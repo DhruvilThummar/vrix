@@ -2,7 +2,8 @@
 
 import React, { useState, useRef } from "react";
 import Image from "next/image";
-import { sendOtp, verifyOtp, addSecurityLog } from "@/utils/api";
+import { sendOtp, verifyOtp, addSecurityLog, fetchProducts } from "@/utils/api";
+import { useEffect } from "react";
 
 interface Order {
   id: string;
@@ -42,10 +43,29 @@ export default function UserAccountPage() {
     country: "United States",
   });
   const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([
-    { id: "equilibrium-ring", title: "Equilibrium Ring", price: 340, material: "Recycled Silver", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBBPUGt39nl4fhh9bL7YGONJWpfMQoy9m3vrobM4sC1z5Kg4q4K2V3YSsr4ZF0lZXhe-P3Hb3Auft7K0cGDmOJaDPNFaCKWJhF9vp-rfWtnDlZVL2oNEsl3unsUzB-roQPkP0W4HuG4udnn1aHW_DfFgSNw9F-a6m0nh4_9nnJOZ4U9JVLeC5CHqrXK6_sdDmdt8dVDwWazpn3z3YF7r7-NuG0ixJs49hrZjIw4fycINtDHE3Yup2G4XpXxBl6sQr2wsMgq61HHwqE" },
-    { id: "monolith-cuff", title: "Monolith Cuff", price: 1250, material: "14k Yellow Gold", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuALBX228VJgA-fSha54_aCstyaGM5Bvt7R6IaPXfEdbiTw3GcO8nIrDqangcOfbnL4N4U-Qv5n4P7bhRVTfyiNG4qcAT2Iwsh-4Fcq_eL0L6o13Z6GM6ltM466LgO-CNld4lsFe3PD2bARpZ1RbAk6bhDRV-_RRX1Oe75wwALHEiqfSP640TSDVIQ0_IT2eBGHqHZ_g9dre8nRdmyFGsBPlWhLxiSeduEajnwXKMak9utASOHbO9PcIza9Mldx7Xsie3uWMI2BR43w" },
-  ]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+
+  // Sync wishlist from localStorage on tab change or mount
+  useEffect(() => {
+    async function loadWishlist() {
+      try {
+        const savedIds = localStorage.getItem("vrix-wishlist");
+        const ids = savedIds ? JSON.parse(savedIds) : [];
+        if (ids.length > 0) {
+          const allProducts = await fetchProducts();
+          const filtered = allProducts.filter((p: any) => ids.includes(p.id));
+          setWishlist(filtered);
+        } else {
+          setWishlist([]);
+        }
+      } catch (err) {
+        console.error("Failed to load wishlist:", err);
+      }
+    }
+    if (activeTab === "wishlist" || activeTab === "dashboard") {
+      loadWishlist();
+    }
+  }, [activeTab]);
   const [orders] = useState<Order[]>([
     { id: "#VRIX12345", date: "May 18, 2026", amount: "$340.00", status: "Processing" },
     { id: "#VRIX12312", date: "April 30, 2026", amount: "$620.00", status: "Delivered" },
@@ -353,7 +373,12 @@ export default function UserAccountPage() {
                           <p className="font-body-md text-sm text-ink-black font-semibold">${item.price}</p>
                         </div>
                         <div className="flex gap-4 pt-2">
-                          <button onClick={() => { setWishlist(wishlist.filter(w => w.id !== item.id)); triggerFeedback("Removed from wishlist."); }} className="font-button text-[9px] tracking-widest text-red-600 uppercase cursor-pointer">REMOVE</button>
+                          <button onClick={() => {
+                            const updated = wishlist.filter(w => w.id !== item.id);
+                            setWishlist(updated);
+                            localStorage.setItem("vrix-wishlist", JSON.stringify(updated.map(w => w.id)));
+                            triggerFeedback("Removed from wishlist.");
+                          }} className="font-button text-[9px] tracking-widest text-red-600 uppercase cursor-pointer">REMOVE</button>
                         </div>
                       </div>
                     </div>

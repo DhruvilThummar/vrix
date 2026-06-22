@@ -56,17 +56,32 @@ model SecurityLog {
 }
 
 model Payment {
-  id         String   @id @default(uuid()) @db.Uuid
-  orderId    String   @unique @map("order_id")
-  paymentId  String?  @map("payment_id")
-  signature  String?
-  amount     Float
-  currency   String   @default("INR")
-  status     String   @default("created")
-  userEmail  String?  @map("user_email")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  orderId       String   @unique @map("order_id")
+  paymentId     String?  @map("payment_id")
+  signature     String?
+  amount        Float
+  currency      String   @default("INR")
+  status        String   @default("created")
+  userEmail     String?  @map("user_email")
+  createdAt     DateTime @default(now()) @map("created_at")
+  customerName  String?  @map("customer_name")
+  customerPhone String?  @map("customer_phone")
+  address       String?
+  city          String?
+  postalCode    String?  @map("postal_code")
+  assignedAgent String?  @map("assigned_agent")
 
   @@map("payments")
+}
+
+model DeliveryStaff {
+  email     String   @id
+  name      String
+  role      String   // "agent" or "manager"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("delivery_staff")
 }
 
 model VerificationOtp {

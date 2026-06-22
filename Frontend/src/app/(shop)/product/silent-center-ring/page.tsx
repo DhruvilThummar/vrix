@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchProducts } from "@/utils/api";
+import { useCart } from "@/context/CartContext";
 
 const DEFAULT_PRODUCT = {
   id: "silent-center-ring",
@@ -17,6 +18,7 @@ const DEFAULT_PRODUCT = {
 function ProductContent() {
   const searchParams = useSearchParams();
   const productId = searchParams.get("id");
+  const { addItem } = useCart();
 
   const [products, setProducts] = useState<any[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -40,6 +42,16 @@ function ProductContent() {
     return found || { ...DEFAULT_PRODUCT, id: productId };
   }, [products, productId]);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("vrix-wishlist");
+      if (saved && product?.id) {
+        const list = JSON.parse(saved);
+        setWishlistActive(list.includes(product.id));
+      }
+    } catch {}
+  }, [product]);
+
   const galleryImages = useMemo(() => {
     return [
       { src: product.image, alt: `Main view of ${product.title}` },
@@ -59,18 +71,38 @@ function ProductContent() {
     }
     setBagLoading(true);
     setTimeout(() => {
+      addItem({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        material: product.material || "18K Gold Vermeil & White Sapphire",
+        size,
+        engraving,
+      });
       setBagLoading(false);
       showToast(`"${product.title}" has been added to your bag.`);
     }, 1000);
   };
 
   const handleAddToWishlist = () => {
-    setWishlistActive(!wishlistActive);
-    showToast(
-      wishlistActive
-        ? "Removed from your Wishlist."
-        : "Added to your Wishlist."
-    );
+    try {
+      const saved = localStorage.getItem("vrix-wishlist");
+      let list = saved ? JSON.parse(saved) : [];
+      const active = list.includes(product.id);
+      let nextActive = !active;
+      if (active) {
+        list = list.filter((id: string) => id !== product.id);
+        showToast("Removed from your Wishlist.");
+      } else {
+        list.push(product.id);
+        showToast("Added to your Wishlist.");
+      }
+      setWishlistActive(nextActive);
+      localStorage.setItem("vrix-wishlist", JSON.stringify(list));
+    } catch (err) {
+      console.error("Wishlist toggle error:", err);
+    }
   };
 
   const showToast = (message: string) => {

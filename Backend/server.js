@@ -463,6 +463,13 @@ app.post("/api/payment/order", async (req, res) => {
   const { amount, currency = "INR", receipt, notes = {} } = req.body;
   if (!amount) return res.status(400).json({ error: "Amount is required (in paise)" });
 
+  const customerName = req.body.customerName || notes.customerName || null;
+  const customerPhone = req.body.customerPhone || notes.customerPhone || null;
+  const address = req.body.address || notes.address || null;
+  const city = req.body.city || notes.city || null;
+  const postalCode = req.body.postalCode || notes.postalCode || null;
+  const userEmail = req.body.email || notes.customerEmail || null;
+
   try {
     if (razorpay) {
       const order = await razorpay.orders.create({
@@ -479,6 +486,12 @@ app.post("/api/payment/order", async (req, res) => {
           amount: Number(amount),
           currency,
           status: "CREATED",
+          customerName,
+          customerPhone,
+          address,
+          city,
+          postalCode,
+          userEmail,
         },
       });
 
@@ -492,6 +505,12 @@ app.post("/api/payment/order", async (req, res) => {
           amount: Number(amount),
           currency,
           status: "CREATED",
+          customerName,
+          customerPhone,
+          address,
+          city,
+          postalCode,
+          userEmail,
         },
       });
       res.json({
@@ -565,13 +584,185 @@ app.get("/api/payment/logs", async (req, res) => {
 //  DELIVERY PANEL
 // ══════════════════════════════════════════════════════════════════════════════
 
-// Get all active orders for delivery agents
+// ══════════════════════════════════════════════════════════════════════════════
+//  DELIVERY PORTAL & ROLE-BASED AUTH
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Delivery Staff login (OTP generation)
+app.post("/api/delivery/auth/login", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Email is required" });
+
+  try {
+    // Check if user is registered delivery staff
+    const staff = await db.deliveryStaff.findUnique({ where: { email } });
+    if (!staff) {
+      return res.status(403).json({ error: "Access denied. Not registered as delivery staff." });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    // Store OTP tagged as delivery login auth
+    const authKey = `delivery_auth:${email}`;
+    await db.verificationOtps.deleteMany({ where: { email: authKey } });
+    await db.verificationOtps.create({
+      data: { email: authKey, otp, expiresAt: expiresAt.toISOString() },
+    });
+
+    if (transporter) {
+      await transporter.sendMail({
+        from: `"VRIX Delivery System" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: "Your VRIX Delivery Portal Login Code",
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f0f4f8;border:1px solid #d0e0f0;">
+            <h2 style="font-size:20px;letter-spacing:4px;color:#1a365d;text-transform:uppercase;margin-bottom:24px;">VRIX Delivery Staff Portal</h2>
+            <p style="color:#4a5568;font-size:14px;margin-bottom:16px;">Hello ${staff.name}, your login verification code is:</p>
+            <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#1a365d;text-align:center;padding:24px;background:#fff;border:1px solid #d0e0f0;margin-bottom:24px;">${otp}</div>
+            <p style="color:#718096;font-size:12px;">This code is valid for 10 minutes. Please keep it secure.</p>
+          </div>
+        `,
+      });
+      res.json({ success: true, message: "Login OTP sent to " + email });
+    } else {
+      console.log(`[DEV] Delivery Auth OTP for ${email}: ${otp}`);
+      res.json({ success: true, message: "Login OTP generated (dev mode)", otp });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delivery Staff verify login
+app.post("/api/delivery/auth/verify", async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) return res.status(400).json({ error: "Email and OTP required" });
+
+  try {
+    const staff = await db.deliveryStaff.findUnique({ where: { email } });
+    if (!staff) {
+      return res.status(403).json({ error: "Access denied." });
+    }
+
+    const authKey = `delivery_auth:${email}`;
+    const record = await db.verificationOtps.findFirst({
+      where: { email: authKey, otp }
+    });
+
+    if (!record) return res.status(401).json({ error: "Invalid login OTP" });
+
+    const expiry = new Date(record.expiresAt);
+    if (expiry < new Date()) {
+      await db.verificationOtps.delete({ where: { id: record.id } });
+      return res.status(401).json({ error: "Login OTP has expired" });
+    }
+
+    // Consume OTP
+    await db.verificationOtps.delete({ where: { id: record.id } });
+
+    await db.securityLogs.create({
+      data: { event: "DELIVERY_STAFF_LOGIN", user: email, status: "SUCCESS" },
+    });
+
+    res.json({
+      success: true,
+      user: {
+        email: staff.email,
+        name: staff.name,
+        role: staff.role
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get delivery orders with role & email filters
 app.get("/api/delivery/orders", async (req, res) => {
+  const { role, email } = req.query;
+
   try {
     const payments = await db.payments.findMany();
-    // Only show successful payments (real orders)
-    const orders = payments.filter((p) => p.status === "SUCCESS" || p.status === "CREATED");
+    // Successful or delivered or created orders
+    let orders = payments.filter((p) => p.status === "SUCCESS" || p.status === "DELIVERED" || p.status === "CREATED");
+
+    if (role === "agent" && email) {
+      // Agents see orders assigned to them, OR unassigned orders (null / undefined)
+      orders = orders.filter(
+        (o) => o.assignedAgent === email || !o.assignedAgent
+      );
+    }
+    // Managers see all orders
+
     res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Manager: Assign order to delivery agent
+app.patch("/api/delivery/orders/:orderId/assign", async (req, res) => {
+  const { orderId } = req.params;
+  const { agentEmail } = req.body; // Can be email string, or null to unassign
+
+  try {
+    // If agentEmail is provided, check if it's a valid agent
+    if (agentEmail) {
+      const agent = await db.deliveryStaff.findUnique({ where: { email: agentEmail } });
+      if (!agent) {
+        return res.status(400).json({ error: "Invalid delivery staff member email" });
+      }
+    }
+
+    const updated = await db.payments.update({
+      where: { orderId },
+      data: { assignedAgent: agentEmail || null },
+    });
+
+    await db.securityLogs.create({
+      data: { event: "DELIVERY_ASSIGNED", user: `${orderId} to ${agentEmail || "unassigned"}`, status: "SUCCESS" },
+    });
+
+    res.json({ success: true, order: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Manager: List all delivery staff
+app.get("/api/delivery/staff", async (req, res) => {
+  try {
+    const staff = await db.deliveryStaff.findMany();
+    res.json(staff);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Manager: Create new delivery staff member
+app.post("/api/delivery/staff", async (req, res) => {
+  const { email, name, role } = req.body;
+  if (!email || !name || !role) {
+    return res.status(400).json({ error: "email, name, and role ('agent' | 'manager') are required" });
+  }
+
+  try {
+    const created = await db.deliveryStaff.create({
+      data: { email, name, role }
+    });
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Manager: Delete a delivery staff member
+app.delete("/api/delivery/staff/:email", async (req, res) => {
+  const { email } = req.params;
+  try {
+    await db.deliveryStaff.delete({ where: { email } });
+    res.json({ success: true, email });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

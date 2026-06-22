@@ -14,9 +14,11 @@ export default function AdminLayout({
   const navItems = [
     { name: "Dashboard", href: "/admin", icon: "dashboard" },
     { name: "Products", href: "/admin/products", icon: "inventory_2" },
+    { name: "Collections", href: "/admin/collections", icon: "category" },
     { name: "Orders", href: "/admin/orders", icon: "receipt_long" },
+    { name: "Marketing", href: "/admin/marketing", icon: "confirmation_number" },
     { name: "CMS", href: "/admin/cms", icon: "article" },
-    { name: "Marketing", href: "/admin/marketing", icon: "campaign" },
+    { name: "Delivery Staff", href: "/admin/delivery", icon: "local_shipping" },
     { name: "Security & Logs", href: "/admin/security", icon: "security" },
   ];
 

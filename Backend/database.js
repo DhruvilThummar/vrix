@@ -412,10 +412,82 @@ export const db = {
         return { code };
       }
     }
+  },
+
+  // Delivery Staff
+  deliveryStaff: {
+    findMany: async () => {
+      if (db.isConnected()) {
+        return await prisma.deliveryStaff.findMany({
+          orderBy: { createdAt: "desc" }
+        });
+      } else {
+        const localData = readLocalDb();
+        return localData.deliveryStaff || [];
+      }
+    },
+    findUnique: async ({ where: { email } }) => {
+      if (db.isConnected()) {
+        return await prisma.deliveryStaff.findUnique({ where: { email } });
+      } else {
+        const localData = readLocalDb();
+        return (localData.deliveryStaff || []).find(s => s.email === email) || null;
+      }
+    },
+    create: async ({ data }) => {
+      if (db.isConnected()) {
+        return await prisma.deliveryStaff.create({ data });
+      } else {
+        const localData = readLocalDb();
+        localData.deliveryStaff = localData.deliveryStaff || [];
+        // Ensure no duplicate emails locally
+        if (localData.deliveryStaff.some(s => s.email === data.email)) {
+          throw new Error(`Staff with email ${data.email} already exists`);
+        }
+        const record = {
+          createdAt: new Date().toISOString(),
+          ...data
+        };
+        localData.deliveryStaff.push(record);
+        writeLocalDb(localData);
+        return record;
+      }
+    },
+    delete: async ({ where: { email } }) => {
+      if (db.isConnected()) {
+        return await prisma.deliveryStaff.delete({ where: { email } });
+      } else {
+        const localData = readLocalDb();
+        localData.deliveryStaff = localData.deliveryStaff || [];
+        localData.deliveryStaff = localData.deliveryStaff.filter(s => s.email !== email);
+        writeLocalDb(localData);
+        return { email };
+      }
+    }
   }
 };
 
 export async function migrateIfNeeded() {
+  // Always seed local db.json fallback with default staff
+  try {
+    const localData = readLocalDb();
+    let updatedLocal = false;
+    if (!localData.deliveryStaff || localData.deliveryStaff.length === 0) {
+      localData.deliveryStaff = [
+        { email: "manager@vrix.com", name: "VRIX Manager", role: "manager", createdAt: new Date().toISOString() },
+        { email: "agent@vrix.com", name: "VRIX Agent", role: "agent", createdAt: new Date().toISOString() },
+        { email: "dhruv@vrix.com", name: "Dhruv Agent", role: "agent", createdAt: new Date().toISOString() }
+      ];
+      updatedLocal = true;
+    }
+    if (updatedLocal) {
+      writeLocalDb(localData);
+      console.log("Database Access Layer: Seeded local fallback delivery staff.");
+    }
+  } catch (err) {
+    console.error("Database Access Layer: Failed to seed local delivery staff:", err);
+  }
+
   if (!db.isConnected()) return;
 
   try {
@@ -507,8 +579,15 @@ export async function migrateIfNeeded() {
       });
 
       console.log("Database Access Layer: Seeding completed successfully.");
-    } else {
-      console.log("Database Access Layer: Database is already seeded.");
+    }
+
+    // Seed delivery staff in Postgres if missing
+    const staffCount = await prisma.deliveryStaff.count();
+    if (staffCount === 0) {
+      console.log("Database Access Layer: Seeding default delivery staff in Postgres...");
+      await prisma.deliveryStaff.create({ data: { email: "manager@vrix.com", name: "VRIX Manager", role: "manager" } });
+      await prisma.deliveryStaff.create({ data: { email: "agent@vrix.com", name: "VRIX Agent", role: "agent" } });
+      await prisma.deliveryStaff.create({ data: { email: "dhruv@vrix.com", name: "Dhruv Agent", role: "agent" } });
     }
   } catch (error) {
     console.error("Database Access Layer: Migration/seeding failed:", error);

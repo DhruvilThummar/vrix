@@ -1,103 +1,161 @@
 "use client";
-import React, { useState } from "react";
 
-export default function Page() {
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { fetchProducts } from "@/utils/api";
+import { useCart } from "@/context/CartContext";
+
+interface Product {
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  material: string;
+}
+
+export default function WishlistPage() {
+  const { addItem } = useCart();
+  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  useEffect(() => {
+    async function loadWishlist() {
+      try {
+        const saved = localStorage.getItem("vrix-wishlist");
+        const ids = saved ? JSON.parse(saved) : [];
+        const allProducts = await fetchProducts();
+        const filtered = allProducts.filter((p: any) => ids.includes(p.id));
+        setWishlist(filtered);
+      } catch (err) {
+        console.error("Failed to load wishlist:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadWishlist();
+  }, []);
+
+  const handleRemove = (id: string, title: string) => {
+    try {
+      const saved = localStorage.getItem("vrix-wishlist");
+      let ids = saved ? JSON.parse(saved) : [];
+      ids = ids.filter((item: string) => item !== id);
+      localStorage.setItem("vrix-wishlist", JSON.stringify(ids));
+      setWishlist(wishlist.filter((item) => item.id !== id));
+      showToast(`Removed "${title}" from Wishlist.`);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleMoveToBag = (product: Product) => {
+    try {
+      // Add to bag with default size 52
+      addItem({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        material: product.material || "18K Gold Vermeil",
+        size: "52"
+      });
+      // Remove from wishlist
+      const saved = localStorage.getItem("vrix-wishlist");
+      let ids = saved ? JSON.parse(saved) : [];
+      ids = ids.filter((item: string) => item !== product.id);
+      localStorage.setItem("vrix-wishlist", JSON.stringify(ids));
+      setWishlist(wishlist.filter((item) => item.id !== product.id));
+      showToast(`Moved "${product.title}" to Bag.`);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-[60vh] flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest animate-pulse">
+        Loading Wishlist...
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full">
-      <main className="flex-grow w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg md:py-section-gap">
+    <div className="w-full min-h-[70vh] bg-pure-white relative">
+      {toast && (
+        <div className="fixed bottom-8 right-8 z-50 bg-deep-navy text-pure-white px-6 py-4 border border-slate-grey/30 shadow-2xl flex items-center gap-3 animate-fade-in">
+          <span className="material-symbols-outlined text-sm">info</span>
+          <p className="font-body-md text-sm tracking-wide">{toast}</p>
+        </div>
+      )}
 
-<header className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-grey/30 pb-stack-lg mb-stack-lg">
-<div>
-<h1 className="font-display-lg text-display-lg md:font-display-lg md:text-display-lg text-on-surface tracking-tight">Your Wishlist</h1>
-</div>
-<div className="mt-4 md:mt-0">
-<span className="font-label-caps text-label-caps text-secondary uppercase tracking-widest">4 Items Saved</span>
-</div>
-</header>
+      <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg md:py-section-gap">
+        <header className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-grey/30 pb-stack-lg mb-stack-lg">
+          <div>
+            <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-ink-black tracking-tight uppercase">Your Wishlist</h1>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest">
+              {wishlist.length} {wishlist.length === 1 ? "Item" : "Items"} Saved
+            </span>
+          </div>
+        </header>
 
-<div className="grid grid-cols-2 md:grid-cols-4 gap-x-gutter gap-y-section-gap">
-
-<article className="bg-pure-white flex flex-col h-full border border-slate-grey/10 hover:border-slate-grey/30 transition-colors duration-300">
-<div className="aspect-[4/5] bg-surface-container-low overflow-hidden relative">
-<img alt="Product Image" className="w-full h-full object-cover mix-blend-multiply transition-transform duration-700 hover:scale-105" data-alt="A minimalist, high-end studio photograph of a delicate gold architectural ring resting on a pristine white marble pedestal. The lighting is soft and cinematic, casting subtle, elegant shadows that highlight the geometric precision of the jewelry. The overall aesthetic perfectly aligns with a quiet luxury brand, utilizing generous negative space and a clean, high-contrast composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMOEEPML7dpx5ItnOx4IRcF_3WeZ8PmYo4Lp2AgJcaq9hyG_H7IphcqzSiXDInGr-joD2AjtFamVhu9G60lf_ynw7WTGnUG_UyjI3TxoVax_VTNATBQZIQsBugE9kwJoOTFXeqYiBgb_2SjVKF2x9HG0rTEzUc3x0HPbW47K397xuLRkPSelysggmAVQT1l4BdaIchTaRDUru2qCol4E11jXBI40vdjwUi3JOubcfUWnG4fHnMExhhv08QRRjJlh8LjakxS1AflIA" />
-</div>
-<div className="p-stack-md flex flex-col flex-grow justify-between">
-<div className="mb-stack-lg">
-<h2 className="font-body-lg text-body-lg text-on-surface mb-2">Equinox Gold Ring</h2>
-<p className="font-body-md text-body-md text-secondary">$1,450</p>
-</div>
-<div className="space-y-4">
-<button className="w-full bg-deep-navy text-pure-white font-button text-button py-4 uppercase tracking-widest hover:bg-on-surface transition-colors duration-300">
-                            Move to Bag
-                        </button>
-<button className="w-full text-center font-label-caps text-label-caps text-slate-grey hover:text-deep-navy hover:underline underline-offset-4 transition-all duration-300">
-                            Remove
-                        </button>
-</div>
-</div>
-</article>
-
-<article className="bg-pure-white flex flex-col h-full border border-slate-grey/10 hover:border-slate-grey/30 transition-colors duration-300">
-<div className="aspect-[4/5] bg-surface-container-low overflow-hidden relative">
-<img alt="Product Image" className="w-full h-full object-cover mix-blend-multiply transition-transform duration-700 hover:scale-105" data-alt="A sophisticated macro shot of a sleek silver cuff bracelet positioned against a stark, pure white background. The image embraces architectural minimalism, focusing entirely on the flawless, reflective surface of the metal and its perfect, unadorned curvature. The lighting is pristine and highly controlled, creating a modern, premium light-mode visual experience devoid of distracting elements." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgPHLizh_JwGyUOYdbdi_dIUlWmi5BHNHCir9KyVL5LjdWntWUlknSLP2c4e3Rt4btaJeBdBJHTM6Oz7C5tiHXF6n7pZkrsr1lQVzpRW4OcQ7Xne2J6j0HdD90pz6xgDjiBKH2mgKqT0WVzMubGFxFtfFgwY1uVWKIrU9pn15SQx6Jr5JwLQVljnOPK5rpDwDpvZIT3k1T7IRJl3wSpy6e5PRzSWxl5Ll2vo3C1mL8lq8ZQCg00GwTatAjY_2VOZJeQO6wSo3fTYs" />
-</div>
-<div className="p-stack-md flex flex-col flex-grow justify-between">
-<div className="mb-stack-lg">
-<h2 className="font-body-lg text-body-lg text-on-surface mb-2">Linear Silver Cuff</h2>
-<p className="font-body-md text-body-md text-secondary">$950</p>
-</div>
-<div className="space-y-4">
-<button className="w-full bg-deep-navy text-pure-white font-button text-button py-4 uppercase tracking-widest hover:bg-on-surface transition-colors duration-300">
-                            Move to Bag
-                        </button>
-<button className="w-full text-center font-label-caps text-label-caps text-slate-grey hover:text-deep-navy hover:underline underline-offset-4 transition-all duration-300">
-                            Remove
-                        </button>
-</div>
-</div>
-</article>
-
-<article className="bg-pure-white flex flex-col h-full border border-slate-grey/10 hover:border-slate-grey/30 transition-colors duration-300">
-<div className="aspect-[4/5] bg-surface-container-low overflow-hidden relative">
-<img alt="Product Image" className="w-full h-full object-cover mix-blend-multiply transition-transform duration-700 hover:scale-105" data-alt="An editorial-style close-up of geometric gold earrings suspended elegantly in mid-air against a soft linen-colored backdrop. The composition is highly intentional, utilizing a 12-column grid-like structure in its negative space. The lighting emphasizes the sharp angles and meticulous craftsmanship of the luxury jewelry, conveying a sense of quiet permanence and refined taste." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkaaSI2U7mE1d6cGpuCid-1e7j-mI02ZqRhLCo-tn_g6ujke-VGi68OgxdLSpf7of0cjlpqyp_fZNxT3nF2-2cCKz4OqetlMMH6vheUWAGjR5G4gCQD9BLw4qEFIx_uNuA6EsBjhCPcowCDuxsFLKgJMDYPj__-X9GJE9vy2nDUsYRbGF76gp1ggxIIymDdXkPSC2kznvFp5w64Ik4mcr3reZ3uCSiFb7izVDIkrVxIrFWayIFXqeD0aWlb59WxNhDL-c0YPMgEUI" />
-</div>
-<div className="p-stack-md flex flex-col flex-grow justify-between">
-<div className="mb-stack-lg">
-<h2 className="font-body-lg text-body-lg text-on-surface mb-2">Vertex Drop Earrings</h2>
-<p className="font-body-md text-body-md text-secondary">$1,800</p>
-</div>
-<div className="space-y-4">
-<button className="w-full bg-deep-navy text-pure-white font-button text-button py-4 uppercase tracking-widest hover:bg-on-surface transition-colors duration-300">
-                            Move to Bag
-                        </button>
-<button className="w-full text-center font-label-caps text-label-caps text-slate-grey hover:text-deep-navy hover:underline underline-offset-4 transition-all duration-300">
-                            Remove
-                        </button>
-</div>
-</div>
-</article>
-
-<article className="bg-pure-white flex flex-col h-full border border-slate-grey/10 hover:border-slate-grey/30 transition-colors duration-300">
-<div className="aspect-[4/5] bg-surface-container-low overflow-hidden relative">
-<img alt="Product Image" className="w-full h-full object-cover mix-blend-multiply transition-transform duration-700 hover:scale-105" data-alt="A meticulously styled photograph of a minimalist chain necklace draped over a smooth, brutalist concrete form, juxtaposed against a pure white setting. The image captures the essence of conscious luxury, focusing on the interplay between the delicate jewelry and the raw, architectural prop. The visual palette is restrained, relying on subtle tonal shifts and sharp 1px details to create depth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkwP3HXAm_gR2x0PxlnYtDcBEx4oPMU9NSQe-JzesBMr_0zJ5zsHqDHOFMbXFIYwEeokKI8MFpCvqEVhN6s0YHOY7jNLSv0RMOgdkwx3C-1n-VNIkEu3Atzjk4FVIFzZ56d06IJJKTmkXKDJJbdH2Ev4r6218otksbpHaGUgt4CnsL57gCiJ-TZy0haxwki60AonW8SXbnX2XKtl3mVAcQ2DJ6XdKvQnIl3mOXsFMF74zTTE4ooTzpq7_wqUiys7XJxp-PWCUeHEI" />
-</div>
-<div className="p-stack-md flex flex-col flex-grow justify-between">
-<div className="mb-stack-lg">
-<h2 className="font-body-lg text-body-lg text-on-surface mb-2">Essence Chain</h2>
-<p className="font-body-md text-body-md text-secondary">$650</p>
-</div>
-<div className="space-y-4">
-<button className="w-full bg-deep-navy text-pure-white font-button text-button py-4 uppercase tracking-widest hover:bg-on-surface transition-colors duration-300">
-                            Move to Bag
-                        </button>
-<button className="w-full text-center font-label-caps text-label-caps text-slate-grey hover:text-deep-navy hover:underline underline-offset-4 transition-all duration-300">
-                            Remove
-                        </button>
-</div>
-</div>
-</article>
-</div>
-</main>
+        {wishlist.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-6">
+            <span className="material-symbols-outlined text-slate-grey text-5xl" style={{ fontVariationSettings: "'wght' 200" }}>favorite_border</span>
+            <div className="text-center space-y-1">
+              <h2 className="font-headline-md text-slate-grey text-lg animate-fade-in">Your Wishlist is Empty</h2>
+              <p className="font-body-md text-slate-grey/60 text-sm">Save items here to view them later.</p>
+            </div>
+            <Link href="/collections/silent-center" className="font-button text-button uppercase px-8 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors tracking-widest">
+              Explore Collections
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-gutter gap-y-section-gap">
+            {wishlist.map((item) => (
+              <article key={item.id} className="bg-pure-white flex flex-col h-full border border-slate-grey/10 hover:border-slate-grey/30 transition-colors duration-300">
+                <div className="aspect-[4/5] bg-surface-container-low overflow-hidden relative">
+                  <Image
+                    alt={item.title}
+                    fill
+                    src={item.image}
+                    className="object-cover mix-blend-multiply transition-transform duration-75 hover:scale-103"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                  />
+                </div>
+                <div className="p-stack-md flex flex-col flex-grow justify-between">
+                  <div className="mb-stack-lg">
+                    <h2 className="font-body-lg text-body-lg text-ink-black mb-2">{item.title}</h2>
+                    <p className="font-body-md text-body-md text-slate-grey">${item.price}</p>
+                  </div>
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => handleMoveToBag(item)}
+                      className="w-full bg-deep-navy text-pure-white font-button text-button py-4 uppercase tracking-widest hover:bg-ink-black transition-colors duration-300 cursor-pointer"
+                    >
+                      Move to Bag
+                    </button>
+                    <button
+                      onClick={() => handleRemove(item.id, item.title)}
+                      className="w-full text-center font-label-caps text-label-caps text-slate-grey hover:text-deep-navy hover:underline underline-offset-4 transition-all duration-300 cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

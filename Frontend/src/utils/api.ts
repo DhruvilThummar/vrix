@@ -226,11 +226,15 @@ export async function fetchPaymentLogs() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  DELIVERY PANEL
+//  DELIVERY PANEL & STAFF APIs
 // ══════════════════════════════════════════════════════════════════════════════
 
-export async function fetchDeliveryOrders() {
-  return apiFetch<any[]>("/delivery/orders");
+export async function fetchDeliveryOrders(role?: string, email?: string) {
+  let url = "/delivery/orders";
+  if (role && email) {
+    url += `?role=${encodeURIComponent(role)}&email=${encodeURIComponent(email)}`;
+  }
+  return apiFetch<any[]>(url);
 }
 
 export async function sendDeliveryOtp(orderId: string, customerEmail: string) {
@@ -246,6 +250,48 @@ export async function verifyDeliveryOtp(orderId: string, otp: string) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ orderId, otp }),
+  });
+}
+
+export async function sendDeliveryAuthOtp(email: string) {
+  return apiFetch<{ success: boolean; message: string; otp?: string }>("/delivery/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function verifyDeliveryAuthOtp(email: string, otp: string) {
+  return apiFetch<{ success: boolean; user: { email: string; name: string; role: "agent" | "manager" } }>("/delivery/auth/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp }),
+  });
+}
+
+export async function fetchDeliveryStaff() {
+  return apiFetch<any[]>("/delivery/staff");
+}
+
+export async function addDeliveryStaff(data: { email: string; name: string; role: "agent" | "manager" }) {
+  return apiFetch<any>("/delivery/staff", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteDeliveryStaff(email: string) {
+  return apiFetch<{ success: boolean; email: string }>(`/delivery/staff/${encodeURIComponent(email)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function assignDeliveryOrder(orderId: string, agentEmail: string | null) {
+  return apiFetch<{ success: boolean; order: any }>(`/delivery/orders/${encodeURIComponent(orderId)}/assign`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ agentEmail }),
   });
 }
 

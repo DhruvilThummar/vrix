@@ -74,6 +74,16 @@ function CollectionContent() {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Sync wishlist from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("vrix-wishlist");
+      if (saved) {
+        setWishlist(JSON.parse(saved));
+      }
+    } catch {}
+  }, []);
+
   // Filter & Sort menus open states
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -117,12 +127,21 @@ function CollectionContent() {
   const toggleWishlist = (id: string, title: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (wishlist.includes(id)) {
-      setWishlist(wishlist.filter((item) => item !== id));
-      showToast(`Removed "${title}" from Wishlist.`);
-    } else {
-      setWishlist([...wishlist, id]);
-      showToast(`Added "${title}" to Wishlist.`);
+    try {
+      const saved = localStorage.getItem("vrix-wishlist");
+      let list = saved ? JSON.parse(saved) : [];
+      if (list.includes(id)) {
+        list = list.filter((item: string) => item !== id);
+        setWishlist(list);
+        showToast(`Removed "${title}" from Wishlist.`);
+      } else {
+        list.push(id);
+        setWishlist(list);
+        showToast(`Added "${title}" to Wishlist.`);
+      }
+      localStorage.setItem("vrix-wishlist", JSON.stringify(list));
+    } catch (err) {
+      console.error("Wishlist toggle error:", err);
     }
   };
 

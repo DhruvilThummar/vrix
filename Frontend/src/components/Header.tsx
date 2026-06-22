@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { fetchDb } from "@/utils/api";
+import { useCart } from "@/context/CartContext";
 
 const MEGAMENU_COLLECTIONS = [
   {
@@ -48,6 +49,7 @@ const DEFAULT_LINKS = [
 
 export default function Header() {
   const pathname = usePathname();
+  const { totalItems } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCollectionsOpen, setMobileCollectionsOpen] = useState(false);
   const [collectionsHovered, setCollectionsHovered] = useState(false);
@@ -160,9 +162,11 @@ export default function Header() {
             className="hover:text-pure-white transition-colors duration-300 cursor-pointer relative flex items-center justify-center w-8 h-8"
           >
             <i className="fa-solid fa-cart-shopping text-[18px]"></i>
-            <span className="absolute -top-1.5 -right-2 bg-pure-white text-deep-navy font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-deep-navy/20 shadow-sm">
-              2
-            </span>
+            {totalItems > 0 && (
+              <span className="absolute -top-1.5 -right-2 bg-pure-white text-deep-navy font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-deep-navy/20 shadow-sm animate-fade-in">
+                {totalItems}
+              </span>
+            )}
           </Link>
         </div>
 
@@ -255,9 +259,11 @@ export default function Header() {
             className="cursor-pointer flex items-center justify-center w-8 h-8 relative"
           >
             <i className="fa-solid fa-cart-shopping text-[16px]"></i>
-            <span className="absolute -top-1 -right-1 bg-pure-white text-deep-navy font-bold text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center border border-deep-navy/20 shadow-sm">
-              2
-            </span>
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-pure-white text-deep-navy font-bold text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center border border-deep-navy/20 shadow-sm animate-fade-in">
+                {totalItems}
+              </span>
+            )}
           </Link>
         </div>
       </header>
