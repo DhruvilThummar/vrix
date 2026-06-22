@@ -1,0 +1,182 @@
+use prisama for databse 
+and 
+
+
+Implementation Plan: Production Backend Upgrade (Supabase, Cloudinary, Razorpay & Nodemailer Auth)
+We will upgrade the VRIX backend to a production-ready stack. This plan details the integration of Supabase for database storage, Cloudinary for image/video upload storage, Razorpay for payment processing, and Nodemailer for email one-time password (OTP) authentication. We will keep a local db.json fallback so that the server remains functional even if credentials are not configured immediately.
+
+User Review Required
+IMPORTANT
+
+Nodemailer OTP Authentication: We will add a verification flow. Customers will input their email on the My Account page, receive a 6-digit OTP, and submit it to authenticate.
+Supabase Database Integration: We will migrate product inventory, blog articles, security logs, payments, and site-wide CMS layout configurations into Supabase. A SQL schema is provided below for setting up your database.
+Cloudinary Media Storage: Expose a /api/media/upload endpoint that receives local files (via multer) and uploads them to your Cloudinary folder. The Admin panel will receive upload buttons next to image fields.
+Razorpay Payments: Expose order creation (/api/payments/create-order) and signature validation (/api/payments/verify) endpoints. Verified payments will be logged to the Supabase database.
+Environment Variables: A .env file will be created in the Backend directory containing configuration keys.
+Supabase SQL Schema
+Run the following commands in your Supabase SQL Editor to create the required tables:
+
+sql
+
+-- 1. Enable UUID Extension if not enabled
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- 2. cms_settings table (for general homepage, brand, legal, features, nav settings)
+CREATE TABLE IF NOT EXISTS cms_settings (
+  key VARCHAR(255) PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+-- 3. products table
+CREATE TABLE IF NOT EXISTS products (
+  id VARCHAR(255) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  material VARCHAR(255),
+  type VARCHAR(100) NOT NULL,
+  price NUMERIC NOT NULL,
+  image TEXT NOT NULL,
+  description TEXT,
+  alt TEXT,
+  collection VARCHAR(100),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+-- 4. journal table (blog articles)
+CREATE TABLE IF NOT EXISTS journal (
+  id VARCHAR(255) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  excerpt TEXT,
+  content TEXT NOT NULL,
+  image TEXT NOT NULL,
+  date VARCHAR(100),
+  read_time VARCHAR(50),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+-- 5. security_logs table
+CREATE TABLE IF NOT EXISTS security_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  event VARCHAR(255) NOT NULL,
+  user_email VARCHAR(255),
+  status VARCHAR(50) NOT NULL
+);
+-- 6. payments table (Razorpay payments log)
+CREATE TABLE IF NOT EXISTS payments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id VARCHAR(255) UNIQUE NOT NULL,
+  payment_id VARCHAR(255),
+  signature VARCHAR(255),
+  amount NUMERIC NOT NULL,
+  currency VARCHAR(10) DEFAULT 'INR',
+  status VARCHAR(50) DEFAULT 'created',
+  user_email VARCHAR(255),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+-- 7. otps table (Email verification codes)
+CREATE TABLE IF NOT EXISTS verification_otps (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) NOT NULL,
+  otp VARCHAR(6) NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+Proposed Changes
+Backend Components
+[NEW] 
+Backend/.env.example
+List all template environment variable configuration keys:
+env
+
+PORT=5000
+SUPABASE_URL=your-supabase-project-url
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+CLOUDINARY_CLOUD_NAME=your-cloudinary-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+RAZORPAY_KEY_ID=your-razorpay-key-id
+RAZORPAY_KEY_SECRET=your-razorpay-key-secret
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-email-app-password
+[NEW] 
+Backend/database.js
+Implement a centralized Database Access Layer.
+Check if Supabase keys exist in .env.
+If keys are present, initialize @supabase/supabase-js client and query tables.
+If keys are missing, fallback to reading and writing locally to data/db.json.
+Write automatic migration logic: on start, if connected to Supabase and tables are empty, copy default values from db.json into Supabase.
+[MODIFY] 
+Backend/package.json
+Add dependencies: @supabase/supabase-js, cloudinary, razorpay, multer, nodemailer, dotenv.
+[MODIFY] 
+Backend/server.js
+Initialize dotenv.
+Integrate database.js to replace direct fs.readFileSync database access.
+Configure cloudinary client.
+Configure razorpay client.
+Configure nodemailer SMTP transporter.
+Expose Authentication OTP Endpoints:
+POST /api/auth/send-otp: Generates a 6-digit OTP code, stores it in verification_otps table (with 10-minute expiration), and sends a beautifully styled HTML email to the recipient using Nodemailer.
+POST /api/auth/verify-otp: Matches the submitted OTP for the email. If valid, deletes the OTP record and returns a login confirmation/success token.
+Expose Cloudinary Media Endpoint:
+POST /api/media/upload: Accepts file input, uploads image/video to Cloudinary, and returns { secure_url }.
+Expose Razorpay Payment Endpoints:
+POST /api/payments/create-order: Generates a Razorpay order ID, writes record to payments table with status created.
+POST /api/payments/verify: Verifies Razorpay checkout signature. Updates database payment status to success or failed.
+GET /api/payments/transactions: Returns transaction history logs from database for the admin panel.
+Frontend Components
+[MODIFY] 
+Frontend/src/utils/api.ts
+Add client helper functions:
+sendOtp(email: string): Calls /api/auth/send-otp.
+verifyOtp(email: string, otp: string): Calls /api/auth/verify-otp.
+uploadMedia(file: File): Sends image/video files via FormData to /api/media/upload.
+createPaymentOrder(amount: number, email: string): Calls /api/payments/create-order.
+verifyPayment(verificationData: any): Calls /api/payments/verify.
+fetchTransactions(): Calls /api/payments/transactions.
+[MODIFY] 
+Frontend/src/app/(shop)/account/page.tsx
+Add dynamic Authentication state (checking if user email is stored in cookie/localStorage).
+If not authenticated, display a premium minimal email login form.
+Upon entering email, trigger OTP send request and switch form to verification mode.
+Verify OTP code. On success, store email and set user session as logged-in.
+Update profile tabs to show user's active session email and support secure logouts.
+[MODIFY] 
+Frontend/src/app/(admin)/admin/products/page.tsx
+Integrate a File Upload Input alongside the Image URL text field. Clicking the file input will upload directly to Cloudinary and populate the URL field automatically.
+Add "Collection" dropdown (Silent Center, Solitude, Presence, Light, none) to set a product's collection classification.
+[MODIFY] 
+Frontend/src/app/(admin)/admin/cms/page.tsx
+Add File Upload Inputs next to image URLs (Hero Image, Story Banner, Story Anchor Image, Blog Image, Brand Logo) to let the Admin upload assets dynamically.
+Add a new "Payments Log" tab to see all Razorpay transactions, amounts, and statuses in a clean table format.
+[MODIFY] 
+Frontend/src/app/(shop)/collections/silent-center/page.tsx
+Adjust filters to match the new dynamic collection classifications, and price range filters.
+Verification Plan
+Automated Tests
+Run npm run build inside Frontend to verify client compile correctness.
+Start backend and inspect console output for Supabase initialization and migration tasks.
+Manual Verification
+Enter an email on the login/account screen, and check inbox for a beautifully formatted VRIX verification email.
+Enter the OTP code to log in successfully.
+Test uploading an image in the product catalogue and ensure it is uploaded to Cloudinary.
+Complete a mockup order checkout to verify Razorpay order generation and database logging.
+
+
+
+
+Task: Production Backend Upgrade & Filters Integration
+[ ] Install new packages in Backend (supabase, cloudinary, razorpay, nodemailer, multer, dotenv)
+[ ] Create Backend/.env.example and .env template
+[ ] Create database access layer Backend/database.js supporting both Supabase and db.json fallback
+[ ] Update Backend/data/db.json to assign collections to products
+[ ] Refactor Backend/server.js with:
+[ ] Cloudinary file upload route (POST /api/media/upload)
+[ ] Razorpay payment order and verify endpoints
+[ ] Nodemailer OTP generation and verification endpoints
+[ ] Update Frontend API client Frontend/src/utils/api.ts with new endpoint calls
+[ ] Update Collections view Frontend/src/app/(shop)/collections/silent-center/page.tsx with collection, price, type, material filters
+[ ] Update Search view Frontend/src/app/(shop)/search/page.tsx with fully dynamic search and filters
+[ ] Update Admin Products page Frontend/src/app/(admin)/admin/products/page.tsx with file upload to Cloudinary and collection drop-down
+[ ] Update Admin CMS page Frontend/src/app/(admin)/admin/cms/page.tsx with file uploads, payment log viewer tab
+[ ] Update User Account page Frontend/src/app/(shop)/account/page.tsx with OTP verification login flow
+[ ] Run build to verify compiling succeeds

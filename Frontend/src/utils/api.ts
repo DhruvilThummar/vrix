@@ -1,0 +1,319 @@
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+// ─── Helper ───────────────────────────────────────────────────────────────────
+async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "API request failed");
+  }
+  return res.json();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  HEALTH
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchHealth() {
+  return apiFetch<{ status: string; dbMode: string; cloudinary: boolean; razorpay: boolean; nodemailer: boolean }>("/health");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  DATABASE / CMS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchDb() {
+  return apiFetch<any>("/db");
+}
+
+export async function updateCMS(data: {
+  homepage?: any;
+  story?: any;
+  legal?: any;
+  navigation?: any[];
+  brand?: any;
+  features?: any;
+  collections?: any;
+}) {
+  return apiFetch<any>("/cms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PRODUCTS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchProducts() {
+  return apiFetch<any[]>("/products");
+}
+
+export async function fetchProduct(id: string) {
+  return apiFetch<any>(`/products/${id}`);
+}
+
+export async function createProduct(productData: any) {
+  return apiFetch<any>("/products", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(productData),
+  });
+}
+
+export async function updateProduct(id: string, productData: any) {
+  return apiFetch<any>(`/products/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(productData),
+  });
+}
+
+export async function deleteProduct(id: string) {
+  return apiFetch<any>(`/products/${id}`, { method: "DELETE" });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  COLLECTIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchCollections() {
+  return apiFetch<any[]>("/collections");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  JOURNAL
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchJournal() {
+  return apiFetch<any[]>("/journal");
+}
+
+export async function createJournalPost(postData: any) {
+  return apiFetch<any>("/journal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(postData),
+  });
+}
+
+export async function updateJournalPost(id: string, postData: any) {
+  return apiFetch<any>(`/journal/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(postData),
+  });
+}
+
+export async function deleteJournalPost(id: string) {
+  return apiFetch<any>(`/journal/${id}`, { method: "DELETE" });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  SECURITY LOGS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchSecurityLogs() {
+  return apiFetch<any[]>("/security/logs");
+}
+
+export async function addSecurityLog(logEntry: { event: string; user?: string; status: "SUCCESS" | "FAILED" }) {
+  return apiFetch<any>("/security/logs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(logEntry),
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MEDIA UPLOAD
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function uploadMedia(file: File): Promise<{ url: string; public_id: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE_URL}/media/upload`, { method: "POST", body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Upload failed");
+  }
+  return res.json();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  OTP
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function sendOtp(email: string) {
+  return apiFetch<{ success: boolean; message: string; otp?: string }>("/otp/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function verifyOtp(email: string, otp: string) {
+  return apiFetch<{ success: boolean; email: string }>("/otp/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp }),
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PROMO / REDEEM CODES
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function verifyPromo(code: string) {
+  return apiFetch<{ success: boolean; code: string; discount: number; type: "percentage" | "fixed" }>("/promo/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function fetchPromoCodes() {
+  return apiFetch<any[]>("/promo/codes");
+}
+
+export async function createPromoCode(data: { code: string; discount: number; type: "percentage" | "fixed" }) {
+  return apiFetch<any>("/promo/codes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updatePromoCode(code: string, data: any) {
+  return apiFetch<any>(`/promo/codes/${code}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deletePromoCode(code: string) {
+  return apiFetch<any>(`/promo/codes/${code}`, { method: "DELETE" });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PAYMENTS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function createPaymentOrder(amount: number, currency = "INR", notes?: any) {
+  return apiFetch<{ success: boolean; order: any; devMode?: boolean }>("/payment/order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount, currency, notes }),
+  });
+}
+
+export async function verifyPayment(data: {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}) {
+  return apiFetch<{ success: boolean; paymentId: string }>("/payment/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchPaymentLogs() {
+  return apiFetch<any[]>("/payment/logs");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  DELIVERY PANEL
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchDeliveryOrders() {
+  return apiFetch<any[]>("/delivery/orders");
+}
+
+export async function sendDeliveryOtp(orderId: string, customerEmail: string) {
+  return apiFetch<{ success: boolean; message: string; otp?: string }>("/delivery/send-otp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId, customerEmail }),
+  });
+}
+
+export async function verifyDeliveryOtp(orderId: string, otp: string) {
+  return apiFetch<{ success: boolean; orderId: string }>("/delivery/verify-otp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId, otp }),
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ADMIN — STATS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchAdminStats() {
+  return apiFetch<{
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: number;
+    pendingOrders: number;
+    deliveredOrders: number;
+    outOfStock: number;
+    hiddenProducts: number;
+    totalPromoCodes: number;
+  }>("/admin/stats");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ADMIN — PRODUCT STOCK & VISIBILITY
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function updateProductStock(id: string, stock: number) {
+  return apiFetch<any>(`/products/${id}/stock`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ stock }),
+  });
+}
+
+export async function updateProductVisibility(id: string, isVisible: boolean) {
+  return apiFetch<any>(`/products/${id}/visibility`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ isVisible }),
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ADMIN — COLLECTIONS MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchAllCollections() {
+  return apiFetch<any[]>("/collections/all");
+}
+
+export async function saveCollections(collections: any[]) {
+  return apiFetch<any>("/collections", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ collections }),
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ADMIN — SITE CONFIG (features, brand, navigation, homepage, etc.)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchSiteConfig() {
+  return apiFetch<Record<string, any>>("/config");
+}
+
+export async function saveSiteConfigKey(key: string, value: any) {
+  return apiFetch<any>(`/config/${key}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ value }),
+  });
+}

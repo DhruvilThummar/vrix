@@ -1,0 +1,351 @@
+{
+  "homepage": {
+    "heroTitle": "the moments that belong only to you.",
+    "heroSubtitle": "Luxury for",
+    "heroImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuCKm3tn95_-TIhyvUMx8vgFS38HrCWsOHrBrnyyeFJBjd_z2sFkgf5ElPRFPGEnwOnMlGRiBDK_yZli7qo7IWe6wwJ1VqDr340H5hr9tu8L6hDEscfaEIE7CKE6wyny9Ao-FKjI5oEmmy28ll5qNZ3iJT-IvgjyY1T2K-tX9l-V1BKl1fvhmcgjLXq_FDQh_OhA0YEk29NB0ijya6TEA6ezmJwuFFzj7vo4A-AooABaJafBIBd-hoJo6vtg5MoS_rDu9I325sFCuVY",
+    "tagline": "Pieces that speak in silence.",
+    "philosophyTitle": "More than jewelry.\nIt's a way of being.",
+    "philosophy": [
+      {
+        "icon": "flare",
+        "title": "Intentional Design",
+        "description": "Every piece has\na deeper meaning."
+      },
+      {
+        "icon": "hourglass_empty",
+        "title": "Timeless Quality",
+        "description": "Crafted to last.\nMade to be lived in."
+      },
+      {
+        "icon": "eco",
+        "title": "Conscious Luxury",
+        "description": "Ethical materials.\nThoughtful process."
+      },
+      {
+        "icon": "favorite_border",
+        "title": "Personal Connection",
+        "description": "A piece for every\nchapter of you."
+      }
+    ]
+  },
+  "collections": [
+    {
+      "id": "silent-center",
+      "title": "Silent Center",
+      "tagline": "For your balance",
+      "description": "A meditation on form and negative space. Pieces designed to ground you in the present moment, crafted with uncompromising architectural precision and conscious materials.",
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCJ1SV0eXJGZrnjfsm6WOrr3dKft0IVZvS2oM6Wf_4vqwndBPocrNSLKtPsbIWUU4g7YWrwgFZmE16ipICZ0QKg6NulSK0D4DTI4FLnuehTPqcKDF-MPdTTbMRnYiwYRh3zsWojYE3R1iHTC60ZfQ8QWGmDD8mnP3JETge_mPnGQPnFepdY66OuKQsUgWIiwNWQZhfsJ00eO2IOXl7WoHUmQypxFUQFslrgHABiUUv1WrU2ZYbRgDbO_H6gk84g6nofQG2mXVqa538",
+      "link": "/collections/silent-center"
+    },
+    {
+      "id": "solitude",
+      "title": "Solitude",
+      "tagline": "For your inner world",
+      "description": "Meticulous, ultra-minimalist designs that focus on purity and quiet comfort. Linear bands and empty spaces crafted for peaceful daily wear.",
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBvjqmByDlRaJiifUTxVoINswXXm-PAkkbVJ9hcfeaPCrqjzkhDhne1pVofS21ApvXAeGd-OJFnGRzVL8xM1zqRCFmpkvOkIowL3V5vx4O5w-jEkPUpaAjd3iMY1jo-f1BXRbiYG4udPbS3MQHLhriu6sBx3BzN7lMwreEZ1yb4ZK1AR6DhvzuF6SFzUjcqZWiXVPPkEHA2TrBgX495Y9x6krS50C7hS02F_3H0td5UhiUYM92VuwUaofA_QbD6kd14XQ5N6xQdRN8",
+      "link": "/collections/silent-center?collection=solitude"
+    },
+    {
+      "id": "presence",
+      "title": "Presence",
+      "tagline": "For your everyday",
+      "description": "Bold geometric shapes and architectural volume that make a quiet statement of confidence, stability, and character.",
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDphu-s5pByRrI5yOYV0iUrAQhJYlFn9pL56eus7YnulYdC3nxZphQV-dBchzOg9F9C9LvMP1pu7Z-pLdoAmvfuYBpwUk4oJ5auvdPVe_jU2tO6Ldyghkc_ftk25VpTLHGq_4DKkpFIC_w_TgCVCFNwT7xlIzlR6i-4QQwgJHFq41jST-K1fySNIMaWHIa6EMO_OoRUmmcTTgSqML2SGB8jMU92aBukkLElsZJVzQ6iVNHyjlgVNaAN0M56RCO3uUNhT8hu1AAtAqw",
+      "link": "/collections/silent-center?collection=presence"
+    },
+    {
+      "id": "light",
+      "title": "Light",
+      "tagline": "For your becoming",
+      "description": "Highly polished, reflecting surfaces designed to catch and project light. A celebration of transformation, hope, and inner growth.",
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuA2QH2OVjZuf5WcRIEP7F8npj47F7LSlY4eXFlP_4urMQx5FXf9gd87o02ZumQ7pm2WKo25BGUt1bsNce0d7I-HD7QC5boW3dnerz7a62sWZjsKrvbRlbS01UwRXiArH8ZtnywdNRZ25CDJfp2abQpz-434ejKZ6OU9sBKPqqq3g10R3Dft5zyZcRp64hHVhotbtoe1SR8QHkWs_cLCp2FAQd7pl75u-fLJSWWvSsfYYBJ2TJ0V4keUY4FKlbyDFJSKzK5hMm4-Huc",
+      "link": "/collections/silent-center?collection=light"
+    }
+  ],
+  "products": [
+    {
+      "id": "equilibrium-ring",
+      "title": "Equilibrium Ring",
+      "material": "Recycled Silver",
+      "type": "Ring",
+      "price": 340,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuBBPUGt39nl4fhh9bL7YGONJWpfMQoy9m3vrobM4sC1z5Kg4q4K2V3YSsr4ZF0lZXhe-P3Hb3Auft7K0cGDmOJaDPNFaCKWJhF9vp-rfWtnDlZVL2oNEsl3unsUzB-roQPkP0W4HuG4udnn1aHW_DfFgSNw9F-a6m0nh4_9nnJOZ4U9JVLeC5CHqrXK6_sdDmdt8dVDwWazpn3z3YF7r7-NuG0ixJs49hrZjIw4fycINtDHE3Yup2G4XpXxBl6sQr2wsMgq61HHwqE",
+      "alt": "A minimalist architectural silver ring resting on a textured light beige plaster surface.",
+      "collection": "silent-center"
+    },
+    {
+      "id": "linear-drop-chain",
+      "title": "Linear Drop Chain",
+      "material": "18k Solid Gold",
+      "type": "Necklace",
+      "price": 890,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCbk-2-AxwfmxDnWc5U6oHEo5hoegyhAryXtouxInsRdYcrqRmiDOmd8pgq7B-O7bcBe1_iL3wYXDvOHecJGPXbKT1NWQ1bfmHMhJROR7PFhyg1xTEumD7Aqe3ZHuoj7zeFeGxlbS4HQw74UcSwupqEML9lQ9H-dbev3uXB7LL3UfW8TV1GzWVwFGiNfayJ_t7Z1SI-HU_EeeiA-tQrkz0QNO45bl5skg2JtJJakEUCxvzQ-4elNEk-VjVlIsw5jQKEyYy-nb4lTls",
+      "alt": "A delicate, minimalist gold chain necklace draped beautifully over a pale ivory marble block.",
+      "collection": "solitude"
+    },
+    {
+      "id": "structural-hoops",
+      "title": "Structural Hoops",
+      "material": "Sterling Silver",
+      "type": "Earring",
+      "price": 420,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuApU1ICJBf8P-mfmsK1_WsPzMze2EG57aEPHRRzycjSxY9JKqyOFReqSgNgzn-7-cgwfhztS00u0RgkZfMI7-G4fbvcjOQiPtU46LxQm_nhRxeRqcZv3fw3Ud42rKnzpAbIj288wOcEYqRsXTOLBt9faFM3gidboVtw4vaLNZkKdlGoMnvrryWNIMrkeDQDlupocZPA8Xt-Mdg4uccfIWABNmj83C9Qovl_bqoRu6FccpKv4ZSXJy9rt-qLJj4w6WSJD3pOB3jhc20",
+      "alt": "A pair of bold, geometric silver earrings positioned neatly on a smooth, off-white gallery pedestal.",
+      "collection": "presence"
+    },
+    {
+      "id": "monolith-cuff",
+      "title": "Monolith Cuff",
+      "material": "14k Yellow Gold",
+      "type": "Bracelet",
+      "price": 1250,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuALBX228VJgA-fSha54_aCstyaGM5Bvt7R6IaPXfEdbiTw3GcO8nIrDqangcOfbnL4N4U-Qv5n4P7bhRVTfyiNG4qcAT2Iwsh-4Fcq_eL0L6o13Z6GM6ltM466LgO-CNld4lsFe3PD2bARpZ1RbAk6bhDRV-_RRX1Oe75wwALHEiqfSP640TSDVIQ0_IT2eBGHqHZ_g9dre8nRdmyFGsBPlWhLxiSeduEajnwXKMak9utASOHbO9PcIza9Mldx7Xsie3uWMI2BR43w",
+      "alt": "A thick, structural gold cuff bracelet presented vertically against an expansive, empty soft-linen background.",
+      "collection": "presence"
+    },
+    {
+      "id": "void-pendant",
+      "title": "Void Pendant",
+      "material": "White Gold & Onyx",
+      "type": "Necklace",
+      "price": 680,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuAMv2Nqvwts9WoAxO0Hnf3UgQbOE7Qik4DydxYnw_ok_qY0aQWCmG5cM7waa5XrJHfLXzkX4xQw-ZQWLwr5-CU1Ai_o4aU5X4TPkvrhrp2yn3Rs6NNLI8NnkJSNdR15CGwphKH8lSJ3bqzUgojBO_912Z_3Xh-AO3PtMhr__xKN3CGldVocHcF6ZnWwgtpyCIUWMQS4CZ_K9AbI--KpDfaJ2PGazg3RmZUAPLqOIRjmT51vbnXApL-kUjnMxadwmlBeoLgD8fxiIhg",
+      "alt": "A minimalist pendant necklace featuring a single, smooth black onyx stone set in white gold, laying flat on a textured light beige surface.",
+      "collection": "solitude"
+    },
+    {
+      "id": "horizon-bangles",
+      "title": "Horizon Bangles (Set of 3)",
+      "material": "Recycled Silver",
+      "type": "Bracelet",
+      "price": 550,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDH_EpJbUEueGoiuYV9Yxg3y-SqlNh7QOezBEoUaYRKIvhYEmfm6FtVYfWXXZ8z0dRPA_k7_Gzhd1cDR4NH6A8a_5mQgNhYYklAb-vFacdLMAYX4q-0ORvDg5OQQp7pl5wFVNK4RIw0qKEUASdpFsiQMIT20Gr_qga_STkVzuDq3iNyvOflR8IMFpI_zaUeFGoxiwvU7Fa3prBan_MhPTaSaf-bzxUeyxh4johSfJWSABzc57YpWrqL2Rt2JXDgB1YgVLolEoIC-B0",
+      "alt": "A stack of three ultra-thin silver bangles resting slightly overlapping on a pristine white ceramic tray.",
+      "collection": "light"
+    }
+  ],
+  "story": {
+    "title": "Conscious Luxury, Redefined.",
+    "content": "VRIX was born from a desire to strip away the excess and focus on what truly matters: the emotional resonance of a beautifully crafted object. We believe jewelry is not merely adornment, but an architectural extension of the self. Each piece is a quiet statement of confidence, designed with permanence in mind.",
+    "bannerImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuCcdSpPRuZyOFUUJWKwm3afGsU9w9KpeUWno8Pa42A3pGYlx1-vN0KKCKvmLJPL_EFfXLzobCo-BC0d2ku2Y7xvw6-c6PqmPba6dqp88n5JeiiFO3b1oi7F0Jes10YaLZMvbActMGPD-i7hLlh-8O8lKIAWu2lNOd5NowaV5Bx5bBvA7WNnXtH_DM7asrOcYuRbufZEoke_TcPK1e6Jfu89JigYO7RWowWl4ItJ-wTKDT4ncdBjNZ71p0MOODMz1Qw5ooa5DL3cdyI",
+    "heroTitle": "Made to be Yours",
+    "ethosTitle": "The VRIX Standard",
+    "ethos": [
+      {
+        "icon": "diamond",
+        "title": "Affordable Luxury",
+        "description": "Exceptional materials and masterful design, made accessible without compromising the integrity of the art."
+      },
+      {
+        "icon": "favorite_border",
+        "title": "Emotional Connection",
+        "description": "We craft pieces designed to hold memories, intended to be worn daily and passed down through generations."
+      },
+      {
+        "icon": "handyman",
+        "title": "Quality Craftsmanship",
+        "description": "Meticulous attention to detail and a commitment to architectural precision in every curve and setting."
+      }
+    ],
+    "anchorTitle": "Designed for Permanence",
+    "anchorContent": "Our studios operate on a philosophy of minimalism. By removing the unnecessary, we expose the structural beauty of precious metals and stones. The result is a collection that transcends seasonal trends, offering a quiet luxury that speaks volumes.",
+    "anchorImage": "https://lh3.googleusercontent.com/aida-public/AB6AXuDtENGLHbYBSzrsxO1UA_vwuaj919h5smCWviaFEdZLzR_osd4WjVJpSBPd6hyzV0ZnN7PWRDBSrSRiFyEkLmRgKj5AaNuDYF7Jkaqtackww_4FTsBF9gGEaq__xBfU4Iwx9JpDTLru3dXLLSKP94Bto5xexScU3fGTHhcZaIbN7WnudaWj_DQ7xK0isEAcQb8YomApNcvfJql9Otu8_a3RPPhk2ahHRtXMeA6KAm-79FWAV9Lh4PntuV9cJOVOytqyBUl5PpHMOkc",
+    "anchorLinkText": "Explore the Process"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "October 2024",
+      "intro": "At VRIX, we are committed to protecting the privacy and security of our clients. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website or interact with our brand.\n\nBy engaging with VRIX, you consent to the data practices described in this statement. We prioritize transparency and aim to ensure you have full control over your personal data.",
+      "sections": [
+        {
+          "title": "1. Introduction",
+          "content": "At VRIX, we are committed to protecting the privacy and security of our clients. This Privacy Policy outlines how we collect, use, disclose, and safeguard your information when you visit our website or interact with our brand.\n\nBy engaging with VRIX, you consent to the data practices described in this statement. We prioritize transparency and aim to ensure you have full control over your personal data."
+        },
+        {
+          "title": "2. Information We Collect",
+          "content": "We collect information that you voluntarily provide to us when you register on the website, express an interest in obtaining information about us or our products, or otherwise contact us. The personal information that we collect depends on the context of your interactions with us and the website, the choices you make, and the products and features you use.\n\n- Personal Identity Data: Name, email address, postal address, phone number.\n- Financial Data: Payment instrument details (e.g., credit card number) processed securely through our payment gateways.\n- Usage Data: Information about how you navigate and interact with our digital platforms."
+        },
+        {
+          "title": "3. How We Use Your Information",
+          "content": "We use personal information collected via our website for a variety of business purposes described below. We process your personal information for these purposes in reliance on our legitimate business interests, in order to enter into or perform a contract with you, with your consent, and/or for compliance with our legal obligations.\n\n- To facilitate account creation and logon process.\n- To fulfill and manage your bespoke orders and standard purchases.\n- To deliver targeted advertising and curated gallery updates to you.\n- To protect our Services from fraudulent transactions."
+        }
+      ]
+    },
+    "shipping": {
+      "title": "Shipping Policy",
+      "lastUpdated": "October 2024",
+      "sections": [
+        {
+          "title": "1. Dispatch & Timing",
+          "content": "All standard orders are processed and dispatched within 1-2 business days. Bespoke and customized jewelry selections require up to 4 weeks of craftsmanship time prior to dispatch."
+        },
+        {
+          "title": "2. Delivery Rates & Insurance",
+          "content": "Complimentary standard delivery is included on all purchases over $150. For orders below this threshold, shipping rates are calculated at checkout. Worldwide express shipping options are available with our premium logistics partners (DHL/FedEx)."
+        },
+        {
+          "title": "3. Signature Requirement",
+          "content": "For your security, all VRIX shipments require an adult signature upon delivery. We are unable to ship to PO Boxes, APO, or FPO addresses."
+        }
+      ]
+    },
+    "returns": {
+      "title": "Returns & Exchanges Policy",
+      "lastUpdated": "October 2024",
+      "sections": [
+        {
+          "title": "1. Return Window",
+          "content": "VRIX offers a 30-day return policy for standard, non-customized pieces. Items must be returned in unworn, pristine condition with all original packaging, certificates, and safety tags intact."
+        },
+        {
+          "title": "2. Non-Returnable Items",
+          "content": "Bespoke commissions, custom configurations created via the modular builder, and personalized engravings are made uniquely for you. These selections are final sale and cannot be returned, exchanged, or canceled."
+        },
+        {
+          "title": "3. Returns Processing",
+          "content": "To initiate a return, please contact our Customer Care team. We will provide a pre-paid shipping label. Once received and inspected, refunds will be credited back to your original payment method within 5-7 business days."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms & Conditions",
+      "lastUpdated": "October 2024",
+      "sections": [
+        {
+          "title": "1. Intellectual Property Rights",
+          "content": "All designs, jewelry architectural concepts, CAD templates, visual graphics, metadata, and brand names featured on VRIX digital platforms are the exclusive property of VRIX and are protected by international trademark and copyright laws."
+        },
+        {
+          "title": "2. Bespoke Contracts",
+          "content": "Submitting an order via the Bespoke configurator constitutes an immediate authorization of metals and stone processing. Orders enter production instantly and are subject to final sale rules."
+        },
+        {
+          "title": "3. Limitation of Liability",
+          "content": "VRIX jewelry is crafted for delicate fashion and lifestyle use. We are not liable for incidental damage, stone loss, or shape distortions stemming from wear patterns outside of our recommended Care Guide guidelines."
+        }
+      ]
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "lastUpdated": "October 2024",
+      "sections": [
+        {
+          "title": "How long do Bespoke orders take?",
+          "content": "Bespoke and customized jewelry selections require up to 4 weeks of craftsmanship time prior to dispatch. Each piece is meticulously designed and handmade by our master artisans to ensure our precise quality standards."
+        },
+        {
+          "title": "What are the shipping fees?",
+          "content": "Complimentary standard shipping is included on all purchases over $150. For orders below this threshold, shipping rates are calculated at checkout. Worldwide express shipping options are available with our premium logistics partners (DHL/FedEx)."
+        },
+        {
+          "title": "What is the return window?",
+          "content": "VRIX offers a 30-day return policy for standard, non-customized pieces. Items must be returned in unworn, pristine condition with all original packaging, certificates, and safety tags intact. Bespoke commissions and custom engravings are final sale."
+        },
+        {
+          "title": "Can I modify my order after placing it?",
+          "content": "Standard orders can be changed or canceled within 1 hour of placement by contacting Customer Care. Bespoke configurations enter production immediately and cannot be modified."
+        }
+      ]
+    },
+    "care": {
+      "title": "Care Guide",
+      "lastUpdated": "October 2024",
+      "sections": [
+        {
+          "title": "1. Fine Metals Care",
+          "content": "To maintain the architectural brilliance of VRIX platinum and gold pieces, we recommend cleaning them with a soft-bristled brush and mild soapy warm water. Rinse thoroughly and dry with a lint-free cloth. Professional polishing is recommended annually to remove surface micro-scratches."
+        },
+        {
+          "title": "2. Gemstone Care",
+          "content": "Protect delicate gemstones (such as emeralds, opals, and pearls) from extreme heat, ultrasonic cleaners, and harsh chemicals. Diamonds, sapphires, and rubies can withstand standard gentle jewelry cleaners but should still be handled with care to prevent setting looseness."
+        },
+        {
+          "title": "3. Storage & Wearing Recommendations",
+          "content": "Always store your jewelry individually in its original VRIX soft-lined pouch or a velvet-lined box to prevent pieces from scratching each other. Avoid wearing your jewelry during physical activities, swimming in chlorinated water, or applying perfumes, lotions, and cosmetics."
+        }
+      ]
+    }
+  },
+  "journal": [
+    {
+      "id": "architectural-minimalism-jewelry",
+      "title": "The Beauty of Architectural Minimalism",
+      "excerpt": "Exploring the design philosophy behind VRIX’s clean lines and structural aesthetics.",
+      "content": "Minimalism is not about what is missing, but about the purity of what remains. In jewelry design, this means celebrating the architectural volume of precious metals and the natural light play of gemstones. Our pieces are designed to act as extensions of the wearer, speaking in a whisper rather than a shout. By reducing adornment to its structural skeleton, we create jewelry that is both timeless and deeply personal.",
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuDtENGLHbYBSzrsxO1UA_vwuaj919h5smCWviaFEdZLzR_osd4WjVJpSBPd6hyzV0ZnN7PWRDBSrSRiFyEkLmRgKj5AaNuDYF7Jkaqtackww_4FTsBF9gGEaq__xBfU4Iwx9JpDTLru3dXLLSKP94Bto5xexScU3fGTHhcZaIbN7WnudaWj_DQ7xK0isEAcQb8YomApNcvfJql9Otu8_a3RPPhk2ahHRtXMeA6KAm-79FWAV9Lh4PntuV9cJOVOytqyBUl5PpHMOkc",
+      "date": "May 15, 2026",
+      "readTime": "4 min read"
+    },
+    {
+      "id": "sustainable-craftsmanship-future",
+      "title": "Sustainable Craftsmanship: The Future of Luxury",
+      "excerpt": "How VRIX utilizes 100% recycled metals and ethically sourced stones to craft fine jewelry.",
+      "content": "Conscious luxury is a commitment to the planet and to the future. At VRIX, every piece is made using recycled platinum, gold, and silver. We collaborate only with certified ethical miners and cutters. This ensures that the history of your ring or necklace is as beautiful as the design itself. We believe that true luxury should leave no footprint on the earth, but rather a legacy of care and artistry.",
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuCcdSpPRuZyOFUUJWKwm3afGsU9w9KpeUWno8Pa42A3pGYlx1-vN0KKCKvmLJPL_EFfXLzobCo-BC0d2ku2Y7xvw6-c6PqmPba6dqp88n5JeiiFO3b1oi7F0Jes10YaLZMvbActMGPD-i7hLlh-8O8lKIAWu2lNOd5NowaV5Bx5bBvA7WNnXtH_DM7asrOcYuRbufZEoke_TcPK1e6Jfu89JigYO7RWowWl4ItJ-wTKDT4ncdBjNZ71p0MOODMz1Qw5ooa5DL3cdyI",
+      "date": "April 28, 2026",
+      "readTime": "6 min read"
+    }
+  ],
+  "navigation": [
+    { "label": "Collections", "path": "/collections" },
+    { "label": "The World of VRIX", "path": "/story" },
+    { "label": "Journal", "path": "/journal" },
+    { "label": "Gifts", "path": "/search" },
+    { "label": "Bespoke", "path": "/bespoke" },
+    { "label": "New Arrivals", "path": "/collections/silent-center" }
+  ],
+  "brand": {
+    "logoUrl": "/logos/white.png",
+    "name": "VRIX",
+    "email": "contact@vrix.com",
+    "phone": "+1 (800) 555-VRIX",
+    "address": "Atelier VRIX, 100 Minimalist Way, Suite 400, New York, NY 10001"
+  },
+  "features": {
+    "bespokeEnabled": true
+  },
+  "securityLogs": [
+    {
+      "timestamp": "2026-06-15 10:24:18 UTC",
+      "event": "MFA Configuration Changed",
+      "user": "admin@vrix.com (192.168.1.1)",
+      "status": "SUCCESS"
+    },
+    {
+      "timestamp": "2026-06-15 08:12:04 UTC",
+      "event": "Role Modified for dev@vrix.com",
+      "user": "admin@vrix.com (192.168.1.1)",
+      "status": "SUCCESS"
+    },
+    {
+      "timestamp": "2026-06-14 16:45:12 UTC",
+      "event": "API Key Generated",
+      "user": "dev@vrix.com (10.0.0.5)",
+      "status": "SUCCESS"
+    },
+    {
+      "timestamp": "2026-06-14 11:20:05 UTC",
+      "event": "Admin Login",
+      "user": "admin@vrix.com (192.168.1.1)",
+      "status": "SUCCESS"
+    }
+  ],
+  "redeemCodes": [
+    {
+      "code": "VRIX20",
+      "discount": 20,
+      "type": "percentage",
+      "isActive": true,
+      "createdAt": "2026-06-22T17:00:00.000Z"
+    },
+    {
+      "code": "WELCOME10",
+      "discount": 10,
+      "type": "fixed",
+      "isActive": true,
+      "createdAt": "2026-06-22T17:00:00.000Z"
+    }
+  ],
+  "payments": []
+}
