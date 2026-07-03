@@ -35,7 +35,7 @@ const DEFAULT_DATA = {
       }
     ]
   },
-  collections: [],
+  collections: [] as any[],
 };
 
 export default function Home() {

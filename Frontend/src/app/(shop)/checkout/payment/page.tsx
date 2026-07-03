@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { createPaymentOrder, verifyPayment } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";

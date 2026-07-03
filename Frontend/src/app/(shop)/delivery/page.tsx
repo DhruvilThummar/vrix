@@ -29,6 +29,7 @@ interface DeliveryOrder {
   city?: string;
   postalCode?: string;
   assignedAgent?: string;
+  userEmail?: string;
 }
 
 interface StaffMember {

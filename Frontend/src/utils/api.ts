@@ -42,6 +42,7 @@ export async function updateCMS(data: {
   brand?: any;
   features?: any;
   collections?: any;
+  api_settings?: any;
 }) {
   return apiFetch<any>("/cms", {
     method: "POST",
