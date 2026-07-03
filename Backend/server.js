@@ -415,7 +415,7 @@ app.post("/api/otp/send", async (req, res) => {
     // Send email if Nodemailer is configured
     if (activeTransporter) {
       const apiSettings = await getApiSettings();
-      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrix.com");
+      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
       await activeTransporter.sendMail({
         from: `"VRIX" <${senderEmail}>`,
         to: email,
@@ -818,7 +818,7 @@ app.post("/api/delivery/auth/login", async (req, res) => {
     const activeTransporter = await getTransporter();
     if (activeTransporter) {
       const apiSettings = await getApiSettings();
-      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrix.com");
+      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
       await activeTransporter.sendMail({
         from: `"VRIX Delivery System" <${senderEmail}>`,
         to: email,
@@ -1000,7 +1000,7 @@ app.post("/api/delivery/send-otp", async (req, res) => {
     const activeTransporter = await getTransporter();
     if (activeTransporter) {
       const apiSettings = await getApiSettings();
-      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrix.com");
+      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
       await activeTransporter.sendMail({
         from: `"VRIX Delivery" <${senderEmail}>`,
         to: customerEmail,
@@ -1056,7 +1056,7 @@ app.post("/api/delivery/verify-otp", async (req, res) => {
         const activeTransporter = await getTransporter();
         if (activeTransporter) {
           const apiSettings = await getApiSettings();
-          const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrix.com");
+          const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
           
           const amountStr = order.currency + " " + (order.amount / 100).toLocaleString();
           
@@ -1096,7 +1096,7 @@ app.post("/api/delivery/verify-otp", async (req, res) => {
                   </table>
                 </div>
 
-                <p style="font-size: 14px; line-height: 1.6; color: #4a5568;">If you did not receive this package or have any questions, please contact our support team immediately at <a href="mailto:support@vrix.com" style="color: #0f1728; font-weight: bold; text-decoration: underline;">support@vrix.com</a>.</p>
+                <p style="font-size: 14px; line-height: 1.6; color: #4a5568;">If you did not receive this package or have any questions, please contact our support team immediately at <a href="mailto:support@vrixjewels.com" style="color: #0f1728; font-weight: bold; text-decoration: underline;">support@vrixjewels.com</a>.</p>
                 
                 <p style="font-size: 14px; line-height: 1.6; color: #4a5568; margin-top: 32px; border-top: 1px solid #e5e3df; padding-top: 16px;">Thank you for shopping with VRIX.</p>
                 <p style="font-size: 12px; color: #999; margin-top: 8px;">This is an automated notification. Please do not reply directly to this email.</p>
