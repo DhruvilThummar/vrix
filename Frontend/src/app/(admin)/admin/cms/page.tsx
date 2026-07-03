@@ -12,103 +12,6 @@ export default function AdminCMSPage() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // --- Live JSON & Snippet Explorer States ---
-  const [rawCMSData, setRawCMSData] = useState<any>(null);
-  const [activeSnippetTab, setActiveSnippetTab] = useState<"fetch" | "axios" | "curl">("fetch");
-  const [activeJsonFilter, setActiveJsonFilter] = useState<"cms" | "products" | "journal" | "full">("cms");
-  const [copiedSnippet, setCopiedSnippet] = useState(false);
-  const [copiedJson, setCopiedJson] = useState(false);
-
-  // Helper to highlight JSON syntax
-  const highlightJson = (jsonStr: string) => {
-    if (!jsonStr) return "";
-    return jsonStr
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(
-        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
-        (match) => {
-          let cls = "text-[#d19a66]"; // default: number
-          if (/^"/.test(match)) {
-            if (/:$/.test(match)) {
-              cls = "text-[#e06c75]"; // key
-            } else {
-              cls = "text-[#98c379]"; // string
-            }
-          } else if (/true|false/.test(match)) {
-            cls = "text-[#d19a66]"; // boolean
-          } else if (/null/.test(match)) {
-            cls = "text-[#56b6c2]"; // null
-          }
-          return `<span class="${cls}">${match}</span>`;
-        }
-      );
-  };
-
-  const getFilteredJson = () => {
-    if (!rawCMSData) return { message: "No data loaded." };
-    switch (activeJsonFilter) {
-      case "cms": {
-        const { homepage, story, navigation, brand, features, legal, api_settings } = rawCMSData;
-        return { homepage, story, navigation, brand, features, legal, api_settings };
-      }
-      case "products":
-        return rawCMSData.products || [];
-      case "journal":
-        return rawCMSData.journal || [];
-      case "full":
-      default:
-        return rawCMSData;
-    }
-  };
-
-  const getSnippetText = () => {
-    const apiUrl = typeof window !== "undefined" 
-      ? `${window.location.protocol}//${window.location.hostname}:5000/api`
-      : "http://localhost:5000/api";
-      
-    if (activeSnippetTab === "fetch") {
-      return `// Fetch CMS configuration and active store catalogs
-fetch("${apiUrl}/db")
-  .then(response => {
-    if (!response.ok) throw new Error("Network response was not ok");
-    return response.json();
-  })
-  .then(data => {
-    console.log("Brand Name:", data.brand?.name);
-    console.log("Navigation:", data.navigation);
-  })
-  .catch(error => console.error("Error fetching data:", error));`;
-    } else if (activeSnippetTab === "axios") {
-      return `import axios from "axios";
-
-// Fetch database configuration
-axios.get("${apiUrl}/db")
-  .then(response => {
-    const { brand, navigation, homepage } = response.data;
-    console.log("Active Brand Configuration:", brand);
-  })
-  .catch(error => {
-    console.error("API error:", error);
-  });`;
-    } else {
-      return `# Fetch full storefront CMS and inventory snapshot
-curl -X GET "${apiUrl}/db" \\
-     -H "Accept: application/json"`;
-    }
-  };
-
-  const handleCopyText = (text: string, type: "snippet" | "json") => {
-    navigator.clipboard.writeText(text);
-    if (type === "snippet") {
-      setCopiedSnippet(true);
-      setTimeout(() => setCopiedSnippet(false), 2000);
-    } else {
-      setCopiedJson(true);
-      setTimeout(() => setCopiedJson(false), 2000);
-    }
-  };
 
   // --- API Configuration States ---
   const [cloudinaryEnabled, setCloudinaryEnabled] = useState(false);
@@ -252,7 +155,6 @@ curl -X GET "${apiUrl}/db" \\
           setTruecallerPartnerKey(res.api_settings.truecallerPartnerKey || "");
           setTruecallerAppId(res.api_settings.truecallerAppId || "");
         }
-        setRawCMSData(res);
         setLoading(false);
       })
       .catch((err) => {
@@ -1314,146 +1216,432 @@ curl -X GET "${apiUrl}/db" \\
                       </div>
                     </section>
 
-                    {/* NEW: API Integration Documentation / Hints */}
-                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
-                      <div className="border-b border-slate-grey/15 pb-2">
-                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                          Developer API Integration Guide
-                        </h3>
-                        <p className="text-xs text-slate-grey font-body-md mt-1">
-                          Examples of how external clients or storefront instances query your CMS configurations and product inventory.
-                        </p>
+                    {/* ═══ LIVE SETUP STATUS BANNER ═══ */}
+                    <section className="bg-deep-navy text-pure-white p-6 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-headline-md text-base uppercase tracking-widest">Integration Setup Status</h3>
+                          <p className="text-xs text-slate-grey/70 font-body-md mt-0.5">Services marked ✓ are currently enabled and configured.</p>
+                        </div>
+                        <span className="material-symbols-outlined text-2xl text-slate-grey/50">integration_instructions</span>
                       </div>
-
-                      {/* Snippet Tabs */}
-                      <div className="flex gap-2 font-label-caps text-xs">
-                        <button
-                          type="button"
-                          onClick={() => setActiveSnippetTab("fetch")}
-                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
-                            activeSnippetTab === "fetch"
-                              ? "bg-deep-navy text-pure-white border-deep-navy"
-                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-                          }`}
-                        >
-                          JavaScript Fetch
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveSnippetTab("axios")}
-                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
-                            activeSnippetTab === "axios"
-                              ? "bg-deep-navy text-pure-white border-deep-navy"
-                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-                          }`}
-                        >
-                          Axios Promise
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveSnippetTab("curl")}
-                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
-                            activeSnippetTab === "curl"
-                              ? "bg-deep-navy text-pure-white border-deep-navy"
-                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-                          }`}
-                        >
-                          cURL Shell
-                        </button>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {[
+                          { label: "Razorpay Payments", active: razorpayEnabled, icon: "payments" },
+                          { label: "Email (SMTP)", active: nodemailerEnabled, icon: "mail" },
+                          { label: "Image Storage", active: cloudinaryEnabled, icon: "image" },
+                          { label: "Truecaller Verify", active: truecallerEnabled, icon: "verified_user" },
+                        ].map((svc) => (
+                          <div key={svc.label} className={`flex items-center gap-3 p-3 border ${svc.active ? "border-green-500/40 bg-green-500/10" : "border-slate-grey/20 bg-pure-white/5"}`}>
+                            <span className={`material-symbols-outlined text-lg ${svc.active ? "text-green-400" : "text-slate-grey/40"}`}>{svc.icon}</span>
+                            <div>
+                              <div className="text-[9px] font-label-caps tracking-widest text-slate-grey/60 uppercase">{svc.label}</div>
+                              <div className={`text-xs font-body-md mt-0.5 ${svc.active ? "text-green-400" : "text-slate-grey/50"}`}>{svc.active ? "✓ Active" : "○ Not set up"}</div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-
-                      {/* Code Block Container */}
-                      <div className="relative group">
-                        <button
-                          type="button"
-                          onClick={() => handleCopyText(getSnippetText(), "snippet")}
-                          className="absolute right-3 top-3 bg-pure-white/10 hover:bg-pure-white/20 text-pure-white border border-pure-white/20 px-3 py-1 text-[10px] font-label-caps tracking-wider transition-colors z-10"
-                        >
-                          {copiedSnippet ? "COPIED" : "COPY CODE"}
-                        </button>
-                        <pre className="bg-[#1e1e1e] p-6 font-mono text-xs text-pure-white leading-relaxed overflow-x-auto border border-slate-grey/30">
-                          <code>{getSnippetText()}</code>
-                        </pre>
-                      </div>
+                      <p className="text-[10px] text-slate-grey/40 font-label-caps mt-4 tracking-wider">Scroll down for step-by-step setup guides for each service →</p>
                     </section>
 
-                    {/* NEW: Active Database Configuration Explorer */}
-                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
-                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-grey/15 pb-2">
+                    {/* ═══ CLIENT-FRIENDLY SETUP GUIDE ═══ */}
+                    <section className="bg-pure-white border border-slate-grey/25 shadow-sm overflow-hidden">
+                      {/* Section Header */}
+                      <div className="bg-soft-linen/60 border-b border-slate-grey/15 px-8 py-5 flex items-center justify-between">
                         <div>
-                          <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                            Active Database Configuration Explorer
-                          </h3>
-                          <p className="text-xs text-slate-grey font-body-md mt-1">
-                            Inspect currently active JSON configurations stored in your DB schema.
-                          </p>
+                          <h3 className="font-headline-md text-lg text-deep-navy uppercase">How to Get Your Keys &amp; Passwords</h3>
+                          <p className="text-xs text-slate-grey font-body-md mt-1">No coding needed. Just follow the steps, copy-paste what you find, and click Save.</p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyText(JSON.stringify(getFilteredJson(), null, 2), "json")}
-                          className="border border-deep-navy text-deep-navy px-4 py-2 font-button uppercase text-[10px] tracking-wider hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer"
-                        >
-                          {copiedJson ? "Copied JSON to Clipboard!" : "Copy Stored JSON"}
-                        </button>
+                        <div className="hidden md:flex flex-col items-end gap-1">
+                          <span className="text-[9px] font-label-caps text-slate-grey uppercase tracking-widest">Setup time</span>
+                          <span className="text-sm font-body-md text-deep-navy">≈ 15 minutes total</span>
+                        </div>
                       </div>
 
-                      {/* Filter Controls */}
-                      <div className="flex flex-wrap gap-2 font-label-caps text-xs">
-                        <button
-                          type="button"
-                          onClick={() => setActiveJsonFilter("cms")}
-                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
-                            activeJsonFilter === "cms"
-                              ? "bg-deep-navy text-pure-white border-deep-navy"
-                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-                          }`}
-                        >
-                          CMS settings
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveJsonFilter("products")}
-                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
-                            activeJsonFilter === "products"
-                              ? "bg-deep-navy text-pure-white border-deep-navy"
-                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-                          }`}
-                        >
-                          Products List
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveJsonFilter("journal")}
-                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
-                            activeJsonFilter === "journal"
-                              ? "bg-deep-navy text-pure-white border-deep-navy"
-                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-                          }`}
-                        >
-                          Journal Articles
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveJsonFilter("full")}
-                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
-                            activeJsonFilter === "full"
-                              ? "bg-deep-navy text-pure-white border-deep-navy"
-                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-                          }`}
-                        >
-                          Full db snapshot
-                        </button>
-                      </div>
+                      <div className="p-8 space-y-10">
 
-                      {/* JSON Block Container */}
-                      <div className="relative">
-                        <pre className="bg-[#1e1e1e] p-6 font-mono text-xs text-pure-white leading-relaxed max-h-96 overflow-y-auto border border-slate-grey/30 rounded-none shadow-inner">
-                          <code
-                            dangerouslySetInnerHTML={{
-                              __html: highlightJson(JSON.stringify(getFilteredJson(), null, 2)),
-                            }}
-                          />
-                        </pre>
+                        {/* ── 1. RAZORPAY ── */}
+                        <div className="space-y-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-deep-navy text-pure-white flex items-center justify-center font-headline-md text-xl flex-shrink-0 shadow">₹</div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h4 className="font-headline-md text-base text-deep-navy uppercase">Razorpay — Payment Gateway</h4>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-green-100 text-green-700 px-2 py-0.5 border border-green-200">Free to start</span>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-blue-50 text-blue-600 px-2 py-0.5 border border-blue-200">~5 min setup</span>
+                              </div>
+                              <p className="text-xs text-slate-grey font-body-md mt-0.5">Lets customers pay by UPI, card, net banking, or wallet on your store. Razorpay charges a 2% fee per transaction — no monthly fee.</p>
+                            </div>
+                          </div>
+
+                          <div className="ml-16 space-y-4">
+                            <ol className="space-y-3">
+                              {[
+                                { text: "Go to razorpay.com and click \"Sign Up\". Create an account with your business email.", tag: "Website" },
+                                { text: "After login, click Settings in the left sidebar → then API Keys at the top of that page.", tag: "Settings" },
+                                { text: "Click \"Generate Test Key\" for now. You can switch to Live Key once your store is ready to sell.", tag: "Test Mode" },
+                                { text: "A box will appear showing Key ID (starts with rzp_test_…) and Key Secret. Copy both — the secret disappears when you close this box!", tag: "⚠ Copy Now" },
+                                { text: "Go back to the Razorpay Payment Gateway section above. Paste Key ID in the first box, Key Secret in the second. Tick \"Enable\".", tag: "Paste Here" },
+                              ].map((step, i) => (
+                                <li key={i} className="flex gap-3 items-start">
+                                  <span className="w-6 h-6 bg-deep-navy text-pure-white rounded-full flex items-center justify-center text-[10px] font-label-caps flex-shrink-0 mt-0.5">{i + 1}</span>
+                                  <div>
+                                    <span className="text-xs text-ink-black font-body-md leading-relaxed">{step.text}</span>
+                                    {step.tag && <span className="ml-2 text-[9px] font-label-caps uppercase bg-slate-grey/10 text-slate-grey px-1.5 py-0.5">{step.tag}</span>}
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="bg-amber-50 border border-amber-200 p-3 flex gap-2 items-start">
+                                <span className="material-symbols-outlined text-amber-500 text-sm mt-0.5">warning</span>
+                                <div>
+                                  <p className="text-[10px] font-label-caps text-amber-700 uppercase tracking-wider mb-1">Test Mode vs Live Mode</p>
+                                  <p className="text-xs text-amber-800 font-body-md">Use Test Keys while building your store — no real money moves. Switch to Live Keys only when you're ready to accept real orders from customers.</p>
+                                </div>
+                              </div>
+                              <div className="bg-slate-grey/5 border border-slate-grey/15 p-3 flex gap-2 items-start">
+                                <span className="material-symbols-outlined text-slate-grey text-sm mt-0.5">help</span>
+                                <div>
+                                  <p className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider mb-1">Common Problem</p>
+                                  <p className="text-xs text-slate-grey font-body-md">Can't see \"API Keys\" in Settings? Your account might need KYC verification first. Complete your business details under the \"My Profile\" section.</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <a href="https://dashboard.razorpay.com/app/website-app-settings/api-keys" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-deep-navy text-deep-navy px-5 py-2.5 text-[10px] font-label-caps uppercase tracking-wider hover:bg-deep-navy hover:text-pure-white transition-colors">
+                              <span className="material-symbols-outlined text-sm">open_in_new</span>
+                              Open Razorpay API Keys Page
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-slate-grey/10" />
+
+                        {/* ── 2. GMAIL SMTP ── */}
+                        <div className="space-y-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#EA4335] text-pure-white flex items-center justify-center font-headline-md text-xl flex-shrink-0 shadow">G</div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h4 className="font-headline-md text-base text-deep-navy uppercase">Gmail — Email Sending (SMTP)</h4>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-green-100 text-green-700 px-2 py-0.5 border border-green-200">100% Free</span>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-blue-50 text-blue-600 px-2 py-0.5 border border-blue-200">~5 min setup</span>
+                              </div>
+                              <p className="text-xs text-slate-grey font-body-md mt-0.5">Sends OTP codes, order confirmations, and shipping updates to your customers via your own Gmail address.</p>
+                            </div>
+                          </div>
+
+                          <div className="ml-16 space-y-4">
+                            <div className="bg-blue-50 border border-blue-200 p-3 flex gap-2 items-start">
+                              <span className="material-symbols-outlined text-blue-500 text-sm mt-0.5">info</span>
+                              <p className="text-xs text-blue-800 font-body-md">Gmail needs a special <strong>"App Password"</strong> — not your regular Gmail login password. It's a 16-letter code generated specifically for this store. Your main Gmail password stays private and unchanged.</p>
+                            </div>
+
+                            <ol className="space-y-3">
+                              {[
+                                { text: "First turn on 2-Step Verification: go to myaccount.google.com → click Security on the left → scroll to \"2-Step Verification\" → Turn On.", tag: "Required First" },
+                                { text: "Now go to myaccount.google.com → Security → scroll down and click \"App passwords\" (only appears after 2FA is on).", tag: "Security Page" },
+                                { text: "You may be asked to re-enter your Gmail password. Enter it and continue.", tag: "" },
+                                { text: "In the \"App passwords\" page, type a name like \"Vrix Store\" in the text box and click \"Create\".", tag: "Name It" },
+                                { text: "Google shows a 16-character password (like: abcd efgh ijkl mnop). Copy it exactly — including spaces removed.", tag: "⚠ Copy Now" },
+                                { text: "In the SMTP section above: Host → smtp.gmail.com | Port → 587 | Username → your full Gmail | Password → paste the 16-char code.", tag: "Paste Here" },
+                              ].map((step, i) => (
+                                <li key={i} className="flex gap-3 items-start">
+                                  <span className="w-6 h-6 bg-[#EA4335] text-pure-white rounded-full flex items-center justify-center text-[10px] font-label-caps flex-shrink-0 mt-0.5">{i + 1}</span>
+                                  <div>
+                                    <span className="text-xs text-ink-black font-body-md leading-relaxed">{step.text}</span>
+                                    {step.tag && <span className="ml-2 text-[9px] font-label-caps uppercase bg-slate-grey/10 text-slate-grey px-1.5 py-0.5">{step.tag}</span>}
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+
+                            {/* Quick Reference Chips */}
+                            <div>
+                              <p className="text-[10px] font-label-caps text-slate-grey uppercase tracking-widest mb-2">Quick Reference — What to Enter in SMTP Fields</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {[
+                                  { label: "SMTP Host", value: "smtp.gmail.com" },
+                                  { label: "SMTP Port", value: "587" },
+                                  { label: "Sender Username", value: "your@gmail.com" },
+                                  { label: "SMTP Password", value: "16-char App Password" },
+                                ].map((item) => (
+                                  <div key={item.label} className="bg-slate-grey/5 border border-slate-grey/15 p-3">
+                                    <div className="text-[9px] font-label-caps text-slate-grey uppercase tracking-widest">{item.label}</div>
+                                    <div className="text-xs font-mono text-deep-navy mt-1 break-all">{item.value}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="bg-slate-grey/5 border border-slate-grey/15 p-3 flex gap-2 items-start">
+                              <span className="material-symbols-outlined text-slate-grey text-sm mt-0.5">help</span>
+                              <div>
+                                <p className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider mb-1">Common Problem — "App passwords" option not showing?</p>
+                                <p className="text-xs text-slate-grey font-body-md">This option only appears <em>after</em> 2-Step Verification is fully turned on. Make sure you completed Step 1 and saved it. Also make sure you are signed in to the correct Google account.</p>
+                              </div>
+                            </div>
+
+                            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-[#EA4335] text-[#EA4335] px-5 py-2.5 text-[10px] font-label-caps uppercase tracking-wider hover:bg-[#EA4335] hover:text-pure-white transition-colors">
+                              <span className="material-symbols-outlined text-sm">open_in_new</span>
+                              Open Gmail App Passwords Page
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-slate-grey/10" />
+
+                        {/* ── 3. HOSTINGER BUSINESS MAIL ── */}
+                        <div className="space-y-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#673de6] text-pure-white flex items-center justify-center font-headline-md text-xl flex-shrink-0 shadow">H</div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h4 className="font-headline-md text-base text-deep-navy uppercase">Hostinger Business Mail — Professional Email</h4>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-orange-50 text-orange-600 px-2 py-0.5 border border-orange-200">Paid (from ₹50/mo)</span>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-purple-50 text-purple-600 px-2 py-0.5 border border-purple-200">Recommended</span>
+                              </div>
+                              <p className="text-xs text-slate-grey font-body-md mt-0.5">Use your own branded email (e.g. hello@vrix.in) instead of Gmail. Looks far more professional to customers. Use this OR Gmail — not both.</p>
+                            </div>
+                          </div>
+
+                          <div className="ml-16 space-y-4">
+                            <ol className="space-y-3">
+                              {[
+                                { text: "Login to your Hostinger control panel at hpanel.hostinger.com with your username and password.", tag: "Hostinger Login" },
+                                { text: "In the top menu, click \"Emails\" and choose your domain name (e.g. vrix.in) from the list.", tag: "Email Section" },
+                                { text: "You'll see your email accounts. Click \"Manage\" next to the email you want to send store emails from.", tag: "" },
+                                { text: "On that email's manage page, look for \"Configuration\" or \"SMTP Settings\". Click on it.", tag: "Find SMTP" },
+                                { text: "You'll see the SMTP details listed. Write them down: Hostname, Port, Username (your email), and Password.", tag: "Note Down" },
+                                { text: "Enter those exact values in the SMTP section in the Nodemailer panel above. Your username is your full email address. Password is what you use to log in to that email.", tag: "Paste Here" },
+                              ].map((step, i) => (
+                                <li key={i} className="flex gap-3 items-start">
+                                  <span className="w-6 h-6 bg-[#673de6] text-pure-white rounded-full flex items-center justify-center text-[10px] font-label-caps flex-shrink-0 mt-0.5">{i + 1}</span>
+                                  <div>
+                                    <span className="text-xs text-ink-black font-body-md leading-relaxed">{step.text}</span>
+                                    {step.tag && <span className="ml-2 text-[9px] font-label-caps uppercase bg-slate-grey/10 text-slate-grey px-1.5 py-0.5">{step.tag}</span>}
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+
+                            <div>
+                              <p className="text-[10px] font-label-caps text-slate-grey uppercase tracking-widest mb-2">Quick Reference — Hostinger SMTP Values</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {[
+                                  { label: "SMTP Host", value: "smtp.hostinger.com" },
+                                  { label: "SMTP Port", value: "465 (SSL) or 587" },
+                                  { label: "Sender Username", value: "hello@yourdomain.com" },
+                                  { label: "SMTP Password", value: "Your email password" },
+                                ].map((item) => (
+                                  <div key={item.label} className="bg-slate-grey/5 border border-slate-grey/15 p-3">
+                                    <div className="text-[9px] font-label-caps text-slate-grey uppercase tracking-widest">{item.label}</div>
+                                    <div className="text-xs font-mono text-deep-navy mt-1 break-all">{item.value}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div className="bg-purple-50 border border-purple-200 p-3 flex gap-2 items-start">
+                                <span className="material-symbols-outlined text-purple-500 text-sm mt-0.5">star</span>
+                                <p className="text-xs text-purple-800 font-body-md"><strong>Why choose this over Gmail?</strong> Sending from hello@vrix.in builds trust with customers. Gmail addresses can end up in spam folders for order emails. Hostinger Business Mail avoids this.</p>
+                              </div>
+                              <div className="bg-slate-grey/5 border border-slate-grey/15 p-3 flex gap-2 items-start">
+                                <span className="material-symbols-outlined text-slate-grey text-sm mt-0.5">help</span>
+                                <div>
+                                  <p className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider mb-1">Common Problem — Can't find SMTP Settings?</p>
+                                  <p className="text-xs text-slate-grey font-body-md">In hPanel, go to Emails → Manage → scroll to the bottom to find \"Email Client Configuration\". If you see \"IMAP\" and \"SMTP\" tabs, click SMTP.</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <a href="https://hpanel.hostinger.com/emails" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-[#673de6] text-[#673de6] px-5 py-2.5 text-[10px] font-label-caps uppercase tracking-wider hover:bg-[#673de6] hover:text-pure-white transition-colors">
+                              <span className="material-symbols-outlined text-sm">open_in_new</span>
+                              Open Hostinger Email Panel
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-slate-grey/10" />
+
+                        {/* ── 4. CLOUDINARY ── */}
+                        <div className="space-y-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#3448C5] text-pure-white flex items-center justify-center font-headline-md text-xl flex-shrink-0 shadow">☁</div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h4 className="font-headline-md text-base text-deep-navy uppercase">Cloudinary — Product Image Storage</h4>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-green-100 text-green-700 px-2 py-0.5 border border-green-200">Free (25 GB)</span>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-blue-50 text-blue-600 px-2 py-0.5 border border-blue-200">~3 min setup</span>
+                              </div>
+                              <p className="text-xs text-slate-grey font-body-md mt-0.5">All product photos you upload are stored here and served to customers at high speed worldwide. The free plan is enough for hundreds of products.</p>
+                            </div>
+                          </div>
+
+                          <div className="ml-16 space-y-4">
+                            <ol className="space-y-3">
+                              {[
+                                { text: "Go to cloudinary.com and click \"Sign Up For Free\". You can sign up instantly with your Google account.", tag: "Free Account" },
+                                { text: "After signing up, you land on your Dashboard. At the very top, look for \"Cloud Name\" — it looks like a unique word. Copy it.", tag: "Cloud Name" },
+                                { text: "Just below that on the Dashboard, find \"API Key\" — a long number. Copy it.", tag: "API Key" },
+                                { text: "Next to the API Key you'll see \"API Secret\" with dots hiding it. Click the eye icon to show it, then copy it.", tag: "API Secret" },
+                                { text: "In the Cloudinary section above, paste Cloud Name, API Key, and API Secret into their matching fields. Tick \"Enable\".", tag: "Paste Here" },
+                              ].map((step, i) => (
+                                <li key={i} className="flex gap-3 items-start">
+                                  <span className="w-6 h-6 bg-[#3448C5] text-pure-white rounded-full flex items-center justify-center text-[10px] font-label-caps flex-shrink-0 mt-0.5">{i + 1}</span>
+                                  <div>
+                                    <span className="text-xs text-ink-black font-body-md leading-relaxed">{step.text}</span>
+                                    {step.tag && <span className="ml-2 text-[9px] font-label-caps uppercase bg-slate-grey/10 text-slate-grey px-1.5 py-0.5">{step.tag}</span>}
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+
+                            <div>
+                              <p className="text-[10px] font-label-caps text-slate-grey uppercase tracking-widest mb-2">What you'll find on the Dashboard</p>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                {[
+                                  { label: "Cloud Name", value: "Shown at top of Dashboard", where: "Paste → Cloud Name field" },
+                                  { label: "API Key", value: "12-digit number on Dashboard", where: "Paste → API Key field" },
+                                  { label: "API Secret", value: "Hidden — click eye icon", where: "Paste → API Secret field" },
+                                ].map((item) => (
+                                  <div key={item.label} className="bg-slate-grey/5 border border-slate-grey/15 p-3">
+                                    <div className="text-[9px] font-label-caps text-slate-grey uppercase tracking-widest">{item.label}</div>
+                                    <div className="text-xs font-mono text-deep-navy mt-1">{item.value}</div>
+                                    <div className="text-[9px] text-slate-grey/60 mt-1 font-body-md">{item.where}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="bg-slate-grey/5 border border-slate-grey/15 p-3 flex gap-2 items-start">
+                              <span className="material-symbols-outlined text-slate-grey text-sm mt-0.5">help</span>
+                              <div>
+                                <p className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider mb-1">Common Problem — Image not uploading?</p>
+                                <p className="text-xs text-slate-grey font-body-md">Double-check that you copied all three values correctly with no extra spaces. The Cloud Name should have no capital letters or special characters. If your API Secret starts with a letter — that's normal.</p>
+                              </div>
+                            </div>
+
+                            <a href="https://console.cloudinary.com/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-[#3448C5] text-[#3448C5] px-5 py-2.5 text-[10px] font-label-caps uppercase tracking-wider hover:bg-[#3448C5] hover:text-pure-white transition-colors">
+                              <span className="material-symbols-outlined text-sm">open_in_new</span>
+                              Open Cloudinary Dashboard
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-slate-grey/10" />
+
+                        {/* ── 5. TRUECALLER ── */}
+                        <div className="space-y-5">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#1da1f2] text-pure-white flex items-center justify-center font-headline-md text-xl flex-shrink-0 shadow">
+                              <span className="material-symbols-outlined text-xl">phone_in_talk</span>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h4 className="font-headline-md text-base text-deep-navy uppercase">Truecaller — 1-Click Phone Verification</h4>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-yellow-50 text-yellow-700 px-2 py-0.5 border border-yellow-200">Optional</span>
+                                <span className="text-[9px] font-label-caps uppercase tracking-widest bg-slate-grey/10 text-slate-grey px-2 py-0.5 border border-slate-grey/20">Sandbox = No key needed</span>
+                              </div>
+                              <p className="text-xs text-slate-grey font-body-md mt-0.5">Lets customers verify their phone number instantly using Truecaller without typing it manually. Speeds up checkout. Works in Sandbox mode for testing without any keys.</p>
+                            </div>
+                          </div>
+
+                          <div className="ml-16 space-y-4">
+                            <div className="bg-yellow-50 border border-yellow-200 p-3 flex gap-2 items-start">
+                              <span className="material-symbols-outlined text-yellow-600 text-sm mt-0.5">info</span>
+                              <p className="text-xs text-yellow-800 font-body-md"><strong>Good news:</strong> If "Sandbox Simulator Mode" is checked in the Truecaller section above, you don't need any keys. It simulates the flow. Only get real keys when you're ready to go live with real customers.</p>
+                            </div>
+
+                            <ol className="space-y-3">
+                              {[
+                                { text: "Go to developer.truecaller.com and create an account.", tag: "Website" },
+                                { text: "Click \"Create New App\". Fill in your app name (e.g. Vrix Store) and your website URL.", tag: "Create App" },
+                                { text: "After creating, you'll see a Partner Key — a long string of letters and numbers. Copy it.", tag: "Partner Key" },
+                                { text: "Your App ID is usually your website domain (e.g. vrix.in). Copy this too.", tag: "App ID" },
+                                { text: "In the Truecaller section above: uncheck Sandbox Mode, paste Partner Key and App ID, and tick Enable.", tag: "Paste Here" },
+                              ].map((step, i) => (
+                                <li key={i} className="flex gap-3 items-start">
+                                  <span className="w-6 h-6 bg-[#1da1f2] text-pure-white rounded-full flex items-center justify-center text-[10px] font-label-caps flex-shrink-0 mt-0.5">{i + 1}</span>
+                                  <div>
+                                    <span className="text-xs text-ink-black font-body-md leading-relaxed">{step.text}</span>
+                                    {step.tag && <span className="ml-2 text-[9px] font-label-caps uppercase bg-slate-grey/10 text-slate-grey px-1.5 py-0.5">{step.tag}</span>}
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+
+                            <a href="https://developer.truecaller.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 border border-[#1da1f2] text-[#1da1f2] px-5 py-2.5 text-[10px] font-label-caps uppercase tracking-wider hover:bg-[#1da1f2] hover:text-pure-white transition-colors">
+                              <span className="material-symbols-outlined text-sm">open_in_new</span>
+                              Open Truecaller Developer Portal
+                            </a>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-slate-grey/10" />
+
+                        {/* ── SECURITY GOLDEN RULES ── */}
+                        <div className="bg-deep-navy text-pure-white p-6 space-y-4">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="material-symbols-outlined text-2xl text-amber-400">shield</span>
+                            <h4 className="font-headline-md text-base uppercase tracking-widest">Security Golden Rules</h4>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                              { icon: "lock", title: "Never Share Secrets", desc: "API Secrets, Key Secrets, and App Passwords are like bank PINs. Never share them via WhatsApp, email, or screenshots. Only enter them here in this private admin panel." },
+                              { icon: "no_photography", title: "Don't Screenshot Keys", desc: "Avoid taking screenshots of API keys or secrets. If someone sees them, they can charge your Razorpay account or misuse your services." },
+                              { icon: "sync", title: "Rotate Keys if Exposed", desc: "If you accidentally shared a key, immediately go to that service and regenerate it. Then update it here. Old keys will stop working automatically." },
+                              { icon: "admin_panel_settings", title: "This Panel is Private", desc: "Do not share the admin panel link or login credentials with anyone who doesn't need to manage the store. The URL /admin should remain confidential." },
+                            ].map((rule) => (
+                              <div key={rule.title} className="flex gap-3 items-start border border-slate-grey/20 p-4 bg-pure-white/5">
+                                <span className="material-symbols-outlined text-amber-400 text-lg flex-shrink-0 mt-0.5">{rule.icon}</span>
+                                <div>
+                                  <p className="text-[10px] font-label-caps text-amber-400 uppercase tracking-widest mb-1">{rule.title}</p>
+                                  <p className="text-xs text-slate-grey/80 font-body-md leading-relaxed">{rule.desc}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* ── ALL SERVICES QUICK REFERENCE ── */}
+                        <div className="border border-slate-grey/20 p-6 space-y-4">
+                          <h4 className="font-headline-md text-sm text-deep-navy uppercase border-b border-slate-grey/15 pb-2">All Services at a Glance</h4>
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs font-body-md">
+                              <thead>
+                                <tr className="border-b border-slate-grey/15">
+                                  <th className="text-left py-2 pr-4 font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Service</th>
+                                  <th className="text-left py-2 pr-4 font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">What It Does</th>
+                                  <th className="text-left py-2 pr-4 font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Cost</th>
+                                  <th className="text-left py-2 font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Where to Sign Up</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-grey/10">
+                                {[
+                                  { service: "Razorpay", what: "Accepts online payments (UPI, cards, wallets)", cost: "2% per transaction", link: "razorpay.com", href: "https://razorpay.com" },
+                                  { service: "Gmail SMTP", what: "Sends OTP & order emails to customers", cost: "Free", link: "myaccount.google.com", href: "https://myaccount.google.com/apppasswords" },
+                                  { service: "Hostinger Mail", what: "Professional branded email sending", cost: "~₹50–150/month", link: "hpanel.hostinger.com", href: "https://hpanel.hostinger.com/emails" },
+                                  { service: "Cloudinary", what: "Stores & serves product images", cost: "Free (25 GB)", link: "cloudinary.com", href: "https://cloudinary.com" },
+                                  { service: "Truecaller", what: "1-click phone number verification", cost: "Free (sandbox included)", link: "developer.truecaller.com", href: "https://developer.truecaller.com" },
+                                ].map((row) => (
+                                  <tr key={row.service} className="hover:bg-soft-linen/20 transition-colors">
+                                    <td className="py-2.5 pr-4 font-label-caps text-deep-navy text-[10px]">{row.service}</td>
+                                    <td className="py-2.5 pr-4 text-slate-grey">{row.what}</td>
+                                    <td className="py-2.5 pr-4 text-slate-grey">{row.cost}</td>
+                                    <td className="py-2.5">
+                                      <a href={row.href} target="_blank" rel="noopener noreferrer" className="text-deep-navy underline hover:text-ink-black">{row.link}</a>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
                       </div>
                     </section>
                   </div>
