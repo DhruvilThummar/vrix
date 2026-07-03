@@ -254,11 +254,16 @@ export async function deletePromoCode(code: string) {
 //  PAYMENTS
 // ══════════════════════════════════════════════════════════════════════════════
 
-export async function createPaymentOrder(amount: number, currency = "INR", notes?: any) {
+export async function createPaymentOrder(data: {
+  amount: number;
+  currency?: string;
+  receipt?: string;
+  notes?: any;
+}) {
   return apiFetch<{ success: boolean; order: any; devMode?: boolean }>("/payment/order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ amount, currency, notes }),
+    body: JSON.stringify(data),
   });
 }
 
@@ -266,6 +271,7 @@ export async function verifyPayment(data: {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+  items?: any[];
 }) {
   return apiFetch<{ success: boolean; paymentId: string }>("/payment/verify", {
     method: "POST",

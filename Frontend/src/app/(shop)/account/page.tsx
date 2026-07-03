@@ -31,19 +31,41 @@ interface WishlistItem {
 }
 
 type AuthStep = "email" | "otp" | "verified";
+type AuthMode = "signin" | "signup";
 
 export default function UserAccountPage() {
+  const router = useRouter();
+  const { user, isLoggedIn, login, logout } = useAuth();
+
   // ── Auth State ──────────────────────────────────────────────────────────────
-  const [authStep, setAuthStep] = useState<AuthStep>("email");
-  const [authEmail, setAuthEmail] = useState("");
+  const [authMode, setAuthMode] = useState<AuthMode>("signin");
+  const [authStep, setAuthStep] = useState<AuthStep>(isLoggedIn ? "verified" : "email");
+  const [authEmail, setAuthEmail] = useState(user?.email || "");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authPhone, setAuthPhone] = useState("");
+  
   const [otpInput, setOtpInput] = useState(["", "", "", "", "", ""]);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // ── Truecaller Config & Simulation State ─────────────────────────────────────
+  const [truecallerEnabled, setTruecallerEnabled] = useState(false);
+  const [truecallerSandbox, setTruecallerSandbox] = useState(true);
+  const [showTruecallerModal, setShowTruecallerModal] = useState(false);
+  const [simName, setSimName] = useState("Dhruv Agent");
+  const [simPhone, setSimPhone] = useState("+919876543210");
+  const [simEmail, setSimEmail] = useState("dhruv@vrix.com");
+
   // ── Account State ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [profile, setProfile] = useState({ firstName: "Vraj", lastName: "Shah", email: "", phone: "+1 (555) 019-2834" });
+  const [profile, setProfile] = useState({ 
+    firstName: user?.name?.split(" ")[0] || "Vraj", 
+    lastName: user?.name?.split(" ").slice(1).join(" ") || "Shah", 
+    email: user?.email || "", 
+    phone: user?.phone || "+1 (555) 019-2834" 
+  });
   const [passwordState, setPasswordState] = useState({ current: "", new: "", confirm: "" });
   const [shippingAddress, setShippingAddress] = useState({
     street: "100 Minimalist Way, Suite 400",
@@ -54,6 +76,36 @@ export default function UserAccountPage() {
   });
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Sync Truecaller API settings
+  useEffect(() => {
+    fetchDb()
+      .then((res) => {
+        if (res.api_settings) {
+          setTruecallerEnabled(!!res.api_settings.truecallerEnabled);
+          setTruecallerSandbox(!!res.api_settings.truecallerSandboxMode);
+        }
+      })
+      .catch((err) => console.error("Failed to load API settings for Truecaller:", err));
+  }, []);
+
+  // Sync user profile state
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      setAuthStep("verified");
+      setAuthEmail(user.email);
+      setProfile({
+        firstName: user.name?.split(" ")[0] || "Vraj",
+        lastName: user.name?.split(" ").slice(1).join(" ") || "Shah",
+        email: user.email,
+        phone: user.phone || "+1 (555) 019-2834"
+      });
+    } else {
+      setAuthStep("email");
+      setAuthEmail("");
+    }
+  }, [isLoggedIn, user]);
 
   // Sync wishlist from localStorage on tab change or mount
   useEffect(() => {
@@ -76,12 +128,12 @@ export default function UserAccountPage() {
       loadWishlist();
     }
   }, [activeTab]);
+
   const [orders] = useState<Order[]>([
     { id: "#VRIX12345", date: "May 18, 2026", amount: "$340.00", status: "Processing" },
     { id: "#VRIX12312", date: "April 30, 2026", amount: "$620.00", status: "Delivered" },
     { id: "#VRIX12289", date: "March 15, 2026", amount: "$890.00", status: "Delivered" },
   ]);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
   const triggerFeedback = (msg: string) => {
@@ -89,18 +141,24 @@ export default function UserAccountPage() {
     setTimeout(() => setSuccessMsg(null), 3500);
   };
 
-  // ── OTP Auth Handlers ───────────────────────────────────────────────────────
-  const handleSendOtp = async (e: React.FormEvent) => {
+  // ── Auth Handlers ──────────────────────────────────────────────────────────
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authEmail) return;
+    if (!authEmail || !authPassword) return;
     setAuthLoading(true);
     setAuthError(null);
     try {
-      await sendOtp(authEmail);
-      setProfile((p) => ({ ...p, email: authEmail }));
+      if (authMode === "signup") {
+        if (!authName) { setAuthError("Name is required for registration."); setAuthLoading(false); return; }
+        await registerUser({ email: authEmail, password: authPassword, name: authName, phone: authPhone });
+        triggerFeedback("Verification code sent to your email!");
+      } else {
+        await loginUser({ email: authEmail, password: authPassword });
+        triggerFeedback("Sign in code sent to your email!");
+      }
       setAuthStep("otp");
     } catch (err: any) {
-      setAuthError(err.message || "Failed to send OTP. Please try again.");
+      setAuthError(err.message || "Authentication request failed. Please try again.");
     } finally {
       setAuthLoading(false);
     }
@@ -127,15 +185,74 @@ export default function UserAccountPage() {
     setAuthLoading(true);
     setAuthError(null);
     try {
-      await verifyOtp(authEmail, code);
-      await addSecurityLog({ event: "ACCOUNT_LOGIN", user: authEmail, status: "SUCCESS" });
+      if (authMode === "signup") {
+        const res = await confirmRegistration({
+          email: authEmail,
+          otp: code,
+          password: authPassword,
+          name: authName,
+          phone: authPhone
+        });
+        login(authEmail, { name: res.user.name, phone: res.user.phone });
+        triggerFeedback("Account verified! Welcome to VRIX.");
+      } else {
+        const res = await confirmLogin({
+          email: authEmail,
+          otp: code
+        });
+        login(authEmail, { name: res.user.name, phone: res.user.phone });
+        triggerFeedback("Welcome back!");
+      }
       setAuthStep("verified");
-      triggerFeedback("Email verified. Welcome back!");
     } catch (err: any) {
-      setAuthError(err.message || "Invalid or expired OTP.");
-      await addSecurityLog({ event: "ACCOUNT_LOGIN", user: authEmail, status: "FAILED" });
+      setAuthError(err.message || "Invalid or expired verification code.");
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  // ── Truecaller Verification Handlers ────────────────────────────────────────
+  const handleTruecallerVerification = async () => {
+    if (truecallerSandbox) {
+      setShowTruecallerModal(true);
+    } else {
+      alert("Live Truecaller verification requires HTTPS. Please toggle Sandbox Mode in the Admin panel to test locally.");
+    }
+  };
+
+  const handleTruecallerAutofillConfirm = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const rawPayload = {
+        firstName: simName.split(" ")[0] || "",
+        lastName: simName.split(" ").slice(1).join(" ") || "",
+        email: simEmail,
+        phoneNumber: simPhone,
+        verifier: "mock-verifier-check"
+      };
+      const base64Payload = btoa(JSON.stringify(rawPayload));
+      
+      const res = await verifyTruecaller(base64Payload, "mock-signature", "RSA-SHA512");
+      
+      if (res.success && res.profile) {
+        login(res.profile.email, { name: res.profile.name, phone: res.profile.phone });
+        setProfile({
+          firstName: res.profile.name.split(" ")[0],
+          lastName: res.profile.name.split(" ").slice(1).join(" ") || "",
+          email: res.profile.email,
+          phone: res.profile.phone
+        });
+        setAuthStep("verified");
+        triggerFeedback("⚡ Successfully signed in via Truecaller!");
+      } else {
+        setAuthError("Truecaller verification failed.");
+      }
+    } catch (err: any) {
+      setAuthError("Verification failed: " + err.message);
+    } finally {
+      setAuthLoading(false);
+      setShowTruecallerModal(false);
     }
   };
 
@@ -149,11 +266,11 @@ export default function UserAccountPage() {
     { key: "logout", label: "Logout", icon: "logout" },
   ];
 
-  // ── OTP Auth Gate ────────────────────────────────────────────────────────────
+  // ── Auth Gate ────────────────────────────────────────────────────────────
   if (authStep !== "verified") {
     return (
-      <div className="w-full min-h-screen bg-soft-linen/30 flex items-center justify-center px-4">
-        <div className="w-full max-w-md bg-pure-white border border-slate-grey/20 shadow-lg p-10 space-y-8">
+      <div className="w-full min-h-screen bg-soft-linen/30 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md bg-pure-white border border-slate-grey/20 shadow-lg p-10 space-y-8 relative">
           {/* Logo / Brand */}
           <div className="text-center space-y-1">
             <p className="font-label-caps text-[10px] tracking-widest text-slate-grey uppercase">Member Access</p>
@@ -161,36 +278,109 @@ export default function UserAccountPage() {
           </div>
 
           {authStep === "email" ? (
-            <form onSubmit={handleSendOtp} className="space-y-6">
-              <div className="space-y-2">
-                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="w-full border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
-                />
+            <div className="space-y-6">
+              {/* Tabs for Sign In vs Register */}
+              <div className="flex border-b border-slate-grey/25 pb-2 justify-center gap-6 text-sm font-label-caps tracking-widest">
+                <button 
+                  onClick={() => { setAuthMode("signin"); setAuthError(null); }}
+                  className={`pb-1 cursor-pointer transition-colors ${authMode === "signin" ? "border-b-2 border-deep-navy text-deep-navy font-semibold" : "text-slate-grey hover:text-ink-black"}`}
+                >
+                  SIGN IN
+                </button>
+                <button 
+                  onClick={() => { setAuthMode("signup"); setAuthError(null); }}
+                  className={`pb-1 cursor-pointer transition-colors ${authMode === "signup" ? "border-b-2 border-deep-navy text-deep-navy font-semibold" : "text-slate-grey hover:text-ink-black"}`}
+                >
+                  CREATE ACCOUNT
+                </button>
               </div>
-              {authError && <p className="text-xs text-red-600 font-body-md">{authError}</p>}
-              <button
-                type="submit"
-                disabled={authLoading}
-                className="w-full font-button text-button uppercase py-4 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer flex items-center justify-center gap-2"
-              >
-                {authLoading ? (
-                  <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  "Send Verification Code"
+
+              <form onSubmit={handleAuthSubmit} className="space-y-5">
+                {authMode === "signup" && (
+                  <div className="space-y-1">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Full Name</label>
+                    <input
+                      type="text"
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                      placeholder="Your name"
+                      required
+                      className="w-full border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                    />
+                  </div>
                 )}
-              </button>
-              <p className="text-center text-[11px] text-slate-grey font-body-md">
-                We'll send a one-time code to your inbox.
+
+                <div className="space-y-1">
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Email Address (ID)</label>
+                  <input
+                    type="email"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    className="w-full border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Password</label>
+                  <input
+                    type="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="w-full border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                  />
+                </div>
+
+                {authMode === "signup" && (
+                  <div className="space-y-1">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Phone Number (Optional)</label>
+                    <input
+                      type="tel"
+                      value={authPhone}
+                      onChange={(e) => setAuthPhone(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      className="w-full border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                    />
+                  </div>
+                )}
+
+                {authError && <p className="text-xs text-red-600 font-body-md">{authError}</p>}
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full font-button text-button uppercase py-4 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer flex items-center justify-center gap-2 tracking-widest text-xs"
+                >
+                  {authLoading ? (
+                    <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    authMode === "signup" ? "Verify & Register" : "Send Verification Code"
+                  )}
+                </button>
+              </form>
+
+              {/* Truecaller Login Block */}
+              {truecallerEnabled && (
+                <div className="pt-4 border-t border-slate-grey/15 space-y-4">
+                  <p className="text-center text-[10px] font-label-caps text-slate-grey tracking-wider uppercase">Or login instantly</p>
+                  <button
+                    type="button"
+                    onClick={handleTruecallerVerification}
+                    className="w-full bg-[#0087FF] text-pure-white py-3.5 font-button text-xs uppercase tracking-widest hover:bg-[#0076E5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">bolt</span>
+                    Sign in with Truecaller
+                  </button>
+                </div>
+              )}
+
+              <p className="text-center text-[11px] text-slate-grey font-body-md leading-relaxed">
+                For your security, we'll send a 6-digit confirmation code to your email.
               </p>
-            </form>
+            </div>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div className="space-y-3">
@@ -218,7 +408,7 @@ export default function UserAccountPage() {
               <button
                 type="submit"
                 disabled={authLoading}
-                className="w-full font-button text-button uppercase py-4 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer flex items-center justify-center gap-2"
+                className="w-full font-button text-button uppercase py-4 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer flex items-center justify-center gap-2 text-xs tracking-widest"
               >
                 {authLoading ? (
                   <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
