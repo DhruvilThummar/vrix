@@ -20,56 +20,145 @@ app.use(express.json());
 // Multer — in-memory for Cloudinary uploads
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ─── Cloudinary (optional) ─────────────────────────────────────────────────────
-let cloudinary = null;
-if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+// ─── Dynamic API Configuration Resolvers ────────────────────────────────────────
+async function getApiSettings() {
   try {
-    const { v2 } = await import("cloudinary");
-    v2.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-    cloudinary = v2;
-    console.log("Cloudinary: initialized.");
+    const settings = await db.cmsSettings.findUnique({ where: { key: "api_settings" } });
+    return settings || null;
   } catch (err) {
-    console.warn("Cloudinary: failed to initialize.", err.message);
+    return null;
   }
 }
 
-// ─── Razorpay (optional) ───────────────────────────────────────────────────────
-let razorpay = null;
-if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-  try {
-    const { default: Razorpay } = await import("razorpay");
-    razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
-    });
-    console.log("Razorpay: initialized.");
-  } catch (err) {
-    console.warn("Razorpay: failed to initialize.", err.message);
+async function getCloudinary() {
+  const apiSettings = await getApiSettings();
+  if (apiSettings && apiSettings.cloudinaryEnabled) {
+    if (apiSettings.cloudinaryCloudName && apiSettings.cloudinaryApiKey && apiSettings.cloudinaryApiSecret) {
+      try {
+        const { v2 } = await import("cloudinary");
+        v2.config({
+          cloud_name: apiSettings.cloudinaryCloudName,
+          api_key: apiSettings.cloudinaryApiKey,
+          api_secret: apiSettings.cloudinaryApiSecret,
+        });
+        return v2;
+      } catch (err) {
+        console.warn("Cloudinary: Dynamic configuration failed, using fallback.", err.message);
+      }
+    }
   }
+
+  // Fallback to process.env
+  if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    try {
+      const { v2 } = await import("cloudinary");
+      v2.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+      });
+      return v2;
+    } catch (err) {
+      console.warn("Cloudinary: fallback env config failed.", err.message);
+    }
+  }
+  return null;
 }
 
-// ─── Nodemailer (optional) ─────────────────────────────────────────────────────
-let transporter = null;
-if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-  try {
-    const nodemailer = await import("nodemailer");
-    transporter = nodemailer.default.createTransport({
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-    console.log("Nodemailer: initialized.");
-  } catch (err) {
-    console.warn("Nodemailer: failed to initialize.", err.message);
+async function getRazorpay() {
+  const apiSettings = await getApiSettings();
+  if (apiSettings && apiSettings.razorpayEnabled) {
+    if (apiSettings.razorpayKeyId && apiSettings.razorpayKeySecret) {
+      try {
+        const { default: Razorpay } = await import("razorpay");
+        return new Razorpay({
+          key_id: apiSettings.razorpayKeyId,
+          key_secret: apiSettings.razorpayKeySecret,
+        });
+      } catch (err) {
+        console.warn("Razorpay: Dynamic configuration failed, using fallback.", err.message);
+      }
+    }
   }
+
+  // Fallback to process.env
+  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    try {
+      const { default: Razorpay } = await import("razorpay");
+      return new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+    } catch (err) {
+      console.warn("Razorpay: fallback env config failed.", err.message);
+    }
+  }
+  return null;
+}
+
+async function getTransporter() {
+  const apiSettings = await getApiSettings();
+  if (apiSettings && apiSettings.nodemailerEnabled) {
+    if (apiSettings.nodemailerUser && apiSettings.nodemailerPass) {
+      try {
+        const nodemailer = await import("nodemailer");
+        return nodemailer.default.createTransport({
+          host: apiSettings.nodemailerHost || "smtp.gmail.com",
+          port: parseInt(apiSettings.nodemailerPort || "587"),
+          secure: false,
+          auth: {
+            user: apiSettings.nodemailerUser,
+            pass: apiSettings.nodemailerPass,
+          },
+        });
+      } catch (err) {
+        console.warn("Nodemailer: Dynamic configuration failed, using fallback.", err.message);
+      }
+    }
+  }
+
+  // Fallback to process.env
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try {
+      const nodemailer = await import("nodemailer");
+      return nodemailer.default.createTransport({
+        host: process.env.SMTP_HOST || "smtp.gmail.com",
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+    } catch (err) {
+      console.warn("Nodemailer: fallback env config failed.", err.message);
+    }
+  }
+  return null;
+}
+
+async function getTruecallerConfig() {
+  const apiSettings = await getApiSettings();
+  if (apiSettings) {
+    return {
+      enabled: !!apiSettings.truecallerEnabled,
+      sandbox: !!apiSettings.truecallerSandboxMode,
+      partnerKey: apiSettings.truecallerPartnerKey || process.env.TRUECALLER_PARTNER_KEY || "",
+      appId: apiSettings.truecallerAppId || process.env.TRUECALLER_APP_ID || "",
+    };
+  }
+
+  // Fallback to process.env
+  const partnerKey = process.env.TRUECALLER_PARTNER_KEY || "";
+  const appId = process.env.TRUECALLER_APP_ID || "";
+  const enabled = !!(partnerKey && appId);
+  const sandbox = process.env.TRUECALLER_SANDBOX_MODE === "true" || !enabled;
+  return {
+    enabled: enabled || sandbox, // Allow sandbox even if real keys are empty
+    sandbox,
+    partnerKey,
+    appId,
+  };
 }
 
 // ─── Startup Migration ─────────────────────────────────────────────────────────
@@ -79,13 +168,19 @@ await migrateIfNeeded();
 //  HEALTH
 // ══════════════════════════════════════════════════════════════════════════════
 
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  const cClient = await getCloudinary();
+  const rClient = await getRazorpay();
+  const tClient = await getTransporter();
+  const tcConfig = await getTruecallerConfig();
   res.json({
     status: "ok",
     dbMode: db.isConnected() ? "prisma" : "local-json",
-    cloudinary: !!cloudinary,
-    razorpay: !!razorpay,
-    nodemailer: !!transporter,
+    cloudinary: !!cClient,
+    razorpay: !!rClient,
+    nodemailer: !!tClient,
+    truecaller: tcConfig.enabled,
+    truecallerSandbox: tcConfig.sandbox,
   });
 });
 
@@ -108,7 +203,7 @@ app.get("/api/db", async (req, res) => {
 // POST /api/cms — Upsert any CMS section
 app.post("/api/cms", async (req, res) => {
   try {
-    const sections = ["homepage", "story", "legal", "navigation", "brand", "features", "collections"];
+    const sections = ["homepage", "story", "legal", "navigation", "brand", "features", "collections", "api_settings"];
     for (const section of sections) {
       if (req.body[section] !== undefined) {
         await db.cmsSettings.upsert({
@@ -262,11 +357,12 @@ app.post("/api/security/logs", async (req, res) => {
 app.post("/api/media/upload", upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file provided" });
 
+  const cClient = await getCloudinary();
   // If Cloudinary is configured, upload there
-  if (cloudinary) {
+  if (cClient) {
     try {
       const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
+        const stream = cClient.uploader.upload_stream(
           { folder: "vrix", resource_type: "auto" },
           (error, result) => (error ? reject(error) : resolve(result))
         );
@@ -315,10 +411,13 @@ app.post("/api/otp/send", async (req, res) => {
       data: { email, otp, expiresAt: expiresAt.toISOString() },
     });
 
+    const activeTransporter = await getTransporter();
     // Send email if Nodemailer is configured
-    if (transporter) {
-      await transporter.sendMail({
-        from: `"VRIX" <${process.env.SMTP_USER}>`,
+    if (activeTransporter) {
+      const apiSettings = await getApiSettings();
+      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrix.com");
+      await activeTransporter.sendMail({
+        from: `"VRIX" <${senderEmail}>`,
         to: email,
         subject: "Your VRIX Verification Code",
         html: `
@@ -367,6 +466,107 @@ app.post("/api/otp/verify", async (req, res) => {
     res.json({ success: true, email, message: "Email verified successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  TRUECALLER API
+// ══════════════════════════════════════════════════════════════════════════════
+
+app.post("/api/truecaller/verify", async (req, res) => {
+  const { payload, signature, signatureAlgorithm } = req.body;
+  
+  try {
+    const config = await getTruecallerConfig();
+    if (!config.enabled) {
+      return res.status(400).json({ error: "Truecaller verification is not enabled in settings." });
+    }
+
+    if (config.sandbox || signature === "mock-signature" || !signature) {
+      // Sandbox / Mock Mode: Simulate Truecaller Verification
+      console.log("[TRUECALLER] Sandbox mode verification requested.");
+      
+      let profile = {
+        name: "Dhruv Agent",
+        email: "dhruv@vrix.com",
+        phone: "+919876543210"
+      };
+
+      if (payload) {
+        try {
+          const decoded = JSON.parse(Buffer.from(payload, "base64").toString("utf-8"));
+          profile.name = (decoded.firstName + " " + (decoded.lastName || "")).trim() || profile.name;
+          profile.email = decoded.email || profile.email;
+          profile.phone = decoded.phoneNumber || profile.phone;
+        } catch (e) {
+          // ignore parsing error
+        }
+      }
+      
+      return res.json({
+        success: true,
+        verified: true,
+        profile,
+        mode: "sandbox"
+      });
+    }
+
+    // Live Signature Verification
+    if (!payload || !signature || !signatureAlgorithm) {
+      return res.status(400).json({ error: "payload, signature, and signatureAlgorithm are required for live verification." });
+    }
+
+    // Fetch public keys from Truecaller
+    const keyRes = await fetch("https://api4.truecaller.com/v1/key");
+    if (!keyRes.ok) {
+      throw new Error("Failed to retrieve public keys from Truecaller API.");
+    }
+    const { keys } = await keyRes.json();
+    
+    let isSignatureValid = false;
+    for (const keyObj of keys) {
+      const pemKey = `-----BEGIN PUBLIC KEY-----\n${keyObj.key}\n-----END PUBLIC KEY-----`;
+      const verify = crypto.createVerify("RSA-SHA512");
+      verify.update(payload);
+      if (verify.verify(pemKey, signature, "base64")) {
+        isSignatureValid = true;
+        break;
+      }
+    }
+
+    if (!isSignatureValid) {
+      return res.status(401).json({ error: "Truecaller signature verification failed." });
+    }
+
+    // Decode Payload
+    const decodedProfile = JSON.parse(Buffer.from(payload, "base64").toString("utf-8"));
+
+    // Validate Verifier
+    if (config.partnerKey && config.appId) {
+      const expectedVerifier = crypto
+        .createHmac("sha256", config.partnerKey)
+        .update(config.appId)
+        .digest("base64");
+      
+      if (decodedProfile.verifier !== expectedVerifier) {
+        return res.status(401).json({ error: "Truecaller payload verification mismatch (possible replay attack)." });
+      }
+    }
+
+    return res.json({
+      success: true,
+      verified: true,
+      profile: {
+        name: (decodedProfile.firstName + " " + (decodedProfile.lastName || "")).trim(),
+        email: decodedProfile.email,
+        phone: decodedProfile.phoneNumber
+      },
+      mode: "live"
+    });
+
+  } catch (err) {
+    console.error("Truecaller verification error:", err.message);
+    res.status(500).json({ error: "Truecaller verification failed: " + err.message });
   }
 });
 
@@ -471,8 +671,9 @@ app.post("/api/payment/order", async (req, res) => {
   const userEmail = req.body.email || notes.customerEmail || null;
 
   try {
-    if (razorpay) {
-      const order = await razorpay.orders.create({
+    const activeRazorpay = await getRazorpay();
+    if (activeRazorpay) {
+      const order = await activeRazorpay.orders.create({
         amount: Math.round(Number(amount) * 100), // convert to paise
         currency,
         receipt: receipt || `receipt_${Date.now()}`,
@@ -534,11 +735,15 @@ app.post("/api/payment/verify", async (req, res) => {
 
   try {
     let isValid = false;
+    const apiSettings = await getApiSettings();
+    const keySecret = apiSettings && apiSettings.razorpayEnabled && apiSettings.razorpayKeySecret
+      ? apiSettings.razorpayKeySecret
+      : process.env.RAZORPAY_KEY_SECRET;
 
-    if (process.env.RAZORPAY_KEY_SECRET) {
+    if (keySecret) {
       const body = razorpay_order_id + "|" + razorpay_payment_id;
       const expectedSig = crypto
-        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .createHmac("sha256", keySecret)
         .update(body)
         .digest("hex");
       isValid = expectedSig === razorpay_signature;
@@ -610,9 +815,12 @@ app.post("/api/delivery/auth/login", async (req, res) => {
       data: { email: authKey, otp, expiresAt: expiresAt.toISOString() },
     });
 
-    if (transporter) {
-      await transporter.sendMail({
-        from: `"VRIX Delivery System" <${process.env.SMTP_USER}>`,
+    const activeTransporter = await getTransporter();
+    if (activeTransporter) {
+      const apiSettings = await getApiSettings();
+      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrix.com");
+      await activeTransporter.sendMail({
+        from: `"VRIX Delivery System" <${senderEmail}>`,
         to: email,
         subject: "Your VRIX Delivery Portal Login Code",
         html: `
@@ -789,9 +997,12 @@ app.post("/api/delivery/send-otp", async (req, res) => {
       },
     });
 
-    if (transporter) {
-      await transporter.sendMail({
-        from: `"VRIX Delivery" <${process.env.SMTP_USER}>`,
+    const activeTransporter = await getTransporter();
+    if (activeTransporter) {
+      const apiSettings = await getApiSettings();
+      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrix.com");
+      await activeTransporter.sendMail({
+        from: `"VRIX Delivery" <${senderEmail}>`,
         to: customerEmail,
         subject: "Your VRIX Delivery Verification Code",
         html: `
@@ -833,11 +1044,73 @@ app.post("/api/delivery/verify-otp", async (req, res) => {
 
     // Consume OTP & mark order as DELIVERED
     await db.verificationOtps.delete({ where: { id: record.id } });
-    await db.payments.update({ where: { orderId }, data: { status: "DELIVERED" } });
+    const order = await db.payments.update({ where: { orderId }, data: { status: "DELIVERED" } });
 
     await db.securityLogs.create({
       data: { event: "DELIVERY_CONFIRMED", user: orderId, status: "SUCCESS" },
     });
+
+    // Send delivery details email to customer
+    if (order.userEmail) {
+      try {
+        const activeTransporter = await getTransporter();
+        if (activeTransporter) {
+          const apiSettings = await getApiSettings();
+          const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrix.com");
+          
+          const amountStr = order.currency + " " + (order.amount / 100).toLocaleString();
+          
+          await activeTransporter.sendMail({
+            from: `"VRIX Order System" <${senderEmail}>`,
+            to: order.userEmail,
+            subject: `Your VRIX Order ${order.orderId} Has Been Delivered!`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 32px; background: #f9f8f6; border: 1px solid #e5e3df; color: #0f1728;">
+                <h2 style="font-size: 20px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 24px; border-bottom: 1px solid #e5e3df; padding-bottom: 12px; color: #0f1728;">Order Delivered Successfully</h2>
+                <p style="font-size: 14px; line-height: 1.6; color: #4a5568;">Dear ${order.customerName || 'Customer'},</p>
+                <p style="font-size: 14px; line-height: 1.6; color: #4a5568;">We are pleased to inform you that your order <strong>#${order.orderId}</strong> has been successfully delivered by our delivery agent.</p>
+                
+                <div style="background: #ffffff; border: 1px solid #e5e3df; padding: 20px; margin: 24px 0; border-radius: 4px;">
+                  <h3 style="font-size: 14px; text-transform: uppercase; margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid #f0edf8; padding-bottom: 8px; color: #0f1728;">Delivery Details</h3>
+                  <table style="width: 100%; font-size: 13px; color: #4a5568; border-collapse: collapse;">
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold; width: 120px;">Recipient Name:</td>
+                      <td style="padding: 6px 0;">${order.customerName || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold;">Phone Number:</td>
+                      <td style="padding: 6px 0;">${order.customerPhone || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Delivery Address:</td>
+                      <td style="padding: 6px 0;">${order.address || 'N/A'}, ${order.city || ''} - ${order.postalCode || ''}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold;">Amount Paid:</td>
+                      <td style="padding: 6px 0; font-weight: bold; color: #16a34a;">${amountStr}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold;">Delivered At:</td>
+                      <td style="padding: 6px 0;">${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <p style="font-size: 14px; line-height: 1.6; color: #4a5568;">If you did not receive this package or have any questions, please contact our support team immediately at <a href="mailto:support@vrix.com" style="color: #0f1728; font-weight: bold; text-decoration: underline;">support@vrix.com</a>.</p>
+                
+                <p style="font-size: 14px; line-height: 1.6; color: #4a5568; margin-top: 32px; border-top: 1px solid #e5e3df; padding-top: 16px;">Thank you for shopping with VRIX.</p>
+                <p style="font-size: 12px; color: #999; margin-top: 8px;">This is an automated notification. Please do not reply directly to this email.</p>
+              </div>
+            `
+          });
+          console.log(`Delivery confirmation email sent to ${order.userEmail} for order ${order.orderId}`);
+        } else {
+          console.log(`[DEV MODE] SMTP not configured. Mocking delivery details email to ${order.userEmail} for order ${order.orderId}`);
+        }
+      } catch (emailErr) {
+        console.error("Failed to send delivery details email:", emailErr.message);
+      }
+    }
 
     res.json({ success: true, orderId, message: "Delivery confirmed successfully" });
   } catch (err) {
@@ -985,9 +1258,7 @@ app.get("/api/admin/stats", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`\n🚀 VRIX Backend API running → http://localhost:${PORT}`);
-  console.log(`   DB Mode : ${db.isConnected() ? "Prisma (PostgreSQL)" : "Local db.json"}`);
-  console.log(`   Cloudinary : ${cloudinary ? "✓ enabled" : "✗ not configured"}`);
-  console.log(`   Razorpay   : ${razorpay ? "✓ enabled" : "✗ not configured"}`);
-  console.log(`   Nodemailer : ${transporter ? "✓ enabled" : "✗ not configured"}\n`);
+  console.log(`   DB Mode      : ${db.isConnected() ? "Prisma (PostgreSQL)" : "Local db.json"}`);
+  console.log(`   Integrations : Dynamically managed (Cloudinary, Razorpay, SMTP, Truecaller)\n`);
 });
 

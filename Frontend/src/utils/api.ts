@@ -15,7 +15,15 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchHealth() {
-  return apiFetch<{ status: string; dbMode: string; cloudinary: boolean; razorpay: boolean; nodemailer: boolean }>("/health");
+  return apiFetch<{
+    status: string;
+    dbMode: string;
+    cloudinary: boolean;
+    razorpay: boolean;
+    nodemailer: boolean;
+    truecaller: boolean;
+    truecallerSandbox: boolean;
+  }>("/health");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -158,6 +166,19 @@ export async function verifyOtp(email: string, otp: string) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, otp }),
+  });
+}
+
+export async function verifyTruecaller(payload?: string, signature?: string, signatureAlgorithm?: string) {
+  return apiFetch<{
+    success: boolean;
+    verified: boolean;
+    profile: { name: string; email: string; phone: string };
+    mode: "sandbox" | "live";
+  }>("/truecaller/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ payload, signature, signatureAlgorithm }),
   });
 }
 

@@ -4,13 +4,34 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal";
+type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations";
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // --- API Configuration States ---
+  const [cloudinaryEnabled, setCloudinaryEnabled] = useState(false);
+  const [cloudinaryCloudName, setCloudinaryCloudName] = useState("");
+  const [cloudinaryApiKey, setCloudinaryApiKey] = useState("");
+  const [cloudinaryApiSecret, setCloudinaryApiSecret] = useState("");
+
+  const [razorpayEnabled, setRazorpayEnabled] = useState(false);
+  const [razorpayKeyId, setRazorpayKeyId] = useState("");
+  const [razorpayKeySecret, setRazorpayKeySecret] = useState("");
+
+  const [nodemailerEnabled, setNodemailerEnabled] = useState(false);
+  const [nodemailerHost, setNodemailerHost] = useState("");
+  const [nodemailerPort, setNodemailerPort] = useState("");
+  const [nodemailerUser, setNodemailerUser] = useState("");
+  const [nodemailerPass, setNodemailerPass] = useState("");
+
+  const [truecallerEnabled, setTruecallerEnabled] = useState(false);
+  const [truecallerSandboxMode, setTruecallerSandboxMode] = useState(true);
+  const [truecallerPartnerKey, setTruecallerPartnerKey] = useState("");
+  const [truecallerAppId, setTruecallerAppId] = useState("");
 
   // --- Homepage Hero & Philosophy States ---
   const [heroTitle, setHeroTitle] = useState("");
@@ -111,6 +132,28 @@ export default function AdminCMSPage() {
         if (res.journal) {
           setJournalArticles(res.journal);
         }
+        // API Settings
+        if (res.api_settings) {
+          setCloudinaryEnabled(res.api_settings.cloudinaryEnabled !== undefined ? res.api_settings.cloudinaryEnabled : false);
+          setCloudinaryCloudName(res.api_settings.cloudinaryCloudName || "");
+          setCloudinaryApiKey(res.api_settings.cloudinaryApiKey || "");
+          setCloudinaryApiSecret(res.api_settings.cloudinaryApiSecret || "");
+
+          setRazorpayEnabled(res.api_settings.razorpayEnabled !== undefined ? res.api_settings.razorpayEnabled : false);
+          setRazorpayKeyId(res.api_settings.razorpayKeyId || "");
+          setRazorpayKeySecret(res.api_settings.razorpayKeySecret || "");
+
+          setNodemailerEnabled(res.api_settings.nodemailerEnabled !== undefined ? res.api_settings.nodemailerEnabled : false);
+          setNodemailerHost(res.api_settings.nodemailerHost || "");
+          setNodemailerPort(res.api_settings.nodemailerPort || "");
+          setNodemailerUser(res.api_settings.nodemailerUser || "");
+          setNodemailerPass(res.api_settings.nodemailerPass || "");
+
+          setTruecallerEnabled(res.api_settings.truecallerEnabled !== undefined ? res.api_settings.truecallerEnabled : false);
+          setTruecallerSandboxMode(res.api_settings.truecallerSandboxMode !== undefined ? res.api_settings.truecallerSandboxMode : true);
+          setTruecallerPartnerKey(res.api_settings.truecallerPartnerKey || "");
+          setTruecallerAppId(res.api_settings.truecallerAppId || "");
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -164,7 +207,25 @@ export default function AdminCMSPage() {
         features: {
           bespokeEnabled
         },
-        legal: legalData
+        legal: legalData,
+        api_settings: {
+          cloudinaryEnabled,
+          cloudinaryCloudName,
+          cloudinaryApiKey,
+          cloudinaryApiSecret,
+          razorpayEnabled,
+          razorpayKeyId,
+          razorpayKeySecret,
+          nodemailerEnabled,
+          nodemailerHost,
+          nodemailerPort,
+          nodemailerUser,
+          nodemailerPass,
+          truecallerEnabled,
+          truecallerSandboxMode,
+          truecallerPartnerKey,
+          truecallerAppId
+        }
       });
       showToast("CMS updated successfully.");
       loadCMSData();
@@ -303,6 +364,16 @@ export default function AdminCMSPage() {
               }`}
             >
               Journal
+            </button>
+            <button
+              onClick={() => setActiveTab("api-integrations")}
+              className={`px-4 py-2 border cursor-pointer ${
+                activeTab === "api-integrations"
+                  ? "bg-deep-navy text-pure-white border-deep-navy"
+                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+              }`}
+            >
+              API Configuration
             </button>
           </div>
         </div>
@@ -897,6 +968,251 @@ export default function AdminCMSPage() {
                       ) : (
                         <div className="text-slate-grey text-sm">No legal document data found.</div>
                       )}
+                    </section>
+                  </div>
+                )}
+
+                {/* 6. API CONFIGURATION TAB */}
+                {activeTab === "api-integrations" && (
+                  <div className="space-y-6">
+                    {/* Cloudinary */}
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                          Cloudinary CDN Integration
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="cloudinary-enabled"
+                            checked={cloudinaryEnabled}
+                            onChange={(e) => setCloudinaryEnabled(e.target.checked)}
+                            className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                          />
+                          <label htmlFor="cloudinary-enabled" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer">
+                            Enable
+                          </label>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-grey font-body-md -mt-4">
+                        Togglable image and media uploading directly to Cloudinary CDN instead of local uploads/ filesystem storage.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Cloud Name</label>
+                          <input
+                            type="text"
+                            value={cloudinaryCloudName}
+                            onChange={(e) => setCloudinaryCloudName(e.target.value)}
+                            disabled={!cloudinaryEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50"
+                            placeholder="your-cloud-name"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">API Key</label>
+                          <input
+                            type="text"
+                            value={cloudinaryApiKey}
+                            onChange={(e) => setCloudinaryApiKey(e.target.value)}
+                            disabled={!cloudinaryEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50"
+                            placeholder="your-api-key"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">API Secret</label>
+                          <input
+                            type="password"
+                            value={cloudinaryApiSecret}
+                            onChange={(e) => setCloudinaryApiSecret(e.target.value)}
+                            disabled={!cloudinaryEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50"
+                            placeholder="••••••••••••••••"
+                          />
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Razorpay */}
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                          Razorpay Payment Gateway
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="razorpay-enabled"
+                            checked={razorpayEnabled}
+                            onChange={(e) => setRazorpayEnabled(e.target.checked)}
+                            className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                          />
+                          <label htmlFor="razorpay-enabled" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer">
+                            Enable
+                          </label>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-grey font-body-md -mt-4">
+                        Configure payment gateways for customer checkouts. If disabled, checkout functions in local dev/mock payment mode.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Razorpay Key ID</label>
+                          <input
+                            type="text"
+                            value={razorpayKeyId}
+                            onChange={(e) => setRazorpayKeyId(e.target.value)}
+                            disabled={!razorpayEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50"
+                            placeholder="rzp_test_..."
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Razorpay Key Secret</label>
+                          <input
+                            type="password"
+                            value={razorpayKeySecret}
+                            onChange={(e) => setRazorpayKeySecret(e.target.value)}
+                            disabled={!razorpayEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50"
+                            placeholder="••••••••••••••••"
+                          />
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* SMTP Nodemailer */}
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                          Nodemailer SMTP Configuration
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="nodemailer-enabled"
+                            checked={nodemailerEnabled}
+                            onChange={(e) => setNodemailerEnabled(e.target.checked)}
+                            className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                          />
+                          <label htmlFor="nodemailer-enabled" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer">
+                            Enable
+                          </label>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-grey font-body-md -mt-4">
+                        Sends OTP verification codes and delivery details notifications to customer emails via SMTP server.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="flex flex-col gap-2 md:col-span-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">SMTP Host</label>
+                          <input
+                            type="text"
+                            value={nodemailerHost}
+                            onChange={(e) => setNodemailerHost(e.target.value)}
+                            disabled={!nodemailerEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
+                            placeholder="smtp.gmail.com"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">SMTP Port</label>
+                          <input
+                            type="text"
+                            value={nodemailerPort}
+                            onChange={(e) => setNodemailerPort(e.target.value)}
+                            disabled={!nodemailerEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
+                            placeholder="587"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Sender Username</label>
+                          <input
+                            type="text"
+                            value={nodemailerUser}
+                            onChange={(e) => setNodemailerUser(e.target.value)}
+                            disabled={!nodemailerEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
+                            placeholder="user@gmail.com"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">SMTP Password</label>
+                          <input
+                            type="password"
+                            value={nodemailerPass}
+                            onChange={(e) => setNodemailerPass(e.target.value)}
+                            disabled={!nodemailerEnabled}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
+                            placeholder="••••••••••••••••"
+                          />
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Truecaller */}
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                          Truecaller Quick Verification
+                        </h3>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              id="truecaller-enabled"
+                              checked={truecallerEnabled}
+                              onChange={(e) => setTruecallerEnabled(e.target.checked)}
+                              className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                            />
+                            <label htmlFor="truecaller-enabled" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer">
+                              Enable
+                            </label>
+                          </div>
+                          <div className="flex items-center gap-2 border-l border-slate-grey/20 pl-4">
+                            <input
+                              type="checkbox"
+                              id="truecaller-sandbox"
+                              checked={truecallerSandboxMode}
+                              onChange={(e) => setTruecallerSandboxMode(e.target.checked)}
+                              disabled={!truecallerEnabled}
+                              className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-50"
+                            />
+                            <label htmlFor="truecaller-sandbox" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer disabled:opacity-50">
+                              Sandbox Simulator Mode
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-grey font-body-md -mt-4">
+                        Enables 1-click customer profile verification and checkout form autofill. Sandbox Simulator mode triggers a mock interface on frontend for development.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Truecaller App / Partner Key</label>
+                          <input
+                            type="text"
+                            value={truecallerPartnerKey}
+                            onChange={(e) => setTruecallerPartnerKey(e.target.value)}
+                            disabled={!truecallerEnabled || truecallerSandboxMode}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
+                            placeholder="Partner key from developer dashboard"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">App ID / Package Name (Domain)</label>
+                          <input
+                            type="text"
+                            value={truecallerAppId}
+                            onChange={(e) => setTruecallerAppId(e.target.value)}
+                            disabled={!truecallerEnabled || truecallerSandboxMode}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
+                            placeholder="e.g. localhost or yourdomain.com"
+                          />
+                        </div>
+                      </div>
                     </section>
                   </div>
                 )}
