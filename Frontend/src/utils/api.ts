@@ -431,3 +431,7 @@ export async function saveSiteConfigKey(key: string, value: any) {
     body: JSON.stringify({ value }),
   });
 }
+
+export async function fetchUsers() {
+  return apiFetch<any[]>("/admin/users");
+}

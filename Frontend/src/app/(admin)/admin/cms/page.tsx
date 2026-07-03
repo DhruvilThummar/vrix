@@ -12,6 +12,104 @@ export default function AdminCMSPage() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // --- Live JSON & Snippet Explorer States ---
+  const [rawCMSData, setRawCMSData] = useState<any>(null);
+  const [activeSnippetTab, setActiveSnippetTab] = useState<"fetch" | "axios" | "curl">("fetch");
+  const [activeJsonFilter, setActiveJsonFilter] = useState<"cms" | "products" | "journal" | "full">("cms");
+  const [copiedSnippet, setCopiedSnippet] = useState(false);
+  const [copiedJson, setCopiedJson] = useState(false);
+
+  // Helper to highlight JSON syntax
+  const highlightJson = (jsonStr: string) => {
+    if (!jsonStr) return "";
+    return jsonStr
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
+        (match) => {
+          let cls = "text-[#d19a66]"; // default: number
+          if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+              cls = "text-[#e06c75]"; // key
+            } else {
+              cls = "text-[#98c379]"; // string
+            }
+          } else if (/true|false/.test(match)) {
+            cls = "text-[#d19a66]"; // boolean
+          } else if (/null/.test(match)) {
+            cls = "text-[#56b6c2]"; // null
+          }
+          return `<span class="${cls}">${match}</span>`;
+        }
+      );
+  };
+
+  const getFilteredJson = () => {
+    if (!rawCMSData) return { message: "No data loaded." };
+    switch (activeJsonFilter) {
+      case "cms": {
+        const { homepage, story, navigation, brand, features, legal, api_settings } = rawCMSData;
+        return { homepage, story, navigation, brand, features, legal, api_settings };
+      }
+      case "products":
+        return rawCMSData.products || [];
+      case "journal":
+        return rawCMSData.journal || [];
+      case "full":
+      default:
+        return rawCMSData;
+    }
+  };
+
+  const getSnippetText = () => {
+    const apiUrl = typeof window !== "undefined" 
+      ? `${window.location.protocol}//${window.location.hostname}:5000/api`
+      : "http://localhost:5000/api";
+      
+    if (activeSnippetTab === "fetch") {
+      return `// Fetch CMS configuration and active store catalogs
+fetch("${apiUrl}/db")
+  .then(response => {
+    if (!response.ok) throw new Error("Network response was not ok");
+    return response.json();
+  })
+  .then(data => {
+    console.log("Brand Name:", data.brand?.name);
+    console.log("Navigation:", data.navigation);
+  })
+  .catch(error => console.error("Error fetching data:", error));`;
+    } else if (activeSnippetTab === "axios") {
+      return `import axios from "axios";
+
+// Fetch database configuration
+axios.get("${apiUrl}/db")
+  .then(response => {
+    const { brand, navigation, homepage } = response.data;
+    console.log("Active Brand Configuration:", brand);
+  })
+  .catch(error => {
+    console.error("API error:", error);
+  });`;
+    } else {
+      return `# Fetch full storefront CMS and inventory snapshot
+curl -X GET "${apiUrl}/db" \\
+     -H "Accept: application/json"`;
+    }
+  };
+
+  const handleCopyText = (text: string, type: "snippet" | "json") => {
+    navigator.clipboard.writeText(text);
+    if (type === "snippet") {
+      setCopiedSnippet(true);
+      setTimeout(() => setCopiedSnippet(false), 2000);
+    } else {
+      setCopiedJson(true);
+      setTimeout(() => setCopiedJson(false), 2000);
+    }
+  };
+
   // --- API Configuration States ---
   const [cloudinaryEnabled, setCloudinaryEnabled] = useState(false);
   const [cloudinaryCloudName, setCloudinaryCloudName] = useState("");
@@ -154,6 +252,7 @@ export default function AdminCMSPage() {
           setTruecallerPartnerKey(res.api_settings.truecallerPartnerKey || "");
           setTruecallerAppId(res.api_settings.truecallerAppId || "");
         }
+        setRawCMSData(res);
         setLoading(false);
       })
       .catch((err) => {
@@ -1212,6 +1311,149 @@ export default function AdminCMSPage() {
                             placeholder="e.g. localhost or yourdomain.com"
                           />
                         </div>
+                      </div>
+                    </section>
+
+                    {/* NEW: API Integration Documentation / Hints */}
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <div className="border-b border-slate-grey/15 pb-2">
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                          Developer API Integration Guide
+                        </h3>
+                        <p className="text-xs text-slate-grey font-body-md mt-1">
+                          Examples of how external clients or storefront instances query your CMS configurations and product inventory.
+                        </p>
+                      </div>
+
+                      {/* Snippet Tabs */}
+                      <div className="flex gap-2 font-label-caps text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setActiveSnippetTab("fetch")}
+                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
+                            activeSnippetTab === "fetch"
+                              ? "bg-deep-navy text-pure-white border-deep-navy"
+                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+                          }`}
+                        >
+                          JavaScript Fetch
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSnippetTab("axios")}
+                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
+                            activeSnippetTab === "axios"
+                              ? "bg-deep-navy text-pure-white border-deep-navy"
+                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+                          }`}
+                        >
+                          Axios Promise
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSnippetTab("curl")}
+                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
+                            activeSnippetTab === "curl"
+                              ? "bg-deep-navy text-pure-white border-deep-navy"
+                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+                          }`}
+                        >
+                          cURL Shell
+                        </button>
+                      </div>
+
+                      {/* Code Block Container */}
+                      <div className="relative group">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(getSnippetText(), "snippet")}
+                          className="absolute right-3 top-3 bg-pure-white/10 hover:bg-pure-white/20 text-pure-white border border-pure-white/20 px-3 py-1 text-[10px] font-label-caps tracking-wider transition-colors z-10"
+                        >
+                          {copiedSnippet ? "COPIED" : "COPY CODE"}
+                        </button>
+                        <pre className="bg-[#1e1e1e] p-6 font-mono text-xs text-pure-white leading-relaxed overflow-x-auto border border-slate-grey/30">
+                          <code>{getSnippetText()}</code>
+                        </pre>
+                      </div>
+                    </section>
+
+                    {/* NEW: Active Database Configuration Explorer */}
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-grey/15 pb-2">
+                        <div>
+                          <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                            Active Database Configuration Explorer
+                          </h3>
+                          <p className="text-xs text-slate-grey font-body-md mt-1">
+                            Inspect currently active JSON configurations stored in your DB schema.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(JSON.stringify(getFilteredJson(), null, 2), "json")}
+                          className="border border-deep-navy text-deep-navy px-4 py-2 font-button uppercase text-[10px] tracking-wider hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer"
+                        >
+                          {copiedJson ? "Copied JSON to Clipboard!" : "Copy Stored JSON"}
+                        </button>
+                      </div>
+
+                      {/* Filter Controls */}
+                      <div className="flex flex-wrap gap-2 font-label-caps text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setActiveJsonFilter("cms")}
+                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
+                            activeJsonFilter === "cms"
+                              ? "bg-deep-navy text-pure-white border-deep-navy"
+                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+                          }`}
+                        >
+                          CMS settings
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveJsonFilter("products")}
+                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
+                            activeJsonFilter === "products"
+                              ? "bg-deep-navy text-pure-white border-deep-navy"
+                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+                          }`}
+                        >
+                          Products List
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveJsonFilter("journal")}
+                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
+                            activeJsonFilter === "journal"
+                              ? "bg-deep-navy text-pure-white border-deep-navy"
+                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+                          }`}
+                        >
+                          Journal Articles
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveJsonFilter("full")}
+                          className={`px-3 py-1.5 border cursor-pointer transition-colors ${
+                            activeJsonFilter === "full"
+                              ? "bg-deep-navy text-pure-white border-deep-navy"
+                              : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+                          }`}
+                        >
+                          Full db snapshot
+                        </button>
+                      </div>
+
+                      {/* JSON Block Container */}
+                      <div className="relative">
+                        <pre className="bg-[#1e1e1e] p-6 font-mono text-xs text-pure-white leading-relaxed max-h-96 overflow-y-auto border border-slate-grey/30 rounded-none shadow-inner">
+                          <code
+                            dangerouslySetInnerHTML={{
+                              __html: highlightJson(JSON.stringify(getFilteredJson(), null, 2)),
+                            }}
+                          />
+                        </pre>
                       </div>
                     </section>
                   </div>

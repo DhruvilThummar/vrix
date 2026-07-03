@@ -1134,6 +1134,15 @@ app.get("/api/payment/logs", async (req, res) => {
   }
 });
 
+// Get all users (admin)
+app.get("/api/admin/users", async (req, res) => {
+  try {
+    res.json(await db.users.findMany());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  DELIVERY PANEL
 // ══════════════════════════════════════════════════════════════════════════════

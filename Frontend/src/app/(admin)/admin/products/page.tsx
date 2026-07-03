@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   fetchProducts, createProduct, updateProduct, deleteProduct, uploadMedia,
   updateProductStock, updateProductVisibility,
@@ -32,6 +33,10 @@ type Product = {
 };
 
 export default function AdminProductsPage() {
+  const searchParams = useSearchParams();
+  const paramId = searchParams.get("id");
+  const paramDrawer = searchParams.get("drawer");
+
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -57,6 +62,20 @@ export default function AdminProductsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { loadProducts(); }, []);
+
+  // Handle URL parameters for selecting a product or opening the drawer
+  useEffect(() => {
+    if (loading || products.length === 0) return;
+
+    if (paramId) {
+      const match = products.find(p => p.id === paramId);
+      if (match) {
+        selectProduct(match);
+      }
+    } else if (paramDrawer === "new") {
+      handleNewProduct();
+    }
+  }, [paramId, paramDrawer, products, loading]);
 
   const loadProducts = () => {
     setLoading(true);

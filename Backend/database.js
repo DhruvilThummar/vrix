@@ -85,7 +85,7 @@ export const db = {
         }, {});
       } else {
         const localData = readLocalDb();
-        const { products, journal, securityLogs, payments, otps, redeemCodes, ...cms } = localData;
+        const { products, journal, securityLogs, payments, otps, redeemCodes, users, ...cms } = localData;
         return cms;
       }
     }
@@ -305,6 +305,16 @@ export const db = {
 
   // Users / Customers
   users: {
+    findMany: async () => {
+      const { readFileSync } = await import("fs");
+      try {
+        const raw = readFileSync(pathDirect.join(__dirname, "data", "db.json"), "utf8");
+        const local = JSON.parse(raw);
+        return local.users || [];
+      } catch (err) {
+        return [];
+      }
+    },
     findUnique: async ({ where: { email } }) => {
       const { readFileSync } = await import("fs");
       try {

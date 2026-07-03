@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { fetchPaymentLogs, fetchAdminStats } from "@/utils/api";
 
 interface Order {
@@ -22,6 +23,10 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; icon: st
 };
 
 export default function AdminOrdersPage() {
+  const searchParams = useSearchParams();
+  const paramId = searchParams.get("id");
+  const paramSearch = searchParams.get("search");
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
@@ -40,6 +45,22 @@ export default function AdminOrdersPage() {
       setLoading(false);
     });
   }, []);
+
+  // Handle URL query parameters to select or search orders
+  useEffect(() => {
+    if (loading || orders.length === 0) return;
+
+    if (paramId) {
+      const match = orders.find(o => o.orderId === paramId || o.id === paramId);
+      if (match) {
+        setSelectedOrder(match);
+      }
+    }
+
+    if (paramSearch) {
+      setSearch(paramSearch);
+    }
+  }, [paramId, paramSearch, orders, loading]);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 

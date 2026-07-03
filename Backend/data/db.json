@@ -254,5 +254,11 @@
     }
   ],
   "payments": [],
-  "users": []
+  "users": [],
+  "api_settings": {
+    "truecallerEnabled": true,
+    "truecallerSandboxMode": true,
+    "truecallerPartnerKey": "",
+    "truecallerAppId": ""
+  }
 }

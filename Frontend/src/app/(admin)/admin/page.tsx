@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { fetchAdminStats, fetchPaymentLogs, fetchProducts } from "@/utils/api";
 
 interface Stats {
@@ -24,6 +25,7 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
@@ -115,7 +117,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Orders */}
-        <div className="lg:col-span-2 bg-pure-white border border-slate-grey/20 overflow-hidden">
+        <div className="lg:col-span-2 bg-pure-white border border-slate-grey/20 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-slate-grey/15 flex justify-between items-center">
             <h2 className="font-headline-md text-base text-deep-navy uppercase">Recent Orders</h2>
             <Link href="/admin/orders" className="font-label-caps text-[10px] uppercase tracking-widest text-slate-grey hover:text-deep-navy transition-colors">
@@ -123,7 +125,18 @@ export default function AdminDashboard() {
             </Link>
           </div>
           {orders.length === 0 ? (
-            <div className="p-8 text-center text-slate-grey text-xs font-label-caps uppercase tracking-widest">No orders yet</div>
+            <div className="flex-1 p-12 flex flex-col items-center justify-center text-center space-y-4 bg-soft-linen/10 border-2 border-dashed border-slate-grey/15 m-6">
+              <div className="w-12 h-12 rounded-full bg-soft-linen flex items-center justify-center text-slate-grey/80">
+                <span className="material-symbols-outlined text-2xl">receipt_long</span>
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-label-caps text-xs text-deep-navy uppercase tracking-wider font-semibold">No active orders found</h4>
+                <p className="text-[11px] text-slate-grey font-body-md max-w-xs leading-relaxed">There are currently no transactions recorded in the database. Customer purchases will appear here in real-time.</p>
+              </div>
+              <Link href="/admin/orders" className="text-[9px] font-label-caps uppercase tracking-widest text-deep-navy border border-deep-navy px-4 py-2 hover:bg-deep-navy hover:text-pure-white transition-all">
+                Go to Orders Portal
+              </Link>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -137,9 +150,13 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-slate-grey/10">
                   {orders.map((o: any) => (
-                    <tr key={o.id} className="hover:bg-soft-linen/20 transition-colors">
-                      <td className="px-5 py-3 font-body-md text-sm font-semibold text-deep-navy">{o.orderId}</td>
-                      <td className="px-5 py-3 font-body-md text-sm">{o.currency} {(o.amount / 100).toLocaleString()}</td>
+                    <tr
+                      key={o.id}
+                      onClick={() => router.push(`/admin/orders?id=${o.orderId}`)}
+                      className="hover:bg-soft-linen/20 transition-colors cursor-pointer"
+                    >
+                      <td className="px-5 py-3 font-body-md text-sm font-semibold text-deep-navy hover:underline">{o.orderId}</td>
+                      <td className="px-5 py-3 font-body-md text-sm font-semibold text-ink-black">{o.currency} {o.amount.toLocaleString()}</td>
                       <td className="px-5 py-3">
                         <span className={`text-[9px] font-label-caps uppercase tracking-widest px-2 py-1 border ${STATUS_BADGE[o.status?.toUpperCase()] || "bg-slate-50 text-slate-500 border-slate-200"}`}>{o.status}</span>
                       </td>
@@ -153,7 +170,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Top Products */}
-        <div className="bg-pure-white border border-slate-grey/20 overflow-hidden">
+        <div className="bg-pure-white border border-slate-grey/20 overflow-hidden flex flex-col">
           <div className="p-5 border-b border-slate-grey/15 flex justify-between items-center">
             <h2 className="font-headline-md text-base text-deep-navy uppercase">Catalogue</h2>
             <Link href="/admin/products" className="font-label-caps text-[10px] uppercase tracking-widest text-slate-grey hover:text-deep-navy transition-colors">
@@ -161,16 +178,31 @@ export default function AdminDashboard() {
             </Link>
           </div>
           {topProducts.length === 0 ? (
-            <div className="p-8 text-center text-slate-grey text-xs font-label-caps uppercase tracking-widest">No products</div>
+            <div className="flex-1 p-12 flex flex-col items-center justify-center text-center space-y-4 bg-soft-linen/10 border-2 border-dashed border-slate-grey/15 m-6">
+              <div className="w-12 h-12 rounded-full bg-soft-linen flex items-center justify-center text-slate-grey/80">
+                <span className="material-symbols-outlined text-2xl">inventory_2</span>
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-label-caps text-xs text-deep-navy uppercase tracking-wider font-semibold">Catalogue is empty</h4>
+                <p className="text-[11px] text-slate-grey font-body-md max-w-[200px] leading-relaxed">Add your first architectural luxury jewelry piece to start selling.</p>
+              </div>
+              <Link href="/admin/products?drawer=new" className="text-[9px] font-label-caps uppercase tracking-widest text-pure-white bg-deep-navy px-4 py-2 hover:bg-ink-black transition-all">
+                Create Product
+              </Link>
+            </div>
           ) : (
             <div className="divide-y divide-slate-grey/10">
               {topProducts.map((p: any) => (
-                <div key={p.id} className="flex items-center gap-3 px-5 py-3 hover:bg-soft-linen/20 transition-colors">
+                <div
+                  key={p.id}
+                  onClick={() => router.push(`/admin/products?id=${p.id}`)}
+                  className="flex items-center gap-3 px-5 py-3 hover:bg-soft-linen/20 transition-colors cursor-pointer"
+                >
                   <div className="w-10 h-12 relative bg-soft-linen overflow-hidden shrink-0 border border-slate-grey/10">
                     <Image src={p.image} alt={p.title} fill className="object-cover mix-blend-multiply" sizes="40px" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-body-md text-ink-black truncate font-medium">{p.title}</p>
+                    <p className="text-xs font-body-md text-ink-black truncate font-medium hover:text-deep-navy">{p.title}</p>
                     <p className="text-[10px] text-slate-grey font-label-caps uppercase tracking-wider">{p.collection || p.material}</p>
                   </div>
                   <div className="text-right shrink-0">
