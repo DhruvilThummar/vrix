@@ -3,13 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, Suspense, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fetchProducts } from "@/utils/api";
+import { useAuth } from "@/context/AuthContext";
 
 const DEFAULT_PRODUCTS: any[] = [];
 
 function CollectionContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const collectionQuery = searchParams.get("collection");
 
   const [products, setProducts] = useState(DEFAULT_PRODUCTS);
@@ -72,6 +75,11 @@ function CollectionContent() {
   const toggleWishlist = (id: string, title: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isLoggedIn) {
+      showToast("Please sign in to save items to your wishlist.");
+      setTimeout(() => router.push("/account"), 1000);
+      return;
+    }
     try {
       const saved = localStorage.getItem("vrix-wishlist");
       let list = saved ? JSON.parse(saved) : [];

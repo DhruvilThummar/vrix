@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { createPaymentOrder, verifyPayment } from "@/utils/api";
+import { useAuth } from "@/context/AuthContext";
 
 declare global {
   interface Window {
@@ -26,6 +27,7 @@ interface ShippingData {
 
 export default function PaymentPage() {
   const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const { items, subtotal, discount, promoCode, promoType, clearCart } = useCart();
   const [shipping, setShipping] = useState<ShippingData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,10 @@ export default function PaymentPage() {
       : 0;
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      router.push("/account");
+      return;
+    }
     // Load shipping from sessionStorage
     const savedShipping = sessionStorage.getItem("vrix-shipping");
     if (savedShipping) {
@@ -93,6 +99,7 @@ export default function PaymentPage() {
           razorpay_order_id: order.id,
           razorpay_payment_id: fakePaymentId,
           razorpay_signature: "dev_signature",
+          items: items,
         });
         setPaidOrderId(order.id);
         clearCart();
@@ -142,6 +149,7 @@ export default function PaymentPage() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              items: items,
             });
             setPaidOrderId(response.razorpay_order_id);
             clearCart();

@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fetchProducts } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 const DEFAULT_PRODUCT = {
   id: "silent-center-ring",
@@ -17,6 +18,8 @@ const DEFAULT_PRODUCT = {
 
 function ProductContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const productId = searchParams.get("id");
   const { addItem } = useCart();
 
@@ -65,6 +68,11 @@ function ProductContent() {
   };
 
   const handleAddToBag = () => {
+    if (!isLoggedIn) {
+      showToast("Please sign in to add items to your bag.");
+      setTimeout(() => router.push("/account"), 1000);
+      return;
+    }
     if (!size) {
       showToast("Please select a size first.");
       return;
@@ -86,6 +94,11 @@ function ProductContent() {
   };
 
   const handleAddToWishlist = () => {
+    if (!isLoggedIn) {
+      showToast("Please sign in to add items to your wishlist.");
+      setTimeout(() => router.push("/account"), 1000);
+      return;
+    }
     try {
       const saved = localStorage.getItem("vrix-wishlist");
       let list = saved ? JSON.parse(saved) : [];

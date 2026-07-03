@@ -169,6 +169,38 @@ export async function verifyOtp(email: string, otp: string) {
   });
 }
 
+export async function registerUser(payload: any) {
+  return apiFetch<{ success: boolean; message: string; otp?: string }>("/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function confirmRegistration(payload: any) {
+  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string } }>("/auth/register/confirm", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function loginUser(payload: any) {
+  return apiFetch<{ success: boolean; message: string; otp?: string }>("/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function confirmLogin(payload: any) {
+  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string } }>("/auth/login/confirm", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function verifyTruecaller(payload?: string, signature?: string, signatureAlgorithm?: string) {
   return apiFetch<{
     success: boolean;

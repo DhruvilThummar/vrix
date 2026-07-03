@@ -253,5 +253,6 @@
       "createdAt": "2026-06-22T17:00:00.000Z"
     }
   ],
-  "payments": []
+  "payments": [],
+  "users": []
 }

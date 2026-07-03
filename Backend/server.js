@@ -469,6 +469,190 @@ app.post("/api/otp/verify", async (req, res) => {
   }
 });
 
+// Register Route: Checks if user exists, sends OTP to register
+app.post("/api/auth/register", async (req, res) => {
+  const { email, password, name, phone } = req.body;
+  if (!email || !password || !name) {
+    return res.status(400).json({ error: "Email, password, and name are required." });
+  }
+
+  try {
+    const existing = await db.users.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ error: "User already exists with this email address." });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    const targetKey = `register:${email.toLowerCase()}`;
+    await db.verificationOtps.deleteMany({ where: { email: targetKey } });
+    await db.verificationOtps.create({
+      data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
+    });
+
+    const activeTransporter = await getTransporter();
+    if (activeTransporter) {
+      const apiSettings = await getApiSettings();
+      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+      await activeTransporter.sendMail({
+        from: `"VRIX" <${senderEmail}>`,
+        to: email,
+        subject: "Verify Your VRIX Account Registration",
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
+            <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Email</h2>
+            <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${name}, thank you for registering with VRIX. Please verify your email address using this verification code:</p>
+            <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
+            <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+          </div>
+        `,
+      });
+      res.json({ success: true, message: "OTP code sent to your email." });
+    } else {
+      console.log(`[DEV] Register OTP for ${email}: ${otp}`);
+      res.json({ success: true, message: "OTP code generated (dev mode)", otp });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Confirm Registration: Verifies OTP, saves user in DB
+app.post("/api/auth/register/confirm", async (req, res) => {
+  const { email, otp, password, name, phone } = req.body;
+  if (!email || !otp || !password || !name) {
+    return res.status(400).json({ error: "Missing required verification fields." });
+  }
+
+  try {
+    const targetKey = `register:${email.toLowerCase()}`;
+    const record = await db.verificationOtps.findFirst({ where: { email: targetKey, otp } });
+
+    if (!record) return res.status(401).json({ error: "Invalid verification code." });
+
+    const expiry = new Date(record.expiresAt);
+    if (expiry < new Date()) {
+      await db.verificationOtps.delete({ where: { id: record.id } });
+      return res.status(401).json({ error: "Verification code has expired." });
+    }
+
+    // Consume OTP
+    await db.verificationOtps.delete({ where: { id: record.id } });
+
+    // Hashing password
+    const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
+
+    // Save user record
+    const newUser = await db.users.create({
+      data: {
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        name,
+        phone: phone || ""
+      }
+    });
+
+    await db.securityLogs.create({
+      data: { event: "ACCOUNT_REGISTER", user: email, status: "SUCCESS" },
+    });
+
+    res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Login Route: Verifies password, sends OTP to log in
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required." });
+  }
+
+  try {
+    const user = await db.users.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: "Incorrect email or password." });
+    }
+
+    // Verify Password
+    const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
+    if (user.password !== hashedPassword && user.password !== "truecaller_oauth_account") {
+      return res.status(401).json({ error: "Incorrect email or password." });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    const targetKey = `login:${email.toLowerCase()}`;
+    await db.verificationOtps.deleteMany({ where: { email: targetKey } });
+    await db.verificationOtps.create({
+      data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
+    });
+
+    const activeTransporter = await getTransporter();
+    if (activeTransporter) {
+      const apiSettings = await getApiSettings();
+      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+      await activeTransporter.sendMail({
+        from: `"VRIX" <${senderEmail}>`,
+        to: email,
+        subject: "VRIX Login Verification Code",
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
+            <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Login</h2>
+            <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${user.name || 'member'}, please verify your VRIX sign-in request using this code:</p>
+            <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
+            <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+          </div>
+        `,
+      });
+      res.json({ success: true, message: "OTP sent to your email." });
+    } else {
+      console.log(`[DEV] Login OTP for ${email}: ${otp}`);
+      res.json({ success: true, message: "OTP generated (dev mode)", otp });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Confirm Login: Verifies OTP and completes log in session
+app.post("/api/auth/login/confirm", async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ error: "Email and OTP are required." });
+  }
+
+  try {
+    const targetKey = `login:${email.toLowerCase()}`;
+    const record = await db.verificationOtps.findFirst({ where: { email: targetKey, otp } });
+
+    if (!record) return res.status(401).json({ error: "Invalid verification code." });
+
+    const expiry = new Date(record.expiresAt);
+    if (expiry < new Date()) {
+      await db.verificationOtps.delete({ where: { id: record.id } });
+      return res.status(401).json({ error: "Verification code has expired." });
+    }
+
+    // Consume OTP
+    await db.verificationOtps.delete({ where: { id: record.id } });
+
+    // Fetch user details
+    const user = await db.users.findUnique({ where: { email } });
+
+    await db.securityLogs.create({
+      data: { event: "ACCOUNT_LOGIN", user: email, status: "SUCCESS" },
+    });
+
+    res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  TRUECALLER API
 // ══════════════════════════════════════════════════════════════════════════════
@@ -503,6 +687,23 @@ app.post("/api/truecaller/verify", async (req, res) => {
         }
       }
       
+      // Auto-register user in DB when verified via Truecaller
+      try {
+        let existingUser = await db.users.findUnique({ where: { email: profile.email } });
+        if (!existingUser) {
+          await db.users.create({
+            data: {
+              email: profile.email,
+              name: profile.name,
+              phone: profile.phone,
+              password: "truecaller_oauth_account"
+            }
+          });
+        }
+      } catch (dbErr) {
+        console.error("Failed to auto-register Truecaller user:", dbErr.message);
+      }
+
       return res.json({
         success: true,
         verified: true,
@@ -553,14 +754,33 @@ app.post("/api/truecaller/verify", async (req, res) => {
       }
     }
 
+    const profileObj = {
+      name: (decodedProfile.firstName + " " + (decodedProfile.lastName || "")).trim(),
+      email: decodedProfile.email,
+      phone: decodedProfile.phoneNumber
+    };
+
+    // Auto-register user in DB when verified via Truecaller
+    try {
+      let existingUser = await db.users.findUnique({ where: { email: profileObj.email } });
+      if (!existingUser) {
+        await db.users.create({
+          data: {
+            email: profileObj.email,
+            name: profileObj.name,
+            phone: profileObj.phone,
+            password: "truecaller_oauth_account"
+          }
+        });
+      }
+    } catch (dbErr) {
+      console.error("Failed to auto-register Truecaller user:", dbErr.message);
+    }
+
     return res.json({
       success: true,
       verified: true,
-      profile: {
-        name: (decodedProfile.firstName + " " + (decodedProfile.lastName || "")).trim(),
-        email: decodedProfile.email,
-        phone: decodedProfile.phoneNumber
-      },
+      profile: profileObj,
       mode: "live"
     });
 
@@ -727,7 +947,7 @@ app.post("/api/payment/order", async (req, res) => {
 
 // Verify Razorpay payment signature
 app.post("/api/payment/verify", async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ error: "Missing payment verification fields" });
@@ -761,7 +981,7 @@ app.post("/api/payment/verify", async (req, res) => {
     }
 
     // Update payment record
-    await db.payments.update({
+    const paymentRecord = await db.payments.update({
       where: { orderId: razorpay_order_id },
       data: { status: "SUCCESS", paymentId: razorpay_payment_id },
     });
@@ -769,6 +989,100 @@ app.post("/api/payment/verify", async (req, res) => {
     await db.securityLogs.create({
       data: { event: "PAYMENT_SUCCESS", user: razorpay_payment_id, status: "SUCCESS" },
     });
+
+    // Send email with order details to both customer and admin
+    try {
+      const activeTransporter = await getTransporter();
+      if (activeTransporter) {
+        const cmsBrand = await db.cmsSettings.findUnique({ where: { key: "brand" } }) || {};
+        const adminEmail = cmsBrand.email || process.env.ADMIN_EMAIL || "contact@vrix.com";
+        const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+        
+        const itemsList = items || [];
+        let itemsHtml = "";
+        itemsList.forEach((item) => {
+          itemsHtml += `
+            <tr style="border-bottom: 1px solid #e5e3df;">
+              <td style="padding: 12px 0; font-size: 14px; color: #0f1728;">
+                <strong>${item.title}</strong><br/>
+                <span style="font-size: 12px; color: #666;">${item.material || ""} ${item.size ? `(Size: ${item.size})` : ""}</span>
+                ${item.engraving ? `<br/><span style="font-size: 12px; color: #666; font-style: italic;">"${item.engraving}"</span>` : ""}
+              </td>
+              <td style="padding: 12px 0; font-size: 14px; color: #0f1728; text-align: center;">${item.quantity}</td>
+              <td style="padding: 12px 0; font-size: 14px; color: #0f1728; text-align: right;">₹${(item.price * item.quantity).toLocaleString()}</td>
+            </tr>
+          `;
+        });
+
+        const orderSummaryHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 32px; background: #f9f8f6; border: 1px solid #e5e3df;">
+            <h2 style="font-size: 20px; letter-spacing: 4px; color: #0f1728; text-transform: uppercase; margin-bottom: 24px; text-align: center; border-bottom: 1px solid #e5e3df; padding-bottom: 16px;">VRIX ORDER CONFIRMATION</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Hello ${paymentRecord.customerName || 'Valued Customer'},</p>
+            <p style="color: #666; font-size: 14px; margin-bottom: 24px;">Thank you for your purchase. We are preparing your architectural jewelry pieces with meticulous care. Below are your order details:</p>
+            
+            <div style="margin-bottom: 24px; background: #fff; padding: 20px; border: 1px solid #e5e3df;">
+              <p style="font-size: 12px; color: #999; margin: 0 0 4px 0;">ORDER ID</p>
+              <p style="font-size: 16px; color: #0f1728; font-weight: bold; margin: 0 0 16px 0;">${paymentRecord.orderId}</p>
+              <p style="font-size: 12px; color: #999; margin: 0 0 4px 0;">SHIPPING ADDRESS</p>
+              <p style="font-size: 14px; color: #0f1728; margin: 0;">${paymentRecord.customerName || ""}</p>
+              <p style="font-size: 14px; color: #0f1728; margin: 0;">${paymentRecord.address || ""}</p>
+              <p style="font-size: 14px; color: #0f1728; margin: 0;">${paymentRecord.city || ""}, ${paymentRecord.postalCode || ""}</p>
+              <p style="font-size: 14px; color: #0f1728; margin: 4px 0 0 0;">Phone: ${paymentRecord.customerPhone || ""}</p>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+              <thead>
+                <tr style="border-bottom: 2px solid #e5e3df; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1px;">
+                  <th style="text-align: left; padding-bottom: 8px;">Item</th>
+                  <th style="text-align: center; padding-bottom: 8px; width: 60px;">Qty</th>
+                  <th style="text-align: right; padding-bottom: 8px; width: 100px;">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml || `<tr><td colspan="3" style="padding: 12px 0; text-align: center; color: #666;">No items registered</td></tr>`}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2" style="padding: 16px 0 0 0; font-size: 14px; color: #666; text-align: right;">Total Paid</td>
+                  <td style="padding: 16px 0 0 0; font-size: 18px; font-weight: bold; color: #0f1728; text-align: right;">₹${paymentRecord.amount.toLocaleString()}</td>
+                </tr>
+              </tfoot>
+            </table>
+            
+            <div style="border-top: 1px solid #e5e3df; padding-top: 24px; text-align: center;">
+              <p style="color: #999; font-size: 12px; margin: 0 0 8px 0;">If you have any questions, please contact us at ${adminEmail}</p>
+              <p style="color: #0f1728; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 0;">VRIX LUXURY JEWELRY</p>
+            </div>
+          </div>
+        `;
+
+        // Send to customer
+        if (paymentRecord.userEmail) {
+          await activeTransporter.sendMail({
+            from: `"VRIX" <${senderEmail}>`,
+            to: paymentRecord.userEmail,
+            subject: `Your VRIX Order Confirmation - ${paymentRecord.orderId}`,
+            html: orderSummaryHtml,
+          });
+        }
+
+        // Send to admin
+        await activeTransporter.sendMail({
+          from: `"VRIX Order System" <${senderEmail}>`,
+          to: adminEmail,
+          subject: `New VRIX Order Received - ${paymentRecord.orderId}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e3df;">
+              <h2 style="color: #0f1728; border-bottom: 2px solid #e5e3df; padding-bottom: 10px;">New Order Paid</h2>
+              <p>A new order has been paid and verified. Details are listed below:</p>
+              ${orderSummaryHtml}
+            </div>
+          `,
+        });
+      }
+    } catch (mailErr) {
+      console.error("Failed to send order verification email:", mailErr.message);
+    }
 
     res.json({ success: true, paymentId: razorpay_payment_id });
   } catch (err) {

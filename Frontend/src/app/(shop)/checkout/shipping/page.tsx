@@ -4,10 +4,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { fetchDb, verifyTruecaller } from "@/utils/api";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Page() {
   const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const { subtotal, discount, promoType } = useCart();
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push("/account");
+    }
+  }, [isLoggedIn, router]);
 
   const [truecallerEnabled, setTruecallerEnabled] = useState(false);
   const [truecallerSandbox, setTruecallerSandbox] = useState(true);

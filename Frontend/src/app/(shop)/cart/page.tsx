@@ -3,10 +3,14 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { verifyPromo } from "@/utils/api";
 
 export default function CartPage() {
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const { items, subtotal, discount, promoCode, promoType, updateQty, removeItem, applyPromo, clearPromo } = useCart();
   const [promoInput, setPromoInput] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
@@ -195,12 +199,20 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <Link
-                href="/checkout/shipping"
-                className="w-full bg-deep-navy text-pure-white font-button text-button uppercase tracking-widest py-4 hover:bg-ink-black transition-colors text-center block"
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!isLoggedIn) {
+                    showToast("Please sign in to proceed to checkout.");
+                    setTimeout(() => router.push("/account"), 1200);
+                  } else {
+                    router.push("/checkout/shipping");
+                  }
+                }}
+                className="w-full bg-deep-navy text-pure-white font-button text-button uppercase tracking-widest py-4 hover:bg-ink-black transition-colors text-center block cursor-pointer"
               >
                 Proceed to Checkout
-              </Link>
+              </button>
 
               <Link href="/collections/silent-center" className="flex items-center justify-center gap-1 font-label-caps text-[10px] text-slate-grey hover:text-deep-navy uppercase tracking-widest transition-colors">
                 <span className="material-symbols-outlined text-[14px]">arrow_back</span>

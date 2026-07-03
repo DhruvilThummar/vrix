@@ -1,9 +1,19 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { sendOtp, verifyOtp, addSecurityLog, fetchProducts } from "@/utils/api";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import {
+  registerUser,
+  confirmRegistration,
+  loginUser,
+  confirmLogin,
+  addSecurityLog,
+  fetchProducts,
+  fetchDb,
+  verifyTruecaller
+} from "@/utils/api";
 
 interface Order {
   id: string;

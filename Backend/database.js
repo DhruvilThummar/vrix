@@ -303,6 +303,49 @@ export const db = {
     }
   },
 
+  // Users / Customers
+  users: {
+    findUnique: async ({ where: { email } }) => {
+      const { readFileSync } = await import("fs");
+      try {
+        const raw = readFileSync(pathDirect.join(__dirname, "data", "db.json"), "utf8");
+        const local = JSON.parse(raw);
+        local.users = local.users || [];
+        return local.users.find(u => u.email.toLowerCase() === email.toLowerCase()) || null;
+      } catch (err) {
+        return null;
+      }
+    },
+    create: async ({ data }) => {
+      const { readFileSync, writeFileSync } = await import("fs");
+      const dbFile = pathDirect.join(__dirname, "data", "db.json");
+      const raw = readFileSync(dbFile, "utf8");
+      const local = JSON.parse(raw);
+      local.users = local.users || [];
+      const record = {
+        createdAt: new Date().toISOString(),
+        ...data
+      };
+      local.users.push(record);
+      writeFileSync(dbFile, JSON.stringify(local, null, 2), "utf8");
+      return record;
+    },
+    update: async ({ where: { email }, data }) => {
+      const { readFileSync, writeFileSync } = await import("fs");
+      const dbFile = pathDirect.join(__dirname, "data", "db.json");
+      const raw = readFileSync(dbFile, "utf8");
+      const local = JSON.parse(raw);
+      local.users = local.users || [];
+      const index = local.users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+      if (index !== -1) {
+        local.users[index] = { ...local.users[index], ...data };
+        writeFileSync(dbFile, JSON.stringify(local, null, 2), "utf8");
+        return local.users[index];
+      }
+      throw new Error(`User with email ${email} not found`);
+    }
+  },
+
   // Verification OTPs
   verificationOtps: {
     create: async ({ data }) => {
