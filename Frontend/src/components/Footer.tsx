@@ -7,12 +7,16 @@ import { fetchDb } from "@/utils/api";
 
 export default function Footer() {
   const [logoUrl, setLogoUrl] = useState("/logos/white.png");
+  const [collections, setCollections] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDb()
       .then((res) => {
         if (res.brand && res.brand.logoUrl) {
           setLogoUrl(res.brand.logoUrl);
+        }
+        if (res.collections) {
+          setCollections(res.collections);
         }
       })
       .catch((err) => console.error("Error loading footer logo:", err));
@@ -51,18 +55,15 @@ export default function Footer() {
         {/* Navigation Links */}
         <div className="flex flex-col gap-4 mt-8 md:mt-0 font-body-md text-sm">
           <h4 className="font-label-caps text-pure-white/50 mb-2">Collections</h4>
-          <Link href="/collections/silent-center" className="text-pure-white/70 hover:text-pure-white transition-colors duration-300">
-            Silent Center
-          </Link>
-          <Link href="/collections/silent-center?collection=solitude" className="text-pure-white/70 hover:text-pure-white transition-colors duration-300">
-            Solitude
-          </Link>
-          <Link href="/collections/silent-center?collection=presence" className="text-pure-white/70 hover:text-pure-white transition-colors duration-300">
-            Presence
-          </Link>
-          <Link href="/collections/silent-center?collection=light" className="text-pure-white/70 hover:text-pure-white transition-colors duration-300">
-            Light
-          </Link>
+          {collections.map((col) => (
+            <Link
+              key={col.id}
+              href={`/collections/silent-center?collection=${col.id}`}
+              className="text-pure-white/70 hover:text-pure-white transition-colors duration-300"
+            >
+              {col.title}
+            </Link>
+          ))}
           <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/collections">
             All Collections
           </Link>

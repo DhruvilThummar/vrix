@@ -6,62 +6,7 @@ import { useState, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { fetchProducts } from "@/utils/api";
 
-const DEFAULT_PRODUCTS = [
-  {
-    id: "equilibrium-ring",
-    title: "Equilibrium Ring",
-    material: "Recycled Silver",
-    type: "Ring",
-    price: 340,
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBBPUGt39nl4fhh9bL7YGONJWpfMQoy9m3vrobM4sC1z5Kg4q4K2V3YSsr4ZF0lZXhe-P3Hb3Auft7K0cGDmOJaDPNFaCKWJhF9vp-rfWtnDlZVL2oNEsl3unsUzB-roQPkP0W4HuG4udnn1aHW_DfFgSNw9F-a6m0nh4_9nnJOZ4U9JVLeC5CHqrXK6_sdDmdt8dVDwWazpn3z3YF7r7-NuG0ixJs49hrZjIw4fycINtDHE3Yup2G4XpXxBl6sQr2wsMgq61HHwqE",
-    alt: "A minimalist architectural silver ring resting on a textured light beige plaster surface.",
-  },
-  {
-    id: "linear-drop-chain",
-    title: "Linear Drop Chain",
-    material: "18k Solid Gold",
-    type: "Necklace",
-    price: 890,
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCbk-2-AxwfmxDnWc5U6oHEo5hoegyhAryXtouxInsRdYcrqRmiDOmd8pgq7B-O7bcBe1_iL3wYXDvOHecJGPXbKT1NWQ1bfmHMhJROR7PFhyg1xTEumD7Aqe3ZHuoj7zeFeGxlbS4HQw74UcSwupqEML9lQ9H-dbev3uXB7LL3UfW8TV1GzWVwFGiNfayJ_t7Z1SI-HU_EeeiA-tQrkz0QNO45bl5skg2JtJJakEUCxvzQ-4elNEk-VjVlIsw5jQKEyYy-nb4lTls",
-    alt: "A delicate, minimalist gold chain necklace draped beautifully over a pale ivory marble block.",
-  },
-  {
-    id: "structural-hoops",
-    title: "Structural Hoops",
-    material: "Sterling Silver",
-    type: "Earring",
-    price: 420,
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuApU1ICJBf8P-mfmsK1_WsPzMze2EG57aEPHRRzycjSxY9JKqyOFReqSgNgzn-7-cgwfhztS00u0RgkZfMI7-G4fbvcjOQiPtU46LxQm_nhRxeRqcZv3fw3Ud42rKnzpAbIj288wOcEYqRsXTOLBt9faFM3gidboVtw4vaLNZkKdlGoMnvrryWNIMrkeDQDlupocZPA8Xt-Mdg4uccfIWABNmj83C9Qovl_bqoRu6FccpKv4ZSXJy9rt-qLJj4w6WSJD3pOB3jhc20",
-    alt: "A pair of bold, geometric silver earrings positioned neatly on a smooth, off-white gallery pedestal.",
-  },
-  {
-    id: "monolith-cuff",
-    title: "Monolith Cuff",
-    material: "14k Yellow Gold",
-    type: "Bracelet",
-    price: 1250,
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuALBX228VJgA-fSha54_aCstyaGM5Bvt7R6IaPXfEdbiTw3GcO8nIrDqangcOfbnL4N4U-Qv5n4P7bhRVTfyiNG4qcAT2Iwsh-4Fcq_eL0L6o13Z6GM6ltM466LgO-CNld4lsFe3PD2bARpZ1RbAk6bhDRV-_RRX1Oe75wwALHEiqfSP640TSDVIQ0_IT2eBGHqHZ_g9dre8nRdmyFGsBPlWhLxiSeduEajnwXKMak9utASOHbO9PcIza9Mldx7Xsie3uWMI2BR43w",
-    alt: "A thick, structural gold cuff bracelet presented vertically against an expansive, empty soft-linen background.",
-  },
-  {
-    id: "void-pendant",
-    title: "Void Pendant",
-    material: "White Gold & Onyx",
-    type: "Necklace",
-    price: 680,
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAMv2Nqvwts9WoAxO0Hnf3UgQbOE7Qik4DydxYnw_ok_qY0aQWCmG5cM7waa5XrJHfLXzkX4xQw-ZQWLwr5-CU1Ai_o4aU5X4TPkvrhrp2yn3Rs6NNLI8NnkJSNdR15CGwphKH8lSJ3bqzUgojBO_912Z_3Xh-AO3PtMhr__xKN3CGldVocHcF6ZnWwgtpyCIUWMQS4CZ_K9AbI--KpDfaJ2PGazg3RmZUAPLqOIRjmT51vbnXApL-kUjnMxadwmlBeoLgD8fxiIhg",
-    alt: "A minimalist pendant necklace featuring a single, smooth black onyx stone set in white gold, laying flat on a textured light beige surface.",
-  },
-  {
-    id: "horizon-bangles",
-    title: "Horizon Bangles (Set of 3)",
-    material: "Recycled Silver",
-    type: "Bracelet",
-    price: 550,
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDH_EpJbUEueGoiuYV9Yxg3y-SqlNh7QOezBEoUaYRKIvhYEmfm6FtVYfWXXZ8z0dRPA_k7_Gzhd1cDR4NH6A8a_5mQgNhYYklAb-vFacdLMAYX4q-0ORvDg5OQQp7pl5wFVNK4RIw0qKEUASdpFsiQMIT20Gr_qga_STkVzuDq3iNyvOflR8IMFpI_zaUeFGoxiwvU7Fa3prBan_MhPTaSaf-bzxUeyxh4johSfJWSABzc57YpWrqL2Rt2JXDgB1YgVLolEoIC-B0",
-    alt: "A stack of three ultra-thin silver bangles resting slightly overlapping on a pristine white ceramic tray.",
-  },
-];
+const DEFAULT_PRODUCTS: any[] = [];
 
 function CollectionContent() {
   const searchParams = useSearchParams();

@@ -7,36 +7,7 @@ import { usePathname } from "next/navigation";
 import { fetchDb } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 
-const MEGAMENU_COLLECTIONS = [
-  {
-    id: "silent-center",
-    title: "Silent Center",
-    tagline: "For your balance",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCJ1SV0eXJGZrnjfsm6WOrr3dKft0IVZvS2oM6Wf_4vqwndBPocrNSLKtPsbIWUU4g7YWrwgFZmE16ipICZ0QKg6NulSK0D4DTI4FLnuehTPqcKDF-MPdTTbMRnYiwYRh3zsWojYE3R1iHTC60ZfQ8QWGmDD8mnP3JETge_mPnGQPnFepdY66OuKQsUgWIiwNWQZhfsJ00eO2IOXl7WoHUmQypxFUQFslrgHABiUUv1WrU2ZYbRgDbO_H6gk84g6nofQG2mXVqa538",
-    link: "/collections/silent-center",
-  },
-  {
-    id: "solitude",
-    title: "Solitude",
-    tagline: "For your inner world",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBvjqmByDlRaJiifUTxVoINswXXm-PAkkbVJ9hcfeaPCrqjzkhDhne1pVofS21ApvXAeGd-OJFnGRzVL8xM1zqRCFmpkvOkIowL3V5vx4O5w-jEkPUpaAjd3iMY1jo-f1BXRbiYG4udPbS3MQHLhriu6sBx3BzN7lMwreEZ1yb4ZK1AR6DhvzuF6SFzUjcqZWiXVPPkEHA2TrBgX495Y9x6krS50C7hS02F_3H0td5UhiUYM92VuwUaofA_QbD6kd14XQ5N6xQdRN8",
-    link: "/collections/silent-center?collection=solitude",
-  },
-  {
-    id: "presence",
-    title: "Presence",
-    tagline: "For your everyday",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDphu-s5pByRrI5yOYV0iUrAQhJYlFn9pL56eus7YnulYdC3nxZphQV-dBchzOg9F9C9LvMP1pu7Z-pLdoAmvfuYBpwUk4oJ5auvdPVe_jU2tO6Ldyghkc_ftk25VpTLHGq_4DKkpFIC_w_TgCVCFNwT7xlIzlR6i-4QQwgJHFq41jST-K1fySNIMaWHIa6EMO_OoRUmmcTTgSqML2SGB8jMU92aBukkLElsZJVzQ6iVNHyjlgVNaAN0M56RCO3uUNhT8hu1AAtAqw",
-    link: "/collections/silent-center?collection=presence",
-  },
-  {
-    id: "light",
-    title: "Light",
-    tagline: "For your becoming",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA2QH2OVjZuf5WcRIEP7F8npj47F7LSlY4eXFlP_4urMQx5FXf9gd87o02ZumQ7pm2WKo25BGUt1bsNce0d7I-HD7QC5boW3dnerz7a62sWZjsKrvbRlbS01UwRXiArH8ZtnywdNRZ25CDJfp2abQpz-434ejKZ6OU9sBKPqqq3g10R3Dft5zyZcRp64hHVhotbtoe1SR8QHkWs_cLCp2FAQd7pl75u-fLJSWWvSsfYYBJ2TJ0V4keUY4FKlbyDFJSKzK5hMm4-Huc",
-    link: "/collections/silent-center?collection=light",
-  },
-];
+const MEGAMENU_COLLECTIONS: any[] = [];
 
 const DEFAULT_LINKS = [
   { label: "Collections", path: "/collections" },
@@ -56,6 +27,7 @@ export default function Header() {
 
   const [navLinks, setNavLinks] = useState(DEFAULT_LINKS);
   const [logoUrl, setLogoUrl] = useState("/logos/white.png");
+  const [collections, setCollections] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDb()
@@ -65,6 +37,9 @@ export default function Header() {
         }
         if (res.brand && res.brand.logoUrl) {
           setLogoUrl(res.brand.logoUrl);
+        }
+        if (res.collections) {
+          setCollections(res.collections);
         }
       })
       .catch((err) => console.error("Error loading header navigation:", err));
@@ -80,7 +55,7 @@ export default function Header() {
     <>
       {/* Desktop Header */}
       <header
-        className="sticky top-0 z-50 w-full bg-deep-navy text-pure-white border-b border-slate-grey/20 px-margin-desktop py-4 grid grid-cols-[1fr_auto_1fr] items-center lg:grid hidden"
+        className="sticky top-0 z-50 w-full bg-deep-navy text-pure-white border-b border-slate-grey/20 px-margin-desktop py-4 grid grid-cols-[1fr_auto_1fr] items-center hidden"
         onMouseLeave={() => setCollectionsHovered(false)}
       >
         {/* Left: Nav links */}
@@ -226,7 +201,7 @@ export default function Header() {
       </header>
 
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 w-full bg-deep-navy text-pure-white px-margin-mobile py-4 flex justify-between items-center lg:hidden border-b border-slate-grey/20">
+      <header className="sticky top-0 z-50 w-full bg-deep-navy text-pure-white px-margin-mobile py-4 flex justify-between items-center border-b border-slate-grey/20">
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="cursor-pointer flex items-center justify-center w-8 h-8"
@@ -270,7 +245,7 @@ export default function Header() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-x-0 top-[57px] bottom-0 z-40 bg-deep-navy text-pure-white flex flex-col px-margin-mobile py-8 lg:hidden overflow-y-auto transition-transform duration-300">
+        <div className="fixed inset-x-0 top-[57px] bottom-0 z-40 bg-deep-navy text-pure-white flex flex-col px-margin-mobile py-8 overflow-y-auto transition-transform duration-300">
           <nav className="flex flex-col gap-6 font-label-caps text-lg uppercase tracking-wider">
             {navLinks.map((link, idx) => {
               const isCollLink = link.path === "/collections";
@@ -290,34 +265,16 @@ export default function Header() {
                     </button>
                     {mobileCollectionsOpen && (
                       <div className="flex flex-col gap-3 pl-4 pt-3 text-sm font-label-caps text-pure-white/70">
-                        <Link
-                          href="/collections/silent-center"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="hover:text-pure-white transition-colors py-1 border-b border-pure-white/5"
-                        >
-                          Silent Center
-                        </Link>
-                        <Link
-                          href="/collections/silent-center?collection=solitude"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="hover:text-pure-white transition-colors py-1 border-b border-pure-white/5"
-                        >
-                          Solitude
-                        </Link>
-                        <Link
-                          href="/collections/silent-center?collection=presence"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="hover:text-pure-white transition-colors py-1 border-b border-pure-white/5"
-                        >
-                          Presence
-                        </Link>
-                        <Link
-                          href="/collections/silent-center?collection=light"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="hover:text-pure-white transition-colors py-1 border-b border-pure-white/5"
-                        >
-                          Light
-                        </Link>
+                        {collections.map((col) => (
+                          <Link
+                            key={col.id}
+                            href={`/collections/silent-center?collection=${col.id}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="hover:text-pure-white transition-colors py-1 border-b border-pure-white/5"
+                          >
+                            {col.title}
+                          </Link>
+                        ))}
                         <Link
                           href="/collections"
                           onClick={() => setMobileMenuOpen(false)}

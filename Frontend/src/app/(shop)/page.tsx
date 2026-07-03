@@ -35,32 +35,7 @@ const DEFAULT_DATA = {
       }
     ]
   },
-  collections: [
-    {
-      id: "solitude",
-      title: "Solitude",
-      tagline: "For your inner world",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBvjqmByDlRaJiifUTxVoINswXXm-PAkkbVJ9hcfeaPCrqjzkhDhne1pVofS21ApvXAeGd-OJFnGRzVL8xM1zqRCFmpkvOkIowL3V5vx4O5w-jEkPUpaAjd3iMY1jo-f1BXRbiYG4udPbS3MQHLhriu6sBx3BzN7lMwreEZ1yb4ZK1AR6DhvzuF6SFzUjcqZWiXVPPkEHA2TrBgX495Y9x6krS50C7hS02F_3H0td5UhiUYM92VuwUaofA_QbD6kd14XQ5N6xQdRN8",
-    },
-    {
-      id: "presence",
-      title: "Presence",
-      tagline: "For your everyday",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDphu-s5pByRrI5yOYV0iUrAQhJYlFn9pL56eus7YnulYdC3nxZphQV-dBchzOg9F9C9LvMP1pu7Z-pLdoAmvfuYBpwUk4oJ5auvdPVe_jU2tO6Ldyghkc_ftk25VpTLHGq_4DKkpFIC_w_TgCVCFNwT7xlIzlR6i-4QQwgJHFq41jST-K1fySNIMaWHIa6EMO_OoRUmmcTTgSqML2SGB8jMU92aBukkLElsZJVzQ6iVNHyjlgVNaAN0M56RCO3uUNhT8hu1AAtAqw",
-    },
-    {
-      id: "silent-center",
-      title: "Silent Center",
-      tagline: "For your balance",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCJ1SV0eXJGZrnjfsm6WOrr3dKft0IVZvS2oM6Wf_4vqwndBPocrNSLKtPsbIWUU4g7YWrwgFZmE16ipICZ0QKg6NulSK0D4DTI4FLnuehTPqcKDF-MPdTTbMRnYiwYRh3zsWojYE3R1iHTC60ZfQ8QWGmDD8mnP3JETge_mPnGQPnFepdY66OuKQsUgWIiwNWQZhfsJ00eO2IOXl7WoHUmQypxFUQFslrgHABiUUv1WrU2ZYbRgDbO_H6gk84g6nofQG2mXVqa538",
-    },
-    {
-      id: "light",
-      title: "Light",
-      tagline: "For your becoming",
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA2QH2OVjZuf5WcRIEP7F8npj47F7LSlY4eXFlP_4urMQx5FXf9gd87o02ZumQ7pm2WKo25BGUt1bsNce0d7I-HD7QC5boW3dnerz7a62sWZjsKrvbRlbS01UwRXiArH8ZtnywdNRZ25CDJfp2abQpz-434ejKZ6OU9sBKPqqq3g10R3Dft5zyZcRp64hHVhotbtoe1SR8QHkWs_cLCp2FAQd7pl75u-fLJSWWvSsfYYBJ2TJ0V4keUY4FKlbyDFJSKzK5hMm4-Huc",
-    },
-  ],
+  collections: [],
 };
 
 export default function Home() {
