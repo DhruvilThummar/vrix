@@ -61,21 +61,10 @@ export default function AdminProductsPage() {
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { loadProducts(); }, []);
-
-  // Handle URL parameters for selecting a product or opening the drawer
-  useEffect(() => {
-    if (loading || products.length === 0) return;
-
-    if (paramId) {
-      const match = products.find(p => p.id === paramId);
-      if (match) {
-        selectProduct(match);
-      }
-    } else if (paramDrawer === "new") {
-      handleNewProduct();
-    }
-  }, [paramId, paramDrawer, products, loading]);
+  const showToast = (msg: string, type: "ok" | "err" = "ok") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const loadProducts = () => {
     setLoading(true);
@@ -101,10 +90,21 @@ export default function AdminProductsPage() {
     setFCollection("silent-center"); setFStock(999); setFVisible(true);
   };
 
-  const showToast = (msg: string, type: "ok" | "err" = "ok") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  };
+  useEffect(() => { loadProducts(); }, []);
+
+  // Handle URL parameters for selecting a product or opening the drawer
+  useEffect(() => {
+    if (loading || products.length === 0) return;
+
+    if (paramId) {
+      const match = products.find(p => p.id === paramId);
+      if (match) {
+        selectProduct(match);
+      }
+    } else if (paramDrawer === "new") {
+      handleNewProduct();
+    }
+  }, [paramId, paramDrawer, products, loading]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
