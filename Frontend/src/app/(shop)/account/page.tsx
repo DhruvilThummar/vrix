@@ -9,6 +9,7 @@ import {
   confirmRegistration,
   loginUser,
   confirmLogin,
+  loginUserDirect,
   addSecurityLog,
   fetchProducts,
   fetchDb,
@@ -152,11 +153,13 @@ export default function UserAccountPage() {
         if (!authName) { setAuthError("Name is required for registration."); setAuthLoading(false); return; }
         await registerUser({ email: authEmail, password: authPassword, name: authName, phone: authPhone });
         triggerFeedback("Verification code sent to your email!");
+        setAuthStep("otp");
       } else {
-        await loginUser({ email: authEmail, password: authPassword });
-        triggerFeedback("Sign in code sent to your email!");
+        const res = await loginUserDirect({ email: authEmail, password: authPassword });
+        login(authEmail, { name: res.user.name, phone: res.user.phone });
+        triggerFeedback("Welcome back!");
+        setAuthStep("verified");
       }
-      setAuthStep("otp");
     } catch (err: any) {
       setAuthError(err.message || "Authentication request failed. Please try again.");
     } finally {
@@ -357,7 +360,7 @@ export default function UserAccountPage() {
                   {authLoading ? (
                     <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                    authMode === "signup" ? "Verify & Register" : "Send Verification Code"
+                    authMode === "signup" ? "Verify & Register" : "Sign In"
                   )}
                 </button>
               </form>
@@ -365,21 +368,27 @@ export default function UserAccountPage() {
               {/* Truecaller Login Block */}
               {truecallerEnabled && (
                 <div className="pt-4 border-t border-slate-grey/15 space-y-4">
-                  <p className="text-center text-[10px] font-label-caps text-slate-grey tracking-wider uppercase">Or login instantly</p>
+                  <p className="text-center text-[10px] font-label-caps text-slate-grey tracking-wider uppercase">Or verify instantly</p>
                   <button
                     type="button"
                     onClick={handleTruecallerVerification}
                     className="w-full bg-[#0087FF] text-pure-white py-3.5 font-button text-xs uppercase tracking-widest hover:bg-[#0076E5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                   >
                     <span className="material-symbols-outlined text-[16px]">bolt</span>
-                    Sign in with Truecaller
+                    {authMode === "signup" ? "Sign up with Truecaller" : "Sign in with Truecaller"}
                   </button>
                 </div>
               )}
 
-              <p className="text-center text-[11px] text-slate-grey font-body-md leading-relaxed">
-                For your security, we'll send a 6-digit confirmation code to your email.
-              </p>
+              {authMode === "signup" ? (
+                <p className="text-center text-[11px] text-slate-grey font-body-md leading-relaxed">
+                  For your security, we'll send a 6-digit confirmation code to your email.
+                </p>
+              ) : (
+                <p className="text-center text-[11px] text-slate-grey font-body-md leading-relaxed">
+                  Secure access to your VRIX account details and order history.
+                </p>
+              )}
             </div>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
@@ -424,6 +433,91 @@ export default function UserAccountPage() {
                 Use a different email
               </button>
             </form>
+          )}
+
+          {/* Truecaller Sandbox Modal */}
+          {showTruecallerModal && (
+            <div className="fixed inset-0 bg-deep-navy/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 transition-all animate-fade-in">
+              <div className="bg-pure-white w-full max-w-sm border border-slate-grey/25 shadow-2xl p-6 relative flex flex-col space-y-5 animate-scale-up">
+                {/* Close Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowTruecallerModal(false)}
+                  className="absolute top-4 right-4 text-slate-grey hover:text-ink-black transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[20px]">close</span>
+                </button>
+
+                {/* Header */}
+                <div className="text-center space-y-1">
+                  <div className="w-12 h-12 bg-[#0087FF]/10 text-[#0087FF] rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span className="material-symbols-outlined text-[26px]">bolt</span>
+                  </div>
+                  <h3 className="font-display-lg text-lg text-deep-navy tracking-wide uppercase">Truecaller Sandbox</h3>
+                  <p className="font-body-md text-[11px] text-slate-grey">Simulating Truecaller 1-Tap Verification</p>
+                </div>
+
+                {/* Form Fields */}
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Simulated Name</label>
+                    <input
+                      type="text"
+                      value={simName}
+                      onChange={(e) => setSimName(e.target.value)}
+                      placeholder="Dhruv Agent"
+                      required
+                      className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Simulated Email</label>
+                    <input
+                      type="email"
+                      value={simEmail}
+                      onChange={(e) => setSimEmail(e.target.value)}
+                      placeholder="dhruv@vrix.com"
+                      required
+                      className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Simulated Phone</label>
+                    <input
+                      type="tel"
+                      value={simPhone}
+                      onChange={(e) => setSimPhone(e.target.value)}
+                      placeholder="+919876543210"
+                      required
+                      className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Verify Button */}
+                <button
+                  type="button"
+                  onClick={handleTruecallerAutofillConfirm}
+                  disabled={authLoading}
+                  className="w-full bg-[#0087FF] text-pure-white py-3.5 font-button text-xs uppercase tracking-widest hover:bg-[#0076E5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md mt-4"
+                >
+                  {authLoading ? (
+                    <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">verified_user</span>
+                      Instant Verification
+                    </>
+                  )}
+                </button>
+
+                <p className="text-[10px] text-center text-slate-grey leading-relaxed pt-1">
+                  Clicking verify will send a mock payload to `/api/truecaller/verify` to simulate a real Truecaller callback response.
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </div>

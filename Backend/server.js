@@ -618,6 +618,41 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+// Direct Login Route: Verifies password and logs in immediately without OTP
+app.post("/api/auth/login/direct", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required." });
+  }
+
+  try {
+    const user = await db.users.findUnique({ where: { email } });
+    if (!user) {
+      await db.securityLogs.create({
+        data: { event: "ACCOUNT_LOGIN", user: email, status: "FAILED" },
+      });
+      return res.status(401).json({ error: "Incorrect email or password." });
+    }
+
+    // Verify Password
+    const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
+    if (user.password !== hashedPassword && user.password !== "truecaller_oauth_account") {
+      await db.securityLogs.create({
+        data: { event: "ACCOUNT_LOGIN", user: email, status: "FAILED" },
+      });
+      return res.status(401).json({ error: "Incorrect email or password." });
+    }
+
+    await db.securityLogs.create({
+      data: { event: "ACCOUNT_LOGIN", user: email, status: "SUCCESS" },
+    });
+
+    res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Confirm Login: Verifies OTP and completes log in session
 app.post("/api/auth/login/confirm", async (req, res) => {
   const { email, otp } = req.body;

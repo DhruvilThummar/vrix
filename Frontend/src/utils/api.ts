@@ -202,6 +202,14 @@ export async function confirmLogin(payload: any) {
   });
 }
 
+export async function loginUserDirect(payload: any) {
+  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string } }>("/auth/login/direct", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function verifyTruecaller(payload?: string, signature?: string, signatureAlgorithm?: string) {
   return apiFetch<{
     success: boolean;
