@@ -1262,3 +1262,5 @@ app.listen(PORT, () => {
   console.log(`   Integrations : Dynamically managed (Cloudinary, Razorpay, SMTP, Truecaller)\n`);
 });
 
+export default app;
+
