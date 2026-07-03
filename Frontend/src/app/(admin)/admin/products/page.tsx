@@ -124,7 +124,10 @@ export default function AdminProductsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fTitle || !fPrice || !fImage) { showToast("Title, price, and image are required.", "err"); return; }
+    if (!fTitle.trim() || fPrice === undefined || fPrice === null || isNaN(fPrice) || fPrice < 0 || !fImage.trim()) {
+      showToast("Title, price, and image are required.", "err");
+      return;
+    }
     setSaveLoading(true);
     const id = fTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const prodData = {

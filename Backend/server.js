@@ -27,7 +27,17 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors());
+// Dynamically mirror the request's origin (supports localhost:3000, vercel, etc.) and allow credentials
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+app.options("*", cors());
 app.use(express.json());
 
 // Serve local uploads if Cloudinary is not configured
@@ -67,6 +77,14 @@ app.use("/api/promo", promoRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/delivery", deliveryRouter);
 app.use("/api/admin", adminRouter);
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("💥 Server Error:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "An unexpected error occurred on the server"
+  });
+});
 
 // ─── Start Server ──────────────────────────────────────────────────────────────
 app.listen(PORT, () => {

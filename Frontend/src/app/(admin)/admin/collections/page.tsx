@@ -104,7 +104,7 @@ export default function AdminCollectionsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fTitle || !fImage) { showToast("Title and image are required.", "err"); return; }
+    if (!fTitle.trim() || !fImage.trim()) { showToast("Title and image are required.", "err"); return; }
     const id = fId || fTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     const updated: Collection = { id, title: fTitle, tagline: fTagline, description: fDescription, image: fImage, link: fLink, isVisible: fVisible };
     let newList: Collection[];

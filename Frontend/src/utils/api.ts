@@ -150,6 +150,45 @@ export async function uploadMedia(file: File): Promise<{ url: string; public_id:
   return res.json();
 }
 
+export async function uploadMediaMultiple(files: File[]): Promise<{
+  results: Array<{
+    originalname: string;
+    url?: string;
+    public_id?: string;
+    error?: string;
+    success: boolean;
+  }>;
+}> {
+  const form = new FormData();
+  files.forEach((file) => {
+    form.append("files", file);
+  });
+  const res = await fetch(`${API_BASE_URL}/media/upload-multiple`, { method: "POST", body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Multiple upload failed");
+  }
+  return res.json();
+}
+
+export async function fetchMedia(): Promise<{
+  files: Array<{
+    name: string;
+    url: string;
+    createdAt: string;
+    size: number;
+  }>;
+}> {
+  return apiFetch<{
+    files: Array<{
+      name: string;
+      url: string;
+      createdAt: string;
+      size: number;
+    }>;
+  }>("/media");
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  OTP
 // ══════════════════════════════════════════════════════════════════════════════
