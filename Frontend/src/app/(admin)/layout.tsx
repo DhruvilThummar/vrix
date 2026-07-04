@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { fetchProducts, fetchPaymentLogs, fetchUsers } from "@/utils/api";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -10,6 +11,8 @@ import AdminProfileModal from "@/components/admin/AdminProfileModal";
 const DEFAULT_AVATAR = "https://lh3.googleusercontent.com/aida-public/AB6AXuCEmDU3gu16YubKEVucF99HSS0iunyLU-YcbfpfX9oeZzjPdLD20AMfwJNxNlPG0c9jCGX2GJyo6O3_-kgjnu_9YPI6tWcYCujJKYFngfcebHqBEnkmdkv-561gqgQUG3BHCniP5Kj92pqfqs8NLRmcH2cQxdX7DTn9Kzmjqi7Ry3FBcjpeo31uXBUviSFTGjuuu7KVIaMGAeEg4r9_lVPAShUIH1QIIXrJdyb0hxe9AlXd1VW6wgAApagpCY3c-CV2KqwlPsM4sEk";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -134,6 +137,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setIsModalOpen(false);
   };
 
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem("vrix_delivery_user");
+    setIsDropdownOpen(false);
+    setIsSearchFocused(false);
+    setSearchQuery("");
+    router.replace("/account");
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-soft-linen">
       <AdminSidebar />
@@ -145,6 +157,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           isDropdownOpen={isDropdownOpen}
           setIsDropdownOpen={setIsDropdownOpen}
           onOpenModal={() => { setIsModalOpen(true); setIsDropdownOpen(false); }}
+          onLogout={handleLogout}
           dropdownRef={dropdownRef}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

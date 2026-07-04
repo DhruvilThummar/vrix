@@ -142,6 +142,15 @@ export default function UserAccountPage() {
     setTimeout(() => setSuccessMsg(null), 3500);
   };
 
+  const handleAccountLogout = () => {
+    logout();
+    setAuthStep("email");
+    setAuthEmail("");
+    setOtpInput(["", "", "", "", "", ""]);
+    setActiveTab("dashboard");
+    router.replace("/account");
+  };
+
   // ── Auth Handlers ──────────────────────────────────────────────────────────
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -788,7 +797,7 @@ export default function UserAccountPage() {
                 <p className="font-body-md text-sm text-slate-grey">Are you sure you want to sign out?</p>
               </div>
               <div className="flex gap-4 justify-center pt-6">
-                <button onClick={() => { setAuthStep("email"); setAuthEmail(""); setOtpInput(["","","","","",""]); setActiveTab("dashboard"); }} className="font-button text-xs uppercase px-8 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer">Sign Out</button>
+                <button onClick={handleAccountLogout} className="font-button text-xs uppercase px-8 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer">Sign Out</button>
                 <button onClick={() => setActiveTab("dashboard")} className="font-button text-xs uppercase px-8 py-3 border border-slate-grey/30 text-slate-grey hover:text-ink-black transition-colors cursor-pointer">Cancel</button>
               </div>
             </div>

@@ -22,6 +22,7 @@ interface AdminHeaderProps {
   isDropdownOpen: boolean;
   setIsDropdownOpen: (open: boolean) => void;
   onOpenModal: () => void;
+  onLogout: () => void;
   dropdownRef: React.RefObject<HTMLDivElement | null>;
 
   // Search
@@ -44,6 +45,7 @@ export default function AdminHeader({
   isDropdownOpen,
   setIsDropdownOpen,
   onOpenModal,
+  onLogout,
   dropdownRef,
   searchQuery,
   setSearchQuery,
@@ -287,10 +289,7 @@ export default function AdminHeader({
               </Link>
               <div className="border-t border-slate-grey/10 my-1"></div>
               <button
-                onClick={() => {
-                  alert("Admin logout simulated.");
-                  setIsDropdownOpen(false);
-                }}
+                onClick={onLogout}
                 className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/5 flex items-center gap-2 cursor-pointer transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">logout</span>

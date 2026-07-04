@@ -34,7 +34,7 @@ const createUniqueProductId = async (title) => {
   let candidate = base;
   let suffix = 2;
 
-  while (await db.products.findUnique({ where: { id: candidate } })) {
+  while (await db.products.exists({ where: { id: candidate } })) {
     candidate = `${base}-${suffix}`;
     suffix += 1;
   }
@@ -73,7 +73,7 @@ router.post("/", async (req, res) => {
 
     if (!data.id) {
       data.id = await createUniqueProductId(data.title);
-    } else if (await db.products.findUnique({ where: { id: data.id } })) {
+    } else if (await db.products.exists({ where: { id: data.id } })) {
       data.id = await createUniqueProductId(data.id);
     }
 

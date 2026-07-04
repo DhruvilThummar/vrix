@@ -45,6 +45,54 @@ if (isDbConnected) {
   console.log("Database Access Layer: DATABASE_URL not set. Falling back to local db.json.");
 }
 
+const productSelect = {
+  id: true,
+  title: true,
+  material: true,
+  type: true,
+  price: true,
+  image: true,
+  images: true,
+  description: true,
+  alt: true,
+  collection: true,
+  stock: true,
+  isVisible: true,
+  createdAt: true,
+};
+
+const productSelectWithoutImages = Object.fromEntries(
+  Object.entries(productSelect).filter(([key]) => key !== "images")
+);
+
+const isMissingProductImagesColumnError = (error) => {
+  const message = String(error?.message || "");
+  return message.includes("products.images") || (error?.code === "P2022" && message.includes("images"));
+};
+
+const withImageGalleryFallback = (product) => (
+  product && !("images" in product)
+    ? { ...product, images: product.image ? [product.image] : [] }
+    : product
+);
+
+const stripProductImages = (data = {}) => {
+  const { images, ...rest } = data;
+  return rest;
+};
+
+const runProductQuery = async (queryWithImages, queryWithoutImages) => {
+  try {
+    return await queryWithImages();
+  } catch (error) {
+    if (!isMissingProductImagesColumnError(error)) throw error;
+    const result = await queryWithoutImages();
+    return Array.isArray(result)
+      ? result.map(withImageGalleryFallback)
+      : withImageGalleryFallback(result);
+  }
+};
+
 // Unified export
 export const db = {
   // Check connection status
@@ -95,9 +143,16 @@ export const db = {
   products: {
     findMany: async () => {
       if (db.isConnected()) {
-        return await prisma.product.findMany({
-          orderBy: { createdAt: "desc" }
-        });
+        return await runProductQuery(
+          () => prisma.product.findMany({
+            orderBy: { createdAt: "desc" },
+            select: productSelect
+          }),
+          () => prisma.product.findMany({
+            orderBy: { createdAt: "desc" },
+            select: productSelectWithoutImages
+          })
+        );
       } else {
         const localData = readLocalDb();
         return localData.products || [];
@@ -105,15 +160,29 @@ export const db = {
     },
     findUnique: async ({ where: { id } }) => {
       if (db.isConnected()) {
-        return await prisma.product.findUnique({ where: { id } });
+        return await runProductQuery(
+          () => prisma.product.findUnique({ where: { id }, select: productSelect }),
+          () => prisma.product.findUnique({ where: { id }, select: productSelectWithoutImages })
+        );
       } else {
         const localData = readLocalDb();
         return (localData.products || []).find(p => p.id === id) || null;
       }
     },
+    exists: async ({ where: { id } }) => {
+      if (db.isConnected()) {
+        return !!(await prisma.product.findUnique({ where: { id }, select: { id: true } }));
+      } else {
+        const localData = readLocalDb();
+        return (localData.products || []).some(p => p.id === id);
+      }
+    },
     create: async ({ data }) => {
       if (db.isConnected()) {
-        return await prisma.product.create({ data });
+        return await runProductQuery(
+          () => prisma.product.create({ data, select: productSelect }),
+          () => prisma.product.create({ data: stripProductImages(data), select: productSelectWithoutImages })
+        );
       } else {
         const localData = readLocalDb();
         localData.products = localData.products || [];
@@ -124,7 +193,10 @@ export const db = {
     },
     update: async ({ where: { id }, data }) => {
       if (db.isConnected()) {
-        return await prisma.product.update({ where: { id }, data });
+        return await runProductQuery(
+          () => prisma.product.update({ where: { id }, data, select: productSelect }),
+          () => prisma.product.update({ where: { id }, data: stripProductImages(data), select: productSelectWithoutImages })
+        );
       } else {
         const localData = readLocalDb();
         localData.products = localData.products || [];
@@ -139,7 +211,7 @@ export const db = {
     },
     delete: async ({ where: { id } }) => {
       if (db.isConnected()) {
-        return await prisma.product.delete({ where: { id } });
+        return await prisma.product.delete({ where: { id }, select: { id: true } });
       } else {
         const localData = readLocalDb();
         localData.products = localData.products || [];
