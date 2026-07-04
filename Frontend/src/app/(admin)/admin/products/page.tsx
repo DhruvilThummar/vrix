@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
-  fetchProducts, createProduct, updateProduct, deleteProduct, uploadMedia,
+  fetchProducts, createProduct, updateProduct, deleteProduct, uploadMediaMultiple,
   updateProductStock, updateProductVisibility,
 } from "@/utils/api";
 import { fetchDb } from "@/utils/api";
@@ -25,6 +25,7 @@ type Product = {
   type: string;
   price: number;
   image: string;
+  images?: string[];
   description?: string;
   collection?: string;
   stock?: number;
@@ -53,6 +54,7 @@ export default function AdminProductsPage() {
   const [fType, setFType] = useState("Ring");
   const [fPrice, setFPrice] = useState(0);
   const [fImage, setFImage] = useState("");
+  const [fImages, setFImages] = useState<string[]>([]);
   const [fDescription, setFDescription] = useState("");
   const [fCollection, setFCollection] = useState("silent-center");
   const [fStock, setFStock] = useState(999);
@@ -73,12 +75,22 @@ export default function AdminProductsPage() {
       .catch(() => { setLoading(false); showToast("Error loading products.", "err"); });
   };
 
+  const normalizeImages = (image: string, images?: string[]) => {
+    const urls = [image, ...(Array.isArray(images) ? images : [])]
+      .filter((url): url is string => typeof url === "string")
+      .map((url) => url.trim())
+      .filter(Boolean);
+    return Array.from(new Set(urls));
+  };
+
   const selectProduct = (p: Product) => {
     setSelectedProduct(p);
     setIsNew(false);
     setFTitle(p.title || ""); setFMaterial(p.material || "");
     setFType(p.type || "Ring"); setFPrice(p.price || 0);
-    setFImage(p.image || ""); setFDescription(p.description || "");
+    setFImage(p.image || "");
+    setFImages(normalizeImages(p.image || "", p.images));
+    setFDescription(p.description || "");
     setFCollection(p.collection || "silent-center");
     setFStock(p.stock ?? 999); setFVisible(p.isVisible !== false);
   };
@@ -86,7 +98,7 @@ export default function AdminProductsPage() {
   const handleNewProduct = () => {
     setSelectedProduct(null); setIsNew(true);
     setFTitle(""); setFMaterial(""); setFType("Ring");
-    setFPrice(0); setFImage(""); setFDescription("");
+    setFPrice(0); setFImage(""); setFImages([]); setFDescription("");
     setFCollection("silent-center"); setFStock(999); setFVisible(true);
   };
 
@@ -107,13 +119,23 @@ export default function AdminProductsPage() {
   }, [paramId, paramDrawer, products, loading]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     setUploadLoading(true);
     try {
-      const result = await uploadMedia(file);
-      setFImage(result.url);
-      showToast("Image uploaded.");
+      const result = await uploadMediaMultiple(files);
+      const uploadedUrls = result.results
+        .filter((item) => item.success && item.url)
+        .map((item) => item.url as string);
+
+      if (uploadedUrls.length === 0) {
+        throw new Error(result.results.find((item) => item.error)?.error || "No images uploaded");
+      }
+
+      const nextImages = Array.from(new Set([...fImages, ...uploadedUrls]));
+      setFImages(nextImages);
+      if (!fImage) setFImage(nextImages[0]);
+      showToast(`${uploadedUrls.length} image${uploadedUrls.length === 1 ? "" : "s"} uploaded.`);
     } catch (err: any) {
       showToast("Upload failed: " + err.message, "err");
     } finally {
@@ -122,18 +144,33 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleImageUrlChange = (url: string) => {
+    setFImage(url);
+    setFImages(normalizeImages(url, fImages));
+  };
+
+  const handleRemoveImage = (url: string) => {
+    const nextImages = fImages.filter((img) => img !== url);
+    setFImages(nextImages);
+    if (fImage === url) setFImage(nextImages[0] || "");
+  };
+
+  const handleSetCoverImage = (url: string) => {
+    setFImage(url);
+    setFImages(normalizeImages(url, fImages));
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fTitle.trim() || fPrice === undefined || fPrice === null || isNaN(fPrice) || fPrice < 0 || !fImage.trim()) {
-      showToast("Title, price, and image are required.", "err");
+    const productImages = normalizeImages(fImage, fImages);
+    if (!fTitle.trim() || fPrice === undefined || fPrice === null || isNaN(fPrice) || fPrice < 0 || productImages.length === 0) {
+      showToast("Title, price, and at least one image are required.", "err");
       return;
     }
     setSaveLoading(true);
-    const id = fTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const prodData = {
-      ...(isNew ? { id } : {}),
       title: fTitle, material: fMaterial, type: fType,
-      price: Number(fPrice), image: fImage, description: fDescription,
+      price: Number(fPrice), image: fImage || productImages[0], images: productImages, description: fDescription,
       collection: fCollection, stock: Number(fStock), isVisible: fVisible,
       alt: `A minimalist architectural ${fType} by VRIX from the ${COLLECTION_LABELS[fCollection]} collection.`,
     };
@@ -362,20 +399,34 @@ export default function AdminProductsPage() {
                     </div>
                   </div>
 
-                  {/* Image */}
+                  {/* Images */}
                   <div className="flex flex-col gap-2">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Product Image *</label>
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Product Images *</label>
                     <div className="flex gap-3 items-start">
                       <div className="flex-1 space-y-2">
-                        <input type="url" value={fImage} onChange={(e) => setFImage(e.target.value)} placeholder="Image URL or upload below" className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent" />
+                        <input type="url" value={fImage} onChange={(e) => handleImageUrlChange(e.target.value)} placeholder="Cover image URL or upload below" className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent" />
                         <div className="flex items-center gap-2">
-                          <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleImageUpload} className="hidden" id="prod-img-upload" />
+                          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" id="prod-img-upload" />
                           <label htmlFor="prod-img-upload" className={`inline-flex items-center gap-1.5 font-button text-[9px] uppercase px-3 py-1.5 border border-slate-grey/30 text-slate-grey hover:border-deep-navy hover:text-deep-navy transition-colors cursor-pointer ${uploadLoading ? "opacity-50 pointer-events-none" : ""}`}>
                             {uploadLoading ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" /> : <span className="material-symbols-outlined text-[12px]">upload</span>}
-                            {uploadLoading ? "Uploading..." : "Upload"}
+                            {uploadLoading ? "Uploading..." : "Upload Images"}
                           </label>
                           <span className="text-[9px] text-slate-grey">JPG · PNG · WebP</span>
                         </div>
+                        {fImages.length > 0 && (
+                          <div className="grid grid-cols-4 gap-2 pt-2">
+                            {fImages.map((url) => (
+                              <div key={url} className={`relative aspect-[4/5] bg-soft-linen border overflow-hidden ${url === fImage ? "border-deep-navy" : "border-slate-grey/15"}`}>
+                                <button type="button" onClick={() => handleSetCoverImage(url)} className="absolute inset-0 z-10 cursor-pointer" aria-label="Set cover image" />
+                                <Image src={url} alt="Product gallery" fill className="object-cover mix-blend-multiply" sizes="80px" />
+                                {url === fImage && <span className="absolute left-1 bottom-1 z-20 bg-deep-navy text-pure-white text-[8px] font-label-caps uppercase px-1 py-0.5">Cover</span>}
+                                <button type="button" onClick={() => handleRemoveImage(url)} className="absolute right-1 top-1 z-20 w-5 h-5 bg-pure-white/90 border border-slate-grey/30 text-ink-black flex items-center justify-center cursor-pointer" aria-label="Remove image">
+                                  <span className="material-symbols-outlined text-[12px]">close</span>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       {fImage && (
                         <div className="w-20 h-24 relative bg-soft-linen overflow-hidden border border-slate-grey/15 shrink-0">

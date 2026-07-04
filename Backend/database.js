@@ -572,6 +572,7 @@ export async function migrateIfNeeded() {
               type: p.type,
               price: Number(p.price),
               image: p.image,
+              images: Array.isArray(p.images) ? p.images : (p.image ? [p.image] : []),
               description: p.description || "",
               alt: p.alt || "",
               collection: p.collection || ""

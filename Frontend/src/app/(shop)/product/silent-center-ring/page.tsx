@@ -13,6 +13,7 @@ const DEFAULT_PRODUCT = {
   material: "18K Gold Vermeil & White Sapphire",
   price: 180,
   image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCi1FcGb9JCgKp0bQNn6hHoMfVtx8bGaQVxU6SUx3CUvynURNZEWjXkcbb0t2j94rIQTCuLBeRnt3ycnvp3ZsUeOHN04_45Z5Y4DPQXgxch1mUrrI8unNaeY3nOH7Y3-am6TVke8zbsKFdPh_2KddVZqo_qDouO5a_mDsktkhIQvCz7KyHfvK5ZW-BbVVY2Ka1FCSvVO8l4EgH2Wm1GRQqokMl3yVF9P5TgsXyW6r1dQ-ECCE9QyoZZTwl_INzOjPZpds4fOZxGCgk",
+  images: [] as string[],
   description: "A symbol of inner balance. Designed to remind you that you are your own center. Minimalist architecture translated into an intimate everyday companion.",
 };
 
@@ -56,11 +57,15 @@ function ProductContent() {
   }, [product]);
 
   const galleryImages = useMemo(() => {
-    return [
-      { src: product.image, alt: `Main view of ${product.title}` },
-      { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuBhJFar1380SAfCo6Ay1rBc9RMzpMeaVFQ0gZa4S8hcBFImeBuycZm_k7vbAowb-Yd6k71OQ4TcaHnosPtszBt5UlKddNfyO_LansZyP6AfB7d6SveVM37VrZBDlSIkiLlEB6dZYj1PdIBeTZA2OQrpI9QvMELYUY4Rpu0FlyTCLqioeTKcjA3u8N_D46GK-9ssDhewsCwnZ2klFgKJ_cbFIGRLXIrGneRFCm08nPAhFyYoYzmAG2gAk6Srsrz71ahCIpnXyCeQySk", alt: `Alternative view of ${product.title}` },
-      { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuB53uPtXi9ispXsZC99v3Tqd8ortbMasQYNeFjdKewNBosA-36U0pZkW2ZUPwPoOkkC7HhSIB-5GBaYrAE66AdkTzxBF24ovAyAsTraF7uDMYl2ZVWiExqx3ucy0Xx7KAe9SIGa0uiPGrtSWm711MLaA6x6_hQU8l7jH0kU5H4CCfKD7MmLY_ePuv-nTaZcVCn1kAgAKA80GInh5b7JN08asU72LVZMdkZ0_zXzThCQXlguv9Kw9DyTEaKAaKCH8fZbEWK9lgClhns", alt: `Model wearing ${product.title}` },
-    ];
+    const urls = [product.image, ...(Array.isArray(product.images) ? product.images : [])]
+      .filter((url): url is string => typeof url === "string")
+      .filter(Boolean)
+      .filter((url, index, arr) => arr.indexOf(url) === index);
+
+    return urls.map((src, index) => ({
+      src,
+      alt: index === 0 ? `Main view of ${product.title}` : `Gallery view ${index + 1} of ${product.title}`,
+    }));
   }, [product]);
 
   const toggleAccordion = (name: string) => {
@@ -186,24 +191,17 @@ function ProductContent() {
               <div className="flex justify-between items-center mb-2">
                 <span className="font-label-caps text-slate-grey text-[10px]">Gallery Inspection</span>
               </div>
-              <div className="bg-soft-linen aspect-[4/5] w-full flex items-center justify-center relative overflow-hidden">
-                <Image
-                  alt={galleryImages[1].alt}
-                  fill
-                  className="object-cover object-center mix-blend-multiply"
-                  src={galleryImages[1].src}
-                  sizes="(max-width: 768px) 100vw, 55vw"
-                />
-              </div>
-              <div className="bg-soft-linen aspect-[4/5] w-full flex items-center justify-center relative overflow-hidden">
-                <Image
-                  alt={galleryImages[2].alt}
-                  fill
-                  className="object-cover object-center mix-blend-multiply"
-                  src={galleryImages[2].src}
-                  sizes="(max-width: 768px) 100vw, 55vw"
-                />
-              </div>
+              {galleryImages.slice(1).map((img) => (
+                <div key={img.src} className="bg-soft-linen aspect-[4/5] w-full flex items-center justify-center relative overflow-hidden">
+                  <Image
+                    alt={img.alt}
+                    fill
+                    className="object-cover object-center mix-blend-multiply"
+                    src={img.src}
+                    sizes="(max-width: 768px) 100vw, 55vw"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
