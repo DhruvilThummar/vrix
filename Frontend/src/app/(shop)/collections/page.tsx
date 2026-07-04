@@ -13,7 +13,7 @@ export default function CollectionsPage() {
   useEffect(() => {
     fetchCollections()
       .then((res) => {
-        if (Array.isArray(res) && res.length > 0) {
+        if (Array.isArray(res)) {
           setCollections(res);
         }
       })

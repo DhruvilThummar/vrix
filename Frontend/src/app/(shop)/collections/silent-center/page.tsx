@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { fetchProducts } from "@/utils/api";
+import { fetchCollections, fetchProducts } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 
 const DEFAULT_PRODUCTS: any[] = [];
@@ -16,6 +16,7 @@ function CollectionContent() {
   const collectionQuery = searchParams.get("collection");
 
   const [products, setProducts] = useState(DEFAULT_PRODUCTS);
+  const [collections, setCollections] = useState<any[]>([]);
   const [selectedMaterial, setSelectedMaterial] = useState("All");
   const [selectedType, setSelectedType] = useState("All");
   const [sortBy, setSortBy] = useState("Curated");
@@ -40,14 +41,30 @@ function CollectionContent() {
   useEffect(() => {
     fetchProducts()
       .then((res) => {
-        if (Array.isArray(res) && res.length > 0) {
+        if (Array.isArray(res)) {
           setProducts(res);
         }
       })
       .catch((err) => console.error("Error fetching products from backend:", err));
+
+    fetchCollections()
+      .then((res) => {
+        if (Array.isArray(res)) {
+          setCollections(res);
+        }
+      })
+      .catch((err) => console.error("Error fetching collections from backend:", err));
   }, []);
 
   const collectionInfo = useMemo(() => {
+    const selectedCollection = collections.find((collection) => collection.id === (collectionQuery || "silent-center"));
+    if (selectedCollection) {
+      return {
+        title: selectedCollection.title,
+        description: selectedCollection.description || selectedCollection.tagline || "",
+      };
+    }
+
     switch (collectionQuery) {
       case "solitude":
         return {
@@ -70,7 +87,7 @@ function CollectionContent() {
           description: "A meditation on form and negative space. Pieces designed to ground you in the present moment, crafted with uncompromising architectural precision and conscious materials.",
         };
     }
-  }, [collectionQuery]);
+  }, [collectionQuery, collections]);
 
   const toggleWishlist = (id: string, title: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -113,7 +130,12 @@ function CollectionContent() {
 
   // Filtered and Sorted Products
   const processedProducts = useMemo(() => {
-    let result = [...products];
+    const activeCollection = collectionQuery || "silent-center";
+    let result = products.filter((p) => (
+      p.isVisible !== false &&
+      (p.stock ?? 999) > 0 &&
+      (p.collection || "silent-center") === activeCollection
+    ));
 
     // Filter by Material
     if (selectedMaterial !== "All") {
@@ -138,7 +160,7 @@ function CollectionContent() {
     }
 
     return result;
-  }, [products, selectedMaterial, selectedType, sortBy]);
+  }, [products, collectionQuery, selectedMaterial, selectedType, sortBy]);
 
   return (
     <div className="w-full bg-pure-white relative min-h-screen">

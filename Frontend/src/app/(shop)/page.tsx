@@ -44,13 +44,13 @@ export default function Home() {
   useEffect(() => {
     fetchDb()
       .then((res) => {
-        if (res.homepage && res.collections) {
+        if (res.homepage && Array.isArray(res.collections)) {
           setStore({
             homepage: {
               ...DEFAULT_DATA.homepage,
               ...res.homepage,
             },
-            collections: res.collections,
+            collections: res.collections.filter((collection: any) => collection.isVisible !== false),
           });
         }
       })
@@ -103,7 +103,7 @@ export default function Home() {
           {store.collections.map((col) => (
             <Link
               key={col.id}
-              href={`/collections/silent-center?collection=${col.id}`}
+              href={col.link || `/collections/silent-center?collection=${col.id}`}
               className="group cursor-pointer"
             >
               <div className="aspect-[4/5] bg-soft-linen mb-stack-md overflow-hidden relative">

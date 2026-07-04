@@ -123,7 +123,10 @@ export default function AdminProductsPage() {
     setFCollection("silent-center"); setFStock(999); setFVisible(true);
   };
 
-  useEffect(() => { loadProducts(); }, []);
+  useEffect(() => {
+    loadProducts();
+    loadCollections();
+  }, []);
 
   // Handle URL parameters for selecting a product or opening the drawer
   useEffect(() => {

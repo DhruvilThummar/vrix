@@ -7,8 +7,6 @@ import { usePathname } from "next/navigation";
 import { fetchDb } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 
-const MEGAMENU_COLLECTIONS: any[] = [];
-
 const DEFAULT_LINKS = [
   { label: "Collections", path: "/collections" },
   { label: "The World of VRIX", path: "/story" },
@@ -38,8 +36,8 @@ export default function Header() {
         if (res.brand && res.brand.logoUrl) {
           setLogoUrl(res.brand.logoUrl);
         }
-        if (res.collections) {
-          setCollections(res.collections);
+        if (Array.isArray(res.collections)) {
+          setCollections(res.collections.filter((collection: any) => collection.isVisible !== false));
         }
       })
       .catch((err) => console.error("Error loading header navigation:", err));
@@ -169,10 +167,10 @@ export default function Header() {
 
               {/* Megamenu Cards */}
               <div className="grid grid-cols-4 gap-gutter">
-                {MEGAMENU_COLLECTIONS.map((col) => (
+                {collections.map((col) => (
                   <Link
                     key={col.id}
-                    href={col.link}
+                    href={col.link || `/collections/silent-center?collection=${col.id}`}
                     className="group/item flex flex-col gap-3"
                   >
                     <div className="aspect-[16/10] relative w-full overflow-hidden bg-soft-linen/10 border border-slate-grey/10">
@@ -268,7 +266,7 @@ export default function Header() {
                         {collections.map((col) => (
                           <Link
                             key={col.id}
-                            href={`/collections/silent-center?collection=${col.id}`}
+                            href={col.link || `/collections/silent-center?collection=${col.id}`}
                             onClick={() => setMobileMenuOpen(false)}
                             className="hover:text-pure-white transition-colors py-1 border-b border-pure-white/5"
                           >

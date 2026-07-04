@@ -15,8 +15,8 @@ export default function Footer() {
         if (res.brand && res.brand.logoUrl) {
           setLogoUrl(res.brand.logoUrl);
         }
-        if (res.collections) {
-          setCollections(res.collections);
+        if (Array.isArray(res.collections)) {
+          setCollections(res.collections.filter((collection: any) => collection.isVisible !== false));
         }
       })
       .catch((err) => console.error("Error loading footer logo:", err));
@@ -58,7 +58,7 @@ export default function Footer() {
           {collections.map((col) => (
             <Link
               key={col.id}
-              href={`/collections/silent-center?collection=${col.id}`}
+              href={col.link || `/collections/silent-center?collection=${col.id}`}
               className="text-pure-white/70 hover:text-pure-white transition-colors duration-300"
             >
               {col.title}
