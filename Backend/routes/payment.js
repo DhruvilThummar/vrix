@@ -5,10 +5,55 @@ import { getRazorpay, getApiSettings, getTransporter } from "../config/apiResolv
 
 const router = express.Router();
 
+const getRazorpayCredentials = async () => {
+  const apiSettings = await getApiSettings();
+  if (apiSettings?.razorpayEnabled && apiSettings.razorpayKeyId && apiSettings.razorpayKeySecret) {
+    return {
+      keyId: apiSettings.razorpayKeyId,
+      keySecret: apiSettings.razorpayKeySecret,
+      source: "cms",
+    };
+  }
+
+  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    return {
+      keyId: process.env.RAZORPAY_KEY_ID,
+      keySecret: process.env.RAZORPAY_KEY_SECRET,
+      source: "env",
+    };
+  }
+
+  return null;
+};
+
+const safeCompareHex = (actual, expected) => {
+  const actualBuffer = Buffer.from(String(actual || ""), "hex");
+  const expectedBuffer = Buffer.from(String(expected || ""), "hex");
+  return actualBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(actualBuffer, expectedBuffer);
+};
+
+router.get("/config", async (req, res) => {
+  try {
+    const credentials = await getRazorpayCredentials();
+    res.json({
+      keyId: credentials?.keyId || null,
+      currency: "INR",
+      enabled: !!credentials?.keyId,
+      devMode: !credentials?.keyId,
+      source: credentials?.source || "dev",
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/payment/order — Create a Razorpay order
 router.post("/order", async (req, res) => {
   const { amount, currency = "INR", receipt, notes = {} } = req.body;
-  if (!amount) return res.status(400).json({ error: "Amount is required (in paise)" });
+  const amountRupees = Number(amount);
+  if (!Number.isFinite(amountRupees) || amountRupees <= 0) {
+    return res.status(400).json({ error: "Valid amount is required" });
+  }
 
   const customerName = req.body.customerName || notes.customerName || null;
   const customerPhone = req.body.customerPhone || notes.customerPhone || null;
@@ -16,30 +61,32 @@ router.post("/order", async (req, res) => {
   const city = req.body.city || notes.city || null;
   const postalCode = req.body.postalCode || notes.postalCode || null;
   const userEmail = req.body.email || notes.customerEmail || null;
+  const normalizedCurrency = String(currency || "INR").toUpperCase();
+  const normalizedReceipt = String(receipt || `vrix_${Date.now()}`).slice(0, 40);
 
   try {
     const activeRazorpay = await getRazorpay();
     if (activeRazorpay) {
       const order = await activeRazorpay.orders.create({
-        amount: Math.round(Number(amount) * 100),
-        currency,
-        receipt: receipt || `receipt_${Date.now()}`,
+        amount: Math.round(amountRupees * 100),
+        currency: normalizedCurrency,
+        receipt: normalizedReceipt,
         notes,
       });
 
       await db.payments.create({
-        data: { orderId: order.id, amount: Number(amount), currency, status: "CREATED", customerName, customerPhone, address, city, postalCode, userEmail },
+        data: { orderId: order.id, amount: amountRupees, currency: normalizedCurrency, status: "CREATED", customerName, customerPhone, address, city, postalCode, userEmail },
       });
 
       res.json({ success: true, order });
     } else {
       const mockOrderId = "order_dev_" + Date.now();
       await db.payments.create({
-        data: { orderId: mockOrderId, amount: Number(amount), currency, status: "CREATED", customerName, customerPhone, address, city, postalCode, userEmail },
+        data: { orderId: mockOrderId, amount: amountRupees, currency: normalizedCurrency, status: "CREATED", customerName, customerPhone, address, city, postalCode, userEmail },
       });
       res.json({
         success: true,
-        order: { id: mockOrderId, amount: Number(amount) * 100, currency, status: "created" },
+        order: { id: mockOrderId, amount: Math.round(amountRupees * 100), currency: normalizedCurrency, status: "created" },
         devMode: true,
       });
     }
@@ -57,18 +104,15 @@ router.post("/verify", async (req, res) => {
   }
 
   try {
-    let isValid = false;
-    const apiSettings = await getApiSettings();
-    const keySecret = apiSettings && apiSettings.razorpayEnabled && apiSettings.razorpayKeySecret
-      ? apiSettings.razorpayKeySecret
-      : process.env.RAZORPAY_KEY_SECRET;
+    const credentials = await getRazorpayCredentials();
+    let isValid = razorpay_order_id.startsWith("order_dev_") && razorpay_signature === "dev_signature";
 
-    if (keySecret) {
+    if (credentials?.keySecret) {
       const body = razorpay_order_id + "|" + razorpay_payment_id;
-      const expectedSig = crypto.createHmac("sha256", keySecret).update(body).digest("hex");
-      isValid = expectedSig === razorpay_signature;
-    } else {
-      isValid = true; // Dev mode: always pass
+      const expectedSig = crypto.createHmac("sha256", credentials.keySecret).update(body).digest("hex");
+      isValid = safeCompareHex(razorpay_signature, expectedSig);
+    } else if (!isValid) {
+      return res.status(503).json({ error: "Razorpay is not configured" });
     }
 
     if (!isValid) {
@@ -89,6 +133,7 @@ router.post("/verify", async (req, res) => {
     try {
       const activeTransporter = await getTransporter();
       if (activeTransporter) {
+        const apiSettings = await getApiSettings();
         const cmsBrand = await db.cmsSettings.findUnique({ where: { key: "brand" } }) || {};
         const adminEmail = cmsBrand.email || process.env.ADMIN_EMAIL || "contact@vrix.com";
         const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
@@ -166,7 +211,7 @@ router.post("/verify", async (req, res) => {
       console.error("Failed to send order verification email:", mailErr.message);
     }
 
-    res.json({ success: true, paymentId: razorpay_payment_id });
+    res.json({ success: true, paymentId: razorpay_payment_id, order: paymentRecord });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

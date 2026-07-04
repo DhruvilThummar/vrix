@@ -307,12 +307,28 @@ export async function createPaymentOrder(data: {
   currency?: string;
   receipt?: string;
   notes?: any;
+  customerName?: string;
+  customerPhone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
 }) {
   return apiFetch<{ success: boolean; order: any; devMode?: boolean }>("/payment/order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+}
+
+export async function fetchPaymentConfig() {
+  return apiFetch<{
+    keyId: string | null;
+    currency: string;
+    enabled: boolean;
+    devMode: boolean;
+    source: "cms" | "env" | "dev";
+  }>("/payment/config");
 }
 
 export async function verifyPayment(data: {

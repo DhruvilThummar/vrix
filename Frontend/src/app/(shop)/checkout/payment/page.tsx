@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { createPaymentOrder, verifyPayment } from "@/utils/api";
+import { createPaymentOrder, fetchPaymentConfig, verifyPayment } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 
 declare global {
@@ -35,6 +35,13 @@ export default function PaymentPage() {
   const [status, setStatus] = useState<"idle" | "processing" | "verifying" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [paidOrderId, setPaidOrderId] = useState("");
+  const [sdkReady, setSdkReady] = useState(false);
+  const [paymentConfig, setPaymentConfig] = useState<{
+    keyId: string | null;
+    currency: string;
+    enabled: boolean;
+    devMode: boolean;
+  } | null>(null);
   const razorpayLoaded = useRef(false);
 
   const discountAmount =
@@ -60,16 +67,37 @@ export default function PaymentPage() {
     // Redirect if cart empty
     if (items.length === 0) router.push("/cart");
 
+    fetchPaymentConfig()
+      .then(setPaymentConfig)
+      .catch((err) => {
+        console.error("Failed to load Razorpay config:", err);
+        setPaymentConfig({ keyId: null, currency: "INR", enabled: false, devMode: true });
+      });
+
     // Load Razorpay SDK once
-    if (!razorpayLoaded.current && !document.getElementById("razorpay-sdk")) {
+    const existingScript = document.getElementById("razorpay-sdk") as HTMLScriptElement | null;
+    if (!razorpayLoaded.current && !existingScript) {
       const script = document.createElement("script");
       script.id = "razorpay-sdk";
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
+      script.onload = () => setSdkReady(true);
+      script.onerror = () => {
+        setSdkReady(false);
+        setErrorMsg("Could not load Razorpay checkout. Please check your connection and try again.");
+      };
       document.head.appendChild(script);
       razorpayLoaded.current = true;
+    } else if (window.Razorpay) {
+      setSdkReady(true);
+    } else if (existingScript) {
+      existingScript.addEventListener("load", () => setSdkReady(true), { once: true });
+      existingScript.addEventListener("error", () => {
+        setSdkReady(false);
+        setErrorMsg("Could not load Razorpay checkout. Please check your connection and try again.");
+      }, { once: true });
     }
-  }, [items.length, router]);
+  }, [isLoggedIn, items.length, router]);
 
   const grandTotal = shipping?.grandTotal ?? subtotal - discountAmount;
 
@@ -82,13 +110,22 @@ export default function PaymentPage() {
     try {
       // 1. Create Razorpay order via backend
       const { order, devMode } = await createPaymentOrder({
-        amount: Math.round(grandTotal), // in INR (backend multiplies by 100 for paise)
+        amount: Number(grandTotal.toFixed(2)), // in INR; backend converts to paise.
         currency: shipping.currency || "INR",
         receipt: `vrix_${Date.now()}`,
+        customerName: shipping.fullName,
+        customerPhone: shipping.phone,
+        email: shipping.email,
+        address: shipping.apartment ? `${shipping.address}, ${shipping.apartment}` : shipping.address,
+        city: shipping.city,
+        postalCode: shipping.postalCode,
         notes: {
           customerEmail: shipping.email,
           customerName: shipping.fullName,
-          address: `${shipping.address}, ${shipping.city}`,
+          customerPhone: shipping.phone,
+          address: shipping.apartment ? `${shipping.address}, ${shipping.apartment}` : shipping.address,
+          city: shipping.city,
+          postalCode: shipping.postalCode,
         },
       });
 
@@ -112,13 +149,19 @@ export default function PaymentPage() {
       }
 
       // 3. Open Razorpay checkout modal
+      const rzpKey = paymentConfig?.keyId;
+      if (!rzpKey) {
+        throw new Error("Razorpay public key is not configured.");
+      }
+      if (!sdkReady || !window.Razorpay) {
+        throw new Error("Razorpay checkout is still loading. Please try again in a moment.");
+      }
+
       setStatus("idle");
       setLoading(false);
 
-      const rzpKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-
       const rzp = new window.Razorpay({
-        key: rzpKey || "rzp_test_placeholder",
+        key: rzpKey,
         amount: order.amount,
         currency: order.currency,
         name: "VRIX",
@@ -303,11 +346,13 @@ export default function PaymentPage() {
             {(status === "idle" || status === "error") && (
               <button
                 onClick={handlePayNow}
-                disabled={loading}
-                className="w-full bg-deep-navy text-pure-white py-5 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer flex items-center justify-center gap-3 text-base"
+                disabled={loading || !paymentConfig || (!paymentConfig.devMode && (!sdkReady || !paymentConfig.keyId))}
+                className="w-full bg-deep-navy text-pure-white py-5 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-base"
               >
                 <span className="material-symbols-outlined text-[18px]">lock</span>
-                Pay ₹{grandTotal.toFixed(2)} Securely
+                {!paymentConfig || (!paymentConfig.devMode && !sdkReady)
+                  ? "Loading secure checkout..."
+                  : `Pay ₹${grandTotal.toFixed(2)} Securely`}
               </button>
             )}
 
