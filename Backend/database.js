@@ -8,6 +8,38 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathDirect.dirname(__filename);
 const DB_PATH = pathDirect.join(__dirname, "data", "db.json");
 
+const normalizePrismaDatabaseUrl = () => {
+  const rawUrl = process.env.DATABASE_URL;
+  if (!rawUrl) return;
+
+  try {
+    const url = new URL(rawUrl);
+    const isSupabasePooler =
+      url.hostname.includes("pooler.supabase.com") ||
+      url.port === "6543" ||
+      rawUrl.toLowerCase().includes("pgbouncer");
+
+    if (!isSupabasePooler) return;
+
+    let changed = false;
+    if (!url.searchParams.has("pgbouncer")) {
+      url.searchParams.set("pgbouncer", "true");
+      changed = true;
+    }
+    if (!url.searchParams.has("connection_limit")) {
+      url.searchParams.set("connection_limit", "1");
+      changed = true;
+    }
+
+    if (changed) {
+      process.env.DATABASE_URL = url.toString();
+      console.log("Database Access Layer: Enabled Prisma PgBouncer mode for Supabase pooler.");
+    }
+  } catch (error) {
+    console.warn("Database Access Layer: Could not inspect DATABASE_URL for PgBouncer mode.", error);
+  }
+};
+
 // Local DB Helpers
 const readLocalDb = () => {
   try {
@@ -30,6 +62,7 @@ const writeLocalDb = (data) => {
 };
 
 // Check if DATABASE_URL is configured
+normalizePrismaDatabaseUrl();
 const isDbConnected = !!process.env.DATABASE_URL;
 let prisma = null;
 
