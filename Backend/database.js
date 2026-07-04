@@ -548,6 +548,8 @@ export async function migrateIfNeeded() {
   if (!db.isConnected()) return;
 
   try {
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB');
+
     const productCount = await prisma.product.count();
     if (productCount === 0) {
       console.log("Database Access Layer: Postgres is empty. Seeding from db.json...");
