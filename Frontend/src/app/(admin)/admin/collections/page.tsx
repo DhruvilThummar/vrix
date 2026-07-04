@@ -106,7 +106,10 @@ export default function AdminCollectionsPage() {
     e.preventDefault();
     if (!fTitle.trim() || !fImage.trim()) { showToast("Title and image are required.", "err"); return; }
     const id = fId || fTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const updated: Collection = { id, title: fTitle, tagline: fTagline, description: fDescription, image: fImage, link: fLink, isVisible: fVisible };
+    const link = fLink && fLink !== "/collections/silent-center"
+      ? fLink
+      : `/collections/silent-center?collection=${id}`;
+    const updated: Collection = { id, title: fTitle, tagline: fTagline, description: fDescription, image: fImage, link, isVisible: fVisible };
     let newList: Collection[];
     if (isNew) {
       newList = [...collections, updated];

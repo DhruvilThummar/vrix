@@ -9,8 +9,8 @@ import {
 } from "@/utils/api";
 import { fetchDb } from "@/utils/api";
 
-const COLLECTIONS = ["silent-center", "solitude", "presence", "light"];
-const COLLECTION_LABELS: Record<string, string> = {
+const DEFAULT_COLLECTIONS = ["silent-center", "solitude", "presence", "light"];
+const DEFAULT_COLLECTION_LABELS: Record<string, string> = {
   "silent-center": "Silent Center",
   solitude: "Solitude",
   presence: "Presence",
@@ -47,6 +47,8 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCollection, setFilterCollection] = useState("All");
   const [filterVisibility, setFilterVisibility] = useState("All");
+  const [collectionOptions, setCollectionOptions] = useState(DEFAULT_COLLECTIONS);
+  const [collectionLabels, setCollectionLabels] = useState<Record<string, string>>(DEFAULT_COLLECTION_LABELS);
 
   // Form fields
   const [fTitle, setFTitle] = useState("");
@@ -73,6 +75,25 @@ export default function AdminProductsPage() {
     fetchProducts()
       .then((res) => { setProducts(res); setLoading(false); })
       .catch(() => { setLoading(false); showToast("Error loading products.", "err"); });
+  };
+
+  const loadCollections = () => {
+    fetchDb()
+      .then((db) => {
+        const collections = Array.isArray(db?.collections) ? db.collections : [];
+        if (collections.length === 0) return;
+        const ids = collections
+          .map((collection: any) => String(collection.id || "").trim())
+          .filter(Boolean);
+        const labels = collections.reduce((acc: Record<string, string>, collection: any) => {
+          const id = String(collection.id || "").trim();
+          if (id) acc[id] = collection.title || id;
+          return acc;
+        }, {});
+        setCollectionOptions(Array.from(new Set([...DEFAULT_COLLECTIONS, ...ids])));
+        setCollectionLabels({ ...DEFAULT_COLLECTION_LABELS, ...labels });
+      })
+      .catch(() => showToast("Error loading collections.", "err"));
   };
 
   const normalizeImages = (image: string, images?: string[]) => {
@@ -172,7 +193,7 @@ export default function AdminProductsPage() {
       title: fTitle, material: fMaterial, type: fType,
       price: Number(fPrice), image: fImage || productImages[0], images: productImages, description: fDescription,
       collection: fCollection, stock: Number(fStock), isVisible: fVisible,
-      alt: `A minimalist architectural ${fType} by VRIX from the ${COLLECTION_LABELS[fCollection]} collection.`,
+      alt: `A minimalist architectural ${fType} by VRIX from the ${collectionLabels[fCollection] || fCollection} collection.`,
     };
     try {
       if (isNew) {
@@ -268,7 +289,7 @@ export default function AdminProductsPage() {
           </div>
           <select value={filterCollection} onChange={(e) => setFilterCollection(e.target.value)} className="px-3 py-2 text-xs border border-slate-grey/25 bg-pure-white font-body-md focus:border-deep-navy outline-none cursor-pointer">
             <option value="All">All Collections</option>
-            {COLLECTIONS.map((c) => <option key={c} value={c}>{COLLECTION_LABELS[c]}</option>)}
+            {collectionOptions.map((c) => <option key={c} value={c}>{collectionLabels[c] || c}</option>)}
           </select>
           <select value={filterVisibility} onChange={(e) => setFilterVisibility(e.target.value)} className="px-3 py-2 text-xs border border-slate-grey/25 bg-pure-white font-body-md focus:border-deep-navy outline-none cursor-pointer">
             <option value="All">All Visibility</option>
@@ -300,7 +321,7 @@ export default function AdminProductsPage() {
                       {/* Details */}
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <h4 className="font-body-md text-sm text-ink-black truncate font-medium">{p.title}</h4>
-                        <p className="text-[10px] text-slate-grey font-label-caps uppercase tracking-wider">{COLLECTION_LABELS[p.collection || ""] || p.collection} · {p.type}</p>
+                        <p className="text-[10px] text-slate-grey font-label-caps uppercase tracking-wider">{collectionLabels[p.collection || ""] || p.collection} · {p.type}</p>
                         <p className="text-xs text-deep-navy font-semibold">${p.price}</p>
                       </div>
                       {/* Stock badge */}
@@ -375,7 +396,7 @@ export default function AdminProductsPage() {
                     <div className="flex flex-col gap-1.5">
                       <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Collection</label>
                       <select value={fCollection} onChange={(e) => setFCollection(e.target.value)} className="border-b border-slate-grey/30 py-1.5 bg-transparent focus:border-deep-navy outline-none font-body-md text-sm cursor-pointer">
-                        {COLLECTIONS.map((c) => <option key={c} value={c}>{COLLECTION_LABELS[c]}</option>)}
+                        {collectionOptions.map((c) => <option key={c} value={c}>{collectionLabels[c] || c}</option>)}
                       </select>
                     </div>
                   </div>

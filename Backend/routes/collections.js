@@ -7,7 +7,8 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const collectionsData = await db.cmsSettings.findUnique({ where: { key: "collections" } });
-    res.json(collectionsData || []);
+    const collections = Array.isArray(collectionsData) ? collectionsData : [];
+    res.json(collections.filter((collection) => collection.isVisible !== false));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
