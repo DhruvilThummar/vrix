@@ -519,6 +519,24 @@ export const db = {
 
   // Redeem Codes
   redeemCodes: {
+    findMany: async () => {
+      if (db.isConnected()) {
+        return await prisma.redeemCode.findMany({
+          orderBy: { createdAt: "desc" }
+        });
+      } else {
+        const localData = readLocalDb();
+        return localData.redeemCodes || [];
+      }
+    },
+    count: async () => {
+      if (db.isConnected()) {
+        return await prisma.redeemCode.count();
+      } else {
+        const localData = readLocalDb();
+        return (localData.redeemCodes || []).length;
+      }
+    },
     findUnique: async ({ where: { code } }) => {
       if (db.isConnected()) {
         return await prisma.redeemCode.findUnique({ where: { code } });

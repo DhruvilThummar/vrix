@@ -1,11 +1,7 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
 import { db } from "../database.js";
 
 const router = express.Router();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // POST /api/promo/verify — Validate a promo code at checkout
 router.post("/verify", async (req, res) => {
@@ -26,17 +22,7 @@ router.post("/verify", async (req, res) => {
 // GET /api/promo/codes — List all promo codes (admin)
 router.get("/codes", async (req, res) => {
   try {
-    if (db.isConnected()) {
-      const { PrismaClient } = await import("@prisma/client");
-      const p = new PrismaClient();
-      const codes = await p.redeemCode.findMany({ orderBy: { createdAt: "desc" } });
-      res.json(codes);
-    } else {
-      const { readFileSync } = await import("fs");
-      const raw = readFileSync(path.join(__dirname, "..", "data", "db.json"), "utf8");
-      const local = JSON.parse(raw);
-      res.json(local.redeemCodes || []);
-    }
+    res.json(await db.redeemCodes.findMany());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -45,7 +45,7 @@ export default function AdminDashboard() {
   }, []);
 
   const statCards = stats ? [
-    { label: "Total Revenue", value: `$${(stats.totalRevenue / 100).toLocaleString()}`, icon: "payments", color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Total Revenue", value: `₹${stats.totalRevenue.toLocaleString()}`, icon: "payments", color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Total Orders", value: stats.totalOrders, icon: "receipt_long", color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Pending", value: stats.pendingOrders, icon: "pending_actions", color: "text-amber-600", bg: "bg-amber-50" },
     { label: "Products", value: stats.totalProducts, icon: "inventory_2", color: "text-deep-navy", bg: "bg-soft-linen" },
