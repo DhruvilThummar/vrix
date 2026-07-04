@@ -523,19 +523,23 @@ export const db = {
 export async function migrateIfNeeded() {
   // Always seed local db.json fallback with default staff
   try {
-    const localData = readLocalDb();
-    let updatedLocal = false;
-    if (!localData.deliveryStaff || localData.deliveryStaff.length === 0) {
-      localData.deliveryStaff = [
-        { email: "manager@vrix.com", name: "VRIX Manager", role: "manager", createdAt: new Date().toISOString() },
-        { email: "agent@vrix.com", name: "VRIX Agent", role: "agent", createdAt: new Date().toISOString() },
-        { email: "dhruv@vrix.com", name: "Dhruv Agent", role: "agent", createdAt: new Date().toISOString() }
-      ];
-      updatedLocal = true;
-    }
-    if (updatedLocal) {
-      writeLocalDb(localData);
-      console.log("Database Access Layer: Seeded local fallback delivery staff.");
+    if (process.env.VERCEL) {
+      console.log("Database Access Layer: Skipping local db.json fallback seed on Vercel.");
+    } else {
+      const localData = readLocalDb();
+      let updatedLocal = false;
+      if (!localData.deliveryStaff || localData.deliveryStaff.length === 0) {
+        localData.deliveryStaff = [
+          { email: "manager@vrix.com", name: "VRIX Manager", role: "manager", createdAt: new Date().toISOString() },
+          { email: "agent@vrix.com", name: "VRIX Agent", role: "agent", createdAt: new Date().toISOString() },
+          { email: "dhruv@vrix.com", name: "Dhruv Agent", role: "agent", createdAt: new Date().toISOString() }
+        ];
+        updatedLocal = true;
+      }
+      if (updatedLocal) {
+        writeLocalDb(localData);
+        console.log("Database Access Layer: Seeded local fallback delivery staff.");
+      }
     }
   } catch (err) {
     console.error("Database Access Layer: Failed to seed local delivery staff:", err);
