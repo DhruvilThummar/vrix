@@ -12,6 +12,15 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const PORT = process.env.PORT || 5000;
 
+function getPublicOrigin(req) {
+  const configuredOrigin = process.env.BACKEND_PUBLIC_URL || process.env.PUBLIC_API_ORIGIN;
+  if (configuredOrigin) return configuredOrigin.replace(/\/$/, "");
+
+  const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
+  const host = req.headers["x-forwarded-host"] || req.get("host") || `localhost:${PORT}`;
+  return `${protocol}://${host}`;
+}
+
 // POST /api/media/upload
 router.post("/upload", upload.single("file"), async (req, res, next) => {
   try {
@@ -54,7 +63,7 @@ router.post("/upload", upload.single("file"), async (req, res, next) => {
       const filePath = path.join(uploadsDir, safeName);
       fs.writeFileSync(filePath, req.file.buffer);
       
-      const url = `http://localhost:${PORT}/uploads/${safeName}`;
+      const url = `${getPublicOrigin(req)}/uploads/${safeName}`;
       console.log(`✅ [Media Upload] Local upload successful. Path: ${filePath}, URL: ${url}`);
       return res.json({ url, public_id: safeName });
     } catch (err) {
@@ -117,7 +126,7 @@ router.post("/upload-multiple", upload.array("files", 10), async (req, res, next
           const safeName = Date.now() + "_" + file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
           const filePath = path.join(uploadsDir, safeName);
           fs.writeFileSync(filePath, file.buffer);
-          const url = `http://localhost:${PORT}/uploads/${safeName}`;
+          const url = `${getPublicOrigin(req)}/uploads/${safeName}`;
           uploadResults.push({
             originalname: file.originalname,
             url,
@@ -166,7 +175,7 @@ router.get("/", async (req, res, next) => {
         if (stats.isFile()) {
           files.push({
             name,
-            url: `http://localhost:${PORT}/uploads/${name}`,
+            url: `${getPublicOrigin(req)}/uploads/${name}`,
             createdAt: stats.birthtime,
             size: stats.size
           });

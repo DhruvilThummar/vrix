@@ -86,11 +86,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ─── Start Server ──────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🚀 VRIX Backend API running → http://localhost:${PORT}`);
-  console.log(`   DB Mode      : ${db.isConnected() ? "Prisma (PostgreSQL)" : "Local db.json"}`);
-  console.log(`   Integrations : Dynamically managed (Cloudinary, Razorpay, SMTP, Truecaller)\n`);
-});
+// Start the HTTP listener only for local runs. Vercel imports the exported app.
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 VRIX Backend API running → http://localhost:${PORT}`);
+    console.log(`   DB Mode      : ${db.isConnected() ? "Prisma (PostgreSQL)" : "Local db.json"}`);
+    console.log(`   Integrations : Dynamically managed (Cloudinary, Razorpay, SMTP, Truecaller)\n`);
+  });
+}
 
 export default app;
