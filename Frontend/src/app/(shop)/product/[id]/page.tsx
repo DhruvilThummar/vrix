@@ -6,6 +6,8 @@ import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { fetchProducts } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
  
 const DEFAULT_PRODUCT = {
   id: "silent-center-ring",
@@ -34,11 +36,13 @@ function ProductContent() {
   const [wishlistActive, setWishlistActive] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeAccordion, setActiveAccordion] = useState<string | null>("details");
+  const [loading, setLoading] = useState(true);
  
   useEffect(() => {
     fetchProducts()
       .then(setProducts)
-      .catch((err) => console.error("Error loading products:", err));
+      .catch((err) => console.error("Error loading products:", err))
+      .finally(() => setLoading(false));
   }, []);
  
   const product = useMemo(() => {
@@ -130,6 +134,52 @@ function ProductContent() {
       setToastMessage(null);
     }, 4000);
   };
+ 
+  if (loading) {
+    return (
+      <div className="relative w-full">
+        <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-section-gap">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter md:gap-[80px]">
+            {/* Left Column: Image Gallery Skeletons */}
+            <div className="md:col-span-7 flex flex-col gap-4 md:gap-8 relative">
+              <div className="bg-soft-linen aspect-[4/5] w-full relative overflow-hidden">
+                <Skeleton height="100%" containerClassName="absolute inset-0 block h-full w-full" />
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="relative aspect-[4/5] w-24 bg-soft-linen overflow-hidden">
+                    <Skeleton height="100%" containerClassName="absolute inset-0 block h-full w-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column: Sticky Product Information Skeletons */}
+            <div className="md:col-span-5 relative mt-8 md:mt-0">
+              <div className="flex flex-col gap-stack-lg">
+                <div className="flex flex-col gap-2 border-b border-slate-grey/20 pb-8">
+                  <Skeleton height={40} width="80%" className="mb-2" />
+                  <Skeleton height={16} width="40%" className="mb-4" />
+                  <Skeleton height={28} width="30%" className="mb-4" />
+                  <Skeleton count={3} height={14} className="mb-2" />
+                  <Skeleton height={16} width="60%" className="mt-4" />
+                </div>
+                <div className="flex flex-col gap-6">
+                  <Skeleton height={50} width="100%" />
+                  <Skeleton height={50} width="100%" />
+                  <Skeleton height={50} width="100%" />
+                </div>
+                <div className="flex flex-col gap-4 mt-4">
+                  <Skeleton height={56} width="100%" />
+                  <Skeleton height={56} width="100%" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
  
   return (
     <div className="relative w-full">

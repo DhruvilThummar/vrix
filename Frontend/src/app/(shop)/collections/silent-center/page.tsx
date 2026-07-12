@@ -6,6 +6,8 @@ import { useState, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fetchCollections, fetchProducts } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const DEFAULT_PRODUCTS: any[] = [];
 
@@ -22,6 +24,7 @@ function CollectionContent() {
   const [sortBy, setSortBy] = useState("Curated");
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Sync wishlist from localStorage on mount
   useEffect(() => {
@@ -39,7 +42,8 @@ function CollectionContent() {
 
   // Fetch products from Express backend
   useEffect(() => {
-    fetchProducts()
+    setLoading(true);
+    const pFetch = fetchProducts()
       .then((res) => {
         if (Array.isArray(res)) {
           setProducts(res);
@@ -47,13 +51,17 @@ function CollectionContent() {
       })
       .catch((err) => console.error("Error fetching products from backend:", err));
 
-    fetchCollections()
+    const cFetch = fetchCollections()
       .then((res) => {
         if (Array.isArray(res)) {
           setCollections(res);
         }
       })
       .catch((err) => console.error("Error fetching collections from backend:", err));
+
+    Promise.allSettled([pFetch, cFetch]).finally(() => {
+      setLoading(false);
+    });
   }, []);
 
   const collectionInfo = useMemo(() => {
@@ -338,8 +346,27 @@ function CollectionContent() {
           </div>
         )}
 
-        {/* Empty State if No Products Match */}
-        {processedProducts.length === 0 ? (
+        {/* Empty State / Loading State / Product Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex flex-col">
+                <div className="relative w-full aspect-[4/5] bg-soft-linen overflow-hidden mb-2">
+                  <Skeleton height="100%" containerClassName="absolute inset-0 block h-full w-full" />
+                </div>
+                <div className="mt-stack-sm flex justify-between items-start pt-2">
+                  <div className="flex flex-col space-y-1 w-2/3">
+                    <Skeleton height={20} width="80%" />
+                    <Skeleton height={12} width="50%" />
+                  </div>
+                  <div className="w-16">
+                    <Skeleton height={20} width="100%" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : processedProducts.length === 0 ? (
           <div className="text-center py-section-gap flex flex-col items-center justify-center space-y-4">
             <span className="material-symbols-outlined text-slate-grey text-4xl">inventory_2</span>
             <p className="font-headline-md text-slate-grey">No products found matching your active filters.</p>

@@ -4,6 +4,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchProducts } from "@/utils/api";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 interface Product {
   id: string;
@@ -48,14 +50,6 @@ export default function SearchPage() {
     "Hoops",
     "Silver"
   ];
-
-  if (loading) {
-    return (
-      <div className="w-full min-h-[60vh] flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest animate-pulse">
-        Loading Search...
-      </div>
-    );
-  }
 
   return (
     <div className="w-full min-h-[70vh] bg-pure-white">
@@ -104,7 +98,26 @@ export default function SearchPage() {
           <h2 className="font-label-caps text-label-caps text-slate-grey mb-stack-lg uppercase tracking-widest border-b border-slate-grey/20 pb-4">
             {searchQuery ? `Search Results (${filteredProducts.length})` : "Suggested Results"}
           </h2>
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex flex-col">
+                  <div className="relative w-full aspect-[4/5] bg-soft-linen overflow-hidden mb-2">
+                    <Skeleton height="100%" containerClassName="absolute inset-0 block h-full w-full" />
+                  </div>
+                  <div className="mt-stack-sm flex justify-between items-start pt-2">
+                    <div className="flex flex-col space-y-1 w-2/3">
+                      <Skeleton height={18} width="80%" />
+                      <Skeleton height={12} width="50%" />
+                    </div>
+                    <div className="w-12">
+                      <Skeleton height={18} width="100%" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-16 text-slate-grey font-body-md">
               No products found matching "{searchQuery}".
             </div>
