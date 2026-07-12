@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "url";
 import { fileURLToPath } from "url";
 import fsDirect from "fs";
 import pathDirect from "path";

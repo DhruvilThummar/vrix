@@ -1,12 +1,12 @@
 "use client";
-
+ 
 import Image from "next/image";
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { fetchProducts } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-
+ 
 const DEFAULT_PRODUCT = {
   id: "silent-center-ring",
   title: "The Silent Center Ring",
@@ -16,14 +16,15 @@ const DEFAULT_PRODUCT = {
   images: [] as string[],
   description: "A symbol of inner balance. Designed to remind you that you are your own center. Minimalist architecture translated into an intimate everyday companion.",
 };
-
+ 
 function ProductContent() {
+  const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const productId = searchParams.get("id");
+  const productId = (params?.id as string) || searchParams.get("id");
   const { addItem } = useCart();
-
+ 
   const [products, setProducts] = useState<any[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [size, setSize] = useState("");
@@ -33,19 +34,19 @@ function ProductContent() {
   const [wishlistActive, setWishlistActive] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeAccordion, setActiveAccordion] = useState<string | null>("details");
-
+ 
   useEffect(() => {
     fetchProducts()
       .then(setProducts)
       .catch((err) => console.error("Error loading products:", err));
   }, []);
-
+ 
   const product = useMemo(() => {
     if (!productId) return DEFAULT_PRODUCT;
     const found = products.find((p) => p.id === productId);
     return found || { ...DEFAULT_PRODUCT, id: productId };
   }, [products, productId]);
-
+ 
   useEffect(() => {
     try {
       const saved = localStorage.getItem("vrix-wishlist");
@@ -55,23 +56,23 @@ function ProductContent() {
       }
     } catch {}
   }, [product]);
-
+ 
   const galleryImages = useMemo(() => {
     const urls = [product.image, ...(Array.isArray(product.images) ? product.images : [])]
       .filter((url): url is string => typeof url === "string")
       .filter(Boolean)
       .filter((url, index, arr) => arr.indexOf(url) === index);
-
+ 
     return urls.map((src, index) => ({
       src,
       alt: index === 0 ? `Main view of ${product.title}` : `Gallery view ${index + 1} of ${product.title}`,
     }));
   }, [product]);
-
+ 
   const toggleAccordion = (name: string) => {
     setActiveAccordion(activeAccordion === name ? null : name);
   };
-
+ 
   const handleAddToBag = () => {
     if (!isLoggedIn) {
       showToast("Please sign in to add items to your bag.");
@@ -97,7 +98,7 @@ function ProductContent() {
       showToast(`"${product.title}" has been added to your bag.`);
     }, 1000);
   };
-
+ 
   const handleAddToWishlist = () => {
     if (!isLoggedIn) {
       showToast("Please sign in to add items to your wishlist.");
@@ -122,14 +123,14 @@ function ProductContent() {
       console.error("Wishlist toggle error:", err);
     }
   };
-
+ 
   const showToast = (message: string) => {
     setToastMessage(message);
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
   };
-
+ 
   return (
     <div className="relative w-full">
       {/* Dynamic Alert Toast */}
@@ -145,7 +146,7 @@ function ProductContent() {
           </button>
         </div>
       )}
-
+ 
       <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-section-gap">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter md:gap-[80px]">
           
@@ -162,7 +163,7 @@ function ProductContent() {
                 sizes="(max-width: 768px) 100vw, 55vw"
               />
             </div>
-
+ 
             {/* Gallery Thumbnails (Always Visible & Interactive) */}
             <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
               {galleryImages.map((img, index) => (
@@ -185,7 +186,7 @@ function ProductContent() {
                 </button>
               ))}
             </div>
-
+ 
             {/* Additional Desktop Full-Size scroll gallery to match original layout look */}
             <div className="hidden md:flex flex-col gap-8 mt-4 border-t border-slate-grey/10 pt-8">
               <div className="flex justify-between items-center mb-2">
@@ -204,7 +205,7 @@ function ProductContent() {
               ))}
             </div>
           </div>
-
+ 
           {/* Right Column: Sticky Product Information */}
           <div className="md:col-span-5 relative mt-8 md:mt-0">
             <div className="sticky top-[100px] flex flex-col gap-stack-lg">
@@ -223,7 +224,7 @@ function ProductContent() {
                   {product.material}
                 </p>
               </div>
-
+ 
               {/* Configuration Form */}
               <div className="flex flex-col gap-6">
                 
@@ -255,7 +256,7 @@ function ProductContent() {
                     </span>
                   </div>
                 </div>
-
+ 
                 {/* Engraving (Optional) */}
                 <div className="flex flex-col gap-2 mt-2">
                   <div className="flex justify-between items-center">
@@ -274,7 +275,7 @@ function ProductContent() {
                     onChange={(e) => setEngraving(e.target.value)}
                   />
                 </div>
-
+ 
                 {/* Gift Note (Optional) */}
                 <div className="flex flex-col gap-2 mt-2">
                   <div className="flex justify-between items-center">
@@ -294,7 +295,7 @@ function ProductContent() {
                   />
                 </div>
               </div>
-
+ 
               {/* Actions */}
               <div className="flex flex-col gap-4 mt-4">
                 <button
@@ -325,7 +326,7 @@ function ProductContent() {
                   {wishlistActive ? "Wishlisted" : "Add to Wishlist"}
                 </button>
               </div>
-
+ 
               {/* Trust Badges */}
               <div className="grid grid-cols-2 gap-y-6 gap-x-4 mt-8 py-8 border-y border-slate-grey/20">
                 <div className="flex gap-3 items-start">
@@ -357,7 +358,7 @@ function ProductContent() {
                   </div>
                 </div>
               </div>
-
+ 
               {/* Accordions */}
               <div className="flex flex-col mt-2">
                 {/* Details Accordion */}
@@ -385,7 +386,7 @@ function ProductContent() {
                     </p>
                   </div>
                 </div>
-
+ 
                 {/* Shipping Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
@@ -411,7 +412,7 @@ function ProductContent() {
                     </p>
                   </div>
                 </div>
-
+ 
                 {/* Returns Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
@@ -437,7 +438,7 @@ function ProductContent() {
                     </p>
                   </div>
                 </div>
-
+ 
                 {/* Care Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
@@ -464,16 +465,16 @@ function ProductContent() {
                   </div>
                 </div>
               </div>
-
+ 
             </div>
           </div>
-
+ 
         </div>
       </main>
     </div>
   );
 }
-
+ 
 export default function ProductPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-pure-white flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest">Loading Product Details...</div>}>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { fetchDb, updateCMS, uploadMedia } from "@/utils/api";
+import { fetchAllCollections, saveCollections, uploadMedia } from "@/utils/api";
 
 interface Collection {
   id: string;
@@ -45,8 +45,7 @@ export default function AdminCollectionsPage() {
   const loadCollections = async () => {
     setLoading(true);
     try {
-      const db = await fetchDb();
-      const cols = Array.isArray(db?.collections) ? db.collections : [];
+      const cols = await fetchAllCollections();
       setCollections(cols.map((c: any) => ({ ...c, isVisible: c.isVisible !== false })));
     } catch {
       showToast("Failed to load collections.", "err");
@@ -92,7 +91,7 @@ export default function AdminCollectionsPage() {
   const saveAll = async (updatedList: Collection[]) => {
     setSaving(true);
     try {
-      await updateCMS({ collections: updatedList });
+      await saveCollections(updatedList);
       showToast("Collections saved.");
       setCollections(updatedList);
     } catch (err: any) {

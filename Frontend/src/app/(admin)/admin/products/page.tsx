@@ -5,9 +5,8 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   fetchProducts, createProduct, updateProduct, deleteProduct, uploadMediaMultiple,
-  updateProductStock, updateProductVisibility,
+  updateProductStock, updateProductVisibility, fetchAllCollections,
 } from "@/utils/api";
-import { fetchDb } from "@/utils/api";
 
 const DEFAULT_COLLECTIONS = ["silent-center", "solitude", "presence", "light"];
 const DEFAULT_COLLECTION_LABELS: Record<string, string> = {
@@ -78,9 +77,8 @@ export default function AdminProductsPage() {
   };
 
   const loadCollections = () => {
-    fetchDb()
-      .then((db) => {
-        const collections = Array.isArray(db?.collections) ? db.collections : [];
+    fetchAllCollections()
+      .then((collections) => {
         if (collections.length === 0) return;
         const ids = collections
           .map((collection: any) => String(collection.id || "").trim())

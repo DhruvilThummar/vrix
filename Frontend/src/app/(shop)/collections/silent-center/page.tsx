@@ -358,7 +358,7 @@ function CollectionContent() {
               return (
                 <Link
                   key={p.id}
-                  href={`/product/silent-center-ring?id=${p.id}`}
+                  href={`/product/${p.id}`}
                   className="flex flex-col group cursor-pointer"
                 >
                   {/* Image Container */}
