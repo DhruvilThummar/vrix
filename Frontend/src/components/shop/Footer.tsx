@@ -1,156 +1,222 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { fetchDb } from "@/utils/api";
 
 export default function Footer() {
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
+  const [selectedCurrency, setSelectedCurrency] = useState("Europe (EUR)");
+  const [brandName, setBrandName] = useState("VRIX");
   const [logoUrl, setLogoUrl] = useState("/logos/white.png");
-  const [collections, setCollections] = useState<any[]>([]);
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
     fetchDb()
       .then((res) => {
-        if (res.brand && res.brand.logoUrl) {
-          setLogoUrl(res.brand.logoUrl);
-        }
-        if (Array.isArray(res.collections)) {
-          setCollections(res.collections.filter((collection: any) => collection.isVisible !== false));
+        if (res.brand) {
+          if (res.brand.name) setBrandName(res.brand.name);
+          if (res.brand.logoUrl) setLogoUrl(res.brand.logoUrl);
+          if (res.brand.address) setAddress(res.brand.address);
+          if (res.brand.phone) setPhone(res.brand.phone);
+          if (res.brand.email) setEmail(res.brand.email);
         }
       })
-      .catch((err) => console.error("Error loading footer logo:", err));
+      .catch((err) => console.error("Error loading footer brand info:", err));
   }, []);
 
   return (
-    <footer className="bg-deep-navy text-pure-white border-t border-slate-grey/30">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-mobile md:px-margin-desktop py-section-gap w-full max-w-container-max mx-auto">
-        {/* Brand Column */}
-        <div className="flex flex-col gap-6 md:col-span-1">
-          <Link href="/" className="flex items-center">
-            <Image
-              src={logoUrl}
-              alt="VRIX Logo"
-              width={120}
-              height={40}
-              className="h-8 w-auto object-contain cursor-pointer"
-            />
+    <footer className="bg-[#F5F4F0] text-ink-black/80 border-t border-slate-grey/20 pt-16 pb-8 font-body-md text-sm">
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10 md:gap-gutter pb-12">
+        
+        {/* Column 1: Brand details */}
+        <div className="flex flex-col gap-4">
+          <Link href="/" className="flex flex-col select-none">
+            {logoUrl && logoUrl !== "" ? (
+              <div className="relative h-8 w-32 my-1">
+                <Image
+                  src={logoUrl}
+                  alt={brandName}
+                  fill
+                  className="object-contain object-left"
+                  sizes="128px"
+                  priority
+                />
+              </div>
+            ) : (
+              <span className="font-display-lg text-3xl font-light tracking-[0.25em] uppercase text-ink-black">
+                {brandName}
+              </span>
+            )}
+            <span className="text-[9px] font-label-caps tracking-[0.3em] uppercase text-[#B59D7C] font-semibold mt-1">
+              Feel The Luxury
+            </span>
           </Link>
-          <p className="font-body-md text-pure-white/70 text-sm max-w-xs leading-relaxed">
-            Become part of the VRIX world.<br />
-            Early access. Meaningful stories. Exclusive rewards.
-          </p>
-          <div className="flex gap-2 max-w-xs mt-2">
-            <input
-              className="bg-transparent border-b border-pure-white/30 px-0 py-2 text-pure-white placeholder-pure-white/50 focus:outline-none focus:border-pure-white focus:ring-0 w-full font-body-md"
-              placeholder="Enter your email"
-              type="email"
-            />
-            <button className="font-button text-button uppercase px-4 py-2 bg-pure-white text-deep-navy hover:bg-pure-white/90 transition-colors cursor-pointer">
-              Join Us
-            </button>
+          
+          <div className="my-1 text-[#B59D7C]">
+            {/* Elegant 4-point star character */}
+            <span className="text-2xl font-light">✦</span>
+          </div>
+
+          <div className="font-body-md text-xs leading-relaxed text-slate-grey/90 space-y-2 max-w-[240px]">
+            {address && <p>{address}</p>}
+            {phone && <p>T: {phone}</p>}
+            {email && <p>E: <a href={`mailto:${email}`} className="hover:underline">{email}</a></p>}
+            {!address && !phone && !email && (
+              <p>Designed for the moments that belong only to you.</p>
+            )}
           </div>
         </div>
 
-        {/* Navigation Links */}
-        <div className="flex flex-col gap-4 mt-8 md:mt-0 font-body-md text-sm">
-          <h4 className="font-label-caps text-pure-white/50 mb-2">Collections</h4>
-          {collections.map((col) => (
-            <Link
-              key={col.id}
-              href={col.link || `/collections/silent-center?collection=${col.id}`}
-              className="text-pure-white/70 hover:text-pure-white transition-colors duration-300"
-            >
-              {col.title}
-            </Link>
-          ))}
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/collections">
-            All Collections
-          </Link>
-        </div>
-
-        <div className="flex flex-col gap-4 mt-8 md:mt-0 font-body-md text-sm">
-          <h4 className="font-label-caps text-pure-white/50 mb-2">The World of VRIX</h4>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/story">
-            Our Story
-          </Link>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/story">
-            Craftsmanship
-          </Link>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/story">
-            Sustainability
-          </Link>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/journal">
-            Journal
-          </Link>
-        </div>
-
-        <div className="flex flex-col gap-4 mt-8 md:mt-0 font-body-md text-sm">
-          <h4 className="font-label-caps text-pure-white/50 mb-2">Customer Care</h4>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/legal?tab=faq">
+        {/* Column 2: HELP */}
+        <div className="flex flex-col gap-3">
+          <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+            Help
+          </h4>
+          <Link href="/legal?tab=faq" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             FAQ
           </Link>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/legal?tab=shipping">
-            Shipping & Delivery
+          <Link href="/legal?tab=shipping" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Shipping
           </Link>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/legal?tab=returns">
-            Returns
+          <Link href="/legal?tab=returns" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Returns & Exchanges
           </Link>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/legal?tab=care">
-            Care Guide
+          <Link href="/legal?tab=care" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Warranty
           </Link>
-          <Link className="text-pure-white/70 hover:text-pure-white transition-colors duration-300" href="/contact">
+          <Link href="/account" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Track Order
+          </Link>
+          <Link href="/contact" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Contact Us
           </Link>
         </div>
+
+        {/* Column 3: ABOUT VRIX */}
+        <div className="flex flex-col gap-3">
+          <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+            About VRIX
+          </h4>
+          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Our Story
+          </Link>
+          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Craftsmanship
+          </Link>
+          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Materials
+          </Link>
+          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Sustainability
+          </Link>
+          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Careers
+          </Link>
+        </div>
+
+        {/* Column 4: JOURNAL */}
+        <div className="flex flex-col gap-3">
+          <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+            Journal
+          </h4>
+          <Link href="/journal" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Stories
+          </Link>
+          <Link href="/legal?tab=care" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Jewelry Care
+          </Link>
+          <Link href="/search?filter=gifts" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Gift Guide
+          </Link>
+          <Link href="/journal" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Style Guide
+          </Link>
+          <Link href="/journal" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+            Behind The Design
+          </Link>
+        </div>
+
+        {/* Column 5: FOLLOW */}
+        <div className="flex flex-col gap-3">
+          <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+            Follow
+          </h4>
+          <a href="#" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+            <i className="fa-brands fa-instagram text-sm w-4 text-center"></i>
+            Instagram
+          </a>
+          <a href="#" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+            <i className="fa-brands fa-pinterest text-sm w-4 text-center"></i>
+            Pinterest
+          </a>
+          <a href="#" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+            <i className="fa-brands fa-linkedin-in text-sm w-4 text-center"></i>
+            LinkedIn
+          </a>
+          <a href="#" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+            <i className="fa-brands fa-youtube text-sm w-4 text-center"></i>
+            YouTube
+          </a>
+        </div>
+
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-slate-grey/20">
-        <div className="px-margin-mobile md:px-margin-desktop py-6 max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="font-label-caps text-[10px] text-pure-white/50 uppercase tracking-widest">
-            © 2026 VRIX. All rights reserved.
-          </p>
-          {/* Social Links using custom images */}
-          <div className="flex gap-4 items-center">
-            <a href="#" className="opacity-70 hover:opacity-100 transition-opacity duration-300">
-              <Image
-                src="/logos/instagram.jpg"
-                alt="Instagram"
-                width={20}
-                height={20}
-                className="h-5 w-5 object-contain rounded-full"
-              />
-            </a>
-            <a href="#" className="opacity-70 hover:opacity-100 transition-opacity duration-300">
-              <Image
-                src="/logos/Facebook.jpg"
-                alt="Facebook"
-                width={20}
-                height={20}
-                className="h-5 w-5 object-contain rounded-full"
-              />
-            </a>
-            <a href="#" className="opacity-70 hover:opacity-100 transition-opacity duration-300">
-              <Image
-                src="/logos/Linkedin.jpg"
-                alt="LinkedIn"
-                width={20}
-                height={20}
-                className="h-5 w-5 object-contain rounded-full"
-              />
-            </a>
-            <a href="#" className="opacity-70 hover:opacity-100 transition-opacity duration-300">
-              <Image
-                src="/logos/whatsapp.jpg"
-                alt="WhatsApp"
-                width={20}
-                height={20}
-                className="h-5 w-5 object-contain rounded-full"
-              />
-            </a>
+      {/* Selector & Payment Row */}
+      <div className="border-t border-b border-slate-grey/25 py-6 bg-[#EBEAE4]">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center gap-6">
+          {/* Selectors */}
+          <div className="flex gap-4 font-label-caps text-[11px] font-semibold text-ink-black/80">
+            <button className="flex items-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer">
+              <i className="fa-solid fa-globe text-xs"></i>
+              <span>{selectedCurrency}</span>
+              <i className="fa-solid fa-chevron-down text-[8px] ml-0.5"></i>
+            </button>
+            <span className="text-slate-grey/40">|</span>
+            <button className="flex items-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer">
+              <span>{selectedLanguage}</span>
+              <i className="fa-solid fa-chevron-down text-[8px] ml-0.5"></i>
+            </button>
+          </div>
+
+          {/* Payment Icons */}
+          <div className="flex flex-wrap gap-4 items-center text-xl text-ink-black/60">
+            <i className="fa-brands fa-cc-visa hover:text-[#1A1F71] transition-colors" title="Visa"></i>
+            <i className="fa-brands fa-cc-mastercard hover:text-[#EB001B] transition-colors" title="Mastercard"></i>
+            <i className="fa-brands fa-cc-amex hover:text-[#007CC3] transition-colors" title="Amex"></i>
+            <i className="fa-brands fa-cc-apple-pay hover:text-black transition-colors" title="Apple Pay"></i>
+            <i className="fa-brands fa-google-pay hover:text-[#4285F4] transition-colors text-2xl" title="Google Pay"></i>
+            <i className="fa-brands fa-cc-stripe hover:text-[#6772E5] transition-colors" title="Stripe"></i>
+            <i className="fa-brands fa-cc-paypal hover:text-[#003087] transition-colors" title="PayPal"></i>
           </div>
         </div>
+      </div>
+
+      {/* Legal Links Bar */}
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center pt-6 gap-4 font-label-caps text-[10px] text-slate-grey">
+        <div className="flex gap-4 flex-wrap justify-center">
+          <Link href="/legal?tab=privacy" className="hover:text-ink-black transition-colors">
+            Privacy Policy
+          </Link>
+          <span className="opacity-45">|</span>
+          <Link href="/legal?tab=terms" className="hover:text-ink-black transition-colors">
+            Terms & Conditions
+          </Link>
+          <span className="opacity-45">|</span>
+          <Link href="/legal?tab=privacy" className="hover:text-ink-black transition-colors">
+            Cookie Policy
+          </Link>
+          <span className="opacity-45">|</span>
+          <Link href="/legal?tab=faq" className="hover:text-ink-black transition-colors">
+            Accessibility
+          </Link>
+        </div>
+        <p className="tracking-widest uppercase">
+          © 2026 {brandName}. All rights reserved.
+        </p>
       </div>
     </footer>
   );

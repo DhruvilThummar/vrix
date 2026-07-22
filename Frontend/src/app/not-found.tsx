@@ -74,13 +74,7 @@ export default function NotFound() {
               >
                 Modular Builder
               </Link>
-              <Link
-                onClick={() => setMenuOpen(false)}
-                href="/wholesale"
-                className="font-label-caps text-label-caps text-deep-navy hover:text-slate-grey transition-colors uppercase"
-              >
-                Wholesale Portal
-              </Link>
+
               <Link
                 onClick={() => setMenuOpen(false)}
                 href="/journal"

@@ -96,11 +96,16 @@ model VerificationOtp {
 }
 
 model RedeemCode {
-  code      String   @id
-  discount  Float
-  type      String   @default("percentage") // "percentage" or "fixed"
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
+  code        String   @id
+  discount    Float
+  type        String   @default("percentage") // "percentage" or "fixed"
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  description String?
+  minSubtotal Float?   @map("min_subtotal")
+  usageLimit  Int?     @map("usage_limit")
+  usedCount   Int      @default(0) @map("used_count")
+  expiryDate  String?  @map("expiry_date")
 
   @@map("redeem_codes")
 }

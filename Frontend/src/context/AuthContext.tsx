@@ -5,6 +5,8 @@ interface User {
   email: string;
   name?: string;
   phone?: string;
+  isVrixPlusMember?: boolean;
+  vrixPlusJoinedDate?: string;
 }
 
 interface AuthContextType {

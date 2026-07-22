@@ -1,3 +1,4 @@
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
@@ -43,6 +44,7 @@ export async function updateCMS(data: {
   features?: any;
   collections?: any;
   api_settings?: any;
+  vrix_plus?: any;
 }) {
   return apiFetch<any>("/cms", {
     method: "POST",

@@ -74,14 +74,14 @@ router.post("/register/confirm", async (req, res) => {
     await db.verificationOtps.delete({ where: { id: record.id } });
     const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
     const newUser = await db.users.create({
-      data: { email: email.toLowerCase(), password: hashedPassword, name, phone: phone || "" },
+      data: { email: email.toLowerCase(), password: hashedPassword, name, phone: phone || "", isVrixPlusMember: false, vrixPlusJoinedDate: null },
     });
 
     await db.securityLogs.create({
       data: { event: "ACCOUNT_REGISTER", user: email, status: "SUCCESS" },
     });
 
-    res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone } });
+    res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone, isVrixPlusMember: false, vrixPlusJoinedDate: null } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -159,7 +159,7 @@ router.post("/login/direct", async (req, res) => {
     }
 
     await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: email, status: "SUCCESS" } });
-    res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone } });
+    res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -187,7 +187,7 @@ router.post("/login/confirm", async (req, res) => {
     const user = await db.users.findUnique({ where: { email } });
     await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: email, status: "SUCCESS" } });
 
-    res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone } });
+    res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -216,18 +216,18 @@ router.post("/truecaller/verify", async (req, res) => {
         } catch (e) { /* ignore */ }
       }
 
+      let existingUser = await db.users.findUnique({ where: { email: profile.email } });
       try {
-        let existingUser = await db.users.findUnique({ where: { email: profile.email } });
         if (!existingUser) {
-          await db.users.create({
-            data: { email: profile.email, name: profile.name, phone: profile.phone, password: "truecaller_oauth_account" },
+          existingUser = await db.users.create({
+            data: { email: profile.email, name: profile.name, phone: profile.phone, password: "truecaller_oauth_account", isVrixPlusMember: false, vrixPlusJoinedDate: null },
           });
         }
       } catch (dbErr) {
         console.error("Failed to auto-register Truecaller user:", dbErr.message);
       }
 
-      return res.json({ success: true, verified: true, profile, mode: "sandbox" });
+      return res.json({ success: true, verified: true, profile: { name: profile.name, email: profile.email, phone: profile.phone, isVrixPlusMember: !!existingUser?.isVrixPlusMember, vrixPlusJoinedDate: existingUser?.vrixPlusJoinedDate || null }, mode: "sandbox" });
     }
 
     // Live Signature Verification
@@ -266,21 +266,72 @@ router.post("/truecaller/verify", async (req, res) => {
       phone: decodedProfile.phoneNumber,
     };
 
+    let existingUser = await db.users.findUnique({ where: { email: profileObj.email } });
     try {
-      let existingUser = await db.users.findUnique({ where: { email: profileObj.email } });
       if (!existingUser) {
-        await db.users.create({
-          data: { email: profileObj.email, name: profileObj.name, phone: profileObj.phone, password: "truecaller_oauth_account" },
+        existingUser = await db.users.create({
+          data: { email: profileObj.email, name: profileObj.name, phone: profileObj.phone, password: "truecaller_oauth_account", isVrixPlusMember: false, vrixPlusJoinedDate: null },
         });
       }
     } catch (dbErr) {
       console.error("Failed to auto-register Truecaller user:", dbErr.message);
     }
 
-    return res.json({ success: true, verified: true, profile: profileObj, mode: "live" });
+    return res.json({ success: true, verified: true, profile: { ...profileObj, isVrixPlusMember: !!existingUser?.isVrixPlusMember, vrixPlusJoinedDate: existingUser?.vrixPlusJoinedDate || null }, mode: "live" });
   } catch (err) {
     console.error("Truecaller verification error:", err.message);
     res.status(500).json({ error: "Truecaller verification failed: " + err.message });
+  }
+});
+
+// POST /api/auth/join-vrix-plus
+router.post("/join-vrix-plus", async (req, res) => {
+  const { email, joinDate } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required." });
+  }
+  
+  try {
+    const today = joinDate || new Date().toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }); // e.g. "22 July 2026"
+    
+    let user = await db.users.findUnique({ where: { email } });
+    
+    if (user) {
+      // Update existing user
+      user = await db.users.update({
+        where: { email },
+        data: { isVrixPlusMember: true, vrixPlusJoinedDate: today }
+      });
+    } else {
+      // Auto-register user with VRIX+ membership
+      user = await db.users.create({
+        data: {
+          email: email.toLowerCase(),
+          name: "VRIX+ Member",
+          password: "vrix_plus_auto_account_" + Math.random().toString(36).substring(7),
+          phone: "",
+          isVrixPlusMember: true,
+          vrixPlusJoinedDate: today
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      user: {
+        email: user.email,
+        name: user.name,
+        phone: user.phone || "",
+        isVrixPlusMember: true,
+        vrixPlusJoinedDate: today
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -5,7 +5,7 @@ const router = express.Router();
 
 // POST /api/promo/verify — Validate a promo code at checkout
 router.post("/verify", async (req, res) => {
-  const { code } = req.body;
+  const { code, subtotal } = req.body;
   if (!code) return res.status(400).json({ error: "Code is required" });
 
   try {
@@ -13,7 +13,40 @@ router.post("/verify", async (req, res) => {
     if (!promo) return res.status(404).json({ error: "Invalid promo code" });
     if (!promo.isActive) return res.status(400).json({ error: "Promo code is no longer active" });
 
-    res.json({ success: true, code: promo.code, discount: promo.discount, type: promo.type });
+    // Expiry Check
+    if (promo.expiryDate) {
+      const expiry = new Date(promo.expiryDate);
+      expiry.setHours(23, 59, 59, 999);
+      if (new Date() > expiry) {
+        return res.status(400).json({ error: "Promo code has expired" });
+      }
+    }
+
+    // Usage Limit Check
+    if (promo.usageLimit !== undefined && promo.usageLimit !== null && promo.usageLimit > 0) {
+      const used = promo.usedCount || 0;
+      if (used >= promo.usageLimit) {
+        return res.status(400).json({ error: "Promo code usage limit has been reached" });
+      }
+    }
+
+    // Min Order Subtotal Check
+    if (promo.minSubtotal !== undefined && promo.minSubtotal !== null && promo.minSubtotal > 0) {
+      if (subtotal !== undefined && Number(subtotal) < Number(promo.minSubtotal)) {
+        return res.status(400).json({ error: `Minimum order subtotal of ₹${promo.minSubtotal} required` });
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      code: promo.code, 
+      discount: promo.discount, 
+      type: promo.type,
+      description: promo.description,
+      minSubtotal: promo.minSubtotal,
+      usageLimit: promo.usageLimit,
+      expiryDate: promo.expiryDate
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -31,10 +64,20 @@ router.get("/codes", async (req, res) => {
 // POST /api/promo/codes — Create a promo code (admin)
 router.post("/codes", async (req, res) => {
   try {
-    const { code, discount, type } = req.body;
+    const { code, discount, type, description, minSubtotal, usageLimit, expiryDate } = req.body;
     if (!code || !discount || !type) return res.status(400).json({ error: "code, discount, and type are required" });
     const created = await db.redeemCodes.create({
-      data: { code: code.toUpperCase(), discount: Number(discount), type, isActive: true },
+      data: { 
+        code: code.toUpperCase(), 
+        discount: Number(discount), 
+        type, 
+        isActive: true,
+        description: description || null,
+        minSubtotal: minSubtotal ? Number(minSubtotal) : null,
+        usageLimit: usageLimit ? Number(usageLimit) : null,
+        usedCount: 0,
+        expiryDate: expiryDate || null
+      },
     });
     res.status(201).json(created);
   } catch (err) {

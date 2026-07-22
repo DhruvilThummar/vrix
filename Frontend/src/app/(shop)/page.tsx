@@ -4,6 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchDb } from "@/utils/api";
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
+import SkeletonImage from "@/components/shop/SkeletonImage";
 
 const DEFAULT_DATA = {
   homepage: {
@@ -40,6 +43,7 @@ const DEFAULT_DATA = {
 
 export default function Home() {
   const [store, setStore] = useState(DEFAULT_DATA);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDb()
@@ -54,111 +58,164 @@ export default function Home() {
           });
         }
       })
-      .catch((err) => console.error("Error loading home page content:", err));
+      .catch((err) => console.error("Error loading home page content:", err))
+      .finally(() => {
+        // Add a slight simulation delay for a smoother premium skeleton transition
+        setTimeout(() => setLoading(false), 600);
+      });
   }, []);
 
   return (
     <div className="w-full">
-      {/* Hero Section */}
-      <section className="relative h-[819px] md:h-[calc(100vh-65px)] w-full flex items-center bg-deep-navy overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image
-            alt="Hero Background"
-            fill
-            className="object-cover object-center opacity-60 mix-blend-overlay"
-            src={store.homepage.heroImage}
-            priority
-            sizes="100vw"
-          />
-        </div>
+      {/* ─── Hero Section ─── */}
+      <section className="relative h-[819px] md:h-[calc(100vh-65px)] w-full flex items-center bg-[#EBEAE4] overflow-hidden">
+        {loading ? (
+          <div className="absolute inset-0 z-0">
+            <Skeleton height="100%" borderRadius="0px" containerClassName="w-full h-full block" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 z-0">
+            <SkeletonImage
+              alt="Hero Background"
+              fill
+              className="object-cover object-center opacity-65 mix-blend-overlay"
+              src={store.homepage.heroImage}
+              priority
+              sizes="100vw"
+            />
+          </div>
+        )}
+        
         <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full">
-          <div className="max-w-xl text-pure-white">
+          <div className="max-w-xl text-ink-black md:text-pure-white">
             <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-80">
-              {store.homepage.heroSubtitle}
+              {loading ? <Skeleton width={120} /> : store.homepage.heroSubtitle}
             </p>
-            <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase">
-              {store.homepage.heroTitle}
+            <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
+              {loading ? (
+                <>
+                  <Skeleton width="90%" />
+                  <Skeleton width="60%" />
+                </>
+              ) : (
+                store.homepage.heroTitle
+              )}
             </h1>
-            <Link
-              href="/collections/silent-center"
-              className="inline-block font-button text-button uppercase px-8 py-3 border border-pure-white text-pure-white hover:bg-pure-white hover:text-deep-navy transition-colors duration-300 cursor-pointer"
-            >
-              Discover Collections
-            </Link>
+            {loading ? (
+              <Skeleton width={160} height={40} />
+            ) : (
+              <Link
+                href="/collections/silent-center"
+                className="inline-block font-button text-button uppercase px-8 py-3 border border-ink-black md:border-pure-white text-ink-black md:text-pure-white hover:bg-ink-black hover:text-white md:hover:bg-pure-white md:hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
+              >
+                Discover Collections
+              </Link>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Collections Grid */}
+      {/* ─── Collections Grid ─── */}
       <section className="py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
         <div className="text-center mb-section-gap">
           <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
             Our Collections
           </p>
-          <h2 className="font-headline-md text-headline-md text-deep-navy">
-            {store.homepage.tagline}
+          <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
+            {loading ? <Skeleton width={280} /> : store.homepage.tagline}
           </h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-          {store.collections.map((col) => (
-            <Link
-              key={col.id}
-              href={col.link || `/collections/silent-center?collection=${col.id}`}
-              className="group cursor-pointer"
-            >
-              <div className="aspect-[4/5] bg-soft-linen mb-stack-md overflow-hidden relative">
-                <Image
-                  alt={`${col.title} Collection`}
-                  fill
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                  src={col.image}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                />
+
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex flex-col">
+                <div className="aspect-[4/5] mb-stack-md w-full">
+                  <Skeleton height="100%" borderRadius="0px" containerClassName="w-full h-full block" />
+                </div>
+                <div className="text-center space-y-1">
+                  <Skeleton width="60%" height={14} className="mx-auto" />
+                  <Skeleton width="40%" height={10} className="mx-auto" />
+                </div>
               </div>
-              <div className="text-center">
-                <h3 className="font-label-caps text-label-caps text-deep-navy uppercase mb-1">
-                  {col.title}
-                </h3>
-                <p className="font-body-md text-slate-grey text-sm">
-                  {col.tagline}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+            {store.collections.map((col) => (
+              <Link
+                key={col.id}
+                href={col.link || `/collections/silent-center?collection=${col.id}`}
+                className="group cursor-pointer"
+              >
+                <div className="aspect-[4/5] bg-soft-linen mb-stack-md overflow-hidden relative border border-slate-grey/10">
+                  <SkeletonImage
+                    alt={`${col.title} Collection`}
+                    fill
+                    className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-700"
+                    src={col.image}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-label-caps text-label-caps text-deep-navy uppercase mb-1 font-semibold">
+                    {col.title}
+                  </h3>
+                  <p className="font-body-md text-slate-grey text-sm">
+                    {col.tagline}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
         <div className="mt-stack-lg text-center">
-          <Link
-            href="/collections"
-            className="inline-flex items-center gap-2 font-button text-button text-deep-navy hover:text-slate-grey transition-colors uppercase tracking-widest border-b border-deep-navy pb-1 cursor-pointer"
-          >
-            Explore All Collections <i className="fa-solid fa-arrow-right text-xs"></i>
-          </Link>
+          {loading ? (
+            <Skeleton width={180} height={20} className="mx-auto" />
+          ) : (
+            <Link
+              href="/collections"
+              className="inline-flex items-center gap-2 font-button text-button text-deep-navy hover:text-slate-grey transition-colors uppercase tracking-widest border-b border-deep-navy pb-1 cursor-pointer"
+            >
+              Explore All Collections <i className="fa-solid fa-arrow-right text-xs"></i>
+            </Link>
+          )}
         </div>
       </section>
 
-      {/* Brand Philosophy / Features */}
-      <section className="bg-soft-linen py-section-gap border-t border-b border-slate-grey/20">
+      {/* ─── Brand Philosophy / Features ─── */}
+      <section className="bg-[#F5F4F0] py-section-gap border-t border-b border-slate-grey/25">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">
           <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
             The World of VRIX
           </p>
-          <h2 className="font-headline-md text-headline-md text-deep-navy mb-section-gap leading-tight uppercase whitespace-pre-line">
-            {store.homepage.philosophyTitle}
+          <h2 className="font-headline-md text-headline-md text-deep-navy mb-section-gap leading-tight uppercase whitespace-pre-line font-light tracking-wide">
+            {loading ? <Skeleton width="50%" height={32} className="mx-auto" /> : store.homepage.philosophyTitle}
           </h2>
+          
           <div className="grid grid-cols-1 md:grid-cols-4 gap-stack-lg">
-            {store.homepage.philosophy.map((item, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <span className="material-symbols-outlined text-deep-navy mb-stack-md text-3xl font-light">
-                  {item.icon}
-                </span>
-                <h4 className="font-label-caps text-label-caps text-deep-navy uppercase mb-2">
-                  {item.title}
-                </h4>
-                <p className="font-body-md text-sm text-slate-grey whitespace-pre-line">
-                  {item.description}
-                </p>
-              </div>
-            ))}
+            {loading
+              ? [1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex flex-col items-center space-y-3">
+                    <Skeleton circle width={50} height={50} />
+                    <Skeleton width="60%" height={14} />
+                    <Skeleton width="80%" height={10} count={2} />
+                  </div>
+                ))
+              : store.homepage.philosophy.map((item, index) => (
+                  <div key={index} className="flex flex-col items-center">
+                    <span className="material-symbols-outlined text-deep-navy mb-stack-md text-3xl font-light">
+                      {item.icon}
+                    </span>
+                    <h4 className="font-label-caps text-label-caps text-deep-navy uppercase mb-2 font-semibold">
+                      {item.title}
+                    </h4>
+                    <p className="font-body-md text-sm text-slate-grey whitespace-pre-line leading-relaxed">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
           </div>
         </div>
       </section>

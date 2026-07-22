@@ -670,6 +670,11 @@ export async function migrateIfNeeded() {
 
   try {
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB');
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "description" TEXT');
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "min_subtotal" DOUBLE PRECISION');
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "usage_limit" INTEGER');
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "used_count" INTEGER DEFAULT 0');
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "expiry_date" TEXT');
 
     const productCount = await prisma.product.count();
     if (productCount === 0) {
@@ -677,7 +682,7 @@ export async function migrateIfNeeded() {
       const localData = readLocalDb();
 
       // Seed CMS Settings
-      const cmsKeys = ["homepage", "story", "legal", "navigation", "brand", "features", "collections"];
+      const cmsKeys = ["homepage", "story", "legal", "navigation", "brand", "features", "collections", "vrix_plus", "api_settings", "announcement_bar"];
       for (const key of cmsKeys) {
         if (localData[key]) {
           await prisma.cmsSetting.upsert({

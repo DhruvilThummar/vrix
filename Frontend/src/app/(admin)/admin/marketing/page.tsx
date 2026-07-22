@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   fetchPromoCodes, createPromoCode, updatePromoCode, deletePromoCode,
-  fetchPaymentLogs, fetchAdminStats,
+  fetchPaymentLogs, fetchAdminStats, fetchUsers,
 } from "@/utils/api";
 
 interface PromoCode {
@@ -12,6 +12,11 @@ interface PromoCode {
   type: "percentage" | "fixed";
   isActive: boolean;
   createdAt: string;
+  description?: string;
+  minSubtotal?: number;
+  usageLimit?: number;
+  usedCount?: number;
+  expiryDate?: string;
 }
 
 interface PaymentLog {
@@ -33,7 +38,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export default function AdminMarketingPage() {
-  const [activeTab, setActiveTab] = useState<"promo" | "payments" | "stats">("promo");
+  const [activeTab, setActiveTab] = useState<"promo" | "payments" | "vrixplus">("promo");
 
   // Promo state
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
@@ -41,7 +46,18 @@ export default function AdminMarketingPage() {
   const [newCode, setNewCode] = useState("");
   const [newDiscount, setNewDiscount] = useState<number>(10);
   const [newType, setNewType] = useState<"percentage" | "fixed">("percentage");
+  const [newDescription, setNewDescription] = useState("");
+  const [newMinSubtotal, setNewMinSubtotal] = useState<number | "">("");
+  const [newUsageLimit, setNewUsageLimit] = useState<number | "">("");
+  const [newExpiryDate, setNewExpiryDate] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // VRIX+ Club Members state
+  const [vrixMembers, setVrixMembers] = useState<any[]>([]);
+  const [vrixLoading, setVrixLoading] = useState(false);
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
+  const [vrixSearch, setVrixSearch] = useState("");
 
   // Payment state
   const [paymentLogs, setPaymentLogs] = useState<PaymentLog[]>([]);
@@ -61,7 +77,8 @@ export default function AdminMarketingPage() {
   useEffect(() => {
     if (activeTab === "promo") loadPromoCodes();
     if (activeTab === "payments") loadPaymentLogs();
-    if (activeTab === "stats") loadStats();
+    if (activeTab === "vrixplus") loadVrixMembers();
+    loadStats();
   }, [activeTab]);
 
   const loadPromoCodes = async () => {
@@ -83,14 +100,41 @@ export default function AdminMarketingPage() {
     catch {}
   };
 
+  const loadVrixMembers = async () => {
+    setVrixLoading(true);
+    try {
+      const allUsers = await fetchUsers();
+      const members = allUsers.filter((u: any) => u.isVrixPlusMember);
+      setVrixMembers(members);
+    } catch (err: any) {
+      showToast("Failed to load VRIX+ members: " + err.message, "err");
+    } finally {
+      setVrixLoading(false);
+    }
+  };
+
   const handleCreateCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCode || !newDiscount) { showToast("All fields required.", "err"); return; }
     setCreating(true);
     try {
-      await createPromoCode({ code: newCode.toUpperCase(), discount: newDiscount, type: newType });
+      await createPromoCode({
+        code: newCode.toUpperCase(),
+        discount: newDiscount,
+        type: newType,
+        description: newDescription || null,
+        minSubtotal: newMinSubtotal !== "" ? Number(newMinSubtotal) : null,
+        usageLimit: newUsageLimit !== "" ? Number(newUsageLimit) : null,
+        expiryDate: newExpiryDate || null
+      });
       showToast(`Code "${newCode.toUpperCase()}" created.`);
-      setNewCode(""); setNewDiscount(10); setNewType("percentage");
+      setNewCode("");
+      setNewDiscount(10);
+      setNewType("percentage");
+      setNewDescription("");
+      setNewMinSubtotal("");
+      setNewUsageLimit("");
+      setNewExpiryDate("");
       loadPromoCodes();
     } catch (err: any) { showToast("Failed: " + err.message, "err"); }
     finally { setCreating(false); }
@@ -111,6 +155,47 @@ export default function AdminMarketingPage() {
       setPromoCodes((prev) => prev.filter((c) => c.code !== code));
       showToast(`"${code}" deleted.`);
     } catch (err: any) { showToast("Failed: " + err.message, "err"); }
+  };
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberEmail.trim()) return;
+    setAddingMember(true);
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newMemberEmail.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add member.");
+      showToast(`Member "${newMemberEmail.trim()}" added to VRIX+ Club.`);
+      setNewMemberEmail("");
+      loadVrixMembers();
+    } catch (err: any) {
+      showToast("Failed: " + err.message, "err");
+    } finally {
+      setAddingMember(false);
+    }
+  };
+
+  const handleRemoveMember = async (email: string) => {
+    if (!confirm(`Remove VRIX+ membership for "${email}"?`)) return;
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${apiBaseUrl}/admin/users/${encodeURIComponent(email)}/vrix-plus`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isVrixPlusMember: false })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update membership.");
+      showToast(`Removed VRIX+ membership for "${email}".`);
+      loadVrixMembers();
+    } catch (err: any) {
+      showToast("Failed: " + err.message, "err");
+    }
   };
 
   const filteredPayments = paymentLogs.filter((p) => {
@@ -162,6 +247,7 @@ export default function AdminMarketingPage() {
           {[
             { key: "promo", label: "Promo / Redeem Codes", icon: "confirmation_number" },
             { key: "payments", label: "Payment Logs", icon: "receipt_long" },
+            { key: "vrixplus", label: "VRIX+ Club Members", icon: "stars" },
           ].map((tab) => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key as any)}
               className={`flex items-center gap-2 px-6 py-3 font-label-caps text-[10px] uppercase tracking-widest border-b-2 transition-colors cursor-pointer ${activeTab === tab.key ? "border-deep-navy text-deep-navy" : "border-transparent text-slate-grey hover:text-deep-navy"}`}
@@ -195,12 +281,39 @@ export default function AdminMarketingPage() {
                   </select>
                 </div>
 
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Description</label>
+                  <input type="text" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} placeholder="e.g. Welcome first order discount" className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-sm bg-transparent" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Min Order Subtotal (₹)</label>
+                    <input type="number" value={newMinSubtotal} onChange={(e) => setNewMinSubtotal(e.target.value !== "" ? Number(e.target.value) : "")} placeholder="None" min={0} className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-sm bg-transparent" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Usage Limit</label>
+                    <input type="number" value={newUsageLimit} onChange={(e) => setNewUsageLimit(e.target.value !== "" ? Number(e.target.value) : "")} placeholder="Unlimited" min={1} className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-sm bg-transparent" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Expiry Date</label>
+                  <input type="date" value={newExpiryDate} onChange={(e) => setNewExpiryDate(e.target.value)} className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-sm bg-transparent cursor-pointer" />
+                </div>
+
                 {/* Preview */}
                 {newCode && (
                   <div className="bg-soft-linen/50 border border-slate-grey/15 p-4 text-center space-y-1">
                     <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Preview</span>
                     <p className="font-display-lg text-deep-navy tracking-widest text-xl font-bold">{newCode}</p>
                     <p className="font-body-md text-sm text-slate-grey">{newDiscount}{newType === "percentage" ? "% off" : "₹ off"}</p>
+                    {newDescription && <p className="text-xs italic text-slate-grey font-body-md">"{newDescription}"</p>}
+                    {(newMinSubtotal || newUsageLimit || newExpiryDate) && (
+                      <div className="text-[10px] text-slate-grey uppercase font-label-caps pt-2 border-t border-slate-grey/10 space-y-0.5 text-left">
+                        {newMinSubtotal ? <p>• Min Order: ₹{newMinSubtotal}</p> : null}
+                        {newUsageLimit ? <p>• Limit: {newUsageLimit} uses</p> : null}
+                        {newExpiryDate ? <p>• Expires: {newExpiryDate}</p> : null}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -236,9 +349,26 @@ export default function AdminMarketingPage() {
                             {code.isActive ? "Active" : "Inactive"}
                           </span>
                         </div>
+                        {code.description && (
+                          <p className="text-xs font-semibold text-deep-navy font-body-md mt-0.5">"{code.description}"</p>
+                        )}
                         <p className="text-xs text-slate-grey font-body-md">
-                          {code.discount}{code.type === "percentage" ? "% off" : "₹ off"} · {code.type === "percentage" ? "Percentage" : "Fixed"} · {new Date(code.createdAt).toLocaleDateString("en-IN")}
+                          {code.discount}{code.type === "percentage" ? "% off" : "₹ off"} · {code.type === "percentage" ? "Percentage" : "Fixed"}
                         </p>
+                        <div className="text-[10px] text-slate-grey font-label-caps uppercase flex flex-wrap gap-x-3 gap-y-1 pt-1">
+                          <span>Created: {new Date(code.createdAt).toLocaleDateString("en-IN")}</span>
+                          {code.minSubtotal ? <span>• Min Order: ₹{code.minSubtotal}</span> : null}
+                          {code.expiryDate ? (
+                            <span className={new Date(code.expiryDate) < new Date() ? "text-error font-semibold" : ""}>
+                              • Expires: {new Date(code.expiryDate).toLocaleDateString("en-IN")}
+                            </span>
+                          ) : null}
+                          {(code.usageLimit !== undefined && code.usageLimit !== null && code.usageLimit > 0) ? (
+                            <span>• Usage: {code.usedCount || 0} / {code.usageLimit}</span>
+                          ) : (
+                            <span>• Usage: {code.usedCount || 0} uses</span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <button
@@ -335,6 +465,125 @@ export default function AdminMarketingPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─── VRIX+ CLUB MEMBERS TAB ──────────────────────────────────── */}
+        {activeTab === "vrixplus" && (
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 animate-fade-in">
+            {/* Add Member Form */}
+            <div className="lg:col-span-2 bg-pure-white border border-slate-grey/20 p-6 shadow-sm space-y-5 self-start">
+              <h2 className="font-label-caps text-[11px] uppercase tracking-widest text-deep-navy border-b border-slate-grey/15 pb-3">
+                Register VRIX+ Member
+              </h2>
+              <form onSubmit={handleAddMember} className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    value={newMemberEmail}
+                    onChange={(e) => setNewMemberEmail(e.target.value)}
+                    placeholder="Enter email to enroll"
+                    required
+                    className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-sm bg-transparent"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={addingMember}
+                  className="w-full font-button text-[11px] uppercase py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {addingMember ? (
+                    <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[15px]">stars</span>
+                      Enroll Member
+                    </>
+                  )}
+                </button>
+              </form>
+              <p className="text-[10px] text-slate-grey font-body-md leading-relaxed">
+                If the email is already registered, they will be upgraded to VRIX+ status. If the email doesn't exist, a placeholder account will be created automatically.
+              </p>
+            </div>
+
+            {/* Members List */}
+            <div className="lg:col-span-3 bg-pure-white border border-slate-grey/20 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-slate-grey/15 flex flex-wrap justify-between items-center gap-3">
+                <div className="relative flex-1 max-w-xs">
+                  <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-slate-grey text-[14px]">search</span>
+                  <input
+                    type="text"
+                    value={vrixSearch}
+                    onChange={(e) => setVrixSearch(e.target.value)}
+                    placeholder="Search by email or name..."
+                    className="pl-7 pr-3 py-1.5 text-xs border border-slate-grey/20 focus:border-deep-navy outline-none font-body-md bg-transparent w-full"
+                  />
+                </div>
+                <button
+                  onClick={loadVrixMembers}
+                  className="flex items-center gap-1 text-[9px] font-label-caps uppercase tracking-widest text-slate-grey hover:text-deep-navy cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[13px]">refresh</span>Refresh
+                </button>
+              </div>
+
+              {vrixLoading ? (
+                <div className="h-48 flex items-center justify-center text-slate-grey text-xs font-label-caps uppercase tracking-widest">
+                  Loading...
+                </div>
+              ) : vrixMembers.filter((m) =>
+                  m.email?.toLowerCase().includes(vrixSearch.toLowerCase()) ||
+                  m.name?.toLowerCase().includes(vrixSearch.toLowerCase())
+                ).length === 0 ? (
+                <div className="h-48 flex flex-col items-center justify-center gap-2 text-slate-grey">
+                  <span className="material-symbols-outlined text-3xl text-slate-grey/60">stars</span>
+                  <p className="text-xs font-label-caps uppercase tracking-widest">No members found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-grey/15 bg-soft-linen/30 text-slate-grey font-label-caps text-[9px] tracking-widest uppercase">
+                        <th className="px-5 py-3 font-normal">Member Details</th>
+                        <th className="px-5 py-3 font-normal">Joined Date</th>
+                        <th className="px-5 py-3 font-normal text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-grey/10 font-body-md text-xs">
+                      {vrixMembers
+                        .filter((m) =>
+                          m.email?.toLowerCase().includes(vrixSearch.toLowerCase()) ||
+                          m.name?.toLowerCase().includes(vrixSearch.toLowerCase())
+                        )
+                        .map((member) => (
+                          <tr key={member.email} className="hover:bg-soft-linen/20 transition-colors">
+                            <td className="px-5 py-3.5 space-y-0.5">
+                              <p className="font-semibold text-deep-navy">{member.name || "VRIX+ Member"}</p>
+                              <p className="text-slate-grey">{member.email}</p>
+                              {member.phone && <p className="text-[10px] text-slate-grey/80">T: {member.phone}</p>}
+                            </td>
+                            <td className="px-5 py-3.5 text-slate-grey">
+                              {member.vrixPlusJoinedDate || "—"}
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              <button
+                                onClick={() => handleRemoveMember(member.email)}
+                                className="text-[9px] font-label-caps uppercase tracking-widest px-2.5 py-1.5 border border-red-200 text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+                              >
+                                Revoke
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

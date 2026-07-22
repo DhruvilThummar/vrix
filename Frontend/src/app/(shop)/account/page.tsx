@@ -274,7 +274,7 @@ export default function UserAccountPage() {
     { key: "wishlist", label: "Wishlist", icon: "favorite" },
     { key: "addresses", label: "Addresses", icon: "location_on" },
     { key: "account", label: "Account Details", icon: "person" },
-    { key: "rewards", label: "Rewards", icon: "stars" },
+    { key: "vrix_plus", label: "VRIX+ Club", icon: "stars" },
     { key: "logout", label: "Logout", icon: "logout" },
   ];
 
@@ -762,29 +762,76 @@ export default function UserAccountPage() {
             </div>
           )}
 
-          {/* REWARDS */}
-          {activeTab === "rewards" && (
+          {/* VRIX+ CLUB */}
+          {activeTab === "vrix_plus" && (
             <div className="space-y-8 animate-fade-in">
               <header className="border-b border-slate-grey/15 pb-4">
-                <h1 className="font-display-lg text-headline-md text-deep-navy uppercase">VRIX Rewards</h1>
+                <h1 className="font-display-lg text-headline-md text-deep-navy uppercase">VRIX+ Club</h1>
+                <p className="font-body-md text-xs text-slate-grey mt-1">Unlock exclusive member privileges and collections.</p>
               </header>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border border-slate-grey/15 p-6 bg-surface/30 space-y-4">
-                  <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">Active Balance</span>
-                  <h3 className="font-display-lg text-4xl text-deep-navy">320 pts</h3>
-                  <div className="w-full bg-slate-grey/25 h-1"><div className="bg-deep-navy h-1 w-[64%]" /></div>
-                  <p className="text-xs text-slate-grey font-body-md">180 points away from next tier.</p>
+              
+              {user?.isVrixPlusMember ? (
+                <div className="space-y-6">
+                  <div className="border border-slate-grey/25 p-6 bg-[#F5F4F0] flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-l-[#B59D7C]">
+                    <div className="space-y-1 text-left">
+                      <span className="font-label-caps text-[9px] text-[#B59D7C] uppercase tracking-widest font-bold">VRIX+ MEMBER ACTIVE</span>
+                      <h3 className="font-headline-md text-lg text-deep-navy uppercase font-semibold">Welcome, VRIX+ Member</h3>
+                    </div>
+                    <div className="bg-[#EBEAE4] px-4 py-2 border border-slate-grey/25 text-center">
+                      <p className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest leading-none mb-1">MEMBER STATUS</p>
+                      <p className="font-label-caps text-xs text-deep-navy font-bold tracking-widest">ACTIVE</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="border border-slate-grey/15 p-6 bg-surface/30 space-y-1">
+                      <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">MEMBER SINCE</span>
+                      <p className="font-body-md text-sm font-semibold text-ink-black">{user?.vrixPlusJoinedDate || "14 July 2026"}</p>
+                    </div>
+                    <div className="border border-slate-grey/15 p-6 bg-surface/30 space-y-1">
+                      <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">MEMBER TIER</span>
+                      <p className="font-body-md text-sm font-semibold text-deep-navy uppercase tracking-wider">VRIX+ MEMBER</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="border border-slate-grey/15 p-6 bg-surface/30 space-y-2">
-                  <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">Member Tier</span>
-                  <h3 className="font-headline-md text-xl text-deep-navy uppercase font-semibold">Platinum Level</h3>
-                  <ul className="text-xs text-slate-grey space-y-2 pt-2 list-disc pl-4 font-body-md">
-                    <li>Complimentary express delivery worldwide</li>
-                    <li>Priority crafting queue on bespoke commissions</li>
-                    <li>Exclusive preview access to seasonal collections</li>
-                  </ul>
+              ) : (
+                <div className="border border-slate-grey/15 p-8 bg-surface/30 space-y-6 text-center">
+                  <h3 className="font-headline-md text-xl text-deep-navy uppercase">Join VRIX+</h3>
+                  <p className="font-body-md text-sm text-slate-grey max-w-md mx-auto">
+                    Become a VRIX+ Member and enjoy exclusive access, early releases, and premium services designed to elevate your experience with VRIX.
+                  </p>
+                  
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!user?.email) return;
+                      try {
+                        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+                        const res = await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ email: user.email })
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                          login(data.user.email, {
+                            name: data.user.name,
+                            phone: data.user.phone,
+                            isVrixPlusMember: true,
+                            vrixPlusJoinedDate: data.user.vrixPlusJoinedDate
+                          });
+                          triggerFeedback("Welcome to VRIX+ Club!");
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    className="px-8 py-3 bg-black text-white font-button text-xs uppercase tracking-widest hover:bg-black/90 transition-colors cursor-pointer"
+                  >
+                    Activate VRIX+ Membership
+                  </button>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

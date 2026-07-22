@@ -194,16 +194,38 @@
     }
   ],
   "navigation": [
-    { "label": "Collections", "path": "/collections" },
-    { "label": "The World of VRIX", "path": "/story" },
-    { "label": "Journal", "path": "/journal" },
-    { "label": "Gifts", "path": "/search" },
-    { "label": "Bespoke", "path": "/bespoke" },
-    { "label": "New Arrivals", "path": "/collections/silent-center" }
+    {
+      "label": "Collections",
+      "path": "/collections"
+    },
+    {
+      "label": "The World of VRIX",
+      "path": "/story"
+    },
+    {
+      "label": "Journal",
+      "path": "/journal"
+    },
+    {
+      "label": "Gifts",
+      "path": "/search"
+    },
+    {
+      "label": "Bespoke",
+      "path": "/bespoke"
+    },
+    {
+      "label": "New Arrivals",
+      "path": "/collections/silent-center"
+    },
+    {
+      "label": "VRIX+",
+      "path": "/vrix-plus"
+    }
   ],
   "brand": {
-    "logoUrl": "/logos/white.png",
     "name": "VRIX",
+    "logoUrl": "/logos/white.png",
     "email": "contact@vrix.com",
     "phone": "+1 (800) 555-VRIX",
     "address": "Atelier VRIX, 100 Minimalist Way, Suite 400, New York, NY 10001"
@@ -256,9 +278,69 @@
   "payments": [],
   "users": [],
   "api_settings": {
+    "cloudinaryEnabled": false,
+    "cloudinaryCloudName": "",
+    "cloudinaryApiKey": "",
+    "cloudinaryApiSecret": "",
+    "razorpayEnabled": false,
+    "razorpayKeyId": "",
+    "razorpayKeySecret": "",
+    "nodemailerEnabled": false,
+    "nodemailerHost": "",
+    "nodemailerPort": "",
+    "nodemailerUser": "",
+    "nodemailerPass": "",
     "truecallerEnabled": true,
     "truecallerSandboxMode": true,
     "truecallerPartnerKey": "",
     "truecallerAppId": ""
+  },
+  "deliveryStaff": [
+    {
+      "email": "manager@vrix.com",
+      "name": "VRIX Manager",
+      "role": "manager",
+      "createdAt": "2026-07-22T08:09:40.921Z"
+    },
+    {
+      "email": "agent@vrix.com",
+      "name": "VRIX Agent",
+      "role": "agent",
+      "createdAt": "2026-07-22T08:09:40.922Z"
+    }
+  ],
+  "vrix_plus": {
+    "programName": "VRIX+",
+    "memberName": "VRIX+ Member",
+    "tagline": "The world of VRIX, unlocked.",
+    "headline": "Join VRIX+",
+    "subheading": "Become a VRIX+ Member and enjoy exclusive access, early releases, and premium services designed to elevate your experience with VRIX.",
+    "welcomeGift": "Your first VRIX+ privilege awaits.",
+    "benefits": [
+      {
+        "title": "Early Access",
+        "description": "Shop new collections before public release."
+      },
+      {
+        "title": "Member-Exclusive Releases",
+        "description": "Access limited pieces available only to VRIX+ Members."
+      },
+      {
+        "title": "Birthday Privilege",
+        "description": "Receive a special birthday surprise from VRIX."
+      }
+    ]
+  },
+  "announcement_bar": {
+    "isEnabled": true,
+    "interval": 3000,
+    "backgroundColor": "#000000",
+    "textColor": "#ffffff",
+    "fontSize": "11px",
+    "lines": [
+      "Complimentary shipping on all orders",
+      "Complimentary gift packaging",
+      "30-day returns"
+    ]
   }
 }

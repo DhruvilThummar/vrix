@@ -15,6 +15,29 @@ router.get("/users", async (req, res) => {
   }
 });
 
+// PATCH /api/admin/users/:email/vrix-plus
+router.patch("/users/:email/vrix-plus", async (req, res) => {
+  const { email } = req.params;
+  const { isVrixPlusMember } = req.body;
+  try {
+    const today = new Date().toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+    const user = await db.users.update({
+      where: { email },
+      data: { 
+        isVrixPlusMember: !!isVrixPlusMember, 
+        vrixPlusJoinedDate: isVrixPlusMember ? today : null 
+      }
+    });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/admin/stats
 router.get("/stats", async (req, res) => {
   try {

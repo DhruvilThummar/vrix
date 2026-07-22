@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations";
+type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar";
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
@@ -65,6 +65,20 @@ export default function AdminCMSPage() {
   // --- Features Toggles States ---
   const [bespokeEnabled, setBespokeEnabled] = useState(true);
 
+  // --- VRIX+ States ---
+  const [vrixPlusProgramName, setVrixPlusProgramName] = useState("VRIX+");
+  const [vrixPlusMemberName, setVrixPlusMemberName] = useState("VRIX+ Member");
+  const [vrixPlusTagline, setVrixPlusTagline] = useState("The world of VRIX, unlocked.");
+  const [vrixPlusHeadline, setVrixPlusHeadline] = useState("Join VRIX+");
+  const [vrixPlusSubheading, setVrixPlusSubheading] = useState("Become a VRIX+ Member and enjoy exclusive access, early releases, and premium services designed to elevate your experience with VRIX.");
+  const [vrixPlusWelcomeGift, setVrixPlusWelcomeGift] = useState("Your first VRIX+ privilege awaits.");
+  const [vrixPlusBenefit1Title, setVrixPlusBenefit1Title] = useState("Early Access");
+  const [vrixPlusBenefit1Desc, setVrixPlusBenefit1Desc] = useState("Shop new collections before public release.");
+  const [vrixPlusBenefit2Title, setVrixPlusBenefit2Title] = useState("Member-Exclusive Releases");
+  const [vrixPlusBenefit2Desc, setVrixPlusBenefit2Desc] = useState("Access limited pieces available only to VRIX+ Members.");
+  const [vrixPlusBenefit3Title, setVrixPlusBenefit3Title] = useState("Birthday Privilege");
+  const [vrixPlusBenefit3Desc, setVrixPlusBenefit3Desc] = useState("Receive a special birthday surprise from VRIX.");
+
   // --- Legal Documents States ---
   const [legalData, setLegalData] = useState<any>({});
   const [selectedLegalKey, setSelectedLegalKey] = useState("privacy");
@@ -79,6 +93,14 @@ export default function AdminCMSPage() {
     image: "",
     readTime: ""
   });
+
+  // --- Announcement Bar States ---
+  const [announcementEnabled, setAnnouncementEnabled] = useState(true);
+  const [announcementInterval, setAnnouncementInterval] = useState(3000);
+  const [announcementBgColor, setAnnouncementBgColor] = useState("#000000");
+  const [announcementTextColor, setAnnouncementTextColor] = useState("#ffffff");
+  const [announcementFontSize, setAnnouncementFontSize] = useState("11px");
+  const [announcementLines, setAnnouncementLines] = useState<string[]>([]);
 
   useEffect(() => {
     loadCMSData();
@@ -155,6 +177,38 @@ export default function AdminCMSPage() {
           setTruecallerPartnerKey(res.api_settings.truecallerPartnerKey || "");
           setTruecallerAppId(res.api_settings.truecallerAppId || "");
         }
+        // VRIX+ Settings
+        if (res.vrix_plus) {
+          setVrixPlusProgramName(res.vrix_plus.programName || "VRIX+");
+          setVrixPlusMemberName(res.vrix_plus.memberName || "VRIX+ Member");
+          setVrixPlusTagline(res.vrix_plus.tagline || "The world of VRIX, unlocked.");
+          setVrixPlusHeadline(res.vrix_plus.headline || "Join VRIX+");
+          setVrixPlusSubheading(res.vrix_plus.subheading || "Become a VRIX+ Member and enjoy exclusive access, early releases, and premium services designed to elevate your experience with VRIX.");
+          setVrixPlusWelcomeGift(res.vrix_plus.welcomeGift || "Your first VRIX+ privilege awaits.");
+          if (Array.isArray(res.vrix_plus.benefits)) {
+            if (res.vrix_plus.benefits[0]) {
+              setVrixPlusBenefit1Title(res.vrix_plus.benefits[0].title || "Early Access");
+              setVrixPlusBenefit1Desc(res.vrix_plus.benefits[0].description || "Shop new collections before public release.");
+            }
+            if (res.vrix_plus.benefits[1]) {
+              setVrixPlusBenefit2Title(res.vrix_plus.benefits[1].title || "Member-Exclusive Releases");
+              setVrixPlusBenefit2Desc(res.vrix_plus.benefits[1].description || "Access limited pieces available only to VRIX+ Members.");
+            }
+            if (res.vrix_plus.benefits[2]) {
+              setVrixPlusBenefit3Title(res.vrix_plus.benefits[2].title || "Birthday Privilege");
+              setVrixPlusBenefit3Desc(res.vrix_plus.benefits[2].description || "Receive a special birthday surprise from VRIX.");
+            }
+          }
+        }
+        // Announcement Bar Settings
+        if (res.announcement_bar) {
+          setAnnouncementEnabled(res.announcement_bar.isEnabled !== false);
+          setAnnouncementInterval(res.announcement_bar.interval || 3000);
+          setAnnouncementBgColor(res.announcement_bar.backgroundColor || "#000000");
+          setAnnouncementTextColor(res.announcement_bar.textColor || "#ffffff");
+          setAnnouncementFontSize(res.announcement_bar.fontSize || "11px");
+          setAnnouncementLines(Array.isArray(res.announcement_bar.lines) ? res.announcement_bar.lines : []);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -226,6 +280,27 @@ export default function AdminCMSPage() {
           truecallerSandboxMode,
           truecallerPartnerKey,
           truecallerAppId
+        },
+        vrix_plus: {
+          programName: vrixPlusProgramName,
+          memberName: vrixPlusMemberName,
+          tagline: vrixPlusTagline,
+          headline: vrixPlusHeadline,
+          subheading: vrixPlusSubheading,
+          welcomeGift: vrixPlusWelcomeGift,
+          benefits: [
+            { title: vrixPlusBenefit1Title, description: vrixPlusBenefit1Desc },
+            { title: vrixPlusBenefit2Title, description: vrixPlusBenefit2Desc },
+            { title: vrixPlusBenefit3Title, description: vrixPlusBenefit3Desc }
+          ]
+        },
+        announcement_bar: {
+          isEnabled: announcementEnabled,
+          interval: Number(announcementInterval),
+          backgroundColor: announcementBgColor,
+          textColor: announcementTextColor,
+          fontSize: announcementFontSize,
+          lines: announcementLines
         }
       });
       showToast("CMS updated successfully.");
@@ -375,6 +450,26 @@ export default function AdminCMSPage() {
               }`}
             >
               API Configuration
+            </button>
+            <button
+              onClick={() => setActiveTab("vrix-plus")}
+              className={`px-4 py-2 border cursor-pointer ${
+                activeTab === "vrix-plus"
+                  ? "bg-deep-navy text-pure-white border-deep-navy"
+                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+              }`}
+            >
+              VRIX+ Club
+            </button>
+            <button
+              onClick={() => setActiveTab("announcement-bar")}
+              className={`px-4 py-2 border cursor-pointer ${
+                activeTab === "announcement-bar"
+                  ? "bg-deep-navy text-pure-white border-deep-navy"
+                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+              }`}
+            >
+              Announcement Bar
             </button>
           </div>
         </div>
@@ -1642,6 +1737,321 @@ export default function AdminCMSPage() {
                           </div>
                         </div>
 
+                      </div>
+                    </section>
+                  </div>
+                )}
+
+                {/* 6. VRIX+ CLUB TAB */}
+                {activeTab === "vrix-plus" && (
+                  <div className="space-y-6 animate-fade-in">
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+                        VRIX+ Program Settings
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Program Name
+                          </label>
+                          <input
+                            type="text"
+                            value={vrixPlusProgramName}
+                            onChange={(e) => setVrixPlusProgramName(e.target.value)}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Member Name
+                          </label>
+                          <input
+                             type="text"
+                             value={vrixPlusMemberName}
+                             onChange={(e) => setVrixPlusMemberName(e.target.value)}
+                             className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                             required
+                           />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Slogan Tagline
+                          </label>
+                          <input
+                            type="text"
+                            value={vrixPlusTagline}
+                            onChange={(e) => setVrixPlusTagline(e.target.value)}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Welcome Headline
+                          </label>
+                          <input
+                            type="text"
+                            value={vrixPlusHeadline}
+                            onChange={(e) => setVrixPlusHeadline(e.target.value)}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                          Welcome Subheading Copy
+                        </label>
+                        <textarea
+                          value={vrixPlusSubheading}
+                          onChange={(e) => setVrixPlusSubheading(e.target.value)}
+                          className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                          rows={3}
+                          required
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                          Welcome Gift Claim Slogan
+                        </label>
+                        <input
+                          type="text"
+                          value={vrixPlusWelcomeGift}
+                          onChange={(e) => setVrixPlusWelcomeGift(e.target.value)}
+                          className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                          required
+                        />
+                      </div>
+                    </section>
+
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+                        Member Benefits List (3 Benefits Cards)
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Benefit 1 */}
+                        <div className="border border-slate-grey/20 p-4 space-y-4 bg-soft-linen/20">
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-bold">Benefit 1 Title</label>
+                            <input
+                              type="text"
+                              value={vrixPlusBenefit1Title}
+                              onChange={(e) => setVrixPlusBenefit1Title(e.target.value)}
+                              className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black"
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-bold">Benefit 1 Description</label>
+                            <textarea
+                              value={vrixPlusBenefit1Desc}
+                              onChange={(e) => setVrixPlusBenefit1Desc(e.target.value)}
+                              className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black"
+                              rows={3}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Benefit 2 */}
+                        <div className="border border-slate-grey/20 p-4 space-y-4 bg-soft-linen/20">
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-bold">Benefit 2 Title</label>
+                            <input
+                              type="text"
+                              value={vrixPlusBenefit2Title}
+                              onChange={(e) => setVrixPlusBenefit2Title(e.target.value)}
+                              className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black"
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-bold">Benefit 2 Description</label>
+                            <textarea
+                              value={vrixPlusBenefit2Desc}
+                              onChange={(e) => setVrixPlusBenefit2Desc(e.target.value)}
+                              className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black"
+                              rows={3}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Benefit 3 */}
+                        <div className="border border-slate-grey/20 p-4 space-y-4 bg-soft-linen/20">
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-bold">Benefit 3 Title</label>
+                            <input
+                              type="text"
+                              value={vrixPlusBenefit3Title}
+                              onChange={(e) => setVrixPlusBenefit3Title(e.target.value)}
+                              className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black"
+                              required
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-bold">Benefit 3 Description</label>
+                            <textarea
+                              value={vrixPlusBenefit3Desc}
+                              onChange={(e) => setVrixPlusBenefit3Desc(e.target.value)}
+                              className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black"
+                              rows={3}
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                )}
+
+                {/* 7. ANNOUNCEMENT BAR TAB */}
+                {activeTab === "announcement-bar" && (
+                  <div className="space-y-6 animate-fade-in">
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+                        Announcement Bar General Settings
+                      </h3>
+                      
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="announcement-enabled"
+                          checked={announcementEnabled}
+                          onChange={(e) => setAnnouncementEnabled(e.target.checked)}
+                          className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                        />
+                        <label htmlFor="announcement-enabled" className="font-body-md text-sm text-ink-black cursor-pointer font-semibold">
+                          Enable Announcement Bar (Toggle ON/OFF)
+                        </label>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Slide Transition Interval (in milliseconds)
+                          </label>
+                          <input
+                            type="number"
+                            min={500}
+                            step={100}
+                            value={announcementInterval}
+                            onChange={(e) => setAnnouncementInterval(Number(e.target.value))}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Font Size (e.g. 10px, 11px, 12px)
+                          </label>
+                          <input
+                            type="text"
+                            value={announcementFontSize}
+                            onChange={(e) => setAnnouncementFontSize(e.target.value)}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Background Color (HEX)
+                          </label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={announcementBgColor}
+                              onChange={(e) => setAnnouncementBgColor(e.target.value)}
+                              className="w-8 h-8 rounded-full border border-slate-grey/30 cursor-pointer overflow-hidden p-0"
+                            />
+                            <input
+                              type="text"
+                              value={announcementBgColor}
+                              onChange={(e) => setAnnouncementBgColor(e.target.value)}
+                              className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black flex-grow"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Text Color (HEX)
+                          </label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={announcementTextColor}
+                              onChange={(e) => setAnnouncementTextColor(e.target.value)}
+                              className="w-8 h-8 rounded-full border border-slate-grey/30 cursor-pointer overflow-hidden p-0"
+                            />
+                            <input
+                              type="text"
+                              value={announcementTextColor}
+                              onChange={(e) => setAnnouncementTextColor(e.target.value)}
+                              className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black flex-grow"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                          Announcement Lines (Sale / Promo Slider)
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setAnnouncementLines([...announcementLines, ""])}
+                          className="font-label-caps text-[10px] text-deep-navy hover:underline cursor-pointer"
+                        >
+                          + ADD LINE
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {announcementLines.length === 0 ? (
+                          <p className="text-slate-grey font-body-md text-sm py-4">No announcement lines added yet. Add a line to display messages.</p>
+                        ) : (
+                          announcementLines.map((line, index) => (
+                            <div key={index} className="flex items-center gap-4 bg-soft-linen/20 p-4 border border-slate-grey/20">
+                              <span className="font-label-caps text-xs text-slate-grey">Line {index + 1}</span>
+                              <input
+                                type="text"
+                                value={line}
+                                onChange={(e) => {
+                                  const updated = [...announcementLines];
+                                  updated[index] = e.target.value;
+                                  setAnnouncementLines(updated);
+                                }}
+                                placeholder="e.g. Complimentary shipping on all orders"
+                                className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black flex-grow"
+                                required
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = announcementLines.filter((_, i) => i !== index);
+                                  setAnnouncementLines(updated);
+                                }}
+                                className="text-error font-label-caps text-[10px] hover:underline cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </section>
                   </div>
