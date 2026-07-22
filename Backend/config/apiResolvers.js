@@ -129,3 +129,21 @@ export async function getTruecallerConfig() {
     appId,
   };
 }
+
+export async function getGoogleConfig() {
+  const apiSettings = await getApiSettings();
+  if (apiSettings) {
+    return {
+      enabled: apiSettings.googleEnabled !== false,
+      clientId: apiSettings.googleClientId || process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: apiSettings.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET || "",
+    };
+  }
+
+  return {
+    enabled: true,
+    clientId: process.env.GOOGLE_CLIENT_ID || "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+  };
+}
+

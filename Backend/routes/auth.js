@@ -1,7 +1,7 @@
 import express from "express";
 import crypto from "crypto";
 import { db } from "../database.js";
-import { getTransporter, getApiSettings, getTruecallerConfig } from "../config/apiResolvers.js";
+import { getTransporter, getApiSettings, getTruecallerConfig, getGoogleConfig } from "../config/apiResolvers.js";
 
 const router = express.Router();
 
@@ -335,4 +335,76 @@ router.post("/join-vrix-plus", async (req, res) => {
   }
 });
 
+// POST /api/auth/google — Google OAuth authentication
+router.post("/google", async (req, res) => {
+  const { credential, email: bodyEmail, name: bodyName, picture } = req.body;
+
+  try {
+    const config = await getGoogleConfig();
+    if (!config.enabled) {
+      return res.status(400).json({ error: "Google authentication is currently disabled in system settings." });
+    }
+
+    let userEmail = bodyEmail;
+    let userName = bodyName || "Google User";
+
+    // If Google JWT Credential string is passed, decode payload safely
+    if (credential) {
+      try {
+        const parts = credential.split(".");
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
+          if (payload.email) userEmail = payload.email;
+          if (payload.name) userName = payload.name;
+        }
+      } catch (e) {
+        console.warn("Could not parse Google JWT credential payload:", e.message);
+      }
+    }
+
+    if (!userEmail) {
+      return res.status(400).json({ error: "Email is required for Google Sign-In." });
+    }
+
+    const emailLower = userEmail.toLowerCase();
+    let existingUser = await db.users.findUnique({ where: { email: emailLower } });
+
+    if (!existingUser) {
+      existingUser = await db.users.create({
+        data: {
+          email: emailLower,
+          name: userName,
+          phone: "",
+          password: "google_oauth_account",
+          isVrixPlusMember: false,
+          vrixPlusJoinedDate: null,
+        },
+      });
+      await db.securityLogs.create({
+        data: { event: "ACCOUNT_REGISTER_GOOGLE", user: emailLower, status: "SUCCESS" },
+      });
+    } else {
+      await db.securityLogs.create({
+        data: { event: "ACCOUNT_LOGIN_GOOGLE", user: emailLower, status: "SUCCESS" },
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        email: existingUser.email,
+        name: existingUser.name,
+        phone: existingUser.phone || "",
+        isVrixPlusMember: !!existingUser.isVrixPlusMember,
+        vrixPlusJoinedDate: existingUser.vrixPlusJoinedDate || null,
+        authMethod: "google",
+      },
+    });
+  } catch (err) {
+    console.error("Google Auth error:", err);
+    res.status(500).json({ error: err.message || "Failed to authenticate with Google." });
+  }
+});
+
 export default router;
+
