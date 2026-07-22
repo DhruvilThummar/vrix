@@ -34,6 +34,10 @@ export default function AdminCMSPage() {
   const [truecallerPartnerKey, setTruecallerPartnerKey] = useState("");
   const [truecallerAppId, setTruecallerAppId] = useState("");
 
+  const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState("");
+  const [googleClientSecret, setGoogleClientSecret] = useState("");
+
   // --- Homepage Hero & Philosophy States ---
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
@@ -176,6 +180,10 @@ export default function AdminCMSPage() {
           setTruecallerSandboxMode(res.api_settings.truecallerSandboxMode !== undefined ? res.api_settings.truecallerSandboxMode : true);
           setTruecallerPartnerKey(res.api_settings.truecallerPartnerKey || "");
           setTruecallerAppId(res.api_settings.truecallerAppId || "");
+
+          setGoogleOAuthEnabled(res.api_settings.googleOAuthEnabled !== undefined ? res.api_settings.googleOAuthEnabled : false);
+          setGoogleClientId(res.api_settings.googleClientId || "");
+          setGoogleClientSecret(res.api_settings.googleClientSecret || "");
         }
         // VRIX+ Settings
         if (res.vrix_plus) {
@@ -279,7 +287,10 @@ export default function AdminCMSPage() {
           truecallerEnabled,
           truecallerSandboxMode,
           truecallerPartnerKey,
-          truecallerAppId
+          truecallerAppId,
+          googleOAuthEnabled,
+          googleClientId,
+          googleClientSecret
         },
         vrix_plus: {
           programName: vrixPlusProgramName,
@@ -1306,7 +1317,49 @@ export default function AdminCMSPage() {
                             disabled={!truecallerEnabled || truecallerSandboxMode}
                             className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
                             placeholder="e.g. localhost or yourdomain.com"
-                          />
+                        {/* Google OAuth Login */}
+                        <div className="border border-slate-grey/20 p-6 space-y-4 col-span-1 md:col-span-2 bg-soft-linen/20">
+                          <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+                            <div className="flex items-center gap-3">
+                              <span className="material-symbols-outlined text-deep-navy text-xl">account_circle</span>
+                              <div>
+                                <h4 className="font-headline-md text-base text-deep-navy uppercase">Google OAuth Sign-In</h4>
+                                <p className="text-xs text-slate-grey font-body-md">Allows customers to log in using their Google account in 1 click.</p>
+                              </div>
+                            </div>
+                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={googleOAuthEnabled}
+                                onChange={(e) => setGoogleOAuthEnabled(e.target.checked)}
+                                className="w-4 h-4 accent-deep-navy cursor-pointer"
+                              />
+                              <span className="font-label-caps text-[10px] uppercase text-deep-navy font-semibold">Enable Google Login</span>
+                            </label>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1">
+                              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Google Client ID</label>
+                              <input
+                                type="text"
+                                value={googleClientId}
+                                onChange={(e) => setGoogleClientId(e.target.value)}
+                                placeholder="xxxxxx.apps.googleusercontent.com"
+                                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Google Client Secret</label>
+                              <input
+                                type="password"
+                                value={googleClientSecret}
+                                onChange={(e) => setGoogleClientSecret(e.target.value)}
+                                placeholder="GOCSPX-xxxxxx"
+                                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </section>

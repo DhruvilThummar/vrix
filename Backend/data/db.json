@@ -342,5 +342,57 @@
       "Complimentary gift packaging",
       "30-day returns"
     ]
+  },
+  "currency_settings": {
+    "baseCurrency": "INR",
+    "autoDetectByIP": true,
+    "supportedCurrencies": [
+      { "code": "INR", "symbol": "₹", "rate": 1, "locale": "en-IN", "countries": ["IN"] },
+      { "code": "EUR", "symbol": "€", "rate": 0.011, "locale": "de-DE", "countries": ["DE","FR","IT","ES","NL","BE","AT","PT","IE","FI","GR"] },
+      { "code": "GBP", "symbol": "£", "rate": 0.0095, "locale": "en-GB", "countries": ["GB"] },
+      { "code": "USD", "symbol": "$", "rate": 0.012, "locale": "en-US", "countries": ["US","CA","AU","SG"] }
+    ],
+    "taxRules": [
+      { "country": "IN", "taxName": "GST", "rate": 3, "inclusive": true, "label": "Prices include 3% GST" },
+      { "country": "GB", "taxName": "VAT", "rate": 20, "inclusive": true, "label": "Prices include 20% VAT" },
+      { "country": "DE", "taxName": "MwSt", "rate": 19, "inclusive": true, "label": "Preise inkl. 19% MwSt" },
+      { "country": "FR", "taxName": "TVA", "rate": 20, "inclusive": true, "label": "Prix TTC (TVA 20%)" },
+      { "country": "US", "taxName": "Sales Tax", "rate": 0, "inclusive": false, "label": "Tax calculated at checkout" },
+      { "country": "*", "taxName": "Tax", "rate": 0, "inclusive": false, "label": "Tax may apply at checkout" }
+    ],
+    "defaultCurrency": "INR",
+    "fallbackCountry": "IN"
+  },
+  "shipping_settings": {
+    "zones": [
+      {
+        "name": "India Domestic",
+        "countries": ["IN"],
+        "flatRate": 50,
+        "freeAbove": 5000,
+        "estimatedDays": "3-5 business days"
+      },
+      {
+        "name": "Europe",
+        "countries": ["DE", "FR", "IT", "ES", "NL", "BE", "AT", "PT", "IE", "FI", "GR"],
+        "flatRate": 1200,
+        "freeAbove": 25000,
+        "estimatedDays": "7-12 business days"
+      },
+      {
+        "name": "United Kingdom",
+        "countries": ["GB"],
+        "flatRate": 1000,
+        "freeAbove": 20000,
+        "estimatedDays": "7-10 business days"
+      },
+      {
+        "name": "Rest of World",
+        "countries": ["*"],
+        "flatRate": 1500,
+        "freeAbove": 30000,
+        "estimatedDays": "10-15 business days"
+      }
+    ]
   }
 }

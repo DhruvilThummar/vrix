@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { fetchDb } from "@/utils/api";
+import CurrencySelector from "@/components/CurrencySelector";
 
 export default function Footer() {
   const [selectedLanguage, setSelectedLanguage] = useState("English");
@@ -168,18 +169,10 @@ export default function Footer() {
       {/* Selector & Payment Row */}
       <div className="border-t border-b border-slate-grey/25 py-6 bg-[#EBEAE4]">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center gap-6">
-          {/* Selectors */}
-          <div className="flex gap-4 font-label-caps text-[11px] font-semibold text-ink-black/80">
-            <button className="flex items-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer">
-              <i className="fa-solid fa-globe text-xs"></i>
-              <span>{selectedCurrency}</span>
-              <i className="fa-solid fa-chevron-down text-[8px] ml-0.5"></i>
-            </button>
-            <span className="text-slate-grey/40">|</span>
-            <button className="flex items-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer">
-              <span>{selectedLanguage}</span>
-              <i className="fa-solid fa-chevron-down text-[8px] ml-0.5"></i>
-            </button>
+          {/* Currency Selector */}
+          <div className="flex items-center gap-2 font-label-caps text-xs">
+            <span className="text-slate-grey">Region & Currency:</span>
+            <CurrencySelector />
           </div>
 
           {/* Payment Icons */}
@@ -209,6 +202,13 @@ export default function Footer() {
           <Link href="/legal?tab=privacy" className="hover:text-ink-black transition-colors">
             Cookie Policy
           </Link>
+          <span className="opacity-45">|</span>
+          <button
+            onClick={() => window.dispatchEvent(new Event("vrix-open-cookie-modal"))}
+            className="hover:text-ink-black transition-colors cursor-pointer"
+          >
+            Cookie Preferences
+          </button>
           <span className="opacity-45">|</span>
           <Link href="/legal?tab=faq" className="hover:text-ink-black transition-colors">
             Accessibility

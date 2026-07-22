@@ -19,6 +19,7 @@ import promoRouter from "./routes/promo.js";
 import paymentRouter from "./routes/payment.js";
 import deliveryRouter from "./routes/delivery.js";
 import adminRouter from "./routes/admin.js";
+import geoRouter from "./routes/geo.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,6 +78,7 @@ app.use("/api/promo", promoRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/delivery", deliveryRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/geo", geoRouter);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

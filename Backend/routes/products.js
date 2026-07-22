@@ -42,6 +42,51 @@ const createUniqueProductId = async (title) => {
   return candidate;
 };
 
+// POST /api/products/validate-stock — Validate cart items against active stock
+router.post("/validate-stock", async (req, res) => {
+  const { items } = req.body;
+  if (!Array.isArray(items)) return res.status(400).json({ error: "items array is required" });
+
+  try {
+    const allProducts = await db.products.findMany();
+    const outOfStockItems = [];
+
+    for (const item of items) {
+      const product = allProducts.find((p) => p.id === item.id);
+      if (!product) {
+        outOfStockItems.push({ id: item.id, title: item.title, reason: "Product no longer available" });
+        continue;
+      }
+      if (product.isVisible === false) {
+        outOfStockItems.push({ id: item.id, title: item.title, reason: "Product is currently unavailable" });
+        continue;
+      }
+      const availableStock = product.stock ?? 999;
+      if (availableStock < item.quantity) {
+        outOfStockItems.push({
+          id: item.id,
+          title: item.title,
+          requested: item.quantity,
+          available: availableStock,
+          reason: availableStock === 0 ? "Out of stock" : `Only ${availableStock} left in stock`
+        });
+      }
+    }
+
+    if (outOfStockItems.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Some items in your cart are no longer available in the requested quantity.",
+        outOfStockItems
+      });
+    }
+
+    res.json({ success: true, message: "All items in stock" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/products
 router.get("/", async (req, res) => {
   try {

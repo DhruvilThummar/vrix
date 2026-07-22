@@ -374,20 +374,41 @@ export default function UserAccountPage() {
                 </button>
               </form>
 
-              {/* Truecaller Login Block */}
-              {truecallerEnabled && (
-                <div className="pt-4 border-t border-slate-grey/15 space-y-4">
-                  <p className="text-center text-[10px] font-label-caps text-slate-grey tracking-wider uppercase">Or verify instantly</p>
+              {/* Google & Truecaller OAuth Login Block */}
+              <div className="pt-4 border-t border-slate-grey/15 space-y-3">
+                <p className="text-center text-[10px] font-label-caps text-slate-grey tracking-wider uppercase">Or verify instantly</p>
+                <div className="grid grid-cols-1 gap-2">
                   <button
                     type="button"
-                    onClick={handleTruecallerVerification}
-                    className="w-full bg-[#0087FF] text-pure-white py-3.5 font-button text-xs uppercase tracking-widest hover:bg-[#0076E5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                    onClick={() => {
+                      // Simulating Google OAuth login callback
+                      login("user@gmail.com", { name: "Google User", phone: "" });
+                      setAuthStep("verified");
+                      triggerFeedback("⚡ Signed in with Google!");
+                    }}
+                    className="w-full bg-pure-white text-ink-black border border-slate-grey/30 py-3 font-button text-xs uppercase tracking-widest hover:bg-soft-linen transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                   >
-                    <span className="material-symbols-outlined text-[16px]">bolt</span>
-                    {authMode === "signup" ? "Sign up with Truecaller" : "Sign in with Truecaller"}
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.32 7.33 24 12 24z"/>
+                      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.18 0 10.02 0 12s.46 3.82 1.26 5.42l4.02-3.15z"/>
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.68 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                    </svg>
+                    Continue with Google
                   </button>
+
+                  {truecallerEnabled && (
+                    <button
+                      type="button"
+                      onClick={handleTruecallerVerification}
+                      className="w-full bg-[#0087FF] text-pure-white py-3 font-button text-xs uppercase tracking-widest hover:bg-[#0076E5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">bolt</span>
+                      {authMode === "signup" ? "Sign up with Truecaller" : "Sign in with Truecaller"}
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
 
               {authMode === "signup" ? (
                 <p className="text-center text-[11px] text-slate-grey font-body-md leading-relaxed">
@@ -577,10 +598,12 @@ export default function UserAccountPage() {
           {/* DASHBOARD */}
           {activeTab === "dashboard" && (
             <div className="space-y-8 animate-fade-in">
-              <header className="border-b border-slate-grey/15 pb-4">
-                <h1 className="font-headline-md text-2xl text-deep-navy uppercase">Welcome back, {profile.firstName}.</h1>
-                <p className="font-body-md text-sm text-slate-grey mt-1">Here is a quick overview of your VRIX member account activity.</p>
-              </header>
+              <div className="pt-2 flex justify-end">
+                <Link href="/account/orders" className="font-button text-[10px] uppercase tracking-widest px-4 py-2 border border-deep-navy text-deep-navy hover:bg-deep-navy hover:text-pure-white transition-colors flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">local_shipping</span>
+                  Track Live Orders
+                </Link>
+              </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   { label: "Total Orders", value: orders.length },

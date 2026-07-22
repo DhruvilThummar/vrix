@@ -65,6 +65,14 @@ export async function fetchProduct(id: string) {
   return apiFetch<any>(`/products/${id}`);
 }
 
+export async function validateStock(items: Array<{ id: string; title: string; quantity: number }>) {
+  return apiFetch<{ success: boolean; message?: string; outOfStockItems?: any[] }>("/products/validate-stock", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items }),
+  });
+}
+
 export async function createProduct(productData: any) {
   return apiFetch<any>("/products", {
     method: "POST",
@@ -280,7 +288,15 @@ export async function fetchPromoCodes() {
   return apiFetch<any[]>("/promo/codes");
 }
 
-export async function createPromoCode(data: { code: string; discount: number; type: "percentage" | "fixed" }) {
+export async function createPromoCode(data: {
+  code: string;
+  discount: number;
+  type: "percentage" | "fixed";
+  description?: string | null;
+  minSubtotal?: number | null;
+  usageLimit?: number | null;
+  expiryDate?: string | null;
+}) {
   return apiFetch<any>("/promo/codes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

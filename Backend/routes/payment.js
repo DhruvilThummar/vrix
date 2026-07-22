@@ -129,6 +129,22 @@ router.post("/verify", async (req, res) => {
       data: { event: "PAYMENT_SUCCESS", user: razorpay_payment_id, status: "SUCCESS" },
     });
 
+    // Deduct Stock for purchased items
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        try {
+          const product = await db.products.findUnique({ where: { id: item.id } });
+          if (product) {
+            const currentStock = product.stock ?? 999;
+            const newStock = Math.max(0, currentStock - (item.quantity || 1));
+            await db.products.update({ where: { id: item.id }, data: { stock: newStock } });
+          }
+        } catch (stockErr) {
+          console.error(`Failed to deduct stock for product ${item.id}:`, stockErr.message);
+        }
+      }
+    }
+
     // Send order confirmation emails
     try {
       const activeTransporter = await getTransporter();

@@ -18,7 +18,11 @@ router.get("/db", async (req, res) => {
 // POST /api/cms — Upsert any CMS section
 router.post("/cms", async (req, res) => {
   try {
-    const sections = ["homepage", "story", "legal", "navigation", "brand", "features", "collections", "api_settings", "vrix_plus", "announcement_bar"];
+    const sections = [
+      "homepage", "story", "legal", "navigation", "brand", "features",
+      "collections", "api_settings", "vrix_plus", "announcement_bar",
+      "currency_settings", "shipping_settings"
+    ];
     for (const section of sections) {
       if (req.body[section] !== undefined) {
         await db.cmsSettings.upsert({

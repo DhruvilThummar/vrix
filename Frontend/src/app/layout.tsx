@@ -4,6 +4,8 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
+import CookieConsent from "@/components/CookieConsent";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -22,8 +24,6 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
   ),
-
-  // ── Core SEO ──────────────────────────────────────────────────────────────
   title: {
     default: "VRIX | Luxury Minimalist Jewelry",
     template: "%s | VRIX",
@@ -39,8 +39,6 @@ export const metadata: Metadata = {
   creator: "VRIX",
   publisher: "VRIX",
   category: "Jewelry & Accessories",
-
-  // ── Robots / Indexing ─────────────────────────────────────────────────────
   robots: {
     index: true,
     follow: true,
@@ -52,13 +50,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-
-  // ── Canonical ─────────────────────────────────────────────────────────────
   alternates: {
     canonical: "/",
   },
-
-  // ── Favicons / App Icons ───────────────────────────────────────────────────
   icons: {
     icon: [
       { url: "/logos/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -70,10 +64,6 @@ export const metadata: Metadata = {
     ],
     shortcut: "/favicon.ico",
   },
-
-  // ── Open Graph — Facebook, WhatsApp, Telegram, LinkedIn ───────────────────
-  // Primary image: 1200×630 landscape — used by Facebook, Telegram, LinkedIn
-  // Second image:  504×504 square     — used by WhatsApp (prefers square)
   openGraph: {
     title: "VRIX | Luxury Minimalist Jewelry",
     description:
@@ -82,7 +72,6 @@ export const metadata: Metadata = {
     siteName: "VRIX",
     images: [
       {
-        // Facebook, Telegram, LinkedIn, general link preview (landscape)
         url: "/logos/og-image.jpg",
         width: 1200,
         height: 630,
@@ -90,7 +79,6 @@ export const metadata: Metadata = {
         type: "image/jpeg",
       },
       {
-        // WhatsApp prefers a square thumbnail
         url: "/logos/og-whatsapp.jpg",
         width: 504,
         height: 504,
@@ -98,7 +86,6 @@ export const metadata: Metadata = {
         type: "image/jpeg",
       },
       {
-        // Instagram square preview
         url: "/logos/og-instagram.jpg",
         width: 326,
         height: 326,
@@ -109,9 +96,6 @@ export const metadata: Metadata = {
     locale: "en_IN",
     type: "website",
   },
-
-  // ── Twitter / X Card ──────────────────────────────────────────────────────
-  // summary_large_image = big banner preview on Twitter/X
   twitter: {
     card: "summary_large_image",
     title: "VRIX | Luxury Minimalist Jewelry",
@@ -155,9 +139,12 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-surface text-on-surface font-body-md antialiased overflow-x-hidden">
         <AuthProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
+          <CurrencyProvider>
+            <CartProvider>
+              {children}
+              <CookieConsent />
+            </CartProvider>
+          </CurrencyProvider>
         </AuthProvider>
       </body>
     </html>

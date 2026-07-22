@@ -102,7 +102,7 @@ export default function CartPage() {
                         {item.size && <p className="text-xs text-slate-grey font-body-md">Size: <span className="text-ink-black">{item.size}</span></p>}
                         {item.engraving && <p className="text-xs text-slate-grey font-body-md italic">"{item.engraving}"</p>}
                       </div>
-                      <span className="font-body-md text-body-md text-primary font-semibold">${(item.price * item.quantity).toLocaleString()}</span>
+                      <span className="font-body-md text-body-md text-primary font-semibold">₹{(item.price * item.quantity).toLocaleString()}</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-end mt-4">
@@ -178,35 +178,41 @@ export default function CartPage() {
               <div className="space-y-3 font-body-md text-body-md text-primary">
                 <div className="flex justify-between">
                   <span className="text-slate-grey">Subtotal</span>
-                  <span>${subtotal.toLocaleString()}</span>
+                  <span>₹{subtotal.toLocaleString()}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-green-700">
                     <span>Discount ({promoCode})</span>
-                    <span>−${discountAmount.toFixed(2)}</span>
+                    <span>−₹{discountAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate-grey">Shipping</span>
-                  <span>{shipping === 0 ? <span className="text-green-700">Free</span> : `$${shipping}`}</span>
+                  <span>{shipping === 0 ? <span className="text-green-700">Free</span> : `₹${shipping}`}</span>
                 </div>
                 {shipping > 0 && (
-                  <p className="text-[10px] text-slate-grey font-body-md">Add ${(150 - subtotal).toFixed(0)} more for free shipping.</p>
+                  <p className="text-[10px] text-slate-grey font-body-md">Add ₹{(150 - subtotal).toFixed(0)} more for free shipping.</p>
                 )}
                 <div className="pt-4 border-t border-slate-grey/20 flex justify-between font-headline-md text-headline-md">
                   <span>Total</span>
-                  <span>${grandTotal.toFixed(2)}</span>
+                  <span>₹{grandTotal.toFixed(2)}</span>
                 </div>
               </div>
 
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.preventDefault();
                   if (!isLoggedIn) {
                     showToast("Please sign in to proceed to checkout.");
                     setTimeout(() => router.push("/account"), 1200);
-                  } else {
+                    return;
+                  }
+                  try {
+                    const { validateStock } = await import("@/utils/api");
+                    await validateStock(items.map(i => ({ id: i.id, title: i.title, quantity: i.quantity })));
                     router.push("/checkout/shipping");
+                  } catch (err: any) {
+                    showToast(err.message || "Some items are out of stock.");
                   }
                 }}
                 className="w-full bg-deep-navy text-pure-white font-button text-button uppercase tracking-widest py-4 hover:bg-ink-black transition-colors text-center block cursor-pointer"
@@ -225,7 +231,7 @@ export default function CartPage() {
         {/* Trust Badges */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter mt-section-gap pt-stack-lg border-t border-slate-grey/20">
           {[
-            { icon: "local_shipping", label: "Free Shipping", sub: "On orders over $150" },
+            { icon: "local_shipping", label: "Free Shipping", sub: "On orders over ₹5,000" },
             { icon: "keyboard_return", label: "Easy Returns", sub: "30-day returns" },
             { icon: "verified", label: "2-Year Warranty", sub: "Guaranteed quality" },
             { icon: "redeem", label: "Gift Packaging", sub: "Always included" },
