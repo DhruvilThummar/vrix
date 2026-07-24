@@ -215,7 +215,7 @@ router.post("/verify-otp", async (req, res) => {
         if (activeTransporter) {
           const apiSettings = await getApiSettings();
           const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-          const amountStr = order.currency + " " + (order.amount / 100).toLocaleString();
+          const amountStr = order.currency + " ₹" + Number(order.amount).toLocaleString("en-IN");
           await activeTransporter.sendMail({
             from: `"VRIX Order System" <${senderEmail}>`,
             to: order.userEmail,

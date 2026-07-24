@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { fetchDb, verifyTruecaller } from "@/utils/api";
+import { fetchDbPublic as fetchDb, verifyTruecaller } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
+import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
 
 export default function Page() {
   const router = useRouter();
@@ -218,6 +219,8 @@ export default function Page() {
                   <input autoComplete="tel" className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 text-ink-black placeholder:text-slate-grey focus:border-deep-navy focus:ring-0 sm:text-body-md transition-colors duration-300" id="phone" name="phone" placeholder="Phone number" required={true} type="tel" />
                 </div>
               </div>
+            <div className="mt-stack-lg">
+              <GiftWrappingSection />
             </div>
 
             <div className="pt-stack-lg mt-stack-lg border-t border-slate-grey/20">

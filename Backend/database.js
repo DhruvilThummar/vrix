@@ -89,6 +89,8 @@ const productSelect = {
   collection: true,
   stock: true,
   isVisible: true,
+  isVrixPlusExclusive: true,
+  vrixPlusPrice: true,
   createdAt: true,
 };
 
@@ -682,7 +684,7 @@ export async function migrateIfNeeded() {
       const localData = readLocalDb();
 
       // Seed CMS Settings
-      const cmsKeys = ["homepage", "story", "legal", "navigation", "brand", "features", "collections", "vrix_plus", "api_settings", "announcement_bar"];
+      const cmsKeys = ["homepage", "story", "legal", "navigation", "brand", "features", "collections", "vrix_plus", "api_settings", "announcement_bar", "gift_wrapping", "metal_types", "currency_settings", "shipping_settings"];
       for (const key of cmsKeys) {
         if (localData[key]) {
           await prisma.cmsSetting.upsert({

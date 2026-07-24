@@ -1,5 +1,6 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || "vrix_admin_secret_change_me_in_production";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -9,6 +10,15 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
     throw new Error(err.error || "API request failed");
   }
   return res.json();
+}
+
+// Admin-only fetch — auto-attaches X-Admin-Secret header
+async function adminFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    "X-Admin-Secret": ADMIN_SECRET,
+    ...(options?.headers as Record<string, string> || {}),
+  };
+  return apiFetch<T>(endpoint, { ...options, headers });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -33,6 +43,11 @@ export async function fetchHealth() {
 
 export async function fetchDb() {
   return apiFetch<any>("/db");
+}
+
+// Public variant — safe for shop-facing pages (strips api_settings secrets)
+export async function fetchDbPublic() {
+  return apiFetch<any>("/db/public");
 }
 
 export async function updateCMS(data: {
@@ -288,11 +303,11 @@ export async function loginWithGoogle(payload: { credential?: string; email?: st
 //  PROMO / REDEEM CODES
 // ══════════════════════════════════════════════════════════════════════════════
 
-export async function verifyPromo(code: string) {
+export async function verifyPromo(code: string, subtotal?: number) {
   return apiFetch<{ success: boolean; code: string; discount: number; type: "percentage" | "fixed" }>("/promo/verify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ code, subtotal }),
   });
 }
 
@@ -366,6 +381,7 @@ export async function verifyPayment(data: {
   razorpay_payment_id: string;
   razorpay_signature: string;
   items?: any[];
+  promoCode?: string;
 }) {
   return apiFetch<{ success: boolean; paymentId: string }>("/payment/verify", {
     method: "POST",
@@ -453,7 +469,7 @@ export async function assignDeliveryOrder(orderId: string, agentEmail: string | 
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchAdminStats() {
-  return apiFetch<{
+  return adminFetch<{
     totalProducts: number;
     totalOrders: number;
     totalRevenue: number;
@@ -518,5 +534,13 @@ export async function saveSiteConfigKey(key: string, value: any) {
 }
 
 export async function fetchUsers() {
-  return apiFetch<any[]>("/admin/users");
+  return adminFetch<any[]>("/admin/users");
+}
+
+export async function updateUserVrixPlus(email: string, isVrixPlusMember: boolean) {
+  return adminFetch<{ success: boolean; user: any }>(`/admin/users/${encodeURIComponent(email)}/vrix-plus`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ isVrixPlusMember }),
+  });
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { fetchDb } from "@/utils/api";
+import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 interface Article {
   id: string;

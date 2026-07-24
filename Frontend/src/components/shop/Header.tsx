@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import SkeletonImage from "@/components/shop/SkeletonImage";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { fetchDb, fetchProducts } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import AuthDrawer from "@/components/auth/AuthDrawer";
 
 const DEFAULT_LINKS = [
   { label: "Trending", path: "/collections/silent-center?filter=trending" },
@@ -69,6 +71,7 @@ export default function Header() {
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -209,10 +212,10 @@ export default function Header() {
           {/* Center Brand Logo */}
           <div className="flex justify-center">
             <Link href="/" className="flex items-center">
-              {logoUrl && logoUrl !== "" && !logoUrl.includes("white.png") ? (
+              {logoUrl && logoUrl !== "" ? (
                 <div className="relative h-8 w-32">
                   <Image
-                    src={logoUrl}
+                    src={logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl}
                     alt={brandName}
                     fill
                     className="object-contain"
@@ -249,13 +252,13 @@ export default function Header() {
                 </span>
               )}
             </button>
-            <Link
-              href="/account"
+            <button
+              onClick={() => setIsAuthOpen(true)}
               className="p-1 hover:text-deep-navy transition-colors duration-300 cursor-pointer flex items-center justify-center"
               aria-label="User Account"
             >
               <i className="fa-regular fa-user text-[19px]"></i>
-            </Link>
+            </button>
             <button
               onClick={() => setIsCartOpen(true)}
               className="p-1 hover:text-deep-navy transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
@@ -300,10 +303,10 @@ export default function Header() {
         </button>
         
         <Link href="/" className="flex items-center">
-          {logoUrl && logoUrl !== "" && !logoUrl.includes("white.png") ? (
+          {logoUrl && logoUrl !== "" ? (
             <div className="relative h-6 w-24">
               <Image
-                src={logoUrl}
+                src={logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl}
                 alt={brandName}
                 fill
                 className="object-contain"
@@ -492,7 +495,7 @@ export default function Header() {
               {wishlist.map((item) => (
                 <div key={item.id} className="flex gap-4 p-3 border border-soft-linen bg-surface/30">
                   <div className="w-20 h-24 bg-soft-linen relative shrink-0">
-                    <Image src={item.image} alt={item.title} fill className="object-cover" sizes="80px" />
+                    <SkeletonImage src={item.image} alt={item.title} fill className="object-cover" sizes="80px" />
                   </div>
                   <div className="flex-grow flex flex-col justify-between">
                     <div>
@@ -506,7 +509,7 @@ export default function Header() {
                         </button>
                       </div>
                       <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">{item.material}</p>
-                      <p className="font-body-md text-sm font-semibold mt-1">${item.price}</p>
+                      <p className="font-body-md text-sm font-semibold mt-1">₹{item.price}</p>
                     </div>
                     <div className="pt-2">
                       <button
@@ -667,6 +670,9 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* Auth Drawer Modal */}
+      <AuthDrawer isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </>
   );
 }

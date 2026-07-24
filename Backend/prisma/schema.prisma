@@ -16,19 +16,21 @@ model CmsSetting {
 }
 
 model Product {
-  id          String   @id
-  title       String
-  material    String?
-  type        String
-  price       Float
-  image       String
-  images      Json?
-  description String?
-  alt         String?
-  collection  String?
-  stock       Int      @default(999)
-  isVisible   Boolean  @default(true) @map("is_visible")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id                  String   @id
+  title               String
+  material            String?
+  type                String
+  price               Float
+  image               String
+  images              Json?
+  description         String?
+  alt                 String?
+  collection          String?
+  stock               Int      @default(999)
+  isVisible           Boolean  @default(true)  @map("is_visible")
+  isVrixPlusExclusive Boolean  @default(false) @map("is_vrix_plus_exclusive")
+  vrixPlusPrice       Float?   @map("vrix_plus_price")
+  createdAt           DateTime @default(now()) @map("created_at")
 
   @@map("products")
 }

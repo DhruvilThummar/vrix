@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { fetchDb } from "@/utils/api";
+import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 export default function Page() {
   const [brandName, setBrandName] = useState("VRIX");

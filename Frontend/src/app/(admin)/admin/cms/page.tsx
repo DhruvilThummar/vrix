@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar";
+type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types";
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
@@ -34,7 +34,7 @@ export default function AdminCMSPage() {
   const [truecallerPartnerKey, setTruecallerPartnerKey] = useState("");
   const [truecallerAppId, setTruecallerAppId] = useState("");
 
-  const [googleOAuthEnabled, setGoogleOAuthEnabled] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
   const [googleClientId, setGoogleClientId] = useState("");
   const [googleClientSecret, setGoogleClientSecret] = useState("");
 
@@ -76,12 +76,41 @@ export default function AdminCMSPage() {
   const [vrixPlusHeadline, setVrixPlusHeadline] = useState("Join VRIX+");
   const [vrixPlusSubheading, setVrixPlusSubheading] = useState("Become a VRIX+ Member and enjoy exclusive access, early releases, and premium services designed to elevate your experience with VRIX.");
   const [vrixPlusWelcomeGift, setVrixPlusWelcomeGift] = useState("Your first VRIX+ privilege awaits.");
+  const [vrixPlusBannerImage, setVrixPlusBannerImage] = useState("");
   const [vrixPlusBenefit1Title, setVrixPlusBenefit1Title] = useState("Early Access");
   const [vrixPlusBenefit1Desc, setVrixPlusBenefit1Desc] = useState("Shop new collections before public release.");
   const [vrixPlusBenefit2Title, setVrixPlusBenefit2Title] = useState("Member-Exclusive Releases");
   const [vrixPlusBenefit2Desc, setVrixPlusBenefit2Desc] = useState("Access limited pieces available only to VRIX+ Members.");
   const [vrixPlusBenefit3Title, setVrixPlusBenefit3Title] = useState("Birthday Privilege");
   const [vrixPlusBenefit3Desc, setVrixPlusBenefit3Desc] = useState("Receive a special birthday surprise from VRIX.");
+
+  // --- Bespoke Atelier Configurator States ---
+  const [bespokeSlogan, setBespokeSlogan] = useState("THE SIGNATURE COLLECTION");
+  const [bespokeTitle, setBespokeTitle] = useState("Bespoke Solitaire");
+  const [bespokeSubtitle, setBespokeSubtitle] = useState("Crafted to your exact specifications. Begin building your legacy piece.");
+  const [bespokeImage, setBespokeImage] = useState("https://lh3.googleusercontent.com/aida-public/AB6AXuAks29fjlA1gotrInXcRvND6geEa51LDm7VTLCZxzQ5SMp7ppo1sLy6YvXWHNXvmv8aU5VUCKZxNgW5V1LK4m9kpD_0gx3-rUg_1dE4tM-ddxE6LIxo6Co86x_O2yLAJmlADHnZJiJMMkiAkkmesYshx4QzL2WLq-rpFbMRQR3aMVFX7IjXVLijUS-lPVPY1hj4O3PV22zApoxyWBrnbLLkxgsqKHK4K9foEioe7RLFuP1K1emgpmp5yITLuyDe3rDmd-904NOjbvw");
+  const [bespokeBasePrice, setBespokeBasePrice] = useState(3450);
+  const [bespokeMetals, setBespokeMetals] = useState<any[]>([
+    { name: "18K YELLOW GOLD", color: "#E6C762" },
+    { name: "18K WHITE GOLD", color: "#E1E1E1" },
+    { name: "18K ROSE GOLD", color: "#E8B2A1" },
+    { name: "PLATINUM", color: "#D1D3D4" }
+  ]);
+  const [bespokeShapes, setBespokeShapes] = useState<string[]>(["ROUND", "OVAL", "EMERALD", "PEAR"]);
+  const [bespokeCaratMin, setBespokeCaratMin] = useState(0.5);
+  const [bespokeCaratMax, setBespokeCaratMax] = useState(3.0);
+  const [bespokeCaratDefault, setBespokeCaratDefault] = useState(1.5);
+  const [bespokeEngravingMax, setBespokeEngravingMax] = useState(15);
+
+  // --- Gift Wrapping States ---
+  const [giftWrapEnabled, setGiftWrapEnabled] = useState(true);
+  const [giftWrapTitle, setGiftWrapTitle] = useState("Monica Vinader Style Signature Gift Packaging");
+  const [giftWrapPrice, setGiftWrapPrice] = useState(250);
+  const [giftWrapImage, setGiftWrapImage] = useState("");
+  const [giftWrapDesc, setGiftWrapDesc] = useState("");
+
+  // --- Metal Types / Swatches States ---
+  const [metalTypesList, setMetalTypesList] = useState<any[]>([]);
 
   // --- Legal Documents States ---
   const [legalData, setLegalData] = useState<any>({});
@@ -181,7 +210,7 @@ export default function AdminCMSPage() {
           setTruecallerPartnerKey(res.api_settings.truecallerPartnerKey || "");
           setTruecallerAppId(res.api_settings.truecallerAppId || "");
 
-          setGoogleOAuthEnabled(res.api_settings.googleOAuthEnabled !== undefined ? res.api_settings.googleOAuthEnabled : false);
+          setGoogleEnabled(res.api_settings.googleEnabled !== undefined ? res.api_settings.googleEnabled : (res.api_settings.googleOAuthEnabled !== undefined ? res.api_settings.googleOAuthEnabled : true));
           setGoogleClientId(res.api_settings.googleClientId || "");
           setGoogleClientSecret(res.api_settings.googleClientSecret || "");
         }
@@ -193,6 +222,7 @@ export default function AdminCMSPage() {
           setVrixPlusHeadline(res.vrix_plus.headline || "Join VRIX+");
           setVrixPlusSubheading(res.vrix_plus.subheading || "Become a VRIX+ Member and enjoy exclusive access, early releases, and premium services designed to elevate your experience with VRIX.");
           setVrixPlusWelcomeGift(res.vrix_plus.welcomeGift || "Your first VRIX+ privilege awaits.");
+          setVrixPlusBannerImage(res.vrix_plus.bannerImage || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1200&auto=format&fit=crop");
           if (Array.isArray(res.vrix_plus.benefits)) {
             if (res.vrix_plus.benefits[0]) {
               setVrixPlusBenefit1Title(res.vrix_plus.benefits[0].title || "Early Access");
@@ -207,6 +237,29 @@ export default function AdminCMSPage() {
               setVrixPlusBenefit3Desc(res.vrix_plus.benefits[2].description || "Receive a special birthday surprise from VRIX.");
             }
           }
+        }
+        if (res.bespoke_config) {
+          if (res.bespoke_config.slogan) setBespokeSlogan(res.bespoke_config.slogan);
+          if (res.bespoke_config.title) setBespokeTitle(res.bespoke_config.title);
+          if (res.bespoke_config.subtitle) setBespokeSubtitle(res.bespoke_config.subtitle);
+          if (res.bespoke_config.previewImage) setBespokeImage(res.bespoke_config.previewImage);
+          if (res.bespoke_config.basePrice !== undefined) setBespokeBasePrice(res.bespoke_config.basePrice);
+          if (Array.isArray(res.bespoke_config.metals)) setBespokeMetals(res.bespoke_config.metals);
+          if (Array.isArray(res.bespoke_config.shapes)) setBespokeShapes(res.bespoke_config.shapes);
+          if (res.bespoke_config.caratMin !== undefined) setBespokeCaratMin(res.bespoke_config.caratMin);
+          if (res.bespoke_config.caratMax !== undefined) setBespokeCaratMax(res.bespoke_config.caratMax);
+          if (res.bespoke_config.caratDefault !== undefined) setBespokeCaratDefault(res.bespoke_config.caratDefault);
+          if (res.bespoke_config.engravingMax !== undefined) setBespokeEngravingMax(res.bespoke_config.engravingMax);
+        }
+        if (res.gift_wrapping) {
+          setGiftWrapEnabled(res.gift_wrapping.isEnabled !== false);
+          setGiftWrapTitle(res.gift_wrapping.title || "");
+          setGiftWrapPrice(res.gift_wrapping.price || 250);
+          setGiftWrapImage(res.gift_wrapping.image || "");
+          setGiftWrapDesc(res.gift_wrapping.description || "");
+        }
+        if (Array.isArray(res.metal_types)) {
+          setMetalTypesList(res.metal_types);
         }
         // Announcement Bar Settings
         if (res.announcement_bar) {
@@ -288,7 +341,7 @@ export default function AdminCMSPage() {
           truecallerSandboxMode,
           truecallerPartnerKey,
           truecallerAppId,
-          googleOAuthEnabled,
+          googleEnabled,
           googleClientId,
           googleClientSecret
         },
@@ -299,12 +352,34 @@ export default function AdminCMSPage() {
           headline: vrixPlusHeadline,
           subheading: vrixPlusSubheading,
           welcomeGift: vrixPlusWelcomeGift,
+          bannerImage: vrixPlusBannerImage,
           benefits: [
             { title: vrixPlusBenefit1Title, description: vrixPlusBenefit1Desc },
             { title: vrixPlusBenefit2Title, description: vrixPlusBenefit2Desc },
             { title: vrixPlusBenefit3Title, description: vrixPlusBenefit3Desc }
           ]
         },
+        bespoke_config: {
+          slogan: bespokeSlogan,
+          title: bespokeTitle,
+          subtitle: bespokeSubtitle,
+          previewImage: bespokeImage,
+          basePrice: Number(bespokeBasePrice),
+          metals: bespokeMetals,
+          shapes: bespokeShapes,
+          caratMin: Number(bespokeCaratMin),
+          caratMax: Number(bespokeCaratMax),
+          caratDefault: Number(bespokeCaratDefault),
+          engravingMax: Number(bespokeEngravingMax),
+        },
+        gift_wrapping: {
+          isEnabled: giftWrapEnabled,
+          title: giftWrapTitle,
+          price: Number(giftWrapPrice),
+          image: giftWrapImage,
+          description: giftWrapDesc
+        },
+        metal_types: metalTypesList,
         announcement_bar: {
           isEnabled: announcementEnabled,
           interval: Number(announcementInterval),
@@ -471,6 +546,36 @@ export default function AdminCMSPage() {
               }`}
             >
               VRIX+ Club
+            </button>
+            <button
+              onClick={() => setActiveTab("bespoke-atelier")}
+              className={`px-4 py-2 border cursor-pointer ${
+                activeTab === "bespoke-atelier"
+                  ? "bg-deep-navy text-pure-white border-deep-navy"
+                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+              }`}
+            >
+              Bespoke Atelier
+            </button>
+            <button
+              onClick={() => setActiveTab("gift-wrapping")}
+              className={`px-4 py-2 border cursor-pointer ${
+                activeTab === "gift-wrapping"
+                  ? "bg-deep-navy text-pure-white border-deep-navy"
+                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+              }`}
+            >
+              Gift Wrapping
+            </button>
+            <button
+              onClick={() => setActiveTab("metal-types")}
+              className={`px-4 py-2 border cursor-pointer ${
+                activeTab === "metal-types"
+                  ? "bg-deep-navy text-pure-white border-deep-navy"
+                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+              }`}
+            >
+              Metal Swatches
             </button>
             <button
               onClick={() => setActiveTab("announcement-bar")}
@@ -1330,8 +1435,8 @@ export default function AdminCMSPage() {
                             <label className="flex items-center gap-2 cursor-pointer select-none">
                               <input
                                 type="checkbox"
-                                checked={googleOAuthEnabled}
-                                onChange={(e) => setGoogleOAuthEnabled(e.target.checked)}
+                                checked={googleEnabled}
+                                onChange={(e) => setGoogleEnabled(e.target.checked)}
                                 className="w-4 h-4 accent-deep-navy cursor-pointer"
                               />
                               <span className="font-label-caps text-[10px] uppercase text-deep-navy font-semibold">Enable Google Login</span>
@@ -1965,6 +2070,214 @@ export default function AdminCMSPage() {
                   </div>
                 )}
 
+                {/* 6.5 BESPOKE ATELIER TAB */}
+                {activeTab === "bespoke-atelier" && (
+                  <div className="space-y-6 animate-fade-in">
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+                        Bespoke Configurator Page Branding &amp; Pricing
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Collection Slogan Tag
+                          </label>
+                          <input
+                            type="text"
+                            value={bespokeSlogan}
+                            onChange={(e) => setBespokeSlogan(e.target.value)}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Page Title
+                          </label>
+                          <input
+                            type="text"
+                            value={bespokeTitle}
+                            onChange={(e) => setBespokeTitle(e.target.value)}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                          Subtitle Narrative Copy
+                        </label>
+                        <textarea
+                          value={bespokeSubtitle}
+                          onChange={(e) => setBespokeSubtitle(e.target.value)}
+                          className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                          rows={2}
+                          required
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Configurator Ring Preview Image URL
+                          </label>
+                          <input
+                            type="url"
+                            value={bespokeImage}
+                            onChange={(e) => setBespokeImage(e.target.value)}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                            required
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                            Base Estimate Price (₹)
+                          </label>
+                          <input
+                            type="number"
+                            value={bespokeBasePrice}
+                            onChange={(e) => setBespokeBasePrice(Number(e.target.value))}
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Metal Options Manager */}
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                          Available Metals Configuration
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => setBespokeMetals([...bespokeMetals, { name: "NEW METAL", color: "#CCCCCC" }])}
+                          className="px-3 py-1 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase cursor-pointer"
+                        >
+                          + Add Metal
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {bespokeMetals.map((m, idx) => (
+                          <div key={idx} className="border border-slate-grey/20 p-4 bg-soft-linen/20 space-y-3 relative">
+                            <button
+                              type="button"
+                              onClick={() => setBespokeMetals(bespokeMetals.filter((_, i) => i !== idx))}
+                              className="absolute top-2 right-2 text-error text-[10px] font-label-caps cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-label-caps text-[9px] text-slate-grey uppercase">Metal Name</label>
+                              <input
+                                type="text"
+                                value={m.name}
+                                onChange={(e) => {
+                                  const next = [...bespokeMetals];
+                                  next[idx].name = e.target.value;
+                                  setBespokeMetals(next);
+                                }}
+                                className="border-b border-slate-grey/30 py-1 text-xs outline-none font-body-md"
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="flex flex-col gap-1 flex-1">
+                                <label className="font-label-caps text-[9px] text-slate-grey uppercase">Color Hex</label>
+                                <input
+                                  type="text"
+                                  value={m.color}
+                                  onChange={(e) => {
+                                    const next = [...bespokeMetals];
+                                    next[idx].color = e.target.value;
+                                    setBespokeMetals(next);
+                                  }}
+                                  className="border-b border-slate-grey/30 py-1 text-xs outline-none font-mono"
+                                />
+                              </div>
+                              <input
+                                type="color"
+                                value={m.color.startsWith("#") ? m.color : "#CCCCCC"}
+                                onChange={(e) => {
+                                  const next = [...bespokeMetals];
+                                  next[idx].color = e.target.value;
+                                  setBespokeMetals(next);
+                                }}
+                                className="w-8 h-8 rounded-full border cursor-pointer mt-3"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* Stone Shapes & Carat Options */}
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                      <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+                        Stone Shapes &amp; Carat Controls
+                      </h3>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                          Diamond Shapes (Comma-separated)
+                        </label>
+                        <input
+                          type="text"
+                          value={bespokeShapes.join(", ")}
+                          onChange={(e) => setBespokeShapes(e.target.value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean))}
+                          className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                          placeholder="ROUND, OVAL, EMERALD, PEAR, CUSHION"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="flex flex-col gap-1">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase">Carat Min (ct)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={bespokeCaratMin}
+                            onChange={(e) => setBespokeCaratMin(Number(e.target.value))}
+                            className="border-b border-slate-grey/30 py-1 text-sm outline-none font-body-md"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase">Carat Max (ct)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={bespokeCaratMax}
+                            onChange={(e) => setBespokeCaratMax(Number(e.target.value))}
+                            className="border-b border-slate-grey/30 py-1 text-sm outline-none font-body-md"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase">Carat Default (ct)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={bespokeCaratDefault}
+                            onChange={(e) => setBespokeCaratDefault(Number(e.target.value))}
+                            className="border-b border-slate-grey/30 py-1 text-sm outline-none font-body-md"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase">Engraving Max Chars</label>
+                          <input
+                            type="number"
+                            value={bespokeEngravingMax}
+                            onChange={(e) => setBespokeEngravingMax(Number(e.target.value))}
+                            className="border-b border-slate-grey/30 py-1 text-sm outline-none font-body-md"
+                          />
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                )}
+
                 {/* 7. ANNOUNCEMENT BAR TAB */}
                 {activeTab === "announcement-bar" && (
                   <div className="space-y-6 animate-fade-in">
@@ -2107,6 +2420,164 @@ export default function AdminCMSPage() {
                         )}
                       </div>
                     </section>
+
+                    {/* 7. GIFT WRAPPING TAB */}
+                    {activeTab === "gift-wrapping" && (
+                      <div className="space-y-6">
+                        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                          <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                            <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                              Signature Gift Packaging Settings
+                            </h3>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id="giftwrap-enabled"
+                                checked={giftWrapEnabled}
+                                onChange={(e) => setGiftWrapEnabled(e.target.checked)}
+                                className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                              />
+                              <label htmlFor="giftwrap-enabled" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer">
+                                Enable Option at Checkout
+                              </label>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2">
+                              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                                Title / Label
+                              </label>
+                              <input
+                                type="text"
+                                value={giftWrapTitle}
+                                onChange={(e) => setGiftWrapTitle(e.target.value)}
+                                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                                required
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                                Gift Wrapping Price (₹ / $)
+                              </label>
+                              <input
+                                type="number"
+                                value={giftWrapPrice}
+                                onChange={(e) => setGiftWrapPrice(Number(e.target.value))}
+                                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                              Gift Wrap Image URL
+                            </label>
+                            <input
+                              type="url"
+                              value={giftWrapImage}
+                              onChange={(e) => setGiftWrapImage(e.target.value)}
+                              className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                              required
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                              Packaging Description
+                            </label>
+                            <textarea
+                              value={giftWrapDesc}
+                              onChange={(e) => setGiftWrapDesc(e.target.value)}
+                              className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                              rows={3}
+                              required
+                            />
+                          </div>
+                        </section>
+                      </div>
+                    )}
+
+                    {/* 8. METAL TYPES / SWATCHES TAB */}
+                    {activeTab === "metal-types" && (
+                      <div className="space-y-6">
+                        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+                          <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                            <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                              Metal Types & Swatch Images
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => setMetalTypesList([
+                                ...metalTypesList,
+                                { id: `metal-${Date.now()}`, name: "New Metal Finish", swatch: "https://images.unsplash.com/photo-1611591475140-be3a7c5b61f8?q=80&w=100&auto=format&fit=crop", description: "Metal material details" }
+                              ])}
+                              className="border border-deep-navy text-deep-navy px-3 py-1 font-label-caps text-[10px] uppercase tracking-wider hover:bg-deep-navy hover:text-white transition-colors cursor-pointer"
+                            >
+                              + Add Metal Finish
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {metalTypesList.map((metal, idx) => (
+                              <div key={idx} className="border border-slate-grey/20 p-4 space-y-3 bg-soft-linen/10 relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setMetalTypesList(metalTypesList.filter((_, i) => i !== idx))}
+                                  className="absolute top-3 right-3 text-error font-label-caps text-[9px] tracking-wider hover:underline cursor-pointer"
+                                >
+                                  Delete Swatch
+                                </button>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Metal Name</label>
+                                  <input
+                                    type="text"
+                                    value={metal.name}
+                                    onChange={(e) => {
+                                      const next = [...metalTypesList];
+                                      next[idx].name = e.target.value;
+                                      setMetalTypesList(next);
+                                    }}
+                                    className="border-b border-slate-grey/30 py-1 font-body-md text-sm text-ink-black focus:border-black outline-none"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Swatch Image URL</label>
+                                  <input
+                                    type="url"
+                                    value={metal.swatch}
+                                    onChange={(e) => {
+                                      const next = [...metalTypesList];
+                                      next[idx].swatch = e.target.value;
+                                      setMetalTypesList(next);
+                                    }}
+                                    className="border-b border-slate-grey/30 py-1 font-body-md text-xs text-ink-black focus:border-black outline-none"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Description</label>
+                                  <input
+                                    type="text"
+                                    value={metal.description}
+                                    onChange={(e) => {
+                                      const next = [...metalTypesList];
+                                      next[idx].description = e.target.value;
+                                      setMetalTypesList(next);
+                                    }}
+                                    className="border-b border-slate-grey/30 py-1 font-body-md text-xs text-ink-black focus:border-black outline-none"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      </div>
+                    )}
                   </div>
                 )}
 

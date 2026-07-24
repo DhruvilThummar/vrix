@@ -97,7 +97,7 @@ router.post("/order", async (req, res) => {
 
 // POST /api/payment/verify — Verify Razorpay payment signature
 router.post("/verify", async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items, promoCode } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ error: "Missing payment verification fields" });
@@ -128,6 +128,21 @@ router.post("/verify", async (req, res) => {
     await db.securityLogs.create({
       data: { event: "PAYMENT_SUCCESS", user: razorpay_payment_id, status: "SUCCESS" },
     });
+
+    // Increment promo code usedCount if a promo was applied
+    if (promoCode) {
+      try {
+        const promo = await db.redeemCodes.findUnique({ where: { code: promoCode.toUpperCase() } });
+        if (promo) {
+          await db.redeemCodes.update({
+            where: { code: promo.code },
+            data: { usedCount: (promo.usedCount || 0) + 1 },
+          });
+        }
+      } catch (promoErr) {
+        console.error("Failed to increment promo usedCount:", promoErr.message);
+      }
+    }
 
     // Deduct Stock for purchased items
     if (Array.isArray(items)) {

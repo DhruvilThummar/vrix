@@ -6,6 +6,8 @@ import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { fetchProducts } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import ProductImageGrid2x2 from "@/components/pdp/ProductImageGrid2x2";
+import MetalSwatches from "@/components/pdp/MetalSwatches";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
  
@@ -28,6 +30,7 @@ function ProductContent() {
   const { addItem } = useCart();
  
   const [products, setProducts] = useState<any[]>([]);
+  const [selectedMetal, setSelectedMetal] = useState("18K Gold Vermeil & White Sapphire");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [size, setSize] = useState("");
   const [engraving, setEngraving] = useState("");
@@ -92,9 +95,9 @@ function ProductContent() {
       addItem({
         id: product.id,
         title: product.title,
-        price: product.price,
+        price: (product.isVrixPlusExclusive && product.vrixPlusPrice) ? product.vrixPlusPrice : product.price,
         image: product.image,
-        material: product.material || "18K Gold Vermeil & White Sapphire",
+        material: selectedMetal || product.material || "18K Gold Vermeil",
         size,
         engraving,
       });
@@ -200,60 +203,9 @@ function ProductContent() {
       <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-section-gap">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter md:gap-[80px]">
           
-          {/* Left Column: Image Gallery */}
-          <div className="md:col-span-7 flex flex-col gap-4 md:gap-8 relative">
-            {/* Main Featured Image */}
-            <div className="bg-soft-linen aspect-[4/5] w-full flex items-center justify-center relative overflow-hidden group">
-              <Image
-                alt={galleryImages[activeImageIndex]?.alt || "Product image"}
-                fill
-                className="object-cover object-center mix-blend-multiply transition-all duration-700"
-                src={galleryImages[activeImageIndex]?.src || product.image}
-                priority
-                sizes="(max-width: 768px) 100vw, 55vw"
-              />
-            </div>
- 
-            {/* Gallery Thumbnails (Always Visible & Interactive) */}
-            <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
-              {galleryImages.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActiveImageIndex(index)}
-                  className={`relative aspect-[4/5] w-24 bg-soft-linen overflow-hidden border transition-all duration-300 cursor-pointer ${
-                    activeImageIndex === index
-                      ? "border-deep-navy opacity-100"
-                      : "border-transparent opacity-60 hover:opacity-90"
-                  }`}
-                >
-                  <Image
-                    alt={img.alt}
-                    fill
-                    className="object-cover object-center mix-blend-multiply"
-                    src={img.src}
-                    sizes="96px"
-                  />
-                </button>
-              ))}
-            </div>
- 
-            {/* Additional Desktop Full-Size scroll gallery to match original layout look */}
-            <div className="hidden md:flex flex-col gap-8 mt-4 border-t border-slate-grey/10 pt-8">
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-label-caps text-slate-grey text-[10px]">Gallery Inspection</span>
-              </div>
-              {galleryImages.slice(1).map((img) => (
-                <div key={img.src} className="bg-soft-linen aspect-[4/5] w-full flex items-center justify-center relative overflow-hidden">
-                  <Image
-                    alt={img.alt}
-                    fill
-                    className="object-cover object-center mix-blend-multiply"
-                    src={img.src}
-                    sizes="(max-width: 768px) 100vw, 55vw"
-                  />
-                </div>
-              ))}
-            </div>
+          {/* Left Column: 2x2 Image Grid (Monica Vinader PC Layout) */}
+          <div className="md:col-span-7 relative">
+            <ProductImageGrid2x2 images={galleryImages} title={product.title} />
           </div>
  
           {/* Right Column: Sticky Product Information */}
@@ -261,19 +213,42 @@ function ProductContent() {
             <div className="sticky top-[100px] flex flex-col gap-stack-lg">
               
               {/* Header Info */}
-              <div className="flex flex-col gap-2 border-b border-slate-grey/20 pb-8">
+              <div className="flex flex-col gap-2 border-b border-slate-grey/20 pb-6">
                 <h1 className="font-display-lg-mobile md:font-display-lg text-ink-black tracking-tight leading-tight uppercase">
                   {product.title}
                 </h1>
-                <p className="font-body-md text-slate-grey">From the VRIX Collections</p>
-                <p className="font-headline-md mt-4 text-ink-black text-2xl font-semibold">${product.price}</p>
-                <p className="font-body-md text-on-surface-variant mt-2 leading-relaxed">
+                <p className="font-body-md text-slate-grey text-xs uppercase tracking-widest font-label-caps flex items-center gap-2">
+                  From the VRIX Collections
+                  {product.isVrixPlusExclusive && (
+                    <span className="bg-amber-100 text-amber-900 border border-amber-300 font-label-caps text-[9px] uppercase tracking-widest px-2 py-0.5 font-bold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">stars</span>
+                      VRIX+ Exclusive
+                    </span>
+                  )}
+                </p>
+
+                <div className="flex items-baseline gap-3 mt-2">
+                  {product.isVrixPlusExclusive && product.vrixPlusPrice ? (
+                    <>
+                      <span className="font-headline-md text-deep-navy text-2xl font-semibold">${product.vrixPlusPrice}</span>
+                      <span className="font-label-caps text-[10px] text-amber-700 uppercase font-bold tracking-wider">Member Price</span>
+                      <span className="font-body-md text-slate-grey/60 line-through text-sm">${product.price}</span>
+                    </>
+                  ) : (
+                    <p className="font-headline-md text-ink-black text-2xl font-semibold">${product.price}</p>
+                  )}
+                </div>
+
+                <p className="font-body-md text-on-surface-variant mt-2 leading-relaxed text-sm">
                   {product.description || "A symbol of inner balance. Designed to remind you that you are your own center. Minimalist architecture translated into an intimate everyday companion."}
                 </p>
-                <p className="font-body-md text-on-surface-variant mt-4 font-medium">
-                  {product.material}
-                </p>
               </div>
+
+              {/* Metal / Material Finish Swatches */}
+              <MetalSwatches
+                selectedMetal={selectedMetal}
+                onSelectMetal={(metal) => setSelectedMetal(metal.name)}
+              />
  
               {/* Configuration Form */}
               <div className="flex flex-col gap-6">

@@ -29,6 +29,8 @@ type Product = {
   collection?: string;
   stock?: number;
   isVisible?: boolean;
+  isVrixPlusExclusive?: boolean;
+  vrixPlusPrice?: number;
   alt?: string;
 };
 
@@ -60,6 +62,8 @@ export default function AdminProductsPage() {
   const [fCollection, setFCollection] = useState("silent-center");
   const [fStock, setFStock] = useState(999);
   const [fVisible, setFVisible] = useState(true);
+  const [fVrixPlusExclusive, setFVrixPlusExclusive] = useState(false);
+  const [fVrixPlusPrice, setFVrixPlusPrice] = useState(0);
 
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,6 +116,8 @@ export default function AdminProductsPage() {
     setFDescription(p.description || "");
     setFCollection(p.collection || "silent-center");
     setFStock(p.stock ?? 999); setFVisible(p.isVisible !== false);
+    setFVrixPlusExclusive(!!p.isVrixPlusExclusive);
+    setFVrixPlusPrice(p.vrixPlusPrice || 0);
   };
 
   const handleNewProduct = () => {
@@ -119,6 +125,7 @@ export default function AdminProductsPage() {
     setFTitle(""); setFMaterial(""); setFType("Ring");
     setFPrice(0); setFImage(""); setFImages([]); setFDescription("");
     setFCollection("silent-center"); setFStock(999); setFVisible(true);
+    setFVrixPlusExclusive(false); setFVrixPlusPrice(0);
   };
 
   useEffect(() => {
@@ -194,6 +201,8 @@ export default function AdminProductsPage() {
       title: fTitle, material: fMaterial, type: fType,
       price: Number(fPrice), image: fImage || productImages[0], images: productImages, description: fDescription,
       collection: fCollection, stock: Number(fStock), isVisible: fVisible,
+      isVrixPlusExclusive: fVrixPlusExclusive,
+      vrixPlusPrice: Number(fVrixPlusPrice) || undefined,
       alt: `A minimalist architectural ${fType} by VRIX from the ${collectionLabels[fCollection] || fCollection} collection.`,
     };
     try {
@@ -419,6 +428,41 @@ export default function AdminProductsPage() {
                         {fVisible ? "Visible (Live)" : "Hidden"}
                       </button>
                     </div>
+                  </div>
+
+                  {/* VRIX+ Member Exclusive & Special Price */}
+                  <div className="p-4 bg-amber-50/50 border border-amber-200/60 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <label htmlFor="vrix-plus-toggle" className="font-label-caps text-[10px] text-deep-navy uppercase tracking-widest font-semibold flex items-center gap-1 cursor-pointer">
+                          <span className="material-symbols-outlined text-amber-600 text-[14px]">stars</span>
+                          VRIX+ Member Exclusive / Early Access
+                        </label>
+                        <p className="text-[10px] text-slate-grey font-body-md">Lock item for VRIX+ Circle members only</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        id="vrix-plus-toggle"
+                        checked={fVrixPlusExclusive}
+                        onChange={(e) => setFVrixPlusExclusive(e.target.checked)}
+                        className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                      />
+                    </div>
+
+                    {fVrixPlusExclusive && (
+                      <div className="flex flex-col gap-1 pt-2 border-t border-amber-200/40">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">
+                          VRIX+ Member Special Price ($ / ₹) (Optional)
+                        </label>
+                        <input
+                          type="number"
+                          value={fVrixPlusPrice}
+                          onChange={(e) => setFVrixPlusPrice(Number(e.target.value))}
+                          placeholder="Member price e.g. 150"
+                          className="border-b border-slate-grey/30 py-1 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Images */}

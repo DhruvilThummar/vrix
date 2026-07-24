@@ -138,6 +138,7 @@ export default function PaymentPage() {
           razorpay_payment_id: fakePaymentId,
           razorpay_signature: "dev_signature",
           items: items,
+          promoCode: promoCode || undefined,
         });
         setPaidOrderId(order.id);
         clearCart();
@@ -194,6 +195,7 @@ export default function PaymentPage() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               items: items,
+              promoCode: promoCode || undefined,
             });
             setPaidOrderId(response.razorpay_order_id);
             clearCart();

@@ -206,7 +206,7 @@ export default function AdminDashboard() {
                     <p className="text-[10px] text-slate-grey font-label-caps uppercase tracking-wider">{p.collection || p.material}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs font-semibold text-deep-navy">${p.price}</p>
+                    <p className="text-xs font-semibold text-deep-navy">₹{p.price}</p>
                     <p className="text-[9px] text-slate-grey font-label-caps uppercase">{p.isVisible !== false ? "Visible" : "Hidden"}</p>
                   </div>
                 </div>

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fetchDb } from "@/utils/api";
+import { fetchDbPublic as fetchDb } from "@/utils/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import SkeletonImage from "@/components/shop/SkeletonImage";

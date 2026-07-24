@@ -19,6 +19,11 @@ interface CartContextType {
   discount: number;
   promoCode: string | null;
   promoType: "percentage" | "fixed" | null;
+  isGiftWrapped: boolean;
+  giftMessage: string;
+  giftWrapPrice: number;
+  toggleGiftWrap: (wrapped: boolean, price?: number) => void;
+  setGiftMessage: (msg: string) => void;
   addItem: (item: Omit<CartItem, "quantity">) => void;
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
@@ -34,12 +39,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [discount, setDiscount] = useState(0);
   const [promoType, setPromoType] = useState<"percentage" | "fixed" | null>(null);
+  const [isGiftWrapped, setIsGiftWrapped] = useState(false);
+  const [giftMessage, setGiftMessageState] = useState("");
+  const [giftWrapPrice, setGiftWrapPrice] = useState(250);
 
   // Hydrate from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem("vrix-cart");
       if (saved) setItems(JSON.parse(saved));
+      const savedGift = localStorage.getItem("vrix-gift-wrap");
+      if (savedGift) {
+        const parsed = JSON.parse(savedGift);
+        setIsGiftWrapped(!!parsed.isGiftWrapped);
+        setGiftMessageState(parsed.giftMessage || "");
+        if (parsed.giftWrapPrice) setGiftWrapPrice(parsed.giftWrapPrice);
+      }
     } catch {}
   }, []);
 
@@ -47,6 +62,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem("vrix-cart", JSON.stringify(items));
   }, [items]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "vrix-gift-wrap",
+      JSON.stringify({ isGiftWrapped, giftMessage, giftWrapPrice })
+    );
+  }, [isGiftWrapped, giftMessage, giftWrapPrice]);
+
+  const toggleGiftWrap = useCallback((wrapped: boolean, price?: number) => {
+    setIsGiftWrapped(wrapped);
+    if (price !== undefined) setGiftWrapPrice(price);
+  }, []);
+
+  const setGiftMessage = useCallback((msg: string) => {
+    setGiftMessageState(msg);
+  }, []);
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -84,13 +115,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(() => {
     setItems([]);
     clearPromo();
+    setIsGiftWrapped(false);
+    setGiftMessageState("");
   }, [clearPromo]);
 
-  const subtotal = items.reduce((acc, i) => acc + i.price * i.quantity, 0);
+  const subtotal = items.reduce((acc, i) => acc + i.price * i.quantity, 0) + (isGiftWrapped ? giftWrapPrice : 0);
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, totalItems, subtotal, discount, promoCode, promoType, addItem, removeItem, updateQty, applyPromo, clearPromo, clearCart }}>
+    <CartContext.Provider value={{ items, totalItems, subtotal, discount, promoCode, promoType, isGiftWrapped, giftMessage, giftWrapPrice, toggleGiftWrap, setGiftMessage, addItem, removeItem, updateQty, applyPromo, clearPromo, clearCart }}>
       {children}
     </CartContext.Provider>
   );

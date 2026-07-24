@@ -22,14 +22,16 @@ export default function SkeletonImage({
 
   return (
     <div className={`relative overflow-hidden w-full h-full ${wrapperClassName}`}>
-      {/* Skeleton overlay shown until image is loaded */}
+      {/* Smooth Skeleton Pulse Overlay */}
       {!loaded && (
-        <div className="absolute inset-0 z-10 bg-soft-linen/50 animate-pulse">
+        <div className="absolute inset-0 z-10 bg-[#FAF8F5] animate-pulse">
           <Skeleton 
             className="w-full h-full min-h-[inherit]" 
             containerClassName="w-full h-full block leading-none" 
             height="100%"
             borderRadius="0px"
+            baseColor="#FAF8F5"
+            highlightColor="#EBEAE4"
           />
         </div>
       )}
@@ -41,8 +43,8 @@ export default function SkeletonImage({
         width={width}
         height={height}
         onLoad={() => setLoaded(true)}
-        className={`transition-opacity duration-500 ease-in-out ${
-          loaded ? "opacity-100" : "opacity-0"
+        className={`transition-all duration-700 ease-out ${
+          loaded ? "opacity-100 scale-100 blur-0" : "opacity-0 scale-105 blur-xs"
         } ${className}`}
         {...props}
       />

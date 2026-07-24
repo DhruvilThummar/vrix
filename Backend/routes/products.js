@@ -26,6 +26,10 @@ const normalizeProductData = (body = {}) => {
     price: Number(body.price),
     stock: body.stock === undefined ? 999 : Number(body.stock),
     isVisible: body.isVisible !== false,
+    isVrixPlusExclusive: body.isVrixPlusExclusive === true,
+    vrixPlusPrice: body.vrixPlusPrice !== undefined && body.vrixPlusPrice !== null
+      ? Number(body.vrixPlusPrice) || null
+      : null,
   };
 };
 

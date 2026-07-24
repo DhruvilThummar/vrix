@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { fetchDb } from "@/utils/api";
+import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_LEGAL: any = {
   privacy: {

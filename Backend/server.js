@@ -20,6 +20,7 @@ import paymentRouter from "./routes/payment.js";
 import deliveryRouter from "./routes/delivery.js";
 import adminRouter from "./routes/admin.js";
 import geoRouter from "./routes/geo.js";
+import newsletterRouter from "./routes/newsletter.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,7 +78,22 @@ app.use("/api/truecaller", authRouter);   // Truecaller endpoint lives in auth r
 app.use("/api/promo", promoRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/delivery", deliveryRouter);
-app.use("/api/admin", adminRouter);
+app.use("/api/newsletter", newsletterRouter);
+// ─── Admin Auth Middleware ─────────────────────────────────────────────────────
+// Protects all /api/admin/* routes with a secret header
+const adminAuth = (req, res, next) => {
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) {
+    // No secret configured — allow access in dev mode (warn only)
+    console.warn("⚠️  ADMIN_SECRET not set. Admin routes are unprotected.");
+    return next();
+  }
+  const provided = req.headers["x-admin-secret"] || req.query.adminSecret;
+  if (provided === secret) return next();
+  return res.status(401).json({ error: "Unauthorized: Invalid admin secret." });
+};
+
+app.use("/api/admin", adminAuth, adminRouter);
 app.use("/api/geo", geoRouter);
 
 // Global Error Handler

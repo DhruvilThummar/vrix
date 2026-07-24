@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -12,7 +13,7 @@ import {
   loginUserDirect,
   addSecurityLog,
   fetchProducts,
-  fetchDb,
+  fetchDbPublic as fetchDb,
   verifyTruecaller
 } from "@/utils/api";
 

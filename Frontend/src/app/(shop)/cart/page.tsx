@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { verifyPromo } from "@/utils/api";
+import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
 
 export default function CartPage() {
   const router = useRouter();
@@ -130,9 +131,11 @@ export default function CartPage() {
                       Remove
                     </button>
                   </div>
-                </div>
               </div>
             ))}
+
+            {/* Signature Gift Packaging Option */}
+            <GiftWrappingSection />
           </div>
 
           {/* Order Summary */}
