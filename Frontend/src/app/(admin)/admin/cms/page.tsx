@@ -470,6 +470,32 @@ export default function AdminCMSPage() {
     }
   };
 
+  // --- Module Tabs Definition & Filtering ---
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [tabSearch, setTabSearch] = useState<string>("");
+
+  const CMS_TABS: { id: TabType; label: string; icon: string; category: "Storefront" | "Experience" | "System"; description: string }[] = [
+    { id: "hero-philosophy", label: "Hero & Philosophy", icon: "view_carousel", category: "Storefront", description: "Banners, subtitles & cards" },
+    { id: "story", label: "Brand Story", icon: "auto_stories", category: "Storefront", description: "Brand narrative & ethos" },
+    { id: "nav-brand", label: "Navbar & Brand", icon: "navigation", category: "Storefront", description: "Links & identity" },
+    { id: "announcement-bar", label: "Announcement Bar", icon: "campaign", category: "Storefront", description: "Top ticker & alerts" },
+    { id: "journal", label: "Journal", icon: "newspaper", category: "Storefront", description: "Articles & editorial" },
+    { id: "custom-pages", label: "Custom Pages", icon: "description", category: "Storefront", description: "CMS pages content" },
+    { id: "bespoke-atelier", label: "Bespoke Atelier", icon: "diamond", category: "Experience", description: "3D Solitaire Configurator" },
+    { id: "vrix-plus", label: "VRIX+ Club", icon: "stars", category: "Experience", description: "Membership privileges" },
+    { id: "gift-wrapping", label: "Gift Wrapping", icon: "card_giftcard", category: "Experience", description: "Signature packaging" },
+    { id: "metal-types", label: "Metal Swatches", icon: "palette", category: "Experience", description: "Gold & platinum types" },
+    { id: "legal", label: "Legal Policies", icon: "gavel", category: "System", description: "Privacy & terms docs" },
+    { id: "api-integrations", label: "API Configuration", icon: "api", category: "System", description: "Razorpay, Cloudinary, Auth" },
+  ];
+
+  const filteredTabs = CMS_TABS.filter((tab) => {
+    const matchesCategory = selectedCategory === "all" || tab.category === selectedCategory;
+    const matchesSearch = tab.label.toLowerCase().includes(tabSearch.toLowerCase()) ||
+                          tab.description.toLowerCase().includes(tabSearch.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <div className="w-full min-h-screen bg-soft-linen/50 p-6 md:p-12 relative">
       {/* Toast Notification */}
@@ -481,138 +507,152 @@ export default function AdminCMSPage() {
       )}
 
       <div className="max-w-6xl mx-auto flex flex-col gap-8">
-        {/* Header */}
-        <div className="border-b border-slate-grey/20 pb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="font-display-lg text-headline-md text-deep-navy uppercase">
-              Storefront CMS Editor
-            </h1>
-            <p className="text-slate-grey font-body-md text-sm">
-              Dynamically modify navigation menu links, contact info, policy documents, and brand copy.
-            </p>
+        {/* Luxury CMS Header & Navigation Bar */}
+        <div className="bg-pure-white border border-slate-grey/20 p-6 md:p-8 shadow-sm flex flex-col gap-6 relative overflow-hidden">
+          {/* Top Subtle Luxury Accent Line */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-deep-navy via-amber-600/40 to-deep-navy" />
+
+          {/* Main Title & Action Tools Row */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-grey/15 pb-6">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="font-display-lg text-headline-md text-deep-navy uppercase tracking-wide">
+                  Storefront CMS Editor
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] font-label-caps tracking-widest text-emerald-800 bg-emerald-50 border border-emerald-200/60 uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Engine
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-label-caps tracking-widest text-slate-600 bg-slate-100 border border-slate-200 uppercase">
+                  {CMS_TABS.length} Modules
+                </span>
+              </div>
+              <p className="text-slate-grey font-body-md text-sm max-w-3xl">
+                Dynamically modify navigation menu links, contact info, policy documents, brand copy, and interactive bespoke experiences.
+              </p>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2 self-start lg:self-center flex-wrap">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-grey/30 bg-pure-white text-deep-navy hover:bg-slate-50 font-label-caps text-xs tracking-wider transition-all"
+              >
+                <span className="material-symbols-outlined text-base">visibility</span>
+                Preview Store
+              </a>
+              <button
+                type="button"
+                onClick={() => loadCMSData()}
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-grey/30 bg-pure-white text-slate-grey hover:text-ink-black hover:bg-slate-50 font-label-caps text-xs tracking-wider transition-all cursor-pointer"
+                title="Reload CMS Data"
+              >
+                <span className="material-symbols-outlined text-base">refresh</span>
+                Reload Data
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2 font-label-caps text-xs">
-            <button
-              onClick={() => setActiveTab("hero-philosophy")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "hero-philosophy"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Hero & Philosophy
-            </button>
-            <button
-              onClick={() => setActiveTab("story")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "story"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Brand Story
-            </button>
-            <button
-              onClick={() => setActiveTab("nav-brand")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "nav-brand"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Navbar & Brand
-            </button>
-            <button
-              onClick={() => setActiveTab("legal")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "legal"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Legal Policies
-            </button>
-            <button
-              onClick={() => setActiveTab("journal")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "journal"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Journal
-            </button>
-            <button
-              onClick={() => setActiveTab("api-integrations")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "api-integrations"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              API Configuration
-            </button>
-            <button
-              onClick={() => setActiveTab("vrix-plus")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "vrix-plus"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              VRIX+ Club
-            </button>
-            <button
-              onClick={() => setActiveTab("bespoke-atelier")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "bespoke-atelier"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Bespoke Atelier
-            </button>
-            <button
-              onClick={() => setActiveTab("gift-wrapping")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "gift-wrapping"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Gift Wrapping
-            </button>
-            <button
-              onClick={() => setActiveTab("metal-types")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "metal-types"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Metal Swatches
-            </button>
-            <button
-              onClick={() => setActiveTab("announcement-bar")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "announcement-bar"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Announcement Bar
-            </button>
-            <button
-              onClick={() => setActiveTab("custom-pages")}
-              className={`px-4 py-2 border cursor-pointer ${
-                activeTab === "custom-pages"
-                  ? "bg-deep-navy text-pure-white border-deep-navy"
-                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
-              }`}
-            >
-              Custom Pages
-            </button>
+
+          {/* Navigation Controls: Categories & Search Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 font-label-caps text-[11px] overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+              {[
+                { id: "all", label: "All Modules", count: CMS_TABS.length },
+                { id: "Storefront", label: "Storefront & Copy", count: CMS_TABS.filter((t) => t.category === "Storefront").length },
+                { id: "Experience", label: "Atelier & Features", count: CMS_TABS.filter((t) => t.category === "Experience").length },
+                { id: "System", label: "System & APIs", count: CMS_TABS.filter((t) => t.category === "System").length },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3 py-1.5 border transition-all cursor-pointer whitespace-nowrap ${
+                    selectedCategory === cat.id
+                      ? "bg-deep-navy text-pure-white border-deep-navy"
+                      : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black hover:border-slate-grey/40"
+                  }`}
+                >
+                  {cat.label} ({cat.count})
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Tab Search */}
+            <div className="relative min-w-[200px] sm:min-w-[240px]">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search modules..."
+                value={tabSearch}
+                onChange={(e) => setTabSearch(e.target.value)}
+                className="w-full pl-9 pr-8 py-1.5 border border-slate-grey/25 bg-pure-white text-xs font-body-md focus:border-deep-navy outline-none text-ink-black transition-all"
+              />
+              {tabSearch && (
+                <button
+                  type="button"
+                  onClick={() => setTabSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Module Navigation Tabs Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 pt-1">
+            {filteredTabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`group relative flex flex-col p-3 border cursor-pointer text-left transition-all duration-200 ${
+                    isActive
+                      ? "bg-deep-navy text-pure-white border-deep-navy shadow-md translate-y-[-1px]"
+                      : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black hover:border-slate-grey/50 hover:bg-slate-50/80"
+                  }`}
+                >
+                  {/* Top Icon & Active Indicator */}
+                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <span
+                      className={`material-symbols-outlined text-lg transition-transform group-hover:scale-110 ${
+                        isActive ? "text-amber-300" : "text-slate-600 group-hover:text-deep-navy"
+                      }`}
+                    >
+                      {tab.icon}
+                    </span>
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                  </div>
+
+                  {/* Module Title */}
+                  <span
+                    className={`font-label-caps text-xs tracking-wider line-clamp-1 ${
+                      isActive ? "text-pure-white font-medium" : "text-deep-navy"
+                    }`}
+                  >
+                    {tab.label}
+                  </span>
+
+                  {/* Sub-description */}
+                  <span className={`text-[10px] line-clamp-1 mt-0.5 ${isActive ? "text-slate-300" : "text-slate-400"}`}>
+                    {tab.description}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {filteredTabs.length === 0 && (
+            <div className="py-8 text-center text-slate-grey text-xs font-label-caps tracking-widest border border-dashed border-slate-grey/30">
+              No CMS modules found matching "{tabSearch}"
+            </div>
+          )}
         </div>
 
         {loading ? (
