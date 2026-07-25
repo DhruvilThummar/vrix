@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types";
+type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier";
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
@@ -139,7 +139,7 @@ export default function AdminCMSPage() {
     loadCMSData();
   }, []);
 
-  const loadCMSData = () => {
+  function loadCMSData() {
     setLoading(true);
     fetchDb()
       .then((res) => {
@@ -1422,6 +1422,9 @@ export default function AdminCMSPage() {
                             disabled={!truecallerEnabled || truecallerSandboxMode}
                             className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
                             placeholder="e.g. localhost or yourdomain.com"
+                          />
+                        </div>
+
                         {/* Google OAuth Login */}
                         <div className="border border-slate-grey/20 p-6 space-y-4 col-span-1 md:col-span-2 bg-soft-linen/20">
                           <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
@@ -2420,6 +2423,8 @@ export default function AdminCMSPage() {
                         )}
                       </div>
                     </section>
+                  </div>
+                )}
 
                     {/* 7. GIFT WRAPPING TAB */}
                     {activeTab === "gift-wrapping" && (
@@ -2578,8 +2583,6 @@ export default function AdminCMSPage() {
                         </section>
                       </div>
                     )}
-                  </div>
-                )}
 
                 {/* Save Button for Forms */}
                 <div className="pt-2">

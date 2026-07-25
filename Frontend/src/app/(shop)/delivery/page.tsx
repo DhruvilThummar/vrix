@@ -81,18 +81,6 @@ export default function DeliveryPanelPage() {
   const authOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const confirmOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Check login on mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem("vrix_delivery_user");
-    if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      setCurrentUser(parsed);
-      loadDashboardData(parsed.role, parsed.email);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
@@ -114,6 +102,18 @@ export default function DeliveryPanelPage() {
       setLoading(false);
     }
   };
+
+  // Check login on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem("vrix_delivery_user");
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      setCurrentUser(parsed);
+      loadDashboardData(parsed.role, parsed.email);
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("vrix_delivery_user");

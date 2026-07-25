@@ -131,6 +131,7 @@ export default function CartPage() {
                       Remove
                     </button>
                   </div>
+                </div>
               </div>
             ))}
 

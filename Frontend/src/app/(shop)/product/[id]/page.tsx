@@ -116,7 +116,7 @@ function ProductContent() {
       const saved = localStorage.getItem("vrix-wishlist");
       let list = saved ? JSON.parse(saved) : [];
       const active = list.includes(product.id);
-      let nextActive = !active;
+      const nextActive = !active;
       if (active) {
         list = list.filter((id: string) => id !== product.id);
         showToast("Removed from your Wishlist.");

@@ -130,14 +130,7 @@ export default function AdminMarketingPage() {
     setToast({ msg, type }); setTimeout(() => setToast(null), 3500);
   }, []);
 
-  useEffect(() => {
-    if (activeTab === "promo") loadPromoCodes();
-    if (activeTab === "payments") loadPaymentLogs();
-    if (activeTab === "vrixplus") loadVrixMembers();
-    if (activeTab === "announcement") loadAnnouncementBar();
-    loadStats();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+
 
   const loadPromoCodes = async () => {
     setPromoLoading(true);
@@ -182,6 +175,14 @@ export default function AdminMarketingPage() {
       setAnnouncementLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === "promo") loadPromoCodes();
+    if (activeTab === "payments") loadPaymentLogs();
+    if (activeTab === "vrixplus") loadVrixMembers();
+    if (activeTab === "announcement") loadAnnouncementBar();
+    loadStats();
+  }, [activeTab]);
 
   // ─── Promo Handlers ──────────────────────────────────────────────────────────
 
@@ -407,39 +408,35 @@ export default function AdminMarketingPage() {
     return new Date(code.expiryDate) < new Date();
   };
 
-  const filteredPromos = useMemo(() => {
-    return promoCodes.filter((c) => {
-      const matchSearch = c.code.toLowerCase().includes(promoSearch.toLowerCase()) ||
-        c.description?.toLowerCase().includes(promoSearch.toLowerCase());
-      let matchFilter = true;
-      if (promoFilter === "active") matchFilter = c.isActive && !isCodeExpired(c);
-      if (promoFilter === "inactive") matchFilter = !c.isActive;
-      if (promoFilter === "expired") matchFilter = isCodeExpired(c);
-      return matchSearch && matchFilter;
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [promoCodes, promoSearch, promoFilter]);
+  const filteredPromos = promoCodes.filter((c) => {
+    const matchSearch = c.code.toLowerCase().includes(promoSearch.toLowerCase()) ||
+      c.description?.toLowerCase().includes(promoSearch.toLowerCase());
+    let matchFilter = true;
+    if (promoFilter === "active") matchFilter = c.isActive && !isCodeExpired(c);
+    if (promoFilter === "inactive") matchFilter = !c.isActive;
+    if (promoFilter === "expired") matchFilter = isCodeExpired(c);
+    return matchSearch && matchFilter;
+  });
 
-  const filteredPayments = useMemo(() => {
-    let result = paymentLogs.filter((p) => {
-      const matchSearch = p.orderId?.toLowerCase().includes(paySearch.toLowerCase()) ||
-        p.paymentId?.toLowerCase().includes(paySearch.toLowerCase()) ||
-        p.userEmail?.toLowerCase().includes(paySearch.toLowerCase()) ||
-        p.customerName?.toLowerCase().includes(paySearch.toLowerCase());
-      const matchFilter = payFilter === "All" || p.status?.toUpperCase() === payFilter;
-      let matchDate = true;
-      if (payDateFrom) matchDate = new Date(p.createdAt) >= new Date(payDateFrom);
-      if (payDateTo) matchDate = matchDate && new Date(p.createdAt) <= new Date(payDateTo + "T23:59:59");
-      return matchSearch && matchFilter && matchDate;
-    });
-    if (paySort === "newest") result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    if (paySort === "oldest") result.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-    if (paySort === "amount-high") result.sort((a, b) => b.amount - a.amount);
-    if (paySort === "amount-low") result.sort((a, b) => a.amount - b.amount);
-    return result;
-  }, [paymentLogs, paySearch, payFilter, payDateFrom, payDateTo, paySort]);
+  const filteredPayments = paymentLogs.filter((p) => {
+    const matchSearch = p.orderId?.toLowerCase().includes(paySearch.toLowerCase()) ||
+      p.paymentId?.toLowerCase().includes(paySearch.toLowerCase()) ||
+      p.userEmail?.toLowerCase().includes(paySearch.toLowerCase()) ||
+      p.customerName?.toLowerCase().includes(paySearch.toLowerCase());
+    const matchFilter = payFilter === "All" || p.status?.toUpperCase() === payFilter;
+    let matchDate = true;
+    if (payDateFrom) matchDate = new Date(p.createdAt) >= new Date(payDateFrom);
+    if (payDateTo) matchDate = matchDate && new Date(p.createdAt) <= new Date(payDateTo + "T23:59:59");
+    return matchSearch && matchFilter && matchDate;
+  }).sort((a, b) => {
+    if (paySort === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (paySort === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (paySort === "amount-high") return b.amount - a.amount;
+    if (paySort === "amount-low") return a.amount - b.amount;
+    return 0;
+  });
 
-  const sortedVrixMembers = useMemo(() => {
+  const sortedVrixMembers = (() => {
     const filtered = vrixMembers.filter((m) =>
       m.email?.toLowerCase().includes(vrixSearch.toLowerCase()) ||
       m.name?.toLowerCase().includes(vrixSearch.toLowerCase())
@@ -447,7 +444,7 @@ export default function AdminMarketingPage() {
     if (vrixSort === "name") return filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     if (vrixSort === "oldest") return filtered.sort((a, b) => (a.vrixPlusJoinedDate || "").localeCompare(b.vrixPlusJoinedDate || ""));
     return filtered; // newest = default order
-  }, [vrixMembers, vrixSearch, vrixSort]);
+  })();
 
   const totalRevenue = paymentLogs
     .filter((p) => p.status === "SUCCESS" || p.status === "DELIVERED")
@@ -719,7 +716,11 @@ export default function AdminMarketingPage() {
                           checked={selectedPromos.has(code.code)}
                           onChange={(e) => {
                             const next = new Set(selectedPromos);
-                            e.target.checked ? next.add(code.code) : next.delete(code.code);
+                            if (e.target.checked) {
+                              next.add(code.code);
+                            } else {
+                              next.delete(code.code);
+                            }
                             setSelectedPromos(next);
                           }}
                           className="w-3.5 h-3.5 accent-deep-navy cursor-pointer mt-1 shrink-0"

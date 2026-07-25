@@ -60,6 +60,10 @@ export async function updateCMS(data: {
   collections?: any;
   api_settings?: any;
   vrix_plus?: any;
+  bespoke_config?: any;
+  gift_wrapping?: any;
+  metal_types?: any[];
+  announcement_bar?: any;
 }) {
   return apiFetch<any>("/cms", {
     method: "POST",
@@ -243,7 +247,7 @@ export async function registerUser(payload: any) {
 }
 
 export async function confirmRegistration(payload: any) {
-  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string } }>("/auth/register/confirm", {
+  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string; isVrixPlusMember?: boolean } }>("/auth/register/confirm", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -259,7 +263,7 @@ export async function loginUser(payload: any) {
 }
 
 export async function confirmLogin(payload: any) {
-  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string } }>("/auth/login/confirm", {
+  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string; isVrixPlusMember?: boolean } }>("/auth/login/confirm", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -267,7 +271,7 @@ export async function confirmLogin(payload: any) {
 }
 
 export async function loginUserDirect(payload: any) {
-  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string } }>("/auth/login/direct", {
+  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string; isVrixPlusMember?: boolean } }>("/auth/login/direct", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

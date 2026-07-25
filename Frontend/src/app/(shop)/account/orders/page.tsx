@@ -44,14 +44,6 @@ export default function OrderTrackingPage() {
   const [searchedOrder, setSearchedOrder] = useState<OrderLog | null>(null);
   const [searchMsg, setSearchMsg] = useState("");
 
-  useEffect(() => {
-    if (isLoggedIn && user?.email) {
-      loadUserOrders(user.email);
-    } else {
-      setLoading(false);
-    }
-  }, [isLoggedIn, user?.email]);
-
   const loadUserOrders = async (email: string) => {
     setLoading(true);
     try {
@@ -66,6 +58,14 @@ export default function OrderTrackingPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isLoggedIn && user?.email) {
+      loadUserOrders(user.email);
+    } else {
+      setLoading(false);
+    }
+  }, [isLoggedIn, user?.email]);
 
   const handleSearchOrder = async (e: React.FormEvent) => {
     e.preventDefault();

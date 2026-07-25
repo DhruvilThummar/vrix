@@ -219,6 +219,7 @@ export default function Page() {
                   <input autoComplete="tel" className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 text-ink-black placeholder:text-slate-grey focus:border-deep-navy focus:ring-0 sm:text-body-md transition-colors duration-300" id="phone" name="phone" placeholder="Phone number" required={true} type="tel" />
                 </div>
               </div>
+            </div>
             <div className="mt-stack-lg">
               <GiftWrappingSection />
             </div>

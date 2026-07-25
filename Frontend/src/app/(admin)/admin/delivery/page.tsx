@@ -22,9 +22,10 @@ export default function AdminDeliveryPage() {
   const [role, setRole] = useState<"agent" | "manager">("agent");
   const [showAddForm, setShowAddForm] = useState(false);
 
-  useEffect(() => {
-    loadStaff();
-  }, []);
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const loadStaff = async () => {
     setLoading(true);
@@ -38,10 +39,9 @@ export default function AdminDeliveryPage() {
     }
   };
 
-  const showToast = (msg: string, type: "success" | "error" = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 4000);
-  };
+  useEffect(() => {
+    loadStaff();
+  }, []);
 
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();

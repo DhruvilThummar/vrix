@@ -40,7 +40,9 @@ export default function AdminCollectionsPage() {
   const [fLink, setFLink] = useState("/collections/silent-center");
   const [fVisible, setFVisible] = useState(true);
 
-  useEffect(() => { loadCollections(); }, []);
+  const showToast = (msg: string, type: "ok" | "err" = "ok") => {
+    setToast({ msg, type }); setTimeout(() => setToast(null), 3500);
+  };
 
   const loadCollections = async () => {
     setLoading(true);
@@ -54,9 +56,7 @@ export default function AdminCollectionsPage() {
     }
   };
 
-  const showToast = (msg: string, type: "ok" | "err" = "ok") => {
-    setToast({ msg, type }); setTimeout(() => setToast(null), 3500);
-  };
+  useEffect(() => { loadCollections(); }, []);
 
   const selectCollection = (c: Collection) => {
     setSelected(c); setIsNew(false);
