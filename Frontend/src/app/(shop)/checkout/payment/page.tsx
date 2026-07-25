@@ -48,8 +48,8 @@ export default function PaymentPage() {
     promoType === "percentage"
       ? (subtotal * discount) / 100
       : promoType === "fixed"
-      ? Math.min(discount, subtotal)
-      : 0;
+        ? Math.min(discount, subtotal)
+        : 0;
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -133,19 +133,25 @@ export default function PaymentPage() {
       if (devMode) {
         setStatus("verifying");
         const fakePaymentId = "pay_dev_" + Date.now();
-        await verifyPayment({
-          razorpay_order_id: order.id,
-          razorpay_payment_id: fakePaymentId,
-          razorpay_signature: "dev_signature",
-          items: items,
-          promoCode: promoCode || undefined,
-        });
-        setPaidOrderId(order.id);
-        clearCart();
-        sessionStorage.removeItem("vrix-shipping");
-        sessionStorage.setItem("vrix-order", JSON.stringify({ orderId: order.id, amount: grandTotal, email: shipping.email, name: shipping.fullName }));
-        setStatus("success");
-        setTimeout(() => router.push("/checkout/confirmation"), 1500);
+        try {
+          // Dev mode fulfillment simulation
+          await verifyPayment({
+            razorpay_order_id: order.id,
+            razorpay_payment_id: fakePaymentId,
+            razorpay_signature: "dev_signature",
+            items: items,
+            promoCode: promoCode || undefined,
+          });
+          setPaidOrderId(order.id);
+          clearCart();
+          sessionStorage.removeItem("vrix-shipping");
+          sessionStorage.setItem("vrix-order", JSON.stringify({ orderId: order.id, amount: grandTotal, email: shipping.email, name: shipping.fullName }));
+          setStatus("success");
+          setTimeout(() => router.push("/checkout/confirmation"), 1500);
+        } catch (err: any) {
+          setStatus("error");
+          setErrorMsg(err.message || "Dev mode payment verification failed.");
+        }
         return;
       }
 
@@ -187,6 +193,7 @@ export default function PaymentPage() {
           razorpay_order_id: string;
           razorpay_signature: string;
         }) => {
+          // 4. Razorpay payment succeeded. Now verify the signature and fulfill the order on our backend.
           setStatus("verifying");
           setLoading(true);
           try {
@@ -197,6 +204,8 @@ export default function PaymentPage() {
               items: items,
               promoCode: promoCode || undefined,
             });
+
+            // 5. Fulfillment successful. Clear cart and redirect to confirmation.
             setPaidOrderId(response.razorpay_order_id);
             clearCart();
             sessionStorage.removeItem("vrix-shipping");
@@ -211,7 +220,15 @@ export default function PaymentPage() {
             setTimeout(() => router.push("/checkout/confirmation"), 1500);
           } catch (err: any) {
             setStatus("error");
-            setErrorMsg(err.message || "Payment verification failed. Contact support.");
+            // If the backend returns a specific error (e.g., transaction rollback), display it clearly.
+            // Since Razorpay already deducted the money, it's critical the user contacts support.
+            const errorText = err.message || "Payment verification failed.";
+            const isFulfillmentError = errorText.toLowerCase().includes("fulfillment failed");
+            setErrorMsg(
+              isFulfillmentError
+                ? `${errorText} Order ID: ${response.razorpay_order_id}`
+                : `${errorText} Please contact support if your money was deducted. Order ID: ${response.razorpay_order_id}`
+            );
           } finally {
             setLoading(false);
           }

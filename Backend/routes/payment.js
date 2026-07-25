@@ -97,7 +97,7 @@ router.post("/order", async (req, res) => {
 
 // POST /api/payment/verify — Verify Razorpay payment signature
 router.post("/verify", async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items, promoCode } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items, promoCode, isGiftWrapped, giftMessage, giftWrapPrice } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ error: "Missing payment verification fields" });
@@ -116,48 +116,61 @@ router.post("/verify", async (req, res) => {
     }
 
     if (!isValid) {
+      // Step 1a: Signature mismatch - mark payment as FAILED
       await db.payments.update({ where: { orderId: razorpay_order_id }, data: { status: "FAILED" } });
       return res.status(400).json({ error: "Payment signature verification failed" });
     }
 
-    const paymentRecord = await db.payments.update({
-      where: { orderId: razorpay_order_id },
-      data: { status: "SUCCESS", paymentId: razorpay_payment_id },
-    });
+    let paymentRecord;
+    try {
+      // Step 1b: Signature valid - Execute atomic transaction for payment fulfillment
+      // If any of these operations fail, the entire block is rolled back.
+      // NOTE: Because Razorpay has already deducted money, a failure here requires manual intervention.
+      paymentRecord = await db.$transaction(async (tx) => {
+        // 1. Update payment status to SUCCESS
+        const updatedPayment = await tx.payments.update({
+          where: { orderId: razorpay_order_id },
+          data: { status: "SUCCESS", paymentId: razorpay_payment_id },
+        });
 
-    await db.securityLogs.create({
-      data: { event: "PAYMENT_SUCCESS", user: razorpay_payment_id, status: "SUCCESS" },
-    });
+        // 2. Create security log for audit trail
+        await tx.securityLogs.create({
+          data: { event: "PAYMENT_SUCCESS", user: razorpay_payment_id, status: "SUCCESS" },
+        });
 
-    // Increment promo code usedCount if a promo was applied
-    if (promoCode) {
-      try {
-        const promo = await db.redeemCodes.findUnique({ where: { code: promoCode.toUpperCase() } });
-        if (promo) {
-          await db.redeemCodes.update({
-            where: { code: promo.code },
-            data: { usedCount: (promo.usedCount || 0) + 1 },
-          });
-        }
-      } catch (promoErr) {
-        console.error("Failed to increment promo usedCount:", promoErr.message);
-      }
-    }
-
-    // Deduct Stock for purchased items
-    if (Array.isArray(items)) {
-      for (const item of items) {
-        try {
-          const product = await db.products.findUnique({ where: { id: item.id } });
-          if (product) {
-            const currentStock = product.stock ?? 999;
-            const newStock = Math.max(0, currentStock - (item.quantity || 1));
-            await db.products.update({ where: { id: item.id }, data: { stock: newStock } });
+        // 3. Increment promo code usage
+        if (promoCode) {
+          const promo = await tx.redeemCodes.findUnique({ where: { code: promoCode.toUpperCase() } });
+          if (promo) {
+            await tx.redeemCodes.update({
+              where: { code: promo.code },
+              data: { usedCount: (promo.usedCount || 0) + 1 },
+            });
           }
-        } catch (stockErr) {
-          console.error(`Failed to deduct stock for product ${item.id}:`, stockErr.message);
         }
-      }
+
+        // 4. Deduct stock for purchased items
+        if (Array.isArray(items)) {
+          for (const item of items) {
+            const product = await tx.products.findUnique({ where: { id: item.id } });
+            if (product) {
+              const currentStock = product.stock ?? 999;
+              const newStock = Math.max(0, currentStock - (item.quantity || 1));
+              await tx.products.update({ where: { id: item.id }, data: { stock: newStock } });
+            }
+          }
+        }
+
+        return updatedPayment;
+      });
+    } catch (txError) {
+      console.error("Critical Fulfillment Error (Transaction Rolled Back):", txError.message);
+      // Since Razorpay collected the money but our fulfillment failed, we must alert the admin
+      // and return a specific error so the frontend knows to instruct the user.
+      return res.status(500).json({ 
+        error: "Payment was successful but fulfillment failed. Please contact support with your Order ID.",
+        orderId: razorpay_order_id
+      });
     }
 
     // Send order confirmation emails
@@ -184,6 +197,19 @@ router.post("/verify", async (req, res) => {
             </tr>
           `;
         });
+
+        if (isGiftWrapped) {
+          itemsHtml += `
+            <tr style="border-bottom: 1px solid #e5e3df;">
+              <td style="padding: 12px 0; font-size: 14px; color: #0f1728;">
+                <strong>Signature Gift Packaging</strong><br/>
+                ${giftMessage ? `<span style="font-size: 12px; color: #666; font-style: italic;">Note: "${giftMessage}"</span>` : ""}
+              </td>
+              <td style="padding: 12px 0; font-size: 14px; color: #0f1728; text-align: center;">1</td>
+              <td style="padding: 12px 0; font-size: 14px; color: #0f1728; text-align: right;">₹${giftWrapPrice || 250}</td>
+            </tr>
+          `;
+        }
 
         const orderSummaryHtml = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 32px; background: #f9f8f6; border: 1px solid #e5e3df;">
