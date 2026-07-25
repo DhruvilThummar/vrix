@@ -173,7 +173,7 @@ export default function PaymentPage() {
         currency: order.currency,
         name: "VRIX",
         description: `Order ${order.id}`,
-        image: "/logos/white.png",
+        image: "/logos/black.png",
         order_id: order.id,
         prefill: {
           name: shipping.fullName,

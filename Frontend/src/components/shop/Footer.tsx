@@ -10,7 +10,7 @@ export default function Footer() {
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [selectedCurrency, setSelectedCurrency] = useState("Europe (EUR)");
   const [brandName, setBrandName] = useState("VRIX");
-  const [logoUrl, setLogoUrl] = useState("/logos/white.png");
+  const [logoUrl, setLogoUrl] = useState("/logos/black.png");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -112,7 +112,7 @@ export default function Footer() {
             {logoUrl && logoUrl !== "" ? (
               <div className="relative h-8 w-32 my-1">
                 <Image
-                  src={logoUrl}
+                  src={logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl}
                   alt={brandName}
                   fill
                   className="object-contain object-left"
