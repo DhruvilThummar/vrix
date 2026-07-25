@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, Suspense, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { fetchCollections, fetchProducts } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
@@ -12,10 +12,14 @@ import "react-loading-skeleton/dist/skeleton.css";
 const DEFAULT_PRODUCTS: any[] = [];
 
 function CollectionContent() {
+  const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const collectionQuery = searchParams.get("collection");
+  
+  // Use slug from URL if available, otherwise fall back to 'collection' search param, or default to 'silent-center'
+  const collectionSlug = (params.slug as string) || searchParams.get("collection") || "silent-center";
+  const collectionQuery = collectionSlug;
 
   const [products, setProducts] = useState(DEFAULT_PRODUCTS);
   const [collections, setCollections] = useState<any[]>([]);

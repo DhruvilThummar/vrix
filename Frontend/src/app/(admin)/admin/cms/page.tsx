@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier";
+type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages";
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
@@ -134,6 +134,16 @@ export default function AdminCMSPage() {
   const [announcementTextColor, setAnnouncementTextColor] = useState("#ffffff");
   const [announcementFontSize, setAnnouncementFontSize] = useState("11px");
   const [announcementLines, setAnnouncementLines] = useState<string[]>([]);
+
+  // --- Custom Pages States ---
+  const [customPages, setCustomPages] = useState<Record<string, any>>({
+    craftsmanship: { title: "Craftsmanship", heroTitle: "Craftsmanship", bannerImage: "", content: "Every VRIX piece is meticulously crafted by master artisans." },
+    materials: { title: "Materials", heroTitle: "Materials", bannerImage: "", content: "We source only the finest, consciously mined metals and conflict-free stones." },
+    sustainability: { title: "Sustainability", heroTitle: "Sustainability", bannerImage: "", content: "True luxury shouldn't cost the earth." },
+    careers: { title: "Careers", heroTitle: "Careers", bannerImage: "", content: "Join the team redefining modern jewelry." },
+    "style-guide": { title: "Style Guide", heroTitle: "Style Guide", bannerImage: "", content: "Discover how to layer, stack, and curate your personal collection." },
+    "behind-the-design": { title: "Behind The Design", heroTitle: "Behind The Design", bannerImage: "", content: "Step into our studios and witness the architectural precision." }
+  });
 
   useEffect(() => {
     loadCMSData();
@@ -270,6 +280,10 @@ export default function AdminCMSPage() {
           setAnnouncementFontSize(res.announcement_bar.fontSize || "11px");
           setAnnouncementLines(Array.isArray(res.announcement_bar.lines) ? res.announcement_bar.lines : []);
         }
+        // Custom Pages
+        if (res.custom_pages) {
+          setCustomPages((prev) => ({ ...prev, ...res.custom_pages }));
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -387,7 +401,8 @@ export default function AdminCMSPage() {
           textColor: announcementTextColor,
           fontSize: announcementFontSize,
           lines: announcementLines
-        }
+        },
+        custom_pages: customPages
       });
       showToast("CMS updated successfully.");
       loadCMSData();
@@ -586,6 +601,16 @@ export default function AdminCMSPage() {
               }`}
             >
               Announcement Bar
+            </button>
+            <button
+              onClick={() => setActiveTab("custom-pages")}
+              className={`px-4 py-2 border cursor-pointer ${
+                activeTab === "custom-pages"
+                  ? "bg-deep-navy text-pure-white border-deep-navy"
+                  : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black"
+              }`}
+            >
+              Custom Pages
             </button>
           </div>
         </div>
@@ -2422,6 +2447,57 @@ export default function AdminCMSPage() {
                           ))
                         )}
                       </div>
+                    </section>
+                  </div>
+                )}
+
+                {/* CUSTOM PAGES TAB */}
+                {activeTab === "custom-pages" && (
+                  <div className="space-y-6">
+                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-8">
+                      <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+                        Custom Placeholder Pages (Footer Links)
+                      </h3>
+                      {Object.keys(customPages).map((key) => (
+                        <div key={key} className="border border-slate-grey/20 p-6 bg-soft-linen/10 space-y-4">
+                          <h4 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest">{customPages[key].title || key} Page (/{(key)})</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col gap-2">
+                              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                                Hero Title
+                              </label>
+                              <input
+                                type="text"
+                                value={customPages[key].heroTitle}
+                                onChange={(e) => setCustomPages({ ...customPages, [key]: { ...customPages[key], heroTitle: e.target.value } })}
+                                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                                Banner Image URL
+                              </label>
+                              <input
+                                type="url"
+                                value={customPages[key].bannerImage}
+                                onChange={(e) => setCustomPages({ ...customPages, [key]: { ...customPages[key], bannerImage: e.target.value } })}
+                                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
+                              Page Content
+                            </label>
+                            <textarea
+                              value={customPages[key].content}
+                              onChange={(e) => setCustomPages({ ...customPages, [key]: { ...customPages[key], content: e.target.value } })}
+                              className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </section>
                   </div>
                 )}

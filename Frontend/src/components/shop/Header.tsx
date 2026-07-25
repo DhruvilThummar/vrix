@@ -458,7 +458,7 @@ export default function Header() {
             <button
               onClick={() => {
                 setIsCartOpen(false);
-                router.push("/checkout");
+                router.push("/checkout/shipping");
               }}
               className="w-full py-4 bg-black text-white text-center uppercase tracking-widest text-xs font-button hover:bg-black/90 transition-colors shadow-md"
             >

@@ -71,7 +71,7 @@ export default function CollectionsPage() {
                 </div>
                 <div className="mt-8 pt-4 border-t border-slate-grey/10">
                   <Link
-                    href={col.link || `/collections/silent-center?collection=${col.id}`}
+                    href={col.link || `/collections/${col.id}`}
                     className="inline-flex items-center gap-2 font-button text-button text-deep-navy hover:text-slate-grey transition-colors uppercase tracking-widest"
                   >
                     View Collection

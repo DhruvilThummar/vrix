@@ -35,7 +35,8 @@ router.post("/cms", async (req, res) => {
     const sections = [
       "homepage", "story", "legal", "navigation", "brand", "features",
       "collections", "api_settings", "vrix_plus", "announcement_bar",
-      "currency_settings", "shipping_settings", "gift_wrapping", "metal_types"
+      "currency_settings", "shipping_settings", "gift_wrapping", "metal_types",
+      "custom_pages"
     ];
     for (const section of sections) {
       if (req.body[section] !== undefined) {

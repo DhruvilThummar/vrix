@@ -178,16 +178,16 @@ export default function Footer() {
           <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Our Story
           </Link>
-          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+          <Link href="/craftsmanship" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Craftsmanship
           </Link>
-          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+          <Link href="/materials" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Materials
           </Link>
-          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+          <Link href="/sustainability" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Sustainability
           </Link>
-          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+          <Link href="/careers" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Careers
           </Link>
         </div>
@@ -206,10 +206,10 @@ export default function Footer() {
           <Link href="/search?filter=gifts" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Gift Guide
           </Link>
-          <Link href="/journal" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+          <Link href="/style-guide" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Style Guide
           </Link>
-          <Link href="/journal" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+          <Link href="/behind-the-design" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
             Behind The Design
           </Link>
         </div>

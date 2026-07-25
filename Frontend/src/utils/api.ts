@@ -58,6 +58,7 @@ export async function updateCMS(data: {
   brand?: any;
   features?: any;
   collections?: any;
+  custom_pages?: any;
   api_settings?: any;
   vrix_plus?: any;
   bespoke_config?: any;
