@@ -74,7 +74,6 @@ app.use("/api/security", securityRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/otp", otpRouter);
 app.use("/api/auth", authRouter);
-app.use("/api/truecaller", authRouter);   // Truecaller endpoint lives in auth router
 app.use("/api/promo", promoRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/delivery", deliveryRouter);

@@ -284,7 +284,7 @@ export async function verifyTruecaller(payload?: string, signature?: string, sig
     verified: boolean;
     profile: { name: string; email: string; phone: string };
     mode: "sandbox" | "live";
-  }>("/truecaller/verify", {
+  }>("/auth/truecaller/verify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ payload, signature, signatureAlgorithm }),

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_STORY = {
@@ -124,13 +125,13 @@ export default function BrandStoryPage() {
               <p className="font-body-lg text-body-lg text-slate-grey leading-relaxed">
                 {story.anchorContent}
               </p>
-              <a
+              <Link
                 className="inline-flex items-center gap-2 font-button text-button text-deep-navy border-b border-deep-navy pb-1 hover:opacity-70 transition-opacity uppercase tracking-widest mt-stack-md cursor-pointer"
-                href="#"
+                href="/collections/silent-center"
               >
                 {story.anchorLinkText}
                 <i className="fa-solid fa-arrow-right text-xs"></i>
-              </a>
+              </Link>
             </div>
             <div className="order-1 md:order-2">
               <div className="aspect-[4/5] bg-soft-linen overflow-hidden border border-slate-grey/20 relative">

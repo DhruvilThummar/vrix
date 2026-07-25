@@ -129,12 +129,12 @@ export default function NotFound() {
       <footer className="absolute bottom-0 w-full px-margin-mobile md:px-margin-desktop py-8 border-t border-slate-grey/10 flex flex-col md:flex-row justify-between items-center z-20 text-slate-grey bg-pure-white/80 backdrop-blur-sm">
         <span className="font-body-md text-[12px] mb-4 md:mb-0">© 2026 VRIX. All rights reserved.</span>
         <div className="flex gap-6">
-          <a className="font-body-md text-[12px] hover:text-deep-navy transition-colors" href="#">
+          <Link className="font-body-md text-[12px] hover:text-deep-navy transition-colors" href="/legal?tab=privacy">
             Privacy
-          </a>
-          <a className="font-body-md text-[12px] hover:text-deep-navy transition-colors" href="#">
+          </Link>
+          <Link className="font-body-md text-[12px] hover:text-deep-navy transition-colors" href="/legal?tab=terms">
             Terms
-          </a>
+          </Link>
         </div>
       </footer>
     </div>

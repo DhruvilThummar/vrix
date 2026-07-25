@@ -219,19 +219,19 @@ export default function Footer() {
           <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
             Follow
           </h4>
-          <a href="#" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
             <i className="fa-brands fa-instagram text-sm w-4 text-center"></i>
             Instagram
           </a>
-          <a href="#" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+          <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
             <i className="fa-brands fa-pinterest text-sm w-4 text-center"></i>
             Pinterest
           </a>
-          <a href="#" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
             <i className="fa-brands fa-linkedin-in text-sm w-4 text-center"></i>
             LinkedIn
           </a>
-          <a href="#" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
             <i className="fa-brands fa-youtube text-sm w-4 text-center"></i>
             YouTube
           </a>
