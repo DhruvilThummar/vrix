@@ -15,7 +15,8 @@ import {
   fetchProducts,
   fetchDbPublic as fetchDb,
   verifyTruecaller,
-  getApiBaseUrl
+  getApiBaseUrl,
+  fetchUserOrders
 } from "@/utils/api";
 
 interface Order {
@@ -132,11 +133,32 @@ export default function UserAccountPage() {
     }
   }, [activeTab]);
 
-  const [orders] = useState<Order[]>([
-    { id: "#VRIX12345", date: "May 18, 2026", amount: "$340.00", status: "Processing" },
-    { id: "#VRIX12312", date: "April 30, 2026", amount: "$620.00", status: "Delivered" },
-    { id: "#VRIX12289", date: "March 15, 2026", amount: "$890.00", status: "Delivered" },
-  ]);
+  const [userOrders, setUserOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadOrders() {
+      if (!user?.email) return;
+      setOrdersLoading(true);
+      try {
+        const data = await fetchUserOrders(user.email);
+        if (Array.isArray(data)) {
+          setUserOrders(data);
+        }
+      } catch (err) {
+        console.error("Failed to load user orders:", err);
+      } finally {
+        setOrdersLoading(false);
+      }
+    }
+    if (isLoggedIn && user?.email) {
+      loadOrders();
+    }
+  }, [isLoggedIn, user?.email]);
+
+  const totalSpent = userOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+  const rewardPoints = Math.floor(totalSpent * 0.1) + (user?.isVrixPlusMember ? 500 : 0);
+  const memberTier = user?.isVrixPlusMember ? "VRIX+ Member" : (userOrders.length > 3 ? "Platinum Member" : (userOrders.length > 0 ? "Gold Member" : "Standard Member"));
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
   const triggerFeedback = (msg: string) => {
@@ -608,10 +630,10 @@ export default function UserAccountPage() {
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { label: "Total Orders", value: orders.length },
-                  { label: "Reward Points", value: "320" },
+                  { label: "Total Orders", value: userOrders.length },
+                  { label: "Reward Points", value: rewardPoints },
                   { label: "Wishlist Items", value: wishlist.length },
-                  { label: "Member Tier", value: "Platinum" },
+                  { label: "Member Tier", value: memberTier },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-surface p-6 border border-slate-grey/15 flex flex-col justify-between h-32 hover:border-slate-grey/30 transition-colors">
                     <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{stat.label}</span>
@@ -629,16 +651,36 @@ export default function UserAccountPage() {
                     <thead><tr className="border-b border-slate-grey/25 text-slate-grey font-label-caps text-[10px] tracking-wider">
                       <th className="py-3 font-normal">ORDER ID</th><th className="py-3 font-normal">DATE</th>
                       <th className="py-3 font-normal">TOTAL</th><th className="py-3 font-normal">STATUS</th>
+                      <th className="py-3 font-normal text-right">INVOICE</th>
                     </tr></thead>
                     <tbody className="font-body-md text-sm text-deep-navy divide-y divide-slate-grey/10">
-                      {orders.slice(0, 2).map((order) => (
-                        <tr key={order.id} className="hover:bg-soft-linen/20 transition-colors">
-                          <td className="py-4 font-semibold">{order.id}</td>
-                          <td className="py-4 text-slate-grey">{order.date}</td>
-                          <td className="py-4">{order.amount}</td>
-                          <td className="py-4"><span className="inline-flex px-2 py-0.5 border border-slate-grey/20 text-[9px] font-label-caps uppercase tracking-wider text-deep-navy">{order.status}</span></td>
+                      {userOrders.length > 0 ? (
+                        userOrders.slice(0, 3).map((order) => (
+                          <tr key={order.orderId} className="hover:bg-soft-linen/20 transition-colors">
+                            <td className="py-4 font-semibold">{order.orderId}</td>
+                            <td className="py-4 text-slate-grey">{new Date(order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
+                            <td className="py-4">₹{Number(order.amount).toLocaleString()}</td>
+                            <td className="py-4"><span className="inline-flex px-2 py-0.5 border border-slate-grey/20 text-[9px] font-label-caps uppercase tracking-wider text-deep-navy">{order.status || "SUCCESS"}</span></td>
+                            <td className="py-4 text-right">
+                              <button
+                                onClick={() => {
+                                  const apiBaseUrl = getApiBaseUrl();
+                                  window.open(`${apiBaseUrl}/payment/invoice/${order.orderId}`, "_blank");
+                                }}
+                                className="font-button text-[10px] tracking-wider text-deep-navy hover:text-slate-grey underline uppercase cursor-pointer"
+                              >
+                                Invoice
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-xs text-slate-grey font-body-md">
+                            No orders placed yet. <Link href="/collections/all" className="text-deep-navy underline font-semibold">Explore Collections</Link>
+                          </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -661,17 +703,33 @@ export default function UserAccountPage() {
                     <th className="py-3 font-normal text-right">ACTION</th>
                   </tr></thead>
                   <tbody className="font-body-md text-sm text-deep-navy divide-y divide-slate-grey/10">
-                    {orders.map((order) => (
-                      <tr key={order.id} className="hover:bg-soft-linen/20 transition-colors">
-                        <td className="py-4 font-semibold">{order.id}</td>
-                        <td className="py-4 text-slate-grey">{order.date}</td>
-                        <td className="py-4">{order.amount}</td>
-                        <td className="py-4"><span className="inline-flex px-2 py-0.5 border border-slate-grey/20 text-[9px] font-label-caps uppercase tracking-wider">{order.status}</span></td>
-                        <td className="py-4 text-right">
-                          <button onClick={() => triggerFeedback(`Invoice for ${order.id} downloading...`)} className="font-button text-[10px] tracking-wider text-deep-navy hover:text-slate-grey underline uppercase cursor-pointer">Invoice</button>
+                    {userOrders.length > 0 ? (
+                      userOrders.map((order) => (
+                        <tr key={order.orderId} className="hover:bg-soft-linen/20 transition-colors">
+                          <td className="py-4 font-semibold">{order.orderId}</td>
+                          <td className="py-4 text-slate-grey">{new Date(order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
+                          <td className="py-4">₹{Number(order.amount).toLocaleString()}</td>
+                          <td className="py-4"><span className="inline-flex px-2 py-0.5 border border-slate-grey/20 text-[9px] font-label-caps uppercase tracking-wider">{order.status || "SUCCESS"}</span></td>
+                          <td className="py-4 text-right">
+                            <button
+                              onClick={() => {
+                                const apiBaseUrl = getApiBaseUrl();
+                                window.open(`${apiBaseUrl}/payment/invoice/${order.orderId}`, "_blank");
+                              }}
+                              className="font-button text-[10px] tracking-wider text-deep-navy hover:text-slate-grey underline uppercase cursor-pointer"
+                            >
+                              Invoice
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-8 text-center text-xs text-slate-grey font-body-md">
+                          No orders found for this account. <Link href="/collections/all" className="text-deep-navy underline font-semibold">Start Shopping</Link>
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

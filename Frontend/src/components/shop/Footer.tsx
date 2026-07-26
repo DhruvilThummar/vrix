@@ -5,8 +5,10 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { fetchDb, getApiBaseUrl } from "@/utils/api";
 import CurrencySelector from "@/components/CurrencySelector";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Footer() {
+  const { user, isLoggedIn } = useAuth();
   const [selectedLanguage, setSelectedLanguage] = useState("English");
   const [selectedCurrency, setSelectedCurrency] = useState("Europe (EUR)");
   const [brandName, setBrandName] = useState("VRIX");
@@ -58,50 +60,64 @@ export default function Footer() {
       
       {/* ─── MONICA VINADER STYLE VRIX+ CIRCLE NEWSLETTER BANNER ─── */}
       <div className="border-b border-slate-grey/20 pb-12 mb-12 bg-[#FAF8F5] py-10 px-margin-mobile md:px-margin-desktop">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <span className="font-label-caps text-[10px] tracking-[0.3em] uppercase text-[#B59D7C] font-semibold">
-            VRIX+ CIRCLE
-          </span>
-          <h3 className="font-display-lg text-2xl md:text-3xl text-deep-navy font-light uppercase tracking-wider max-w-2xl mx-auto leading-snug">
-            Join VRIX+ Circle for early sale access, birthday treats, a discount on your first order, and more.
-          </h3>
+        {isLoggedIn && user?.isVrixPlusMember ? (
+          <div className="max-w-4xl mx-auto text-center space-y-3">
+            <span className="font-label-caps text-[10px] tracking-[0.3em] uppercase text-[#B59D7C] font-semibold">
+              ★ VRIX+ CIRCLE MEMBER
+            </span>
+            <h3 className="font-display-lg text-xl md:text-2xl text-deep-navy font-light uppercase tracking-wider">
+              Welcome back, {user.name || "Valued Member"}. Your VRIX+ Circle perks & extra discounts are active.
+            </h3>
+            <p className="text-xs text-slate-grey font-body-md">
+              Enjoy exclusive priority concierge, early access to releases, and complimentary signature gift wrapping.
+            </p>
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            <span className="font-label-caps text-[10px] tracking-[0.3em] uppercase text-[#B59D7C] font-semibold">
+              VRIX+ CIRCLE
+            </span>
+            <h3 className="font-display-lg text-2xl md:text-3xl text-deep-navy font-light uppercase tracking-wider max-w-2xl mx-auto leading-snug">
+              Join VRIX+ Circle for early sale access, birthday treats, a discount on your first order, and more.
+            </h3>
 
-          {newsletterSuccess ? (
-            <div className="p-4 bg-green-50 border border-green-200 text-green-800 text-xs font-body-md max-w-md mx-auto animate-fade-in">
-              ★ Welcome to VRIX+ Circle! Your first order discount is ready. Check your inbox.
-            </div>
-          ) : (
-            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-                placeholder="Email address"
-                required
-                className="flex-1 bg-pure-white border border-slate-grey/30 px-4 py-3 text-sm font-body-md text-ink-black focus:border-black outline-none"
-              />
-              <button
-                type="submit"
-                disabled={newsletterLoading}
-                className="px-8 py-3 bg-black text-white font-button text-xs uppercase tracking-widest hover:bg-black/90 transition-colors flex items-center justify-center gap-2 shrink-0 cursor-pointer"
-              >
-                {newsletterLoading ? (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <span>Join Now</span>
-                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                  </>
-                )}
-              </button>
-            </form>
-          )}
+            {newsletterSuccess ? (
+              <div className="p-4 bg-green-50 border border-green-200 text-green-800 text-xs font-body-md max-w-md mx-auto animate-fade-in">
+                ★ Welcome to VRIX+ Circle! Your first order discount is ready. Check your inbox.
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Email address"
+                  required
+                  className="flex-1 bg-pure-white border border-slate-grey/30 px-4 py-3 text-sm font-body-md text-ink-black focus:border-black outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={newsletterLoading}
+                  className="px-8 py-3 bg-black text-white font-button text-xs uppercase tracking-widest hover:bg-black/90 transition-colors flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                >
+                  {newsletterLoading ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span>Join Now</span>
+                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
 
-          <p className="text-[11px] text-slate-grey font-body-md max-w-lg mx-auto">
-            We'll update you by email + SMS and you can unsubscribe at any time —{" "}
-            <Link href="/legal?tab=privacy" className="underline hover:text-black">Privacy Policy</Link>.
-          </p>
-        </div>
+            <p className="text-[11px] text-slate-grey font-body-md max-w-lg mx-auto">
+              We'll update you by email + SMS and you can unsubscribe at any time —{" "}
+              <Link href="/legal?tab=privacy" className="underline hover:text-black">Privacy Policy</Link>.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10 md:gap-gutter pb-12">

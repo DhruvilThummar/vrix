@@ -303,6 +303,21 @@ export async function loginUserDirect(payload: any) {
   });
 }
 
+export async function fetchUserOrders(email: string) {
+  return apiFetch<Array<{
+    id: string;
+    orderId: string;
+    paymentId?: string;
+    amount: number;
+    currency: string;
+    status: string;
+    createdAt: string;
+    customerName?: string;
+    address?: string;
+    city?: string;
+  }>>(`/payment/user-orders?email=${encodeURIComponent(email)}`);
+}
+
 export async function verifyTruecaller(payload?: string, signature?: string, signatureAlgorithm?: string) {
   return apiFetch<{
     success: boolean;

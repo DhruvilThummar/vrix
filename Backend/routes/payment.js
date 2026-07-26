@@ -274,6 +274,124 @@ router.post("/verify", async (req, res) => {
   }
 });
 
+// GET /api/payment/user-orders — Fetch all orders for a logged-in user
+router.get("/user-orders", async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: "Email query parameter is required" });
+
+  try {
+    const allPayments = await db.payments.findMany();
+    const userPayments = allPayments.filter(
+      p => p.userEmail && p.userEmail.toLowerCase() === String(email).toLowerCase()
+    );
+    res.json(userPayments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/payment/invoice/:orderId — Generate Invoice View / Printable Document
+router.get("/invoice/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    const payment = await db.payments.findUnique({ where: { orderId } });
+    if (!payment) {
+      return res.status(404).send("<h2 style='font-family:sans-serif;text-align:center;padding:50px;'>Invoice not found.</h2>");
+    }
+
+    const dateStr = new Date(payment.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>VRIX Invoice - ${payment.orderId}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #0f1728; margin: 0; padding: 40px; }
+          .container { max-width: 750px; margin: auto; border: 1px solid #e5e3df; padding: 40px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f1728; padding-bottom: 20px; margin-bottom: 30px; }
+          .brand { font-size: 28px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; }
+          .title { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #666; margin-top: 5px; }
+          .meta { text-align: right; font-size: 12px; color: #555; }
+          .meta strong { font-size: 16px; color: #0f1728; display: block; margin-top: 4px; }
+          .grid { display: grid; grid-template-cols: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+          .card { background: #f9f8f6; padding: 20px; border: 1px solid #e5e3df; font-size: 13px; line-height: 1.6; }
+          .card h4 { margin: 0 0 10px 0; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; color: #888; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th { text-align: left; padding: 12px; border-bottom: 2px solid #0f1728; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #666; }
+          td { padding: 14px 12px; border-bottom: 1px solid #e5e3df; font-size: 14px; }
+          .total-row { font-size: 18px; font-weight: bold; background: #f9f8f6; }
+          .print-btn { display: block; width: 180px; margin: 30px auto 0; text-align: center; background: #0f1728; color: #fff; padding: 12px; text-decoration: none; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; }
+          @media print { .print-btn { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div>
+              <div class="brand">VRIX</div>
+              <div class="title">Official Tax Invoice</div>
+            </div>
+            <div class="meta">
+              <div>Invoice Date: ${dateStr}</div>
+              <div>Order ID: <strong>${payment.orderId}</strong></div>
+              <div>Payment ID: ${payment.paymentId || "N/A"}</div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="card">
+              <h4>Billed & Shipped To</h4>
+              <div><strong>${payment.customerName || payment.userEmail || "Customer"}</strong></div>
+              <div>${payment.address || "Address Provided at Checkout"}</div>
+              <div>${payment.city || ""}${payment.postalCode ? `, ${payment.postalCode}` : ""}</div>
+              <div>Email: ${payment.userEmail || "N/A"}</div>
+              <div>Phone: ${payment.customerPhone || "N/A"}</div>
+            </div>
+            <div class="card">
+              <h4>Payment & Order Status</h4>
+              <div>Payment Gateway: <strong>Razorpay / Online</strong></div>
+              <div>Currency: <strong>${payment.currency || "INR"}</strong></div>
+              <div>Payment Status: <strong style="color: green;">${payment.status || "SUCCESS"}</strong></div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th style="text-align: center;">Qty</th>
+                <th style="text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>VRIX Architectural Fine Jewelry Order</strong><br/><span style="font-size:12px;color:#777;">Order Receipt: ${payment.orderId}</span></td>
+                <td style="text-align: center;">1</td>
+                <td style="text-align: right;">₹${payment.amount.toLocaleString()}</td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="2" style="text-align: right;"><strong>Total Paid:</strong></td>
+                <td style="text-align: right;"><strong>₹${payment.amount.toLocaleString()}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <a href="#" onclick="window.print(); return false;" class="print-btn">Print / Save Invoice</a>
+        </div>
+      </body>
+      </html>
+    `;
+    res.send(html);
+  } catch (err) {
+    res.status(500).send("Error generating invoice: " + err.message);
+  }
+});
+
 // GET /api/payment/logs — Get payment logs (admin)
 router.get("/logs", async (req, res) => {
   try {
