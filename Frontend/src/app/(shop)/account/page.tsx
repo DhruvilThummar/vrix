@@ -14,7 +14,8 @@ import {
   addSecurityLog,
   fetchProducts,
   fetchDbPublic as fetchDb,
-  verifyTruecaller
+  verifyTruecaller,
+  getApiBaseUrl
 } from "@/utils/api";
 
 interface Order {
@@ -830,7 +831,7 @@ export default function UserAccountPage() {
                     onClick={async () => {
                       if (!user?.email) return;
                       try {
-                        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+                        const apiBaseUrl = getApiBaseUrl();
                         const res = await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },

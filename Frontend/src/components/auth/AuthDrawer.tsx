@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin } from "@/utils/api";
+import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin, getApiBaseUrl } from "@/utils/api";
 import SkeletonImage from "@/components/shop/SkeletonImage";
 
 interface AuthDrawerProps {
@@ -110,7 +110,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
 
       if (joinVrixPlus) {
         try {
-          const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+          const apiBaseUrl = getApiBaseUrl();
           await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

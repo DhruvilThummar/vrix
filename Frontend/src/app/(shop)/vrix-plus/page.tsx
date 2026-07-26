@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { fetchDbPublic as fetchDb } from "@/utils/api";
+import { fetchDbPublic as fetchDb, getApiBaseUrl } from "@/utils/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -73,7 +73,7 @@ export default function VrixPlusPage() {
     setErrorMsg(null);
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const apiBaseUrl = getApiBaseUrl();
       
       const res = await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
         method: "POST",

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { fetchDb } from "@/utils/api";
+import { fetchDb, getApiBaseUrl } from "@/utils/api";
 
 export interface CurrencyConfig {
   code: string;
@@ -89,7 +89,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
       // Geo-IP Auto Detection
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+        const apiBaseUrl = getApiBaseUrl();
         const res = await fetch(`${apiBaseUrl}/geo/detect`);
         if (res.ok) {
           const geo = await res.json();

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { fetchDb } from "@/utils/api";
+import { fetchDb, getApiBaseUrl } from "@/utils/api";
 import CurrencySelector from "@/components/CurrencySelector";
 
 export default function Footer() {
@@ -38,7 +38,7 @@ export default function Footer() {
     if (!newsletterEmail.trim()) return;
     setNewsletterLoading(true);
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const apiBaseUrl = getApiBaseUrl();
       await fetch(`${apiBaseUrl}/newsletter/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -1,10 +1,24 @@
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+export function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host !== "localhost" && host !== "127.0.0.1") {
+      return "https://vrix-backend-git-main-dhruvilthummars-projects.vercel.app/api";
+    }
+  }
+  return "http://localhost:5000/api";
+}
+
 const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || "vrix_admin_secret_change_me_in_production";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
+  const baseUrl = getApiBaseUrl();
+  const url = endpoint.startsWith("/") ? `${baseUrl}${endpoint}` : `${baseUrl}/${endpoint}`;
+  const res = await fetch(url, options);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || "API request failed");
@@ -172,7 +186,8 @@ export async function addSecurityLog(logEntry: { event: string; user?: string; s
 export async function uploadMedia(file: File): Promise<{ url: string; public_id: string }> {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${API_BASE_URL}/media/upload`, { method: "POST", body: form });
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}/media/upload`, { method: "POST", body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || "Upload failed");
@@ -193,7 +208,8 @@ export async function uploadMediaMultiple(files: File[]): Promise<{
   files.forEach((file) => {
     form.append("files", file);
   });
-  const res = await fetch(`${API_BASE_URL}/media/upload-multiple`, { method: "POST", body: form });
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}/media/upload-multiple`, { method: "POST", body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || "Multiple upload failed");

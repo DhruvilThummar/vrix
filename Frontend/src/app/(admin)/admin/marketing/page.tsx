@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   fetchPromoCodes, createPromoCode, updatePromoCode, deletePromoCode,
-  fetchPaymentLogs, fetchAdminStats, fetchUsers, fetchDb, updateCMS,
+  fetchPaymentLogs, fetchAdminStats, fetchUsers, fetchDb, updateCMS, getApiBaseUrl,
 } from "@/utils/api";
 
 interface PromoCode {
@@ -282,7 +282,7 @@ export default function AdminMarketingPage() {
     if (!newMemberEmail.trim()) return;
     setAddingMember(true);
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const apiBaseUrl = getApiBaseUrl();
       const res = await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -303,7 +303,7 @@ export default function AdminMarketingPage() {
   const handleRemoveMember = async (email: string) => {
     if (!confirm(`Remove VRIX+ membership for "${email}"?`)) return;
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const apiBaseUrl = getApiBaseUrl();
       const res = await fetch(`${apiBaseUrl}/admin/users/${encodeURIComponent(email)}/vrix-plus`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
