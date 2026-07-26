@@ -210,6 +210,10 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     setLoading(true);
     setErrorMsg(null);
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://snvifoikeixkgrdkgyme.supabase.co";
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const supabaseOAuthUrl = `${supabaseUrl.replace(/\/$/, "")}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
+
       let googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
       if (!googleClientId) {
         const dbData = await fetchDb().catch(() => null);
@@ -248,14 +252,16 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
           });
           (window as any).google.accounts.id.prompt((notification: any) => {
             if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-              handleDirectGoogleLogin().then(resolve).catch(reject);
+              window.location.href = supabaseOAuthUrl;
+              resolve();
             }
           });
         });
         return;
       }
 
-      await handleDirectGoogleLogin();
+      // Initiate Supabase Google OAuth Redirect
+      window.location.href = supabaseOAuthUrl;
     } catch (err: any) {
       console.error("Google authentication error:", err);
       setErrorMsg(err.message || "Google authentication failed. Please try again.");

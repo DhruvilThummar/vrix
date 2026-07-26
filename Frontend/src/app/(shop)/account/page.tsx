@@ -490,23 +490,15 @@ export default function UserAccountPage() {
                 <div className="grid grid-cols-1 gap-2">
                   <button
                     type="button"
-                    onClick={async () => {
+                    onClick={() => {
                       setAuthLoading(true);
                       setAuthError(null);
                       try {
-                        const targetEmail = authEmail.trim() || "user@gmail.com";
-                        const targetName = authName.trim() || (authEmail ? authEmail.split("@")[0] : "Google User");
-                        const res = await loginWithGoogle({ email: targetEmail, name: targetName });
-                        if (res && res.user) {
-                          login(res.user.email, { name: res.user.name, phone: res.user.phone || "", isVrixPlusMember: !!res.user.isVrixPlusMember });
-                          setAuthStep("verified");
-                          triggerFeedback("⚡ Signed in with Google!");
-                        } else {
-                          setAuthError("Google Sign-In failed.");
-                        }
+                        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://snvifoikeixkgrdkgyme.supabase.co";
+                        const redirectUrl = `${window.location.origin}/auth/callback`;
+                        window.location.href = `${supabaseUrl.replace(/\/$/, "")}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
                       } catch (err: any) {
-                        setAuthError(err.message || "Google authentication failed.");
-                      } finally {
+                        setAuthError(err.message || "Failed to initiate Google Sign-In.");
                         setAuthLoading(false);
                       }
                     }}

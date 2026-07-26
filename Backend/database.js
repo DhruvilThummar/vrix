@@ -1,10 +1,16 @@
 import { fileURLToPath } from "url";
 import fsDirect from "fs";
 import pathDirect from "path";
+import { createClient } from "@supabase/supabase-js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathDirect.dirname(__filename);
 const DB_PATH = pathDirect.join(__dirname, "data", "db.json");
+
+// Initialize Supabase JS Client if credentials are provided
+const supabaseUrl = process.env.SUPABASE_URL || "https://snvifoikeixkgrdkgyme.supabase.co";
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudmlmb2lrZWl4a2dyZGtneW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTA0NjIsImV4cCI6MjA5ODU2NjQ2Mn0.H-mxdmhjHGg0RVF35ifWIvYgGRBS3oMgq08dGE3bbTw";
+export const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 const normalizePrismaDatabaseUrl = () => {
   const rawUrl = process.env.DATABASE_URL;
@@ -39,20 +45,26 @@ const normalizePrismaDatabaseUrl = () => {
 };
 
 // Local DB Helpers
+let memoryDbCache = null;
+
 const readLocalDb = () => {
   try {
     const data = fsDirect.readFileSync(DB_PATH, "utf8");
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    memoryDbCache = parsed;
+    return parsed;
   } catch (error) {
+    if (memoryDbCache) return memoryDbCache;
     console.error("Error reading local db.json fallback:", error);
     return {};
   }
 };
 
 const writeLocalDb = (data) => {
+  memoryDbCache = data;
   try {
     if (process.env.VERCEL) {
-      console.warn("Database Access Layer: Skipping write to local db.json on Vercel.");
+      console.warn("Database Access Layer: In-memory store updated (Vercel environment).");
       return true;
     }
     fsDirect.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf8");
@@ -64,6 +76,11 @@ const writeLocalDb = (data) => {
 };
 
 // Check if DATABASE_URL is configured and valid for PostgreSQL
+if (!process.env.DATABASE_URL) {
+  const vercelDb = process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING;
+  if (vercelDb) process.env.DATABASE_URL = vercelDb;
+}
+
 normalizePrismaDatabaseUrl();
 const rawUrl = process.env.DATABASE_URL || "";
 const isPostgresUrl = rawUrl.startsWith("postgresql://") || rawUrl.startsWith("postgres://");
@@ -85,21 +102,21 @@ if (isDbConnected) {
 
 let tablesCreated = false;
 export async function ensureTablesExist() {
-  if (tablesCreated || !prisma) return;
-  tablesCreated = true;
+  if (!prisma) return;
   try {
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "cms_settings" ("key" TEXT PRIMARY KEY, "value" JSONB NOT NULL, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS "journal" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "excerpt" TEXT, "content" TEXT NOT NULL, "image" TEXT NOT NULL, "date" TEXT, "read_time" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS "security_logs" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "event" TEXT NOT NULL, "user_email" TEXT, "status" TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS "payments" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "order_id" TEXT UNIQUE NOT NULL, "payment_id" TEXT, "signature" TEXT, "amount" DOUBLE PRECISION NOT NULL, "currency" TEXT DEFAULT 'INR', "status" TEXT DEFAULT 'created', "user_email" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "customer_name" TEXT, "customer_phone" TEXT, "address" TEXT, "city" TEXT, "postal_code" TEXT, "assigned_agent" TEXT);
-      CREATE TABLE IF NOT EXISTS "delivery_staff" ("email" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "role" TEXT NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS "verification_otps" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "email" TEXT NOT NULL, "otp" TEXT NOT NULL, "expires_at" TIMESTAMP NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-      CREATE TABLE IF NOT EXISTS "redeem_codes" ("code" TEXT PRIMARY KEY, "discount" DOUBLE PRECISION NOT NULL, "type" TEXT DEFAULT 'percentage', "is_active" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "description" TEXT, "min_subtotal" DOUBLE PRECISION, "usage_limit" INTEGER, "used_count" INTEGER DEFAULT 0, "expiry_date" TEXT);
-      CREATE TABLE IF NOT EXISTS "users" ("email" TEXT PRIMARY KEY, "name" TEXT, "phone" TEXT, "password" TEXT, "is_vrix_plus_member" BOOLEAN DEFAULT false, "vrix_plus_joined_date" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-    `).catch(() => {});
-  } catch (e) {}
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "users" ("email" TEXT PRIMARY KEY, "name" TEXT, "phone" TEXT, "password" TEXT, "is_vrix_plus_member" BOOLEAN DEFAULT false, "vrix_plus_joined_date" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(e => console.warn("Notice: users table creation issue:", e.message));
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "cms_settings" ("key" TEXT PRIMARY KEY, "value" JSONB NOT NULL, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "journal" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "excerpt" TEXT, "content" TEXT NOT NULL, "image" TEXT NOT NULL, "date" TEXT, "read_time" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "delivery_staff" ("email" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "role" TEXT NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "redeem_codes" ("code" TEXT PRIMARY KEY, "discount" DOUBLE PRECISION NOT NULL, "type" TEXT DEFAULT 'percentage', "is_active" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "description" TEXT, "min_subtotal" DOUBLE PRECISION, "usage_limit" INTEGER, "used_count" INTEGER DEFAULT 0, "expiry_date" TEXT);`).catch(() => {});
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "security_logs" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "event" TEXT NOT NULL, "user_email" TEXT, "status" TEXT NOT NULL);`).catch(() => {});
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "payments" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "order_id" TEXT UNIQUE NOT NULL, "payment_id" TEXT, "signature" TEXT, "amount" DOUBLE PRECISION NOT NULL, "currency" TEXT DEFAULT 'INR', "status" TEXT DEFAULT 'created', "user_email" TEXT, "customer_name" TEXT, "customer_phone" TEXT, "address" TEXT, "city" TEXT, "postal_code" TEXT, "assigned_agent" TEXT);`).catch(() => {});
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "verification_otps" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "email" TEXT NOT NULL, "otp" TEXT NOT NULL, "expires_at" TIMESTAMP NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
+    tablesCreated = true;
+  } catch (e) {
+    console.error("ensureTablesExist error:", e.message);
+  }
 }
 
 const productSelect = {
@@ -612,11 +629,15 @@ export const db = {
   // Users / Customers
   users: {
     findMany: async () => {
+      if (supabase) {
+        try {
+          const { data, error } = await supabase.from("users").select("*").order("created_at", { ascending: false });
+          if (!error && Array.isArray(data)) return data;
+        } catch (e) {}
+      }
       if (db.isConnected()) {
         try {
-          return await prisma.user.findMany({
-            orderBy: { createdAt: "desc" }
-          });
+          return await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
         } catch (err) {
           await ensureTablesExist();
           try {
@@ -635,6 +656,14 @@ export const db = {
     findUnique: async ({ where: { email } }) => {
       if (!email) return null;
       const targetEmail = email.toLowerCase();
+
+      if (supabase) {
+        try {
+          const { data, error } = await supabase.from("users").select("*").eq("email", targetEmail).maybeSingle();
+          if (!error && data) return data;
+        } catch (e) {}
+      }
+
       if (db.isConnected()) {
         try {
           return await prisma.user.findUnique({ where: { email: targetEmail } });
@@ -657,76 +686,116 @@ export const db = {
     },
     create: async ({ data }) => {
       const emailLower = data.email ? data.email.toLowerCase() : "";
+      const recordData = { ...data, email: emailLower };
+
+      if (supabase) {
+        try {
+          const { data: supaUser, error } = await supabase.from("users").upsert([recordData]).select().single();
+          if (!error && supaUser) return supaUser;
+        } catch (e) {}
+      }
+
       if (db.isConnected()) {
         try {
-          return await prisma.user.create({
-            data: {
-              ...data,
-              email: emailLower
-            }
+          return await prisma.user.create({ data: recordData });
+        } catch (err) {
+          await ensureTablesExist();
+          try {
+            return await prisma.user.create({ data: recordData });
+          } catch (retryErr) {
+            console.error("Prisma users.create failed:", retryErr.message);
+          }
+        }
+      }
+
+      const localData = readLocalDb();
+      localData.users = localData.users || [];
+      const idx = localData.users.findIndex(u => u.email && u.email.toLowerCase() === emailLower);
+      const record = { createdAt: new Date().toISOString(), ...recordData };
+      if (idx !== -1) {
+        localData.users[idx] = { ...localData.users[idx], ...record };
+      } else {
+        localData.users.push(record);
+      }
+      writeLocalDb(localData);
+      return record;
+    },
+    update: async ({ where: { email }, data }) => {
+      const targetEmail = email ? email.toLowerCase() : "";
+
+      if (supabase) {
+        try {
+          const { data: supaUser, error } = await supabase.from("users").update(data).eq("email", targetEmail).select().single();
+          if (!error && supaUser) return supaUser;
+        } catch (e) {}
+      }
+
+      if (db.isConnected()) {
+        try {
+          return await prisma.user.update({ where: { email: targetEmail }, data });
+        } catch (err) {
+          await ensureTablesExist();
+          try {
+            return await prisma.user.update({ where: { email: targetEmail }, data });
+          } catch (retryErr) {
+            console.error(`Prisma users.update(${email}) failed:`, retryErr.message);
+          }
+        }
+      }
+
+      const localData = readLocalDb();
+      localData.users = localData.users || [];
+      const index = localData.users.findIndex(u => u.email && u.email.toLowerCase() === targetEmail);
+      if (index !== -1) {
+        localData.users[index] = { ...localData.users[index], ...data };
+      } else {
+        localData.users.push({ email: targetEmail, createdAt: new Date().toISOString(), ...data });
+      }
+      writeLocalDb(localData);
+      return localData.users.find(u => u.email && u.email.toLowerCase() === targetEmail);
+    },
+    upsert: async ({ where: { email }, update, create }) => {
+      const targetEmail = email ? email.toLowerCase() : "";
+
+      if (supabase) {
+        try {
+          const payload = { ...create, ...update, email: targetEmail };
+          const { data: supaUser, error } = await supabase.from("users").upsert([payload]).select().single();
+          if (!error && supaUser) return supaUser;
+        } catch (e) {}
+      }
+
+      if (db.isConnected()) {
+        try {
+          return await prisma.user.upsert({
+            where: { email: targetEmail },
+            update,
+            create: { ...create, email: targetEmail }
           });
         } catch (err) {
           await ensureTablesExist();
           try {
-            return await prisma.user.create({ data: { ...data, email: emailLower } });
+            return await prisma.user.upsert({
+              where: { email: targetEmail },
+              update,
+              create: { ...create, email: targetEmail }
+            });
           } catch (retryErr) {
-            console.error("Prisma users.create failed:", retryErr.message);
-            const localData = readLocalDb();
-            localData.users = localData.users || [];
-            const record = {
-              createdAt: new Date().toISOString(),
-              ...data,
-              email: emailLower
-            };
-            localData.users.push(record);
-            writeLocalDb(localData);
-            return record;
+            console.error("Prisma users.upsert failed:", retryErr.message);
           }
         }
-      } else {
-        const localData = readLocalDb();
-        localData.users = localData.users || [];
-        const record = {
-          createdAt: new Date().toISOString(),
-          ...data,
-          email: emailLower
-        };
-        localData.users.push(record);
-        writeLocalDb(localData);
-        return record;
       }
-    },
-    update: async ({ where: { email }, data }) => {
-      const targetEmail = email ? email.toLowerCase() : "";
-      if (db.isConnected()) {
-        try {
-          return await prisma.user.update({
-            where: { email: targetEmail },
-            data
-          });
-        } catch (err) {
-          console.error(`Prisma users.update(${email}) failed:`, err.message);
-          const localData = readLocalDb();
-          localData.users = localData.users || [];
-          const index = localData.users.findIndex(u => u.email && u.email.toLowerCase() === targetEmail);
-          if (index !== -1) {
-            localData.users[index] = { ...localData.users[index], ...data };
-            writeLocalDb(localData);
-            return localData.users[index];
-          }
-          throw new Error(`User with email ${email} not found`);
-        }
+
+      const localData = readLocalDb();
+      localData.users = localData.users || [];
+      const index = localData.users.findIndex(u => u.email && u.email.toLowerCase() === targetEmail);
+      if (index !== -1) {
+        localData.users[index] = { ...localData.users[index], ...update };
       } else {
-        const localData = readLocalDb();
-        localData.users = localData.users || [];
-        const index = localData.users.findIndex(u => u.email && u.email.toLowerCase() === targetEmail);
-        if (index !== -1) {
-          localData.users[index] = { ...localData.users[index], ...data };
-          writeLocalDb(localData);
-          return localData.users[index];
-        }
-        throw new Error(`User with email ${email} not found`);
+        localData.users.push({ createdAt: new Date().toISOString(), ...create, email: targetEmail });
       }
+      writeLocalDb(localData);
+      return localData.users.find(u => u.email && u.email.toLowerCase() === targetEmail);
     }
   },
 

@@ -478,5 +478,35 @@ router.post("/google", async (req, res) => {
   }
 });
 
-export default router;
+// GET /api/auth/me — Fetch authenticated user profile directly from Supabase / DB
+router.get("/me", async (req, res) => {
+  const { email } = req.query;
+  if (!email) {
+    return res.status(400).json({ error: "Email query parameter is required." });
+  }
 
+  try {
+    const cleanEmail = String(email).trim().toLowerCase();
+    const user = await db.users.findUnique({ where: { email: cleanEmail } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found in database." });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        email: user.email,
+        name: user.name || "",
+        phone: user.phone || "",
+        isVrixPlusMember: !!user.isVrixPlusMember,
+        vrixPlusJoinedDate: user.vrixPlusJoinedDate || null,
+        createdAt: user.createdAt || null
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;

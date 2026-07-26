@@ -6,7 +6,7 @@ export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     if (host !== "localhost" && host !== "127.0.0.1") {
-      return "https://vrix-b.vercel.app/api";
+      return `${window.location.origin}/api`;
     }
   }
   return "http://localhost:5000/api";
