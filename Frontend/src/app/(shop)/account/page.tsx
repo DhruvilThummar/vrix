@@ -35,6 +35,16 @@ interface WishlistItem {
   material: string;
 }
 
+interface ShippingAddress {
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  phone: string;
+  useSamePhone: boolean;
+}
+
 type AuthStep = "email" | "otp" | "verified";
 type AuthMode = "signin" | "signup";
 
@@ -85,12 +95,14 @@ export default function UserAccountPage() {
     email: user?.email || "", 
     phone: user?.phone || "" 
   });
-  const [shippingAddress, setShippingAddress] = useState({
+  const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     street: "",
     city: "",
     state: "",
     zip: "",
     country: "",
+    phone: "",
+    useSamePhone: true,
   });
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -176,7 +188,16 @@ export default function UserAccountPage() {
     try {
       const saved = localStorage.getItem(`vrix_address_${user.email}`);
       if (saved) {
-        setShippingAddress(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setShippingAddress({
+          street: parsed.street || "",
+          city: parsed.city || "",
+          state: parsed.state || "",
+          zip: parsed.zip || "",
+          country: parsed.country || "",
+          phone: parsed.phone || "",
+          useSamePhone: parsed.useSamePhone !== undefined ? parsed.useSamePhone : true,
+        });
       } else if (userOrders.length > 0) {
         const latest = userOrders[0];
         if (latest.address) {
@@ -186,6 +207,8 @@ export default function UserAccountPage() {
             state: "",
             zip: latest.postalCode || "",
             country: "India",
+            phone: user.phone || "",
+            useSamePhone: true,
           });
         }
       }
