@@ -83,6 +83,25 @@ if (isDbConnected) {
   console.log("Database Access Layer: DATABASE_URL not set or not PostgreSQL. Falling back to local db.json.");
 }
 
+let tablesCreated = false;
+export async function ensureTablesExist() {
+  if (tablesCreated || !prisma) return;
+  tablesCreated = true;
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "cms_settings" ("key" TEXT PRIMARY KEY, "value" JSONB NOT NULL, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS "journal" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "excerpt" TEXT, "content" TEXT NOT NULL, "image" TEXT NOT NULL, "date" TEXT, "read_time" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS "security_logs" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "event" TEXT NOT NULL, "user_email" TEXT, "status" TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS "payments" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "order_id" TEXT UNIQUE NOT NULL, "payment_id" TEXT, "signature" TEXT, "amount" DOUBLE PRECISION NOT NULL, "currency" TEXT DEFAULT 'INR', "status" TEXT DEFAULT 'created', "user_email" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "customer_name" TEXT, "customer_phone" TEXT, "address" TEXT, "city" TEXT, "postal_code" TEXT, "assigned_agent" TEXT);
+      CREATE TABLE IF NOT EXISTS "delivery_staff" ("email" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "role" TEXT NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS "verification_otps" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "email" TEXT NOT NULL, "otp" TEXT NOT NULL, "expires_at" TIMESTAMP NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS "redeem_codes" ("code" TEXT PRIMARY KEY, "discount" DOUBLE PRECISION NOT NULL, "type" TEXT DEFAULT 'percentage', "is_active" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "description" TEXT, "min_subtotal" DOUBLE PRECISION, "usage_limit" INTEGER, "used_count" INTEGER DEFAULT 0, "expiry_date" TEXT);
+      CREATE TABLE IF NOT EXISTS "users" ("email" TEXT PRIMARY KEY, "name" TEXT, "phone" TEXT, "password" TEXT, "is_vrix_plus_member" BOOLEAN DEFAULT false, "vrix_plus_joined_date" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+    `).catch(() => {});
+  } catch (e) {}
+}
+
 const productSelect = {
   id: true,
   title: true,
@@ -125,11 +144,9 @@ const runProductQuery = async (queryWithImages, queryWithoutImages) => {
   try {
     return await queryWithImages();
   } catch (error) {
-    if (isMissingColumnError(error) && prisma) {
+    if (prisma) {
       try {
-        await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_vrix_plus_exclusive" BOOLEAN DEFAULT false;').catch(() => {});
-        await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "vrix_plus_price" DOUBLE PRECISION;').catch(() => {});
-        await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB;').catch(() => {});
+        await ensureTablesExist();
         return await queryWithImages();
       } catch (retryErr) {
         console.warn("Product query retry failed:", retryErr.message);
@@ -601,9 +618,14 @@ export const db = {
             orderBy: { createdAt: "desc" }
           });
         } catch (err) {
-          console.error("Prisma users.findMany failed:", err.message);
-          const localData = readLocalDb();
-          return localData.users || [];
+          await ensureTablesExist();
+          try {
+            return await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+          } catch (retryErr) {
+            console.error("Prisma users.findMany failed:", retryErr.message);
+            const localData = readLocalDb();
+            return localData.users || [];
+          }
         }
       } else {
         const localData = readLocalDb();
@@ -617,10 +639,15 @@ export const db = {
         try {
           return await prisma.user.findUnique({ where: { email: targetEmail } });
         } catch (err) {
-          console.error(`Prisma users.findUnique(${email}) failed:`, err.message);
-          const localData = readLocalDb();
-          const users = localData.users || [];
-          return users.find(u => u.email && u.email.toLowerCase() === targetEmail) || null;
+          await ensureTablesExist();
+          try {
+            return await prisma.user.findUnique({ where: { email: targetEmail } });
+          } catch (retryErr) {
+            console.error(`Prisma users.findUnique(${email}) failed:`, retryErr.message);
+            const localData = readLocalDb();
+            const users = localData.users || [];
+            return users.find(u => u.email && u.email.toLowerCase() === targetEmail) || null;
+          }
         }
       } else {
         const localData = readLocalDb();
@@ -639,17 +666,22 @@ export const db = {
             }
           });
         } catch (err) {
-          console.error("Prisma users.create failed:", err.message);
-          const localData = readLocalDb();
-          localData.users = localData.users || [];
-          const record = {
-            createdAt: new Date().toISOString(),
-            ...data,
-            email: emailLower
-          };
-          localData.users.push(record);
-          writeLocalDb(localData);
-          return record;
+          await ensureTablesExist();
+          try {
+            return await prisma.user.create({ data: { ...data, email: emailLower } });
+          } catch (retryErr) {
+            console.error("Prisma users.create failed:", retryErr.message);
+            const localData = readLocalDb();
+            localData.users = localData.users || [];
+            const record = {
+              createdAt: new Date().toISOString(),
+              ...data,
+              email: emailLower
+            };
+            localData.users.push(record);
+            writeLocalDb(localData);
+            return record;
+          }
         }
       } else {
         const localData = readLocalDb();
@@ -705,17 +737,22 @@ export const db = {
         try {
           return await prisma.verificationOtp.create({ data });
         } catch (err) {
-          console.error("Prisma verificationOtps.create failed:", err.message);
-          const localData = readLocalDb();
-          localData.otps = localData.otps || [];
-          const record = {
-            id: Math.random().toString(36).substring(2, 15),
-            createdAt: new Date().toISOString(),
-            ...data
-          };
-          localData.otps.push(record);
-          writeLocalDb(localData);
-          return record;
+          await ensureTablesExist();
+          try {
+            return await prisma.verificationOtp.create({ data });
+          } catch (retryErr) {
+            console.error("Prisma verificationOtps.create failed:", retryErr.message);
+            const localData = readLocalDb();
+            localData.otps = localData.otps || [];
+            const record = {
+              id: Math.random().toString(36).substring(2, 15),
+              createdAt: new Date().toISOString(),
+              ...data
+            };
+            localData.otps.push(record);
+            writeLocalDb(localData);
+            return record;
+          }
         }
       } else {
         const localData = readLocalDb();
@@ -735,12 +772,17 @@ export const db = {
         try {
           return await prisma.verificationOtp.findFirst({ where });
         } catch (err) {
-          console.error("Prisma verificationOtps.findFirst failed:", err.message);
-          const localData = readLocalDb();
-          const otps = localData.otps || [];
-          return otps.find(otp => {
-            return Object.entries(where).every(([k, v]) => otp[k] === v);
-          }) || null;
+          await ensureTablesExist();
+          try {
+            return await prisma.verificationOtp.findFirst({ where });
+          } catch (retryErr) {
+            console.error("Prisma verificationOtps.findFirst failed:", retryErr.message);
+            const localData = readLocalDb();
+            const otps = localData.otps || [];
+            return otps.find(otp => {
+              return Object.entries(where).every(([k, v]) => otp[k] === v);
+            }) || null;
+          }
         }
       } else {
         const localData = readLocalDb();
@@ -755,12 +797,17 @@ export const db = {
         try {
           return await prisma.verificationOtp.delete({ where: { id } });
         } catch (err) {
-          console.error(`Prisma verificationOtps.delete(${id}) failed:`, err.message);
-          const localData = readLocalDb();
-          localData.otps = localData.otps || [];
-          localData.otps = localData.otps.filter(otp => otp.id !== id);
-          writeLocalDb(localData);
-          return { id };
+          await ensureTablesExist();
+          try {
+            return await prisma.verificationOtp.delete({ where: { id } });
+          } catch (retryErr) {
+            console.error(`Prisma verificationOtps.delete(${id}) failed:`, retryErr.message);
+            const localData = readLocalDb();
+            localData.otps = localData.otps || [];
+            localData.otps = localData.otps.filter(otp => otp.id !== id);
+            writeLocalDb(localData);
+            return { id };
+          }
         }
       } else {
         const localData = readLocalDb();
@@ -775,15 +822,20 @@ export const db = {
         try {
           return await prisma.verificationOtp.deleteMany({ where });
         } catch (err) {
-          console.error("Prisma verificationOtps.deleteMany failed:", err.message);
-          const localData = readLocalDb();
-          localData.otps = localData.otps || [];
-          const initialLength = localData.otps.length;
-          localData.otps = localData.otps.filter(otp => {
-            return !Object.entries(where).every(([k, v]) => otp[k] === v);
-          });
-          writeLocalDb(localData);
-          return { count: initialLength - localData.otps.length };
+          await ensureTablesExist();
+          try {
+            return await prisma.verificationOtp.deleteMany({ where });
+          } catch (retryErr) {
+            console.error("Prisma verificationOtps.deleteMany failed:", retryErr.message);
+            const localData = readLocalDb();
+            localData.otps = localData.otps || [];
+            const initialLength = localData.otps.length;
+            localData.otps = localData.otps.filter(otp => {
+              return !Object.entries(where).every(([k, v]) => otp[k] === v);
+            });
+            writeLocalDb(localData);
+            return { count: initialLength - localData.otps.length };
+          }
         }
       } else {
         const localData = readLocalDb();

@@ -57,7 +57,20 @@ app.use("/uploads", express.static(path.join(__dirname, "data", "uploads")));
 // ─── Startup Migration ─────────────────────────────────────────────────────────
 await migrateIfNeeded();
 
-// ─── Health Check ──────────────────────────────────────────────────────────────
+// ─── Root Status & Health Check ───────────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.json({
+    status: "online",
+    message: "🚀 VRIX Backend API Platform",
+    version: "1.0.0",
+    endpoints: {
+      health: "/api/health",
+      products: "/api/products",
+      collections: "/api/collections"
+    }
+  });
+});
+
 const healthHandler = async (req, res) => {
   const cClient = await getCloudinary();
   const rClient = await getRazorpay();
