@@ -142,8 +142,14 @@ export const db = {
   cmsSettings: {
     findUnique: async ({ where: { key } }) => {
       if (db.isConnected()) {
-        const row = await prisma.cmsSetting.findUnique({ where: { key } });
-        return row ? row.value : null;
+        try {
+          const row = await prisma.cmsSetting.findUnique({ where: { key } });
+          return row ? row.value : null;
+        } catch (err) {
+          console.error(`Prisma cmsSettings.findUnique(${key}) failed:`, err.message);
+          const localData = readLocalDb();
+          return localData[key] || null;
+        }
       } else {
         const localData = readLocalDb();
         return localData[key] || null;
@@ -151,12 +157,20 @@ export const db = {
     },
     upsert: async ({ where: { key }, update, create }) => {
       if (db.isConnected()) {
-        const row = await prisma.cmsSetting.upsert({
-          where: { key },
-          update: { value: update.value },
-          create: { key, value: create.value }
-        });
-        return row.value;
+        try {
+          const row = await prisma.cmsSetting.upsert({
+            where: { key },
+            update: { value: update.value },
+            create: { key, value: create.value }
+          });
+          return row.value;
+        } catch (err) {
+          console.error(`Prisma cmsSettings.upsert(${key}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData[key] = update.value;
+          writeLocalDb(localData);
+          return localData[key];
+        }
       } else {
         const localData = readLocalDb();
         localData[key] = update.value;
@@ -166,11 +180,18 @@ export const db = {
     },
     findMany: async () => {
       if (db.isConnected()) {
-        const rows = await prisma.cmsSetting.findMany();
-        return rows.reduce((acc, row) => {
-          acc[row.key] = row.value;
-          return acc;
-        }, {});
+        try {
+          const rows = await prisma.cmsSetting.findMany();
+          return rows.reduce((acc, row) => {
+            acc[row.key] = row.value;
+            return acc;
+          }, {});
+        } catch (err) {
+          console.error("Prisma cmsSettings.findMany failed:", err.message);
+          const localData = readLocalDb();
+          const { products, journal, securityLogs, payments, otps, redeemCodes, users, ...cms } = localData;
+          return cms;
+        }
       } else {
         const localData = readLocalDb();
         const { products, journal, securityLogs, payments, otps, redeemCodes, users, ...cms } = localData;
@@ -183,16 +204,22 @@ export const db = {
   products: {
     findMany: async () => {
       if (db.isConnected()) {
-        return await runProductQuery(
-          () => prisma.product.findMany({
-            orderBy: { createdAt: "desc" },
-            select: productSelect
-          }),
-          () => prisma.product.findMany({
-            orderBy: { createdAt: "desc" },
-            select: productSelectWithoutImages
-          })
-        );
+        try {
+          return await runProductQuery(
+            () => prisma.product.findMany({
+              orderBy: { createdAt: "desc" },
+              select: productSelect
+            }),
+            () => prisma.product.findMany({
+              orderBy: { createdAt: "desc" },
+              select: productSelectWithoutImages
+            })
+          );
+        } catch (err) {
+          console.error("Prisma products.findMany failed:", err.message);
+          const localData = readLocalDb();
+          return localData.products || [];
+        }
       } else {
         const localData = readLocalDb();
         return localData.products || [];
@@ -200,10 +227,16 @@ export const db = {
     },
     findUnique: async ({ where: { id } }) => {
       if (db.isConnected()) {
-        return await runProductQuery(
-          () => prisma.product.findUnique({ where: { id }, select: productSelect }),
-          () => prisma.product.findUnique({ where: { id }, select: productSelectWithoutImages })
-        );
+        try {
+          return await runProductQuery(
+            () => prisma.product.findUnique({ where: { id }, select: productSelect }),
+            () => prisma.product.findUnique({ where: { id }, select: productSelectWithoutImages })
+          );
+        } catch (err) {
+          console.error(`Prisma products.findUnique(${id}) failed:`, err.message);
+          const localData = readLocalDb();
+          return (localData.products || []).find(p => p.id === id) || null;
+        }
       } else {
         const localData = readLocalDb();
         return (localData.products || []).find(p => p.id === id) || null;
@@ -211,7 +244,12 @@ export const db = {
     },
     exists: async ({ where: { id } }) => {
       if (db.isConnected()) {
-        return !!(await prisma.product.findUnique({ where: { id }, select: { id: true } }));
+        try {
+          return !!(await prisma.product.findUnique({ where: { id }, select: { id: true } }));
+        } catch (err) {
+          const localData = readLocalDb();
+          return (localData.products || []).some(p => p.id === id);
+        }
       } else {
         const localData = readLocalDb();
         return (localData.products || []).some(p => p.id === id);
@@ -219,10 +257,19 @@ export const db = {
     },
     create: async ({ data }) => {
       if (db.isConnected()) {
-        return await runProductQuery(
-          () => prisma.product.create({ data, select: productSelect }),
-          () => prisma.product.create({ data: stripProductImages(data), select: productSelectWithoutImages })
-        );
+        try {
+          return await runProductQuery(
+            () => prisma.product.create({ data, select: productSelect }),
+            () => prisma.product.create({ data: stripProductImages(data), select: productSelectWithoutImages })
+          );
+        } catch (err) {
+          console.error("Prisma products.create failed:", err.message);
+          const localData = readLocalDb();
+          localData.products = localData.products || [];
+          localData.products.push(data);
+          writeLocalDb(localData);
+          return data;
+        }
       } else {
         const localData = readLocalDb();
         localData.products = localData.products || [];
@@ -233,10 +280,23 @@ export const db = {
     },
     update: async ({ where: { id }, data }) => {
       if (db.isConnected()) {
-        return await runProductQuery(
-          () => prisma.product.update({ where: { id }, data, select: productSelect }),
-          () => prisma.product.update({ where: { id }, data: stripProductImages(data), select: productSelectWithoutImages })
-        );
+        try {
+          return await runProductQuery(
+            () => prisma.product.update({ where: { id }, data, select: productSelect }),
+            () => prisma.product.update({ where: { id }, data: stripProductImages(data), select: productSelectWithoutImages })
+          );
+        } catch (err) {
+          console.error(`Prisma products.update(${id}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.products = localData.products || [];
+          const index = localData.products.findIndex(p => p.id === id);
+          if (index !== -1) {
+            localData.products[index] = { ...localData.products[index], ...data };
+            writeLocalDb(localData);
+            return localData.products[index];
+          }
+          throw new Error(`Product with ID ${id} not found`);
+        }
       } else {
         const localData = readLocalDb();
         localData.products = localData.products || [];
@@ -251,7 +311,20 @@ export const db = {
     },
     delete: async ({ where: { id } }) => {
       if (db.isConnected()) {
-        return await prisma.product.delete({ where: { id }, select: { id: true } });
+        try {
+          return await prisma.product.delete({ where: { id }, select: { id: true } });
+        } catch (err) {
+          console.error(`Prisma products.delete(${id}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.products = localData.products || [];
+          const initialLength = localData.products.length;
+          localData.products = localData.products.filter(p => p.id !== id);
+          if (localData.products.length < initialLength) {
+            writeLocalDb(localData);
+            return { id };
+          }
+          throw new Error(`Product with ID ${id} not found`);
+        }
       } else {
         const localData = readLocalDb();
         localData.products = localData.products || [];
@@ -270,9 +343,15 @@ export const db = {
   journal: {
     findMany: async () => {
       if (db.isConnected()) {
-        return await prisma.journal.findMany({
-          orderBy: { createdAt: "desc" }
-        });
+        try {
+          return await prisma.journal.findMany({
+            orderBy: { createdAt: "desc" }
+          });
+        } catch (err) {
+          console.error("Prisma journal.findMany failed:", err.message);
+          const localData = readLocalDb();
+          return localData.journal || [];
+        }
       } else {
         const localData = readLocalDb();
         return localData.journal || [];
