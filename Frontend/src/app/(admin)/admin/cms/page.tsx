@@ -1381,6 +1381,32 @@ export default function AdminCMSPage() {
                       <p className="text-xs text-slate-grey font-body-md -mt-4">
                         Sends OTP verification codes and delivery details notifications to customer emails via SMTP server.
                       </p>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-xs text-slate-grey font-medium">Quick Presets:</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNodemailerHost("smtp.hostinger.com");
+                            setNodemailerPort("465");
+                          }}
+                          disabled={!nodemailerEnabled}
+                          className="px-2 py-1 text-[11px] bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded font-semibold cursor-pointer disabled:opacity-50"
+                        >
+                          Hostinger Mail (smtp.hostinger.com:465)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNodemailerHost("smtp.gmail.com");
+                            setNodemailerPort("465");
+                          }}
+                          disabled={!nodemailerEnabled}
+                          className="px-2 py-1 text-[11px] bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 rounded font-semibold cursor-pointer disabled:opacity-50"
+                        >
+                          Gmail (smtp.gmail.com:465)
+                        </button>
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="flex flex-col gap-2 md:col-span-2">
                           <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">SMTP Host</label>
@@ -1390,19 +1416,20 @@ export default function AdminCMSPage() {
                             onChange={(e) => setNodemailerHost(e.target.value)}
                             disabled={!nodemailerEnabled}
                             className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
-                            placeholder="smtp.gmail.com"
+                            placeholder="smtp.hostinger.com"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">SMTP Port</label>
-                          <input
-                            type="text"
-                            value={nodemailerPort}
+                          <select
+                            value={nodemailerPort || "465"}
                             onChange={(e) => setNodemailerPort(e.target.value)}
                             disabled={!nodemailerEnabled}
-                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
-                            placeholder="587"
-                          />
+                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm cursor-pointer"
+                          >
+                            <option value="465">465 (SSL - Recommended)</option>
+                            <option value="587">587 (TLS)</option>
+                          </select>
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Sender Username</label>
@@ -1412,7 +1439,7 @@ export default function AdminCMSPage() {
                             onChange={(e) => setNodemailerUser(e.target.value)}
                             disabled={!nodemailerEnabled}
                             className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
-                            placeholder="user@gmail.com"
+                            placeholder="hello@vrix.in"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
