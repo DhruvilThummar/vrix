@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { fetchSiteConfig, saveSiteConfigKey, fetchSecurityLogs } from "@/utils/api";
+import { fetchSiteConfig, saveSiteConfigKey, fetchSecurityLogs, sendTestEmail } from "@/utils/api";
 
 export default function Page() {
   const [backupsEnabled, setBackupsEnabled] = useState(false);
@@ -38,13 +38,32 @@ export default function Page() {
 
     // Nodemailer / SMTP
     nodemailerEnabled: true,
-    nodemailerHost: "smtp.gmail.com",
-    nodemailerPort: "587",
+    nodemailerHost: "smtp.hostinger.com",
+    nodemailerPort: "465",
     nodemailerUser: "",
     nodemailerPass: "",
   });
 
   const [logs, setLogs] = useState<any[]>([]);
+  const [testingMail, setTestingMail] = useState(false);
+
+  const handleTestEmail = async () => {
+    const targetEmail = prompt("Enter recipient email address to send test message:", apiSettings.nodemailerUser || "dhruvilthummar2007@gmail.com");
+    if (!targetEmail) return;
+    setTestingMail(true);
+    try {
+      const res = await sendTestEmail(targetEmail);
+      if (res.success) {
+        alert("✅ EMAIL TEST SUCCESS:\n" + res.message);
+      } else {
+        alert("❌ EMAIL TEST ERROR:\n" + (res.error || "Failed to send test email. Check host, port, username, and password."));
+      }
+    } catch (err: any) {
+      alert("❌ SMTP ERROR:\n" + err.message);
+    } finally {
+      setTestingMail(false);
+    }
+  };
 
   useEffect(() => {
     async function loadData() {

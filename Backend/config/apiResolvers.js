@@ -96,7 +96,7 @@ export async function getTransporter() {
   }
 
   // Fallback to process.env
-  const user = process.env.SMTP_USER || "dhruvilthummar2007@gmail.com";
+  const user = process.env.SMTP_USER || "info@vrixjewels.com";
   const pass = process.env.SMTP_PASS || "wy0l-usan-vdb8-jruv";
   if (user && pass && pass !== "YourAppPasswordHere") {
     try {

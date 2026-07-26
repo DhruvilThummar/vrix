@@ -255,6 +255,14 @@ export async function verifyOtp(email: string, otp: string) {
   });
 }
 
+export async function sendTestEmail(recipientEmail: string) {
+  return apiFetch<{ success: boolean; message?: string; error?: string; messageId?: string }>("/otp/test-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recipientEmail }),
+  });
+}
+
 export async function registerUser(payload: any) {
   return apiFetch<{ success: boolean; message: string; otp?: string }>("/auth/register", {
     method: "POST",
