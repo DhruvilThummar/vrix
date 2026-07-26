@@ -317,42 +317,81 @@ export default function Page() {
               </div>
 
               {apiSettings.nodemailerEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-grey/10">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      SMTP Host
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="smtp.gmail.com"
-                      value={apiSettings.nodemailerHost}
-                      onChange={(e) => handleInputChange("nodemailerHost", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs text-slate-grey font-medium">Quick Presets:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleInputChange("nodemailerHost", "smtp.hostinger.com");
+                        handleInputChange("nodemailerPort", "465");
+                      }}
+                      className="px-2 py-1 text-[11px] bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded font-semibold cursor-pointer"
+                    >
+                      Hostinger Mail (smtp.hostinger.com:465)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleInputChange("nodemailerHost", "smtp.gmail.com");
+                        handleInputChange("nodemailerPort", "465");
+                      }}
+                      className="px-2 py-1 text-[11px] bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 rounded font-semibold cursor-pointer"
+                    >
+                      Gmail (smtp.gmail.com:465)
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      SMTP Sender Email / User
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="info@vrixjewels.com"
-                      value={apiSettings.nodemailerUser}
-                      onChange={(e) => handleInputChange("nodemailerUser", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      App Password / Secret
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="SMTP Password"
-                      value={apiSettings.nodemailerPass}
-                      onChange={(e) => handleInputChange("nodemailerPass", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 border-t border-slate-grey/10">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                        SMTP Host
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="smtp.hostinger.com"
+                        value={apiSettings.nodemailerHost}
+                        onChange={(e) => handleInputChange("nodemailerHost", e.target.value)}
+                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                        SMTP Port
+                      </label>
+                      <select
+                        value={apiSettings.nodemailerPort || "465"}
+                        onChange={(e) => handleInputChange("nodemailerPort", e.target.value)}
+                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none cursor-pointer"
+                      >
+                        <option value="465">465 (SSL - Recommended)</option>
+                        <option value="587">587 (TLS)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                        Sender Email / Username
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="hello@vrix.in"
+                        value={apiSettings.nodemailerUser}
+                        onChange={(e) => handleInputChange("nodemailerUser", e.target.value)}
+                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                        Email Password
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Hostinger / Email Password"
+                        value={apiSettings.nodemailerPass}
+                        onChange={(e) => handleInputChange("nodemailerPass", e.target.value)}
+                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

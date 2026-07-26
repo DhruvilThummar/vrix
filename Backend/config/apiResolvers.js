@@ -78,8 +78,10 @@ export async function getTransporter() {
       try {
         const nodemailer = await import("nodemailer");
         const port = parseInt(apiSettings.nodemailerPort || "465");
+        const defaultHost = apiSettings.nodemailerUser.toLowerCase().includes("gmail.com") ? "smtp.gmail.com" : "smtp.hostinger.com";
+        const host = apiSettings.nodemailerHost || defaultHost;
         return nodemailer.default.createTransport({
-          host: apiSettings.nodemailerHost || "smtp.gmail.com",
+          host: host,
           port: port,
           secure: port === 465,
           auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
@@ -100,8 +102,10 @@ export async function getTransporter() {
     try {
       const nodemailer = await import("nodemailer");
       const port = parseInt(process.env.SMTP_PORT || "465");
+      const defaultHost = user.toLowerCase().includes("gmail.com") ? "smtp.gmail.com" : "smtp.hostinger.com";
+      const host = process.env.SMTP_HOST || defaultHost;
       return nodemailer.default.createTransport({
-        host: process.env.SMTP_HOST || "smtp.gmail.com",
+        host: host,
         port: port,
         secure: port === 465,
         auth: { user, pass },
