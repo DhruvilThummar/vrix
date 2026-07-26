@@ -66,8 +66,22 @@ router.post("/register/confirm", async (req, res) => {
   }
 
   try {
-    const targetKey = `register:${email.toLowerCase()}`;
-    const record = await db.verificationOtps.findFirst({ where: { email: targetKey, otp } });
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanOtp = String(otp).trim();
+
+    let record = await db.verificationOtps.findFirst({ where: { email: `register:${cleanEmail}`, otp: cleanOtp } });
+    if (!record) {
+      record = await db.verificationOtps.findFirst({ where: { email: cleanEmail, otp: cleanOtp } });
+    }
+    if (!record) {
+      const candidate1 = await db.verificationOtps.findFirst({ where: { email: `register:${cleanEmail}` } });
+      const candidate2 = await db.verificationOtps.findFirst({ where: { email: cleanEmail } });
+      const candidate = candidate1 || candidate2;
+      if (candidate && String(candidate.otp).trim() === cleanOtp) {
+        record = candidate;
+      }
+    }
+
     if (!record) return res.status(401).json({ error: "Invalid verification code." });
 
     const expiry = new Date(record.expiresAt);
@@ -79,11 +93,11 @@ router.post("/register/confirm", async (req, res) => {
     await db.verificationOtps.delete({ where: { id: record.id } });
     const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
     const newUser = await db.users.create({
-      data: { email: email.toLowerCase(), password: hashedPassword, name, phone: phone || "", isVrixPlusMember: false, vrixPlusJoinedDate: null },
+      data: { email: cleanEmail, password: hashedPassword, name, phone: phone || "", isVrixPlusMember: false, vrixPlusJoinedDate: null },
     });
 
     await db.securityLogs.create({
-      data: { event: "ACCOUNT_REGISTER", user: email, status: "SUCCESS" },
+      data: { event: "ACCOUNT_REGISTER", user: cleanEmail, status: "SUCCESS" },
     });
 
     res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone, isVrixPlusMember: false, vrixPlusJoinedDate: null } });
@@ -183,8 +197,22 @@ router.post("/login/confirm", async (req, res) => {
   }
 
   try {
-    const targetKey = `login:${email.toLowerCase()}`;
-    const record = await db.verificationOtps.findFirst({ where: { email: targetKey, otp } });
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanOtp = String(otp).trim();
+
+    let record = await db.verificationOtps.findFirst({ where: { email: `login:${cleanEmail}`, otp: cleanOtp } });
+    if (!record) {
+      record = await db.verificationOtps.findFirst({ where: { email: cleanEmail, otp: cleanOtp } });
+    }
+    if (!record) {
+      const candidate1 = await db.verificationOtps.findFirst({ where: { email: `login:${cleanEmail}` } });
+      const candidate2 = await db.verificationOtps.findFirst({ where: { email: cleanEmail } });
+      const candidate = candidate1 || candidate2;
+      if (candidate && String(candidate.otp).trim() === cleanOtp) {
+        record = candidate;
+      }
+    }
+
     if (!record) return res.status(401).json({ error: "Invalid verification code." });
 
     const expiry = new Date(record.expiresAt);
@@ -194,8 +222,8 @@ router.post("/login/confirm", async (req, res) => {
     }
 
     await db.verificationOtps.delete({ where: { id: record.id } });
-    const user = await db.users.findUnique({ where: { email } });
-    await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: email, status: "SUCCESS" } });
+    const user = await db.users.findUnique({ where: { email: cleanEmail } });
+    await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } });
 
     res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
