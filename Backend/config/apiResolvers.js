@@ -77,14 +77,15 @@ export async function getTransporter() {
     if (apiSettings.nodemailerUser && apiSettings.nodemailerPass) {
       try {
         const nodemailer = await import("nodemailer");
+        const port = parseInt(apiSettings.nodemailerPort || "465");
         return nodemailer.default.createTransport({
           host: apiSettings.nodemailerHost || "smtp.gmail.com",
-          port: parseInt(apiSettings.nodemailerPort || "587"),
-          secure: false,
+          port: port,
+          secure: port === 465,
           auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
-          connectionTimeout: 5000,
-          greetingTimeout: 5000,
-          socketTimeout: 5000,
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 8000,
         });
       } catch (err) {
         console.warn("Nodemailer: Dynamic configuration failed, using fallback.", err.message);
@@ -93,17 +94,20 @@ export async function getTransporter() {
   }
 
   // Fallback to process.env
-  if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_PASS !== "YourAppPasswordHere") {
+  const user = process.env.SMTP_USER || "dhruvilthummar2007@gmail.com";
+  const pass = process.env.SMTP_PASS || "wy0l-usan-vdb8-jruv";
+  if (user && pass && pass !== "YourAppPasswordHere") {
     try {
       const nodemailer = await import("nodemailer");
+      const port = parseInt(process.env.SMTP_PORT || "465");
       return nodemailer.default.createTransport({
         host: process.env.SMTP_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: false,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 5000,
+        port: port,
+        secure: port === 465,
+        auth: { user, pass },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 8000,
       });
     } catch (err) {
       console.warn("Nodemailer: fallback env config failed.", err.message);
