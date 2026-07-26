@@ -104,8 +104,7 @@ const adminAuth = (req, res, next) => {
 // ─── API Routers (Mount under both /api and root / for full compatibility) ────
 const registerRoutes = (prefix = "") => {
   const p = (route) => (prefix ? `${prefix}${route}` : route);
-  app.use(p("/db"), cmsRouter);
-  app.use(p("/cms"), cmsRouter);
+  app.use(prefix || "/", cmsRouter);
   app.use(p("/products"), productsRouter);
   app.use(p("/collections"), collectionsRouter);
   app.use(p("/journal"), journalRouter);
