@@ -824,31 +824,116 @@ export default function UserAccountPage() {
                 )}
               </header>
               {isEditingAddress ? (
-                <form onSubmit={(e) => { e.preventDefault(); setIsEditingAddress(false); triggerFeedback("Address saved."); }} className="space-y-6">
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const savedObj = {
+                    ...shippingAddress,
+                    phone: shippingAddress.useSamePhone ? profile.phone : shippingAddress.phone
+                  };
+                  setShippingAddress(savedObj);
+                  if (user?.email) {
+                    localStorage.setItem(`vrix_address_${user.email}`, JSON.stringify(savedObj));
+                  }
+                  setIsEditingAddress(false);
+                  triggerFeedback("Shipping address updated successfully.");
+                }} className="space-y-6">
                   {[
-                    { label: "Street Address", field: "street" as const },
-                    { label: "City", field: "city" as const },
-                    { label: "State", field: "state" as const },
-                    { label: "ZIP Code", field: "zip" as const },
-                    { label: "Country", field: "country" as const },
-                  ].map(({ label, field }) => (
+                    { label: "Street Address", field: "street" as const, placeholder: "Building, Flat / House No., Street" },
+                    { label: "City", field: "city" as const, placeholder: "City / Town" },
+                    { label: "State", field: "state" as const, placeholder: "State / Province" },
+                    { label: "ZIP Code", field: "zip" as const, placeholder: "Postal / PIN Code" },
+                    { label: "Country", field: "country" as const, placeholder: "Country" },
+                  ].map(({ label, field, placeholder }) => (
                     <div key={field} className="flex flex-col gap-2">
                       <label className="font-label-caps text-[9px] text-slate-grey uppercase">{label}</label>
-                      <input type="text" value={shippingAddress[field]} onChange={(e) => setShippingAddress({ ...shippingAddress, [field]: e.target.value })} required className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black" />
+                      <input
+                        type="text"
+                        value={shippingAddress[field]}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, [field]: e.target.value })}
+                        placeholder={placeholder}
+                        required
+                        className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black"
+                      />
                     </div>
                   ))}
-                  <div className="flex gap-4">
+
+                  {/* Delivery Phone Selection */}
+                  <div className="space-y-3 pt-2 border-t border-slate-grey/15">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider block">
+                      Delivery Contact Phone Number
+                    </label>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-deep-navy">
+                        <input
+                          type="radio"
+                          name="phoneOption"
+                          checked={shippingAddress.useSamePhone}
+                          onChange={() => setShippingAddress({ ...shippingAddress, useSamePhone: true, phone: profile.phone })}
+                          className="accent-deep-navy cursor-pointer"
+                        />
+                        <span>Use my Account Phone Number ({profile.phone || "Same as Account"})</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-deep-navy">
+                        <input
+                          type="radio"
+                          name="phoneOption"
+                          checked={!shippingAddress.useSamePhone}
+                          onChange={() => setShippingAddress({ ...shippingAddress, useSamePhone: false })}
+                          className="accent-deep-navy cursor-pointer"
+                        />
+                        <span>Enter a different delivery contact number</span>
+                      </label>
+                    </div>
+
+                    {!shippingAddress.useSamePhone && (
+                      <div className="flex flex-col gap-2 pt-2 animate-fade-in">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase">Delivery Contact Phone</label>
+                        <input
+                          type="tel"
+                          value={shippingAddress.phone}
+                          onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
+                          placeholder="+91 98765 43210 (For Courier Delivery Calls)"
+                          required
+                          className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-4 pt-2">
                     <button type="submit" className="font-button text-xs uppercase px-8 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer">Save Address</button>
                     <button type="button" onClick={() => setIsEditingAddress(false)} className="font-button text-xs uppercase px-8 py-3 border border-slate-grey/30 text-slate-grey cursor-pointer">Cancel</button>
                   </div>
                 </form>
-              ) : (
+              ) : (shippingAddress.street || shippingAddress.city) ? (
                 <div className="bg-surface/50 border border-slate-grey/15 p-6 space-y-2">
                   <h4 className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider mb-2">Primary Shipping Location</h4>
                   <p className="font-body-md text-sm text-deep-navy font-semibold">{profile.firstName} {profile.lastName}</p>
                   <p className="font-body-md text-sm text-slate-grey">{shippingAddress.street}</p>
-                  <p className="font-body-md text-sm text-slate-grey">{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zip}</p>
+                  <p className="font-body-md text-sm text-slate-grey">{shippingAddress.city}{shippingAddress.state ? `, ${shippingAddress.state}` : ""} {shippingAddress.zip}</p>
                   <p className="font-body-md text-sm text-slate-grey">{shippingAddress.country}</p>
+                  <div className="pt-2 border-t border-slate-grey/10 flex items-center gap-2 text-xs text-deep-navy font-medium">
+                    <span className="material-symbols-outlined text-[16px] text-slate-grey">call</span>
+                    <span>Delivery Contact: <strong>{shippingAddress.phone || profile.phone || "Not specified"}</strong></span>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-surface/50 border border-slate-grey/15 p-8 text-center space-y-4">
+                  <div className="w-12 h-12 bg-soft-linen rounded-full flex items-center justify-center mx-auto text-slate-grey">
+                    <span className="material-symbols-outlined text-[24px]">location_on</span>
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-label-caps text-xs text-deep-navy uppercase font-semibold">No Shipping Address Saved</h4>
+                    <p className="font-body-md text-xs text-slate-grey max-w-sm mx-auto">
+                      Add your primary delivery address for smooth 1-click checkouts and order shipping.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsEditingAddress(true)}
+                    className="font-button text-xs uppercase px-6 py-2.5 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer"
+                  >
+                    + Add Primary Address
+                  </button>
                 </div>
               )}
             </div>
@@ -874,6 +959,18 @@ export default function UserAccountPage() {
                     </div>
                   ))}
                 </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Phone / Mobile Number</label>
+                  <input
+                    type="tel"
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    placeholder="+91 98765 43210 (For SMS Notifications & Express Login)"
+                    className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black"
+                  />
+                </div>
+
                 <div className="flex flex-col gap-2">
                   <label className="font-label-caps text-[9px] text-slate-grey uppercase">Verified Email</label>
                   <div className="flex items-center gap-2 border-b border-slate-grey/20 py-1.5">
