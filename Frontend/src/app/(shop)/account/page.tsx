@@ -356,6 +356,71 @@ export default function UserAccountPage() {
     }
   };
 
+  // ── Google OAuth Handlers ──────────────────────────────────────────────────
+  const handleGoogleLogin = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://snvifoikeixkgrdkgyme.supabase.co";
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const supabaseOAuthUrl = `${supabaseUrl.replace(/\/$/, "")}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
+
+      let googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      if (!googleClientId) {
+        const dbData = await fetchDb().catch(() => null);
+        if (dbData?.api_settings?.googleClientId) {
+          googleClientId = dbData.api_settings.googleClientId;
+        }
+      }
+
+      if (typeof window !== "undefined" && (window as any).google?.accounts?.id && googleClientId) {
+        await new Promise<void>((resolve, reject) => {
+          (window as any).google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: async (response: any) => {
+              try {
+                if (response.credential) {
+                  const res = await loginWithGoogle({ credential: response.credential });
+                  if (res && res.user) {
+                    login(res.user.email, {
+                      name: res.user.name,
+                      phone: res.user.phone || "",
+                      isVrixPlusMember: !!res.user.isVrixPlusMember
+                    });
+                    triggerFeedback("Signed in with Google!");
+                    setAuthStep("verified");
+                    resolve();
+                  } else {
+                    reject(new Error("Failed to process Google authentication."));
+                  }
+                } else {
+                  reject(new Error("Google credential not received."));
+                }
+              } catch (err) {
+                reject(err);
+              }
+            }
+          });
+          (window as any).google.accounts.id.prompt((notification: any) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              window.location.href = supabaseOAuthUrl;
+              resolve();
+            }
+          });
+        });
+        return;
+      }
+
+      // Initiate Supabase Google OAuth Redirect
+      window.location.href = supabaseOAuthUrl;
+    } catch (err: any) {
+      console.error("Google authentication error:", err);
+      setAuthError(err.message || "Google authentication failed. Please try again.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   // ── Truecaller Verification Handlers ────────────────────────────────────────
   const handleTruecallerVerification = async () => {
     if (truecallerSandbox) {
@@ -513,18 +578,7 @@ export default function UserAccountPage() {
                 <div className="grid grid-cols-1 gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setAuthLoading(true);
-                      setAuthError(null);
-                      try {
-                        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://snvifoikeixkgrdkgyme.supabase.co";
-                        const redirectUrl = `${window.location.origin}/auth/callback`;
-                        window.location.href = `${supabaseUrl.replace(/\/$/, "")}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
-                      } catch (err: any) {
-                        setAuthError(err.message || "Failed to initiate Google Sign-In.");
-                        setAuthLoading(false);
-                      }
-                    }}
+                    onClick={handleGoogleLogin}
                     className="w-full bg-pure-white text-ink-black border border-slate-grey/30 py-3 font-button text-xs uppercase tracking-widest hover:bg-soft-linen transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -1023,9 +1077,19 @@ export default function UserAccountPage() {
               <header className="border-b border-slate-grey/15 pb-4">
                 <h1 className="font-display-lg text-headline-md text-deep-navy uppercase">Account Details</h1>
               </header>
-              <form onSubmit={(e) => {
+              <form onSubmit={async (e) => {
                 e.preventDefault();
                 const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+                try {
+                  const apiBaseUrl = getApiBaseUrl();
+                  await fetch(`${apiBaseUrl}/auth/profile`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: authEmail, name: fullName, phone: profile.phone })
+                  });
+                } catch (err) {
+                  console.error("Failed to persist user profile to DB:", err);
+                }
                 login(authEmail, { name: fullName, phone: profile.phone, isVrixPlusMember: user?.isVrixPlusMember });
                 triggerFeedback("Account details updated successfully.");
               }} className="space-y-8">

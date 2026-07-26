@@ -509,4 +509,57 @@ router.get("/me", async (req, res) => {
   }
 });
 
+// PUT /api/auth/profile — Update user profile details in DB
+router.put("/profile", async (req, res) => {
+  const { email, name, phone } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Email is required to update profile." });
+  }
+
+  try {
+    const cleanEmail = String(email).trim().toLowerCase();
+    let user = await db.users.findUnique({ where: { email: cleanEmail } });
+
+    const updateData = {};
+    if (name !== undefined) updateData.name = String(name).trim();
+    if (phone !== undefined) updateData.phone = String(phone).trim();
+
+    if (!user) {
+      user = await db.users.create({
+        data: {
+          email: cleanEmail,
+          name: updateData.name || "VRIX Member",
+          phone: updateData.phone || "",
+          password: "auto_created_profile",
+          isVrixPlusMember: false,
+          vrixPlusJoinedDate: null,
+        },
+      });
+    } else {
+      user = await db.users.update({
+        where: { email: cleanEmail },
+        data: updateData,
+      });
+    }
+
+    await db.securityLogs.create({
+      data: { event: "PROFILE_UPDATE", user: cleanEmail, status: "SUCCESS" },
+    });
+
+    res.json({
+      success: true,
+      user: {
+        email: user.email,
+        name: user.name || "",
+        phone: user.phone || "",
+        isVrixPlusMember: !!user.isVrixPlusMember,
+        vrixPlusJoinedDate: user.vrixPlusJoinedDate || null,
+      },
+    });
+  } catch (err) {
+    console.error("Profile update error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
