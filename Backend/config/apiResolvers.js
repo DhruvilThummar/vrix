@@ -151,6 +151,7 @@ export async function getGoogleConfig() {
       enabled: apiSettings.googleEnabled !== false,
       clientId: apiSettings.googleClientId || process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: apiSettings.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET || "",
+      callbackUrl: apiSettings.googleCallbackUrl || process.env.GOOGLE_CALLBACK_URL || defaultCallback,
     };
   }
 
@@ -158,6 +159,7 @@ export async function getGoogleConfig() {
     enabled: true,
     clientId: process.env.GOOGLE_CLIENT_ID || "",
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL || defaultCallback,
   };
 }
 

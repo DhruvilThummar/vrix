@@ -11,6 +11,7 @@ import {
   loginUser,
   confirmLogin,
   loginUserDirect,
+  loginWithGoogle,
   addSecurityLog,
   fetchProducts,
   fetchDbPublic as fetchDb,
@@ -215,23 +216,70 @@ export default function UserAccountPage() {
   // ── Auth Handlers ──────────────────────────────────────────────────────────
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authEmail || !authPassword) return;
+    const cleanEmail = authEmail.trim().toLowerCase();
+    const cleanName = authName.trim();
+    const cleanPhone = authPhone.trim();
+
+    if (!cleanEmail || !authPassword) {
+      setAuthError("Email and password are required.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setAuthError("Please enter a valid email address.");
+      return;
+    }
+
+    if (authPassword.length < 6) {
+      setAuthError("Password must be at least 6 characters long.");
+      return;
+    }
+
     setAuthLoading(true);
     setAuthError(null);
     try {
       if (authMode === "signup") {
-        if (!authName) { setAuthError("Name is required for registration."); setAuthLoading(false); return; }
-        await registerUser({ email: authEmail, password: authPassword, name: authName, phone: authPhone });
-        triggerFeedback("Verification code sent to your email!");
+        if (!cleanName) { setAuthError("Full name is required for registration."); setAuthLoading(false); return; }
+        const res = await registerUser({ email: cleanEmail, password: authPassword, name: cleanName, phone: cleanPhone });
+        if (res.otp) {
+          const digits = String(res.otp).split("").slice(0, 6);
+          if (digits.length === 6) setOtpInput(digits);
+          triggerFeedback(`Verification code generated! (Dev code: ${res.otp})`);
+        } else {
+          triggerFeedback("Verification code sent to your email!");
+        }
         setAuthStep("otp");
       } else {
-        const res = await loginUserDirect({ email: authEmail, password: authPassword });
-        login(authEmail, { name: res.user.name, phone: res.user.phone });
+        const res = await loginUserDirect({ email: cleanEmail, password: authPassword });
+        login(cleanEmail, { name: res.user.name, phone: res.user.phone, isVrixPlusMember: res.user.isVrixPlusMember });
         triggerFeedback("Welcome back!");
         setAuthStep("verified");
       }
     } catch (err: any) {
       setAuthError(err.message || "Authentication request failed. Please try again.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    const cleanEmail = authEmail.trim().toLowerCase();
+    const cleanName = authName.trim();
+    const cleanPhone = authPhone.trim();
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      const res = await registerUser({ email: cleanEmail, password: authPassword, name: cleanName, phone: cleanPhone });
+      if (res.otp) {
+        const digits = String(res.otp).split("").slice(0, 6);
+        if (digits.length === 6) setOtpInput(digits);
+        triggerFeedback(`Code resent! (Dev code: ${res.otp})`);
+      } else {
+        triggerFeedback("A new verification code has been sent to your email.");
+      }
+    } catch (err: any) {
+      setAuthError(err.message || "Failed to resend code.");
     } finally {
       setAuthLoading(false);
     }
@@ -254,26 +302,27 @@ export default function UserAccountPage() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const code = otpInput.join("");
-    if (code.length < 6) { setAuthError("Please enter the 6-digit code."); return; }
+    if (code.length < 6) { setAuthError("Please enter the complete 6-digit code."); return; }
     setAuthLoading(true);
     setAuthError(null);
     try {
+      const cleanEmail = authEmail.trim().toLowerCase();
       if (authMode === "signup") {
         const res = await confirmRegistration({
-          email: authEmail,
+          email: cleanEmail,
           otp: code,
           password: authPassword,
-          name: authName,
-          phone: authPhone
+          name: authName.trim(),
+          phone: authPhone.trim()
         });
-        login(authEmail, { name: res.user.name, phone: res.user.phone });
+        login(cleanEmail, { name: res.user.name, phone: res.user.phone, isVrixPlusMember: res.user.isVrixPlusMember });
         triggerFeedback("Account verified! Welcome to VRIX.");
       } else {
         const res = await confirmLogin({
-          email: authEmail,
+          email: cleanEmail,
           otp: code
         });
-        login(authEmail, { name: res.user.name, phone: res.user.phone });
+        login(cleanEmail, { name: res.user.name, phone: res.user.phone, isVrixPlusMember: res.user.isVrixPlusMember });
         triggerFeedback("Welcome back!");
       }
       setAuthStep("verified");
@@ -441,11 +490,25 @@ export default function UserAccountPage() {
                 <div className="grid grid-cols-1 gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      // Simulating Google OAuth login callback
-                      login("user@gmail.com", { name: "Google User", phone: "" });
-                      setAuthStep("verified");
-                      triggerFeedback("⚡ Signed in with Google!");
+                    onClick={async () => {
+                      setAuthLoading(true);
+                      setAuthError(null);
+                      try {
+                        const targetEmail = authEmail.trim() || "user@gmail.com";
+                        const targetName = authName.trim() || (authEmail ? authEmail.split("@")[0] : "Google User");
+                        const res = await loginWithGoogle({ email: targetEmail, name: targetName });
+                        if (res && res.user) {
+                          login(res.user.email, { name: res.user.name, phone: res.user.phone || "", isVrixPlusMember: !!res.user.isVrixPlusMember });
+                          setAuthStep("verified");
+                          triggerFeedback("⚡ Signed in with Google!");
+                        } else {
+                          setAuthError("Google Sign-In failed.");
+                        }
+                      } catch (err: any) {
+                        setAuthError(err.message || "Google authentication failed.");
+                      } finally {
+                        setAuthLoading(false);
+                      }
                     }}
                     className="w-full bg-pure-white text-ink-black border border-slate-grey/30 py-3 font-button text-xs uppercase tracking-widest hover:bg-soft-linen transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                   >

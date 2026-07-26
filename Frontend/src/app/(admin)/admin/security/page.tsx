@@ -18,6 +18,7 @@ export default function Page() {
     googleEnabled: true,
     googleClientId: "",
     googleClientSecret: "",
+    googleCallbackUrl: "https://snvifoikeixkgrdkgyme.supabase.co/auth/v1/callback",
 
     // Truecaller
     truecallerEnabled: true,
@@ -172,30 +173,58 @@ export default function Page() {
               </div>
 
               {apiSettings.googleEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-grey/10">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      Google Client ID
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 123456789-abc.apps.googleusercontent.com"
-                      value={apiSettings.googleClientId}
-                      onChange={(e) => handleInputChange("googleClientId", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
+                <div className="space-y-4 mt-4 pt-4 border-t border-slate-grey/10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                        Google Client ID
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 123456789-abc.apps.googleusercontent.com"
+                        value={apiSettings.googleClientId}
+                        onChange={(e) => handleInputChange("googleClientId", e.target.value)}
+                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                        Google Client Secret
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="e.g. GOCSPX-xxxxxxxxxxxxxx"
+                        value={apiSettings.googleClientSecret}
+                        onChange={(e) => handleInputChange("googleClientSecret", e.target.value)}
+                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      Google Client Secret
+                      OAuth Callback / Redirect URL (Supabase Auth)
                     </label>
-                    <input
-                      type="password"
-                      placeholder="e.g. GOCSPX-xxxxxxxxxxxxxx"
-                      value={apiSettings.googleClientSecret}
-                      onChange={(e) => handleInputChange("googleClientSecret", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={apiSettings.googleCallbackUrl || "https://snvifoikeixkgrdkgyme.supabase.co/auth/v1/callback"}
+                        onChange={(e) => handleInputChange("googleCallbackUrl", e.target.value)}
+                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black font-mono focus:border-deep-navy outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(apiSettings.googleCallbackUrl || "https://snvifoikeixkgrdkgyme.supabase.co/auth/v1/callback");
+                          alert("Callback URL copied to clipboard!");
+                        }}
+                        className="px-3 py-2 bg-slate-grey/10 hover:bg-slate-grey/20 text-ink-black font-button text-xs uppercase tracking-wider transition-colors shrink-0 cursor-pointer"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-slate-grey mt-1">
+                      Set this as the <strong>Authorized Redirect URI</strong> in Google Cloud Console &amp; Supabase Auth Settings.
+                    </p>
                   </div>
                 </div>
               )}

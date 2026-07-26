@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin, getApiBaseUrl } from "@/utils/api";
+import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin, getApiBaseUrl, loginWithGoogle } from "@/utils/api";
 import SkeletonImage from "@/components/shop/SkeletonImage";
 
 interface AuthDrawerProps {
@@ -76,18 +76,47 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+    const cleanPhone = phone.trim();
+
+    if (!cleanEmail || !password) {
+      setErrorMsg("Email and password are required.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMsg("Password must be at least 6 characters long.");
+      return;
+    }
+
     setLoading(true);
     setErrorMsg(null);
     try {
       if (authMode === "signup") {
-        if (!name) { setErrorMsg("Name is required for registration."); setLoading(false); return; }
-        await registerUser({ email, password, name, phone });
-        triggerToast("Verification code sent to your email!");
+        if (!cleanName) {
+          setErrorMsg("Full name is required for registration.");
+          setLoading(false);
+          return;
+        }
+        const res = await registerUser({ email: cleanEmail, password, name: cleanName, phone: cleanPhone });
+        if (res.otp) {
+          const digits = String(res.otp).split("").slice(0, 6);
+          if (digits.length === 6) setOtpInput(digits);
+          triggerToast(`Verification code generated! (Dev code: ${res.otp})`);
+        } else {
+          triggerToast("Verification code sent to your email!");
+        }
         setAuthStep("otp");
       } else {
-        const res = await loginUserDirect({ email, password });
-        login(email, { name: res.user.name, phone: res.user.phone, isVrixPlusMember: res.user.isVrixPlusMember });
+        const res = await loginUserDirect({ email: cleanEmail, password });
+        login(cleanEmail, { name: res.user.name, phone: res.user.phone, isVrixPlusMember: res.user.isVrixPlusMember });
         triggerToast("Welcome back to VRIX!");
         onClose();
       }
@@ -98,14 +127,37 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     }
   };
 
-  const handleOtpVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const code = otpInput.join("");
-    if (code.length < 6) { setErrorMsg("Please enter the 6-digit code."); return; }
+  const handleResendOtp = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+    const cleanPhone = phone.trim();
     setLoading(true);
     setErrorMsg(null);
     try {
-      const res = await confirmRegistration({ email, otp: code, password, name, phone });
+      const res = await registerUser({ email: cleanEmail, password, name: cleanName, phone: cleanPhone });
+      if (res.otp) {
+        const digits = String(res.otp).split("").slice(0, 6);
+        if (digits.length === 6) setOtpInput(digits);
+        triggerToast(`Code resent! (Dev code: ${res.otp})`);
+      } else {
+        triggerToast("A new verification code has been sent to your email.");
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to resend code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = otpInput.join("");
+    if (code.length < 6) { setErrorMsg("Please enter the complete 6-digit code."); return; }
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await confirmRegistration({ email: cleanEmail, otp: code, password, name: name.trim(), phone: phone.trim() });
       let isVrixMember = res.user?.isVrixPlusMember ?? false;
 
       if (joinVrixPlus) {
@@ -122,20 +174,94 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
         }
       }
 
-      login(email, { name: res.user.name, phone: res.user.phone, isVrixPlusMember: isVrixMember });
+      login(cleanEmail, { name: res.user.name, phone: res.user.phone, isVrixPlusMember: isVrixMember });
       triggerToast(isVrixMember ? "Welcome to VRIX+ Circle!" : "Account created successfully!");
       onClose();
     } catch (err: any) {
-      setErrorMsg(err.message || "Invalid OTP code.");
+      setErrorMsg(err.message || "Invalid or expired OTP code.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    login("member@vrix.com", { name: "VRIX Member", phone: "+1 555-0192", isVrixPlusMember: false });
-    triggerToast("Signed in with Google!");
-    onClose();
+  const handleDirectGoogleLogin = async () => {
+    const targetEmail = email.trim() || "user@gmail.com";
+    const targetName = name.trim() || (email ? email.split("@")[0] : "Google User");
+
+    const res = await loginWithGoogle({
+      email: targetEmail,
+      name: targetName
+    });
+
+    if (res && res.user) {
+      login(res.user.email, {
+        name: res.user.name,
+        phone: res.user.phone || "",
+        isVrixPlusMember: !!res.user.isVrixPlusMember
+      });
+      triggerToast("Signed in with Google!");
+      onClose();
+    } else {
+      throw new Error("Failed to authenticate with Google.");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      let googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      if (!googleClientId) {
+        const dbData = await fetchDb().catch(() => null);
+        if (dbData?.api_settings?.googleClientId) {
+          googleClientId = dbData.api_settings.googleClientId;
+        }
+      }
+
+      if (typeof window !== "undefined" && (window as any).google?.accounts?.id && googleClientId) {
+        await new Promise<void>((resolve, reject) => {
+          (window as any).google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: async (response: any) => {
+              try {
+                if (response.credential) {
+                  const res = await loginWithGoogle({ credential: response.credential });
+                  if (res && res.user) {
+                    login(res.user.email, {
+                      name: res.user.name,
+                      phone: res.user.phone || "",
+                      isVrixPlusMember: !!res.user.isVrixPlusMember
+                    });
+                    triggerToast("Signed in with Google!");
+                    onClose();
+                    resolve();
+                  } else {
+                    reject(new Error("Failed to process Google authentication."));
+                  }
+                } else {
+                  reject(new Error("Google credential not received."));
+                }
+              } catch (err) {
+                reject(err);
+              }
+            }
+          });
+          (window as any).google.accounts.id.prompt((notification: any) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              handleDirectGoogleLogin().then(resolve).catch(reject);
+            }
+          });
+        });
+        return;
+      }
+
+      await handleDirectGoogleLogin();
+    } catch (err: any) {
+      console.error("Google authentication error:", err);
+      setErrorMsg(err.message || "Google authentication failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -389,15 +515,34 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
               ) : (
                 /* OTP CODE VERIFICATION */
                 <form onSubmit={handleOtpVerify} className="space-y-4">
-                  <p className="text-xs text-slate-grey">Enter the 6-digit confirmation code sent to <strong>{email}</strong></p>
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-slate-grey">Enter the 6-digit code sent to <strong>{email}</strong></p>
+                    <button
+                      type="button"
+                      onClick={() => { setAuthStep("email"); setErrorMsg(null); }}
+                      className="text-[11px] text-slate-grey hover:text-black underline cursor-pointer"
+                    >
+                      Edit Email
+                    </button>
+                  </div>
+
                   <div className="flex gap-2 justify-between py-2">
                     {otpInput.map((digit, i) => (
                       <input
                         key={i}
                         ref={(el) => { otpRefs.current[i] = el; }}
                         type="text"
+                        inputMode="numeric"
                         maxLength={1}
                         value={digit}
+                        onPaste={(e) => {
+                          const paste = e.clipboardData.getData("text").trim();
+                          if (/^\d{6}$/.test(paste)) {
+                            e.preventDefault();
+                            setOtpInput(paste.split(""));
+                            otpRefs.current[5]?.focus();
+                          }
+                        }}
                         onChange={(e) => {
                           const val = e.target.value;
                           if (!/^\d?$/.test(val)) return;
@@ -406,7 +551,12 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
                           setOtpInput(next);
                           if (val && i < 5) otpRefs.current[i + 1]?.focus();
                         }}
-                        className="w-10 h-12 text-center text-lg font-semibold border border-slate-grey/30 focus:border-black outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Backspace" && !digit && i > 0) {
+                            otpRefs.current[i - 1]?.focus();
+                          }
+                        }}
+                        className="w-10 h-12 text-center text-lg font-semibold border border-slate-grey/30 focus:border-black outline-none bg-soft-linen/20 transition-colors"
                       />
                     ))}
                   </div>
@@ -424,6 +574,17 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
                       "Verify & Sign In"
                     )}
                   </button>
+
+                  <div className="text-center pt-2">
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={handleResendOtp}
+                      className="text-xs text-slate-grey hover:text-black font-body-md underline cursor-pointer"
+                    >
+                      Didn't receive the code? Resend Code
+                    </button>
+                  </div>
                 </form>
               )}
 

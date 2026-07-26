@@ -290,6 +290,10 @@
   "payments": [],
   "users": [],
   "api_settings": {
+    "googleEnabled": true,
+    "googleClientId": "",
+    "googleClientSecret": "",
+    "googleCallbackUrl": "https://snvifoikeixkgrdkgyme.supabase.co/auth/v1/callback",
     "cloudinaryEnabled": false,
     "cloudinaryCloudName": "",
     "cloudinaryApiKey": "",

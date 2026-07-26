@@ -12,15 +12,23 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ error: "Email, password, and name are required." });
   }
 
+  const cleanEmail = String(email).trim().toLowerCase();
+  const cleanName = String(name).trim();
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(cleanEmail)) {
+    return res.status(400).json({ error: "Please provide a valid email address." });
+  }
+
   try {
-    const existing = await db.users.findUnique({ where: { email } });
+    const existing = await db.users.findUnique({ where: { email: cleanEmail } });
     if (existing) {
-      return res.status(400).json({ error: "User already exists with this email address." });
+      return res.status(400).json({ error: "An account with this email address already exists." });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    const targetKey = `register:${email.toLowerCase()}`;
+    const targetKey = `register:${cleanEmail}`;
     await db.verificationOtps.deleteMany({ where: { email: targetKey } });
     await db.verificationOtps.create({
       data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
