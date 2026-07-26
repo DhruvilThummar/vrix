@@ -20,13 +20,14 @@ router.patch("/users/:email/vrix-plus", async (req, res) => {
   const { email } = req.params;
   const { isVrixPlusMember } = req.body;
   try {
+    const cleanEmail = String(email).trim().toLowerCase();
     const today = new Date().toLocaleDateString("en-GB", {
       day: "numeric",
       month: "long",
       year: "numeric"
     });
     const user = await db.users.update({
-      where: { email },
+      where: { email: cleanEmail },
       data: { 
         isVrixPlusMember: !!isVrixPlusMember, 
         vrixPlusJoinedDate: isVrixPlusMember ? today : null 

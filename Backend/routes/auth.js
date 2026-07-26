@@ -362,27 +362,28 @@ router.post("/join-vrix-plus", async (req, res) => {
   if (!email) {
     return res.status(400).json({ error: "Email is required." });
   }
-  
+
   try {
+    const cleanEmail = String(email).trim().toLowerCase();
     const today = joinDate || new Date().toLocaleDateString("en-GB", {
       day: "numeric",
       month: "long",
       year: "numeric"
     }); // e.g. "22 July 2026"
-    
-    let user = await db.users.findUnique({ where: { email } });
-    
+
+    let user = await db.users.findUnique({ where: { email: cleanEmail } });
+
     if (user) {
       // Update existing user
       user = await db.users.update({
-        where: { email },
+        where: { email: cleanEmail },
         data: { isVrixPlusMember: true, vrixPlusJoinedDate: today }
       });
     } else {
       // Auto-register user with VRIX+ membership
       user = await db.users.create({
         data: {
-          email: email.toLowerCase(),
+          email: cleanEmail,
           name: "VRIX+ Member",
           password: "vrix_plus_auto_account_" + Math.random().toString(36).substring(7),
           phone: "",
@@ -391,7 +392,11 @@ router.post("/join-vrix-plus", async (req, res) => {
         }
       });
     }
-    
+
+    await db.securityLogs.create({
+      data: { event: "VRIX_PLUS_JOIN", user: cleanEmail, status: "SUCCESS" }
+    });
+
     res.json({
       success: true,
       user: {
