@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0",
     "start": "node server.js",
-    "postinstall": "prisma generate && npm run db:push",
-    "db:push": "node -e \"import('child_process').then(cp => { const url = process.env.DATABASE_URL || ''; if (url.startsWith('postgres://') || url.startsWith('postgresql://')) { cp.execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' }); } else { console.log('Skipping db:push: DATABASE_URL is not PostgreSQL.'); } })\""
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push --accept-data-loss"
   },
   "dependencies": {
     "@prisma/client": "^5.12.0",

@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "npm run db:push",
   "builds": [
     {
       "src": "server.js",
