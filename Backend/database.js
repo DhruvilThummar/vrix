@@ -629,29 +629,41 @@ export const db = {
   // Users / Customers
   users: {
     findMany: async () => {
+      let result = [];
       if (supabase) {
         try {
-          const { data, error } = await supabase.from("users").select("*").order("created_at", { ascending: false });
-          if (!error && Array.isArray(data)) return data;
+          const { data, error } = await supabase.from("users").select("*");
+          if (!error && Array.isArray(data)) {
+            result = data;
+          }
         } catch (e) {}
       }
-      if (db.isConnected()) {
+      if (result.length === 0 && db.isConnected()) {
         try {
-          return await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+          result = await prisma.user.findMany();
         } catch (err) {
           await ensureTablesExist();
           try {
-            return await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+            result = await prisma.user.findMany();
           } catch (retryErr) {
             console.error("Prisma users.findMany failed:", retryErr.message);
-            const localData = readLocalDb();
-            return localData.users || [];
           }
         }
-      } else {
-        const localData = readLocalDb();
-        return localData.users || [];
       }
+
+      const localData = readLocalDb();
+      const localUsers = localData.users || [];
+
+      // Merge database records and local file records by email
+      const map = new Map();
+      for (const u of [...result, ...localUsers]) {
+        if (u && u.email) {
+          const key = u.email.toLowerCase();
+          const existing = map.get(key) || {};
+          map.set(key, { ...existing, ...u });
+        }
+      }
+      return Array.from(map.values());
     },
     findUnique: async ({ where: { email } }) => {
       if (!email) return null;

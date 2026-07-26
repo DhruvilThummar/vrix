@@ -155,7 +155,9 @@ export default function AdminMarketingPage() {
     setVrixLoading(true);
     try {
       const allUsers = await fetchUsers();
-      const members = allUsers.filter((u: any) => u.isVrixPlusMember);
+      const members = allUsers.filter((u: any) =>
+        Boolean(u.isVrixPlusMember) || String(u.isVrixPlusMember).toLowerCase() === "true" || Boolean(u.vrixPlusJoinedDate)
+      );
       setVrixMembers(members);
     } catch (err: any) {
       showToast("Failed to load VRIX+ members: " + err.message, "err");
@@ -177,11 +179,18 @@ export default function AdminMarketingPage() {
   };
 
   useEffect(() => {
+    loadVrixMembers();
+    loadPromoCodes();
+    loadPaymentLogs();
+    loadAnnouncementBar();
+    loadStats();
+  }, []);
+
+  useEffect(() => {
     if (activeTab === "promo") loadPromoCodes();
     if (activeTab === "payments") loadPaymentLogs();
     if (activeTab === "vrixplus") loadVrixMembers();
     if (activeTab === "announcement") loadAnnouncementBar();
-    loadStats();
   }, [activeTab]);
 
   // ─── Promo Handlers ──────────────────────────────────────────────────────────
@@ -279,18 +288,32 @@ export default function AdminMarketingPage() {
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMemberEmail.trim()) return;
+    const cleanEmail = newMemberEmail.trim().toLowerCase();
+    if (!cleanEmail) return;
     setAddingMember(true);
     try {
       const apiBaseUrl = getApiBaseUrl();
       const res = await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newMemberEmail.trim() })
+        body: JSON.stringify({ email: cleanEmail })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to add member.");
-      showToast(`"${newMemberEmail.trim()}" added to VRIX+ Club.`);
+      showToast(`"${cleanEmail}" added to VRIX+ Club.`);
+      
+      const newMemberObj = data.user || {
+        email: cleanEmail,
+        name: "VRIX+ Member",
+        isVrixPlusMember: true,
+        vrixPlusJoinedDate: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+      };
+
+      setVrixMembers((prev) => {
+        const filtered = prev.filter((m) => m.email?.toLowerCase() !== cleanEmail);
+        return [newMemberObj, ...filtered];
+      });
+
       setNewMemberEmail("");
       loadVrixMembers();
     } catch (err: any) {
@@ -301,17 +324,19 @@ export default function AdminMarketingPage() {
   };
 
   const handleRemoveMember = async (email: string) => {
-    if (!confirm(`Remove VRIX+ membership for "${email}"?`)) return;
+    const cleanEmail = email.trim().toLowerCase();
+    if (!confirm(`Remove VRIX+ membership for "${cleanEmail}"?`)) return;
     try {
       const apiBaseUrl = getApiBaseUrl();
-      const res = await fetch(`${apiBaseUrl}/admin/users/${encodeURIComponent(email)}/vrix-plus`, {
+      const res = await fetch(`${apiBaseUrl}/admin/users/${encodeURIComponent(cleanEmail)}/vrix-plus`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isVrixPlusMember: false })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update membership.");
-      showToast(`Removed VRIX+ membership for "${email}".`);
+      showToast(`Removed VRIX+ membership for "${cleanEmail}".`);
+      setVrixMembers((prev) => prev.filter((m) => m.email?.toLowerCase() !== cleanEmail));
       loadVrixMembers();
     } catch (err: any) {
       showToast("Failed: " + err.message, "err");
@@ -1009,8 +1034,10 @@ export default function AdminMarketingPage() {
                     <span className="text-xs text-slate-grey font-body-md">Joined This Month</span>
                     <span className="font-headline-md text-base text-deep-navy font-bold">
                       {vrixMembers.filter(m => {
-                        if (!m.vrixPlusJoinedDate) return false;
-                        const joined = new Date(m.vrixPlusJoinedDate);
+                        const dateStr = m.vrixPlusJoinedDate || m.createdAt;
+                        if (!dateStr) return true;
+                        const joined = new Date(dateStr);
+                        if (isNaN(joined.getTime())) return true;
                         const now = new Date();
                         return joined.getMonth() === now.getMonth() && joined.getFullYear() === now.getFullYear();
                       }).length}
