@@ -91,16 +91,27 @@ router.post("/register/confirm", async (req, res) => {
     }
 
     await db.verificationOtps.delete({ where: { id: record.id } });
-    const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
-    const newUser = await db.users.create({
-      data: { email: cleanEmail, password: hashedPassword, name, phone: phone || "", isVrixPlusMember: false, vrixPlusJoinedDate: null },
-    });
+    const cleanPass = password.trim();
+    const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
+
+    const existingUser = await db.users.findUnique({ where: { email: cleanEmail } });
+    let newUser;
+    if (existingUser) {
+      newUser = await db.users.update({
+        where: { email: cleanEmail },
+        data: { password: hashedPassword, name, phone: phone || "" }
+      });
+    } else {
+      newUser = await db.users.create({
+        data: { email: cleanEmail, password: hashedPassword, name, phone: phone || "", isVrixPlusMember: false, vrixPlusJoinedDate: null },
+      });
+    }
 
     await db.securityLogs.create({
       data: { event: "ACCOUNT_REGISTER", user: cleanEmail, status: "SUCCESS" },
     });
 
-    res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone, isVrixPlusMember: false, vrixPlusJoinedDate: null } });
+    res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone, isVrixPlusMember: !!newUser.isVrixPlusMember, vrixPlusJoinedDate: newUser.vrixPlusJoinedDate || null } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
