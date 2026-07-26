@@ -114,17 +114,24 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    const user = await db.users.findUnique({ where: { email } });
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password.trim();
+    let user = await db.users.findUnique({ where: { email: cleanEmail } });
+    if (!user) {
+      const allUsers = await db.users.findMany();
+      user = allUsers.find(u => u.email && u.email.trim().toLowerCase() === cleanEmail);
+    }
     if (!user) return res.status(401).json({ error: "Incorrect email or password." });
 
-    const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
-    if (user.password !== hashedPassword && user.password !== "truecaller_oauth_account") {
+    const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
+    const isPasswordValid = user.password === hashedPassword || user.password === cleanPass || user.password === "truecaller_oauth_account";
+    if (!isPasswordValid) {
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    const targetKey = `login:${email.toLowerCase()}`;
+    const targetKey = `login:${cleanEmail}`;
     await db.verificationOtps.deleteMany({ where: { email: targetKey } });
     await db.verificationOtps.create({
       data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
@@ -137,7 +144,7 @@ router.post("/login", async (req, res) => {
         const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
         await activeTransporter.sendMail({
           from: `"VRIX" <${senderEmail}>`,
-          to: email,
+          to: cleanEmail,
           subject: "VRIX Login Verification Code",
           html: `
             <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
@@ -154,7 +161,7 @@ router.post("/login", async (req, res) => {
         return res.json({ success: true, message: "OTP generated (dev fallback)", otp });
       }
     } else {
-      console.log(`[DEV] Login OTP for ${email}: ${otp}`);
+      console.log(`[DEV] Login OTP for ${cleanEmail}: ${otp}`);
       return res.json({ success: true, message: "OTP generated (dev mode)", otp });
     }
   } catch (err) {
@@ -170,19 +177,27 @@ router.post("/login/direct", async (req, res) => {
   }
 
   try {
-    const user = await db.users.findUnique({ where: { email } });
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password.trim();
+    let user = await db.users.findUnique({ where: { email: cleanEmail } });
     if (!user) {
-      await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: email, status: "FAILED" } });
+      const allUsers = await db.users.findMany();
+      user = allUsers.find(u => u.email && u.email.trim().toLowerCase() === cleanEmail);
+    }
+
+    if (!user) {
+      await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } });
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
-    const hashedPassword = crypto.createHash("sha256").update(password).digest("hex");
-    if (user.password !== hashedPassword && user.password !== "truecaller_oauth_account") {
-      await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: email, status: "FAILED" } });
+    const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
+    const isPasswordValid = user.password === hashedPassword || user.password === cleanPass || user.password === "truecaller_oauth_account";
+    if (!isPasswordValid) {
+      await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } });
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
-    await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: email, status: "SUCCESS" } });
+    await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } });
     res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
     res.status(500).json({ error: err.message });
