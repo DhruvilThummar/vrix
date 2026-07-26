@@ -64,19 +64,32 @@ export default function UserAccountPage() {
 
   // ── Account State ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("dashboard");
+  const getFirstName = (name?: string, email?: string) => {
+    if (name && name.trim()) return name.trim().split(" ")[0];
+    if (email) {
+      const prefix = email.split("@")[0];
+      return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    }
+    return "";
+  };
+
+  const getLastName = (name?: string) => {
+    if (name && name.trim()) return name.trim().split(" ").slice(1).join(" ");
+    return "";
+  };
+
   const [profile, setProfile] = useState({ 
-    firstName: user?.name?.split(" ")[0] || "Vraj", 
-    lastName: user?.name?.split(" ").slice(1).join(" ") || "Shah", 
+    firstName: getFirstName(user?.name, user?.email), 
+    lastName: getLastName(user?.name), 
     email: user?.email || "", 
-    phone: user?.phone || "+1 (555) 019-2834" 
+    phone: user?.phone || "" 
   });
-  const [passwordState, setPasswordState] = useState({ current: "", new: "", confirm: "" });
   const [shippingAddress, setShippingAddress] = useState({
-    street: "100 Minimalist Way, Suite 400",
-    city: "New York",
-    state: "NY",
-    zip: "10001",
-    country: "United States",
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "",
   });
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -100,10 +113,10 @@ export default function UserAccountPage() {
       setAuthStep("verified");
       setAuthEmail(user.email);
       setProfile({
-        firstName: user.name?.split(" ")[0] || "Vraj",
-        lastName: user.name?.split(" ").slice(1).join(" ") || "Shah",
+        firstName: getFirstName(user.name, user.email),
+        lastName: getLastName(user.name),
         email: user.email,
-        phone: user.phone || "+1 (555) 019-2834"
+        phone: user.phone || ""
       });
     } else {
       setAuthStep("email");
@@ -156,8 +169,32 @@ export default function UserAccountPage() {
     }
   }, [isLoggedIn, user?.email]);
 
+  // Load saved address from localStorage or latest order
+  useEffect(() => {
+    if (!user?.email) return;
+    try {
+      const saved = localStorage.getItem(`vrix_address_${user.email}`);
+      if (saved) {
+        setShippingAddress(JSON.parse(saved));
+      } else if (userOrders.length > 0) {
+        const latest = userOrders[0];
+        if (latest.address) {
+          setShippingAddress({
+            street: latest.address || "",
+            city: latest.city || "",
+            state: "",
+            zip: latest.postalCode || "",
+            country: "India",
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Error loading address:", e);
+    }
+  }, [user?.email, userOrders]);
+
   const totalSpent = userOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
-  const rewardPoints = Math.floor(totalSpent * 0.1) + (user?.isVrixPlusMember ? 500 : 0);
+  const rewardPoints = Math.floor(totalSpent * 0.1);
   const memberTier = user?.isVrixPlusMember ? "VRIX+ Member" : (userOrders.length > 3 ? "Platinum Member" : (userOrders.length > 0 ? "Gold Member" : "Standard Member"));
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -823,7 +860,12 @@ export default function UserAccountPage() {
               <header className="border-b border-slate-grey/15 pb-4">
                 <h1 className="font-display-lg text-headline-md text-deep-navy uppercase">Account Details</h1>
               </header>
-              <form onSubmit={(e) => { e.preventDefault(); triggerFeedback("Account details updated."); }} className="space-y-8">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+                login(authEmail, { name: fullName, phone: profile.phone, isVrixPlusMember: user?.isVrixPlusMember });
+                triggerFeedback("Account details updated successfully.");
+              }} className="space-y-8">
                 <div className="grid grid-cols-2 gap-4">
                   {[{ label: "First Name", field: "firstName" as const }, { label: "Last Name", field: "lastName" as const }].map(({ label, field }) => (
                     <div key={field} className="flex flex-col gap-2">
