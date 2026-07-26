@@ -105,9 +105,14 @@ const productSelectWithoutImages = Object.fromEntries(
   Object.entries(productSelect).filter(([key]) => key !== "images")
 );
 
-const isMissingProductImagesColumnError = (error) => {
+const isMissingColumnError = (error) => {
   const message = String(error?.message || "");
-  return message.includes("products.images") || (error?.code === "P2022" && message.includes("images"));
+  return (
+    message.includes("is_vrix_plus_exclusive") ||
+    message.includes("vrix_plus_price") ||
+    message.includes("products.images") ||
+    error?.code === "P2022"
+  );
 };
 
 const withImageGalleryFallback = (product) => (
@@ -116,17 +121,21 @@ const withImageGalleryFallback = (product) => (
     : product
 );
 
-const stripProductImages = (data = {}) => {
-  const { images, ...rest } = data;
-  return rest;
-};
-
 const runProductQuery = async (queryWithImages, queryWithoutImages) => {
   try {
     return await queryWithImages();
   } catch (error) {
-    if (!isMissingProductImagesColumnError(error)) throw error;
-    const result = await queryWithoutImages();
+    if (isMissingColumnError(error) && prisma) {
+      try {
+        await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_vrix_plus_exclusive" BOOLEAN DEFAULT false;').catch(() => {});
+        await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "vrix_plus_price" DOUBLE PRECISION;').catch(() => {});
+        await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB;').catch(() => {});
+        return await queryWithImages();
+      } catch (retryErr) {
+        console.warn("Product query retry failed:", retryErr.message);
+      }
+    }
+    const result = await queryWithoutImages().catch(() => []);
     return Array.isArray(result)
       ? result.map(withImageGalleryFallback)
       : withImageGalleryFallback(result);

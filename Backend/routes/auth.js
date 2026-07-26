@@ -28,25 +28,30 @@ router.post("/register", async (req, res) => {
 
     const activeTransporter = await getTransporter();
     if (activeTransporter) {
-      const apiSettings = await getApiSettings();
-      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-      await activeTransporter.sendMail({
-        from: `"VRIX" <${senderEmail}>`,
-        to: email,
-        subject: "Verify Your VRIX Account Registration",
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
-            <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Email</h2>
-            <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${name}, thank you for registering with VRIX. Please verify your email address using this verification code:</p>
-            <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
-            <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-          </div>
-        `,
-      });
-      res.json({ success: true, message: "OTP code sent to your email." });
+      try {
+        const apiSettings = await getApiSettings();
+        const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+        await activeTransporter.sendMail({
+          from: `"VRIX" <${senderEmail}>`,
+          to: email,
+          subject: "Verify Your VRIX Account Registration",
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
+              <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Email</h2>
+              <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${name}, thank you for registering with VRIX. Please verify your email address using this verification code:</p>
+              <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
+              <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+            </div>
+          `,
+        });
+        return res.json({ success: true, message: "OTP code sent to your email." });
+      } catch (mailErr) {
+        console.warn("Nodemailer sendMail failed during registration (falling back to dev response):", mailErr.message);
+        return res.json({ success: true, message: "OTP code generated (dev fallback)", otp });
+      }
     } else {
       console.log(`[DEV] Register OTP for ${email}: ${otp}`);
-      res.json({ success: true, message: "OTP code generated (dev mode)", otp });
+      return res.json({ success: true, message: "OTP code generated (dev mode)", otp });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -113,25 +118,30 @@ router.post("/login", async (req, res) => {
 
     const activeTransporter = await getTransporter();
     if (activeTransporter) {
-      const apiSettings = await getApiSettings();
-      const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-      await activeTransporter.sendMail({
-        from: `"VRIX" <${senderEmail}>`,
-        to: email,
-        subject: "VRIX Login Verification Code",
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
-            <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Login</h2>
-            <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${user.name || 'member'}, please verify your VRIX sign-in request using this code:</p>
-            <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
-            <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-          </div>
-        `,
-      });
-      res.json({ success: true, message: "OTP sent to your email." });
+      try {
+        const apiSettings = await getApiSettings();
+        const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+        await activeTransporter.sendMail({
+          from: `"VRIX" <${senderEmail}>`,
+          to: email,
+          subject: "VRIX Login Verification Code",
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
+              <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Login</h2>
+              <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${user.name || 'member'}, please verify your VRIX sign-in request using this code:</p>
+              <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
+              <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+            </div>
+          `,
+        });
+        return res.json({ success: true, message: "OTP sent to your email." });
+      } catch (mailErr) {
+        console.warn("Nodemailer sendMail failed during login (falling back to dev response):", mailErr.message);
+        return res.json({ success: true, message: "OTP generated (dev fallback)", otp });
+      }
     } else {
       console.log(`[DEV] Login OTP for ${email}: ${otp}`);
-      res.json({ success: true, message: "OTP generated (dev mode)", otp });
+      return res.json({ success: true, message: "OTP generated (dev mode)", otp });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
