@@ -359,7 +359,16 @@ export const db = {
     },
     create: async ({ data }) => {
       if (db.isConnected()) {
-        return await prisma.journal.create({ data });
+        try {
+          return await prisma.journal.create({ data });
+        } catch (err) {
+          console.error("Prisma journal.create failed:", err.message);
+          const localData = readLocalDb();
+          localData.journal = localData.journal || [];
+          localData.journal.unshift(data);
+          writeLocalDb(localData);
+          return data;
+        }
       } else {
         const localData = readLocalDb();
         localData.journal = localData.journal || [];
@@ -370,7 +379,20 @@ export const db = {
     },
     update: async ({ where: { id }, data }) => {
       if (db.isConnected()) {
-        return await prisma.journal.update({ where: { id }, data });
+        try {
+          return await prisma.journal.update({ where: { id }, data });
+        } catch (err) {
+          console.error(`Prisma journal.update(${id}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.journal = localData.journal || [];
+          const index = localData.journal.findIndex(j => j.id === id);
+          if (index !== -1) {
+            localData.journal[index] = { ...localData.journal[index], ...data };
+            writeLocalDb(localData);
+            return localData.journal[index];
+          }
+          throw new Error(`Article with ID ${id} not found`);
+        }
       } else {
         const localData = readLocalDb();
         localData.journal = localData.journal || [];
@@ -385,7 +407,20 @@ export const db = {
     },
     delete: async ({ where: { id } }) => {
       if (db.isConnected()) {
-        return await prisma.journal.delete({ where: { id } });
+        try {
+          return await prisma.journal.delete({ where: { id } });
+        } catch (err) {
+          console.error(`Prisma journal.delete(${id}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.journal = localData.journal || [];
+          const initialLength = localData.journal.length;
+          localData.journal = localData.journal.filter(j => j.id !== id);
+          if (localData.journal.length < initialLength) {
+            writeLocalDb(localData);
+            return { id };
+          }
+          throw new Error(`Article with ID ${id} not found`);
+        }
       } else {
         const localData = readLocalDb();
         localData.journal = localData.journal || [];
@@ -404,15 +439,21 @@ export const db = {
   securityLogs: {
     findMany: async () => {
       if (db.isConnected()) {
-        const logs = await prisma.securityLog.findMany({
-          orderBy: { timestamp: "desc" }
-        });
-        return logs.map(l => ({
-          timestamp: l.timestamp.toISOString().replace("T", " ").substring(0, 19) + " UTC",
-          event: l.event,
-          user: l.userEmail,
-          status: l.status
-        }));
+        try {
+          const logs = await prisma.securityLog.findMany({
+            orderBy: { timestamp: "desc" }
+          });
+          return logs.map(l => ({
+            timestamp: l.timestamp.toISOString().replace("T", " ").substring(0, 19) + " UTC",
+            event: l.event,
+            user: l.userEmail,
+            status: l.status
+          }));
+        } catch (err) {
+          console.error("Prisma securityLogs.findMany failed:", err.message);
+          const localData = readLocalDb();
+          return localData.securityLogs || [];
+        }
       } else {
         const localData = readLocalDb();
         return localData.securityLogs || [];
@@ -420,19 +461,34 @@ export const db = {
     },
     create: async ({ data }) => {
       if (db.isConnected()) {
-        const log = await prisma.securityLog.create({
-          data: {
+        try {
+          const log = await prisma.securityLog.create({
+            data: {
+              event: data.event,
+              userEmail: data.user,
+              status: data.status
+            }
+          });
+          return {
+            timestamp: log.timestamp.toISOString().replace("T", " ").substring(0, 19) + " UTC",
+            event: log.event,
+            user: log.userEmail,
+            status: log.status
+          };
+        } catch (err) {
+          console.error("Prisma securityLogs.create failed:", err.message);
+          const localData = readLocalDb();
+          localData.securityLogs = localData.securityLogs || [];
+          const newLog = {
+            timestamp: new Date().toISOString().replace("T", " ").substring(0, 19) + " UTC",
             event: data.event,
-            userEmail: data.user,
+            user: data.user,
             status: data.status
-          }
-        });
-        return {
-          timestamp: log.timestamp.toISOString().replace("T", " ").substring(0, 19) + " UTC",
-          event: log.event,
-          user: log.userEmail,
-          status: log.status
-        };
+          };
+          localData.securityLogs.unshift(newLog);
+          writeLocalDb(localData);
+          return newLog;
+        }
       } else {
         const localData = readLocalDb();
         localData.securityLogs = localData.securityLogs || [];
@@ -453,9 +509,15 @@ export const db = {
   payments: {
     findMany: async () => {
       if (db.isConnected()) {
-        return await prisma.payment.findMany({
-          orderBy: { createdAt: "desc" }
-        });
+        try {
+          return await prisma.payment.findMany({
+            orderBy: { createdAt: "desc" }
+          });
+        } catch (err) {
+          console.error("Prisma payments.findMany failed:", err.message);
+          const localData = readLocalDb();
+          return localData.payments || [];
+        }
       } else {
         const localData = readLocalDb();
         return localData.payments || [];
@@ -463,7 +525,21 @@ export const db = {
     },
     create: async ({ data }) => {
       if (db.isConnected()) {
-        return await prisma.payment.create({ data });
+        try {
+          return await prisma.payment.create({ data });
+        } catch (err) {
+          console.error("Prisma payments.create failed:", err.message);
+          const localData = readLocalDb();
+          localData.payments = localData.payments || [];
+          const record = {
+            id: Math.random().toString(36).substring(2, 15),
+            createdAt: new Date().toISOString(),
+            ...data
+          };
+          localData.payments.unshift(record);
+          writeLocalDb(localData);
+          return record;
+        }
       } else {
         const localData = readLocalDb();
         localData.payments = localData.payments || [];
@@ -479,7 +555,20 @@ export const db = {
     },
     update: async ({ where: { orderId }, data }) => {
       if (db.isConnected()) {
-        return await prisma.payment.update({ where: { orderId }, data });
+        try {
+          return await prisma.payment.update({ where: { orderId }, data });
+        } catch (err) {
+          console.error(`Prisma payments.update(${orderId}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.payments = localData.payments || [];
+          const index = localData.payments.findIndex(p => p.orderId === orderId);
+          if (index !== -1) {
+            localData.payments[index] = { ...localData.payments[index], ...data };
+            writeLocalDb(localData);
+            return localData.payments[index];
+          }
+          throw new Error(`Payment with orderId ${orderId} not found`);
+        }
       } else {
         const localData = readLocalDb();
         localData.payments = localData.payments || [];
@@ -498,9 +587,15 @@ export const db = {
   users: {
     findMany: async () => {
       if (db.isConnected()) {
-        return await prisma.user.findMany({
-          orderBy: { createdAt: "desc" }
-        });
+        try {
+          return await prisma.user.findMany({
+            orderBy: { createdAt: "desc" }
+          });
+        } catch (err) {
+          console.error("Prisma users.findMany failed:", err.message);
+          const localData = readLocalDb();
+          return localData.users || [];
+        }
       } else {
         const localData = readLocalDb();
         return localData.users || [];
@@ -510,7 +605,14 @@ export const db = {
       if (!email) return null;
       const targetEmail = email.toLowerCase();
       if (db.isConnected()) {
-        return await prisma.user.findUnique({ where: { email: targetEmail } });
+        try {
+          return await prisma.user.findUnique({ where: { email: targetEmail } });
+        } catch (err) {
+          console.error(`Prisma users.findUnique(${email}) failed:`, err.message);
+          const localData = readLocalDb();
+          const users = localData.users || [];
+          return users.find(u => u.email && u.email.toLowerCase() === targetEmail) || null;
+        }
       } else {
         const localData = readLocalDb();
         const users = localData.users || [];
@@ -520,12 +622,26 @@ export const db = {
     create: async ({ data }) => {
       const emailLower = data.email ? data.email.toLowerCase() : "";
       if (db.isConnected()) {
-        return await prisma.user.create({
-          data: {
+        try {
+          return await prisma.user.create({
+            data: {
+              ...data,
+              email: emailLower
+            }
+          });
+        } catch (err) {
+          console.error("Prisma users.create failed:", err.message);
+          const localData = readLocalDb();
+          localData.users = localData.users || [];
+          const record = {
+            createdAt: new Date().toISOString(),
             ...data,
             email: emailLower
-          }
-        });
+          };
+          localData.users.push(record);
+          writeLocalDb(localData);
+          return record;
+        }
       } else {
         const localData = readLocalDb();
         localData.users = localData.users || [];
@@ -542,10 +658,23 @@ export const db = {
     update: async ({ where: { email }, data }) => {
       const targetEmail = email ? email.toLowerCase() : "";
       if (db.isConnected()) {
-        return await prisma.user.update({
-          where: { email: targetEmail },
-          data
-        });
+        try {
+          return await prisma.user.update({
+            where: { email: targetEmail },
+            data
+          });
+        } catch (err) {
+          console.error(`Prisma users.update(${email}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.users = localData.users || [];
+          const index = localData.users.findIndex(u => u.email && u.email.toLowerCase() === targetEmail);
+          if (index !== -1) {
+            localData.users[index] = { ...localData.users[index], ...data };
+            writeLocalDb(localData);
+            return localData.users[index];
+          }
+          throw new Error(`User with email ${email} not found`);
+        }
       } else {
         const localData = readLocalDb();
         localData.users = localData.users || [];
@@ -564,7 +693,21 @@ export const db = {
   verificationOtps: {
     create: async ({ data }) => {
       if (db.isConnected()) {
-        return await prisma.verificationOtp.create({ data });
+        try {
+          return await prisma.verificationOtp.create({ data });
+        } catch (err) {
+          console.error("Prisma verificationOtps.create failed:", err.message);
+          const localData = readLocalDb();
+          localData.otps = localData.otps || [];
+          const record = {
+            id: Math.random().toString(36).substring(2, 15),
+            createdAt: new Date().toISOString(),
+            ...data
+          };
+          localData.otps.push(record);
+          writeLocalDb(localData);
+          return record;
+        }
       } else {
         const localData = readLocalDb();
         localData.otps = localData.otps || [];
@@ -580,7 +723,16 @@ export const db = {
     },
     findFirst: async ({ where }) => {
       if (db.isConnected()) {
-        return await prisma.verificationOtp.findFirst({ where });
+        try {
+          return await prisma.verificationOtp.findFirst({ where });
+        } catch (err) {
+          console.error("Prisma verificationOtps.findFirst failed:", err.message);
+          const localData = readLocalDb();
+          const otps = localData.otps || [];
+          return otps.find(otp => {
+            return Object.entries(where).every(([k, v]) => otp[k] === v);
+          }) || null;
+        }
       } else {
         const localData = readLocalDb();
         const otps = localData.otps || [];
@@ -591,7 +743,16 @@ export const db = {
     },
     delete: async ({ where: { id } }) => {
       if (db.isConnected()) {
-        return await prisma.verificationOtp.delete({ where: { id } });
+        try {
+          return await prisma.verificationOtp.delete({ where: { id } });
+        } catch (err) {
+          console.error(`Prisma verificationOtps.delete(${id}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.otps = localData.otps || [];
+          localData.otps = localData.otps.filter(otp => otp.id !== id);
+          writeLocalDb(localData);
+          return { id };
+        }
       } else {
         const localData = readLocalDb();
         localData.otps = localData.otps || [];
@@ -602,7 +763,19 @@ export const db = {
     },
     deleteMany: async ({ where }) => {
       if (db.isConnected()) {
-        return await prisma.verificationOtp.deleteMany({ where });
+        try {
+          return await prisma.verificationOtp.deleteMany({ where });
+        } catch (err) {
+          console.error("Prisma verificationOtps.deleteMany failed:", err.message);
+          const localData = readLocalDb();
+          localData.otps = localData.otps || [];
+          const initialLength = localData.otps.length;
+          localData.otps = localData.otps.filter(otp => {
+            return !Object.entries(where).every(([k, v]) => otp[k] === v);
+          });
+          writeLocalDb(localData);
+          return { count: initialLength - localData.otps.length };
+        }
       } else {
         const localData = readLocalDb();
         localData.otps = localData.otps || [];
@@ -620,9 +793,15 @@ export const db = {
   redeemCodes: {
     findMany: async () => {
       if (db.isConnected()) {
-        return await prisma.redeemCode.findMany({
-          orderBy: { createdAt: "desc" }
-        });
+        try {
+          return await prisma.redeemCode.findMany({
+            orderBy: { createdAt: "desc" }
+          });
+        } catch (err) {
+          console.error("Prisma redeemCodes.findMany failed:", err.message);
+          const localData = readLocalDb();
+          return localData.redeemCodes || [];
+        }
       } else {
         const localData = readLocalDb();
         return localData.redeemCodes || [];
@@ -630,7 +809,13 @@ export const db = {
     },
     count: async () => {
       if (db.isConnected()) {
-        return await prisma.redeemCode.count();
+        try {
+          return await prisma.redeemCode.count();
+        } catch (err) {
+          console.error("Prisma redeemCodes.count failed:", err.message);
+          const localData = readLocalDb();
+          return (localData.redeemCodes || []).length;
+        }
       } else {
         const localData = readLocalDb();
         return (localData.redeemCodes || []).length;
@@ -638,7 +823,14 @@ export const db = {
     },
     findUnique: async ({ where: { code } }) => {
       if (db.isConnected()) {
-        return await prisma.redeemCode.findUnique({ where: { code } });
+        try {
+          return await prisma.redeemCode.findUnique({ where: { code } });
+        } catch (err) {
+          console.error(`Prisma redeemCodes.findUnique(${code}) failed:`, err.message);
+          const localData = readLocalDb();
+          const codes = localData.redeemCodes || [];
+          return codes.find(c => c.code.toUpperCase() === code.toUpperCase()) || null;
+        }
       } else {
         const localData = readLocalDb();
         const codes = localData.redeemCodes || [];
@@ -647,7 +839,21 @@ export const db = {
     },
     create: async ({ data }) => {
       if (db.isConnected()) {
-        return await prisma.redeemCode.create({ data });
+        try {
+          return await prisma.redeemCode.create({ data });
+        } catch (err) {
+          console.error("Prisma redeemCodes.create failed:", err.message);
+          const localData = readLocalDb();
+          localData.redeemCodes = localData.redeemCodes || [];
+          const record = {
+            createdAt: new Date().toISOString(),
+            isActive: true,
+            ...data
+          };
+          localData.redeemCodes.push(record);
+          writeLocalDb(localData);
+          return record;
+        }
       } else {
         const localData = readLocalDb();
         localData.redeemCodes = localData.redeemCodes || [];
@@ -663,7 +869,20 @@ export const db = {
     },
     update: async ({ where: { code }, data }) => {
       if (db.isConnected()) {
-        return await prisma.redeemCode.update({ where: { code }, data });
+        try {
+          return await prisma.redeemCode.update({ where: { code }, data });
+        } catch (err) {
+          console.error(`Prisma redeemCodes.update(${code}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.redeemCodes = localData.redeemCodes || [];
+          const index = localData.redeemCodes.findIndex(c => c.code.toUpperCase() === code.toUpperCase());
+          if (index !== -1) {
+            localData.redeemCodes[index] = { ...localData.redeemCodes[index], ...data };
+            writeLocalDb(localData);
+            return localData.redeemCodes[index];
+          }
+          throw new Error(`RedeemCode ${code} not found`);
+        }
       } else {
         const localData = readLocalDb();
         localData.redeemCodes = localData.redeemCodes || [];
@@ -678,7 +897,16 @@ export const db = {
     },
     delete: async ({ where: { code } }) => {
       if (db.isConnected()) {
-        return await prisma.redeemCode.delete({ where: { code } });
+        try {
+          return await prisma.redeemCode.delete({ where: { code } });
+        } catch (err) {
+          console.error(`Prisma redeemCodes.delete(${code}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.redeemCodes = localData.redeemCodes || [];
+          localData.redeemCodes = localData.redeemCodes.filter(c => c.code.toUpperCase() !== code.toUpperCase());
+          writeLocalDb(localData);
+          return { code };
+        }
       } else {
         const localData = readLocalDb();
         localData.redeemCodes = localData.redeemCodes || [];
@@ -693,9 +921,15 @@ export const db = {
   deliveryStaff: {
     findMany: async () => {
       if (db.isConnected()) {
-        return await prisma.deliveryStaff.findMany({
-          orderBy: { createdAt: "desc" }
-        });
+        try {
+          return await prisma.deliveryStaff.findMany({
+            orderBy: { createdAt: "desc" }
+          });
+        } catch (err) {
+          console.error("Prisma deliveryStaff.findMany failed:", err.message);
+          const localData = readLocalDb();
+          return localData.deliveryStaff || [];
+        }
       } else {
         const localData = readLocalDb();
         return localData.deliveryStaff || [];
@@ -703,7 +937,13 @@ export const db = {
     },
     findUnique: async ({ where: { email } }) => {
       if (db.isConnected()) {
-        return await prisma.deliveryStaff.findUnique({ where: { email } });
+        try {
+          return await prisma.deliveryStaff.findUnique({ where: { email } });
+        } catch (err) {
+          console.error(`Prisma deliveryStaff.findUnique(${email}) failed:`, err.message);
+          const localData = readLocalDb();
+          return (localData.deliveryStaff || []).find(s => s.email === email) || null;
+        }
       } else {
         const localData = readLocalDb();
         return (localData.deliveryStaff || []).find(s => s.email === email) || null;
@@ -711,11 +951,26 @@ export const db = {
     },
     create: async ({ data }) => {
       if (db.isConnected()) {
-        return await prisma.deliveryStaff.create({ data });
+        try {
+          return await prisma.deliveryStaff.create({ data });
+        } catch (err) {
+          console.error("Prisma deliveryStaff.create failed:", err.message);
+          const localData = readLocalDb();
+          localData.deliveryStaff = localData.deliveryStaff || [];
+          if (localData.deliveryStaff.some(s => s.email === data.email)) {
+            throw new Error(`Staff with email ${data.email} already exists`);
+          }
+          const record = {
+            createdAt: new Date().toISOString(),
+            ...data
+          };
+          localData.deliveryStaff.push(record);
+          writeLocalDb(localData);
+          return record;
+        }
       } else {
         const localData = readLocalDb();
         localData.deliveryStaff = localData.deliveryStaff || [];
-        // Ensure no duplicate emails locally
         if (localData.deliveryStaff.some(s => s.email === data.email)) {
           throw new Error(`Staff with email ${data.email} already exists`);
         }
@@ -730,7 +985,16 @@ export const db = {
     },
     delete: async ({ where: { email } }) => {
       if (db.isConnected()) {
-        return await prisma.deliveryStaff.delete({ where: { email } });
+        try {
+          return await prisma.deliveryStaff.delete({ where: { email } });
+        } catch (err) {
+          console.error(`Prisma deliveryStaff.delete(${email}) failed:`, err.message);
+          const localData = readLocalDb();
+          localData.deliveryStaff = localData.deliveryStaff || [];
+          localData.deliveryStaff = localData.deliveryStaff.filter(s => s.email !== email);
+          writeLocalDb(localData);
+          return { email };
+        }
       } else {
         const localData = readLocalDb();
         localData.deliveryStaff = localData.deliveryStaff || [];
@@ -788,7 +1052,7 @@ export async function migrateIfNeeded() {
       await prisma.$executeRawUnsafe(`ALTER TABLE IF EXISTS "${table}" ENABLE ROW LEVEL SECURITY;`).catch(() => {});
     }
 
-    const productCount = await prisma.product.count();
+    const productCount = await prisma.product.count().catch(() => null);
     if (productCount === 0) {
       console.log("Database Access Layer: Postgres is empty. Seeding from db.json...");
       const localData = readLocalDb();
@@ -801,7 +1065,7 @@ export async function migrateIfNeeded() {
             where: { key },
             update: { value: localData[key] },
             create: { key, value: localData[key] }
-          });
+          }).catch(() => {});
         }
       }
 
@@ -821,7 +1085,7 @@ export async function migrateIfNeeded() {
               alt: p.alt || "",
               collection: p.collection || ""
             }
-          });
+          }).catch(() => {});
         }
       }
 
@@ -838,7 +1102,7 @@ export async function migrateIfNeeded() {
               date: j.date || "",
               readTime: j.readTime || ""
             }
-          });
+          }).catch(() => {});
         }
       }
 
@@ -856,7 +1120,7 @@ export async function migrateIfNeeded() {
               userEmail: log.user || "",
               status: log.status
             }
-          });
+          }).catch(() => {});
         }
       }
 
@@ -867,25 +1131,25 @@ export async function migrateIfNeeded() {
           discount: 20,
           type: "percentage"
         }
-      });
+      }).catch(() => {});
       await prisma.redeemCode.create({
         data: {
           code: "WELCOME10",
           discount: 10,
           type: "fixed"
         }
-      });
+      }).catch(() => {});
 
       console.log("Database Access Layer: Seeding completed successfully.");
     }
 
     // Seed delivery staff in Postgres if missing
-    const staffCount = await prisma.deliveryStaff.count();
+    const staffCount = await prisma.deliveryStaff.count().catch(() => null);
     if (staffCount === 0) {
       console.log("Database Access Layer: Seeding default delivery staff in Postgres...");
-      await prisma.deliveryStaff.create({ data: { email: "manager@vrix.com", name: "VRIX Manager", role: "manager" } });
-      await prisma.deliveryStaff.create({ data: { email: "agent@vrix.com", name: "VRIX Agent", role: "agent" } });
-      await prisma.deliveryStaff.create({ data: { email: "dhruv@vrix.com", name: "Dhruv Agent", role: "agent" } });
+      await prisma.deliveryStaff.create({ data: { email: "manager@vrix.com", name: "VRIX Manager", role: "manager" } }).catch(() => {});
+      await prisma.deliveryStaff.create({ data: { email: "agent@vrix.com", name: "VRIX Agent", role: "agent" } }).catch(() => {});
+      await prisma.deliveryStaff.create({ data: { email: "dhruv@vrix.com", name: "Dhruv Agent", role: "agent" } }).catch(() => {});
     }
   } catch (error) {
     console.error("Database Access Layer: Migration/seeding failed:", error);
