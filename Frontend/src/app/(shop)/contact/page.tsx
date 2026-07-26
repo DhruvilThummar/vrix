@@ -4,7 +4,7 @@ import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 export default function Page() {
   const [brandName, setBrandName] = useState("VRIX");
-  const [email, setEmail] = useState("info@vrixjewels.com");
+  const [email, setEmail] = useState("vrixjewels@gmail.com");
   const [phone, setPhone] = useState("905-428-5693");
   const [address, setAddress] = useState("");
 
