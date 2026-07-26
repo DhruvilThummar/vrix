@@ -29,17 +29,26 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ────────────────────────────────────────────────────────────────
-// Dynamically mirror the request's origin (supports localhost:3000, vercel, etc.) and allow credentials
+// Custom CORS middleware to guarantee headers on all requests (including preflights & error responses)
+app.use((req, res, next) => {
+  const origin = req.headers.origin || "*";
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Admin-Secret, x-admin-secret");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+  next();
+});
+
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    callback(null, true);
-  },
+  origin: (origin, callback) => callback(null, true),
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Secret"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Secret", "x-admin-secret"],
 }));
-app.options("*", cors());
 app.use(express.json());
 
 // Serve local uploads if Cloudinary is not configured
@@ -49,7 +58,7 @@ app.use("/uploads", express.static(path.join(__dirname, "data", "uploads")));
 await migrateIfNeeded();
 
 // ─── Health Check ──────────────────────────────────────────────────────────────
-app.get("/api/health", async (req, res) => {
+const healthHandler = async (req, res) => {
   const cClient = await getCloudinary();
   const rClient = await getRazorpay();
   const tClient = await getTransporter();
@@ -63,27 +72,14 @@ app.get("/api/health", async (req, res) => {
     truecaller: tcConfig.enabled,
     truecallerSandbox: tcConfig.sandbox,
   });
-});
+};
+app.get("/api/health", healthHandler);
+app.get("/health", healthHandler);
 
-// ─── API Routers ───────────────────────────────────────────────────────────────
-app.use("/api", cmsRouter);
-app.use("/api/products", productsRouter);
-app.use("/api/collections", collectionsRouter);
-app.use("/api/journal", journalRouter);
-app.use("/api/security", securityRouter);
-app.use("/api/media", mediaRouter);
-app.use("/api/otp", otpRouter);
-app.use("/api/auth", authRouter);
-app.use("/api/promo", promoRouter);
-app.use("/api/payment", paymentRouter);
-app.use("/api/delivery", deliveryRouter);
-app.use("/api/newsletter", newsletterRouter);
 // ─── Admin Auth Middleware ─────────────────────────────────────────────────────
-// Protects all /api/admin/* routes with a secret header
 const adminAuth = (req, res, next) => {
   const secret = process.env.ADMIN_SECRET;
   if (!secret) {
-    // No secret configured — allow access in dev mode (warn only)
     console.warn("⚠️  ADMIN_SECRET not set. Admin routes are unprotected.");
     return next();
   }
@@ -92,8 +88,28 @@ const adminAuth = (req, res, next) => {
   return res.status(401).json({ error: "Unauthorized: Invalid admin secret." });
 };
 
-app.use("/api/admin", adminAuth, adminRouter);
-app.use("/api/geo", geoRouter);
+// ─── API Routers (Mount under both /api and root / for full compatibility) ────
+const registerRoutes = (prefix = "") => {
+  const p = (route) => (prefix ? `${prefix}${route}` : route);
+  app.use(p("/db"), cmsRouter);
+  app.use(p("/cms"), cmsRouter);
+  app.use(p("/products"), productsRouter);
+  app.use(p("/collections"), collectionsRouter);
+  app.use(p("/journal"), journalRouter);
+  app.use(p("/security"), securityRouter);
+  app.use(p("/media"), mediaRouter);
+  app.use(p("/otp"), otpRouter);
+  app.use(p("/auth"), authRouter);
+  app.use(p("/promo"), promoRouter);
+  app.use(p("/payment"), paymentRouter);
+  app.use(p("/delivery"), deliveryRouter);
+  app.use(p("/newsletter"), newsletterRouter);
+  app.use(p("/admin"), adminAuth, adminRouter);
+  app.use(p("/geo"), geoRouter);
+};
+
+registerRoutes("/api");
+registerRoutes("");
 
 // Global Error Handler
 app.use((err, req, res, next) => {
