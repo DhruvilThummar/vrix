@@ -51,6 +51,10 @@ const readLocalDb = () => {
 
 const writeLocalDb = (data) => {
   try {
+    if (process.env.VERCEL) {
+      console.warn("Database Access Layer: Skipping write to local db.json on Vercel.");
+      return true;
+    }
     fsDirect.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf8");
     return true;
   } catch (error) {
@@ -59,21 +63,24 @@ const writeLocalDb = (data) => {
   }
 };
 
-// Check if DATABASE_URL is configured
+// Check if DATABASE_URL is configured and valid for PostgreSQL
 normalizePrismaDatabaseUrl();
-const isDbConnected = !!process.env.DATABASE_URL;
+const rawUrl = process.env.DATABASE_URL || "";
+const isPostgresUrl = rawUrl.startsWith("postgresql://") || rawUrl.startsWith("postgres://");
+const isDbConnected = !!rawUrl && isPostgresUrl;
 let prisma = null;
 
 if (isDbConnected) {
   try {
     const { PrismaClient } = await import("@prisma/client");
-    prisma = new PrismaClient();
+    prisma = globalThis.__prismaClient || new PrismaClient();
+    if (process.env.NODE_ENV !== "production") globalThis.__prismaClient = prisma;
     console.log("Database Access Layer: Prisma client initialized.");
   } catch (err) {
     console.error("Database Access Layer: Failed to load Prisma Client, falling back to db.json", err);
   }
 } else {
-  console.log("Database Access Layer: DATABASE_URL not set. Falling back to local db.json.");
+  console.log("Database Access Layer: DATABASE_URL not set or not PostgreSQL. Falling back to local db.json.");
 }
 
 const productSelect = {
@@ -411,53 +418,66 @@ export const db = {
   // Users / Customers
   users: {
     findMany: async () => {
-      const { readFileSync } = await import("fs");
-      try {
-        const raw = readFileSync(pathDirect.join(__dirname, "data", "db.json"), "utf8");
-        const local = JSON.parse(raw);
-        return local.users || [];
-      } catch (err) {
-        return [];
+      if (db.isConnected()) {
+        return await prisma.user.findMany({
+          orderBy: { createdAt: "desc" }
+        });
+      } else {
+        const localData = readLocalDb();
+        return localData.users || [];
       }
     },
     findUnique: async ({ where: { email } }) => {
-      const { readFileSync } = await import("fs");
-      try {
-        const raw = readFileSync(pathDirect.join(__dirname, "data", "db.json"), "utf8");
-        const local = JSON.parse(raw);
-        local.users = local.users || [];
-        return local.users.find(u => u.email.toLowerCase() === email.toLowerCase()) || null;
-      } catch (err) {
-        return null;
+      if (!email) return null;
+      const targetEmail = email.toLowerCase();
+      if (db.isConnected()) {
+        return await prisma.user.findUnique({ where: { email: targetEmail } });
+      } else {
+        const localData = readLocalDb();
+        const users = localData.users || [];
+        return users.find(u => u.email && u.email.toLowerCase() === targetEmail) || null;
       }
     },
     create: async ({ data }) => {
-      const { readFileSync, writeFileSync } = await import("fs");
-      const dbFile = pathDirect.join(__dirname, "data", "db.json");
-      const raw = readFileSync(dbFile, "utf8");
-      const local = JSON.parse(raw);
-      local.users = local.users || [];
-      const record = {
-        createdAt: new Date().toISOString(),
-        ...data
-      };
-      local.users.push(record);
-      writeFileSync(dbFile, JSON.stringify(local, null, 2), "utf8");
-      return record;
+      const emailLower = data.email ? data.email.toLowerCase() : "";
+      if (db.isConnected()) {
+        return await prisma.user.create({
+          data: {
+            ...data,
+            email: emailLower
+          }
+        });
+      } else {
+        const localData = readLocalDb();
+        localData.users = localData.users || [];
+        const record = {
+          createdAt: new Date().toISOString(),
+          ...data,
+          email: emailLower
+        };
+        localData.users.push(record);
+        writeLocalDb(localData);
+        return record;
+      }
     },
     update: async ({ where: { email }, data }) => {
-      const { readFileSync, writeFileSync } = await import("fs");
-      const dbFile = pathDirect.join(__dirname, "data", "db.json");
-      const raw = readFileSync(dbFile, "utf8");
-      const local = JSON.parse(raw);
-      local.users = local.users || [];
-      const index = local.users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
-      if (index !== -1) {
-        local.users[index] = { ...local.users[index], ...data };
-        writeFileSync(dbFile, JSON.stringify(local, null, 2), "utf8");
-        return local.users[index];
+      const targetEmail = email ? email.toLowerCase() : "";
+      if (db.isConnected()) {
+        return await prisma.user.update({
+          where: { email: targetEmail },
+          data
+        });
+      } else {
+        const localData = readLocalDb();
+        localData.users = localData.users || [];
+        const index = localData.users.findIndex(u => u.email && u.email.toLowerCase() === targetEmail);
+        if (index !== -1) {
+          localData.users[index] = { ...localData.users[index], ...data };
+          writeLocalDb(localData);
+          return localData.users[index];
+        }
+        throw new Error(`User with email ${email} not found`);
       }
-      throw new Error(`User with email ${email} not found`);
     }
   },
 
@@ -643,7 +663,11 @@ export const db = {
   }
 };
 
+let hasMigrated = false;
 export async function migrateIfNeeded() {
+  if (hasMigrated) return;
+  hasMigrated = true;
+
   // Always seed local db.json fallback with default staff
   try {
     if (process.env.VERCEL) {
@@ -671,12 +695,19 @@ export async function migrateIfNeeded() {
   if (!db.isConnected()) return;
 
   try {
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB');
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "description" TEXT');
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "min_subtotal" DOUBLE PRECISION');
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "usage_limit" INTEGER');
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "used_count" INTEGER DEFAULT 0');
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "expiry_date" TEXT');
+    // Structural migrations
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB').catch(() => {});
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "description" TEXT').catch(() => {});
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "min_subtotal" DOUBLE PRECISION').catch(() => {});
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "usage_limit" INTEGER').catch(() => {});
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "used_count" INTEGER DEFAULT 0').catch(() => {});
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "expiry_date" TEXT').catch(() => {});
+
+    // Automatic Row Level Security (RLS) enforcement for Supabase database security
+    const tablesToSecure = ["cms_settings", "products", "journal", "security_logs", "payments", "delivery_staff", "verification_otps", "redeem_codes", "users"];
+    for (const table of tablesToSecure) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE IF EXISTS "${table}" ENABLE ROW LEVEL SECURITY;`).catch(() => {});
+    }
 
     const productCount = await prisma.product.count();
     if (productCount === 0) {

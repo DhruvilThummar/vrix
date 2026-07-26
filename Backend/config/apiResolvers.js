@@ -82,6 +82,9 @@ export async function getTransporter() {
           port: parseInt(apiSettings.nodemailerPort || "587"),
           secure: false,
           auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+          socketTimeout: 5000,
         });
       } catch (err) {
         console.warn("Nodemailer: Dynamic configuration failed, using fallback.", err.message);
@@ -90,7 +93,7 @@ export async function getTransporter() {
   }
 
   // Fallback to process.env
-  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+  if (process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_PASS !== "YourAppPasswordHere") {
     try {
       const nodemailer = await import("nodemailer");
       return nodemailer.default.createTransport({
@@ -98,6 +101,9 @@ export async function getTransporter() {
         port: parseInt(process.env.SMTP_PORT || "587"),
         secure: false,
         auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
       });
     } catch (err) {
       console.warn("Nodemailer: fallback env config failed.", err.message);

@@ -289,10 +289,15 @@ export default function AdminHeader({
               </Link>
               <div className="border-t border-slate-grey/10 my-1"></div>
               <button
-                onClick={onLogout}
-                className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/5 flex items-center gap-2 cursor-pointer transition-colors"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onLogout();
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer transition-colors font-medium group"
               >
-                <span className="material-symbols-outlined text-sm">logout</span>
+                <span className="material-symbols-outlined text-sm text-red-600 group-hover:scale-110 transition-transform">logout</span>
                 <span>Logout Session</span>
               </button>
             </div>
