@@ -59,9 +59,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback((email: string, details?: Partial<User>) => {
-    const userData = { email, ...details };
-    setUser(userData);
-    localStorage.setItem("vrix-user", JSON.stringify(userData));
+    setUser((prev) => {
+      const merged: User = {
+        email: email.toLowerCase(),
+        name: details?.name !== undefined ? details.name : (prev?.email?.toLowerCase() === email.toLowerCase() ? prev.name : ""),
+        phone: details?.phone !== undefined ? details.phone : (prev?.email?.toLowerCase() === email.toLowerCase() ? prev.phone : ""),
+        isVrixPlusMember: details?.isVrixPlusMember !== undefined ? !!details.isVrixPlusMember : (prev?.email?.toLowerCase() === email.toLowerCase() ? !!prev.isVrixPlusMember : false),
+        vrixPlusJoinedDate: details?.vrixPlusJoinedDate !== undefined ? details.vrixPlusJoinedDate : (prev?.email?.toLowerCase() === email.toLowerCase() ? prev.vrixPlusJoinedDate : undefined),
+      };
+      localStorage.setItem("vrix-user", JSON.stringify(merged));
+      return merged;
+    });
+
+    // Background sync with DB to get fresh profile data
+    try {
+      const baseUrl = getApiBaseUrl();
+      fetch(`${baseUrl}/auth/me?email=${encodeURIComponent(email)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.user) {
+            setUser((current) => {
+              const freshUser: User = {
+                email: data.user.email,
+                name: data.user.name || current?.name || details?.name || "",
+                phone: data.user.phone || current?.phone || details?.phone || "",
+                isVrixPlusMember: data.user.isVrixPlusMember !== undefined ? !!data.user.isVrixPlusMember : (current?.isVrixPlusMember ?? !!details?.isVrixPlusMember),
+                vrixPlusJoinedDate: data.user.vrixPlusJoinedDate || current?.vrixPlusJoinedDate || details?.vrixPlusJoinedDate,
+              };
+              localStorage.setItem("vrix-user", JSON.stringify(freshUser));
+              return freshUser;
+            });
+          }
+        })
+        .catch(() => {});
+    } catch {}
   }, []);
 
   const logout = useCallback(() => {

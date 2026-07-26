@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
-import { fetchProducts } from "@/utils/api";
+import { fetchProducts, getWishlistKey } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import ProductImageGrid2x2 from "@/components/pdp/ProductImageGrid2x2";
@@ -25,7 +25,7 @@ function ProductContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { user, isLoggedIn } = useAuth();
   const productId = (params?.id as string) || searchParams.get("id");
   const { addItem } = useCart();
  
@@ -56,13 +56,14 @@ function ProductContent() {
  
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("vrix-wishlist");
+      const key = getWishlistKey(user?.email);
+      const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
       if (saved && product?.id) {
         const list = JSON.parse(saved);
         setWishlistActive(list.includes(product.id));
       }
     } catch {}
-  }, [product]);
+  }, [product, user?.email]);
  
   const galleryImages = useMemo(() => {
     const urls = [product.image, ...(Array.isArray(product.images) ? product.images : [])]
@@ -113,7 +114,8 @@ function ProductContent() {
       return;
     }
     try {
-      const saved = localStorage.getItem("vrix-wishlist");
+      const key = getWishlistKey(user?.email);
+      const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
       let list = saved ? JSON.parse(saved) : [];
       const active = list.includes(product.id);
       const nextActive = !active;
@@ -125,6 +127,7 @@ function ProductContent() {
         showToast("Added to your Wishlist.");
       }
       setWishlistActive(nextActive);
+      localStorage.setItem(key, JSON.stringify(list));
       localStorage.setItem("vrix-wishlist", JSON.stringify(list));
     } catch (err) {
       console.error("Wishlist toggle error:", err);

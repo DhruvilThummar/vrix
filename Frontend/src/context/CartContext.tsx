@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export interface CartItem {
   id: string;
@@ -35,6 +36,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [discount, setDiscount] = useState(0);
@@ -43,11 +45,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [giftMessage, setGiftMessageState] = useState("");
   const [giftWrapPrice, setGiftWrapPrice] = useState(250);
 
-  // Hydrate from localStorage
+  // Hydrate from localStorage per user email
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("vrix-cart");
-      if (saved) setItems(JSON.parse(saved));
+      const userKey = user?.email ? `vrix-cart_${user.email.toLowerCase()}` : "vrix-cart-guest";
+      const savedUserCart = localStorage.getItem(userKey);
+      const fallbackCart = localStorage.getItem("vrix-cart");
+
+      if (savedUserCart) {
+        setItems(JSON.parse(savedUserCart));
+      } else if (fallbackCart) {
+        const parsedFallback = JSON.parse(fallbackCart);
+        setItems(parsedFallback);
+        localStorage.setItem(userKey, JSON.stringify(parsedFallback));
+      } else {
+        setItems([]);
+      }
+
       const savedGift = localStorage.getItem("vrix-gift-wrap");
       if (savedGift) {
         const parsed = JSON.parse(savedGift);
@@ -56,12 +70,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (parsed.giftWrapPrice) setGiftWrapPrice(parsed.giftWrapPrice);
       }
     } catch {}
-  }, []);
+  }, [user?.email]);
 
-  // Persist to localStorage
+  // Persist to localStorage per user email
   useEffect(() => {
-    localStorage.setItem("vrix-cart", JSON.stringify(items));
-  }, [items]);
+    try {
+      const userKey = user?.email ? `vrix-cart_${user.email.toLowerCase()}` : "vrix-cart-guest";
+      localStorage.setItem(userKey, JSON.stringify(items));
+      localStorage.setItem("vrix-cart", JSON.stringify(items));
+    } catch {}
+  }, [items, user?.email]);
 
   useEffect(() => {
     localStorage.setItem(

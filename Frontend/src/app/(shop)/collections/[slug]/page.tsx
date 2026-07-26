@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, Suspense, useEffect } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { fetchCollections, fetchProducts } from "@/utils/api";
+import { fetchCollections, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -15,7 +15,7 @@ function CollectionContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { user, isLoggedIn } = useAuth();
   
   // Use slug from URL if available, otherwise fall back to 'collection' search param, or default to 'silent-center'
   const collectionSlug = (params.slug as string) || searchParams.get("collection") || "silent-center";
@@ -30,15 +30,16 @@ function CollectionContent() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Sync wishlist from localStorage on mount
+  // Sync wishlist from localStorage on mount or user change
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("vrix-wishlist");
+      const key = getWishlistKey(user?.email);
+      const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
       if (saved) {
         setWishlist(JSON.parse(saved));
       }
     } catch {}
-  }, []);
+  }, [user?.email]);
 
   // Filter & Sort menus open states
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -110,7 +111,8 @@ function CollectionContent() {
       return;
     }
     try {
-      const saved = localStorage.getItem("vrix-wishlist");
+      const key = getWishlistKey(user?.email);
+      const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
       let list = saved ? JSON.parse(saved) : [];
       if (list.includes(id)) {
         list = list.filter((item: string) => item !== id);
@@ -121,6 +123,7 @@ function CollectionContent() {
         setWishlist(list);
         showToast(`Added "${title}" to Wishlist.`);
       }
+      localStorage.setItem(key, JSON.stringify(list));
       localStorage.setItem("vrix-wishlist", JSON.stringify(list));
     } catch (err) {
       console.error("Wishlist toggle error:", err);

@@ -17,7 +17,8 @@ import {
   fetchDbPublic as fetchDb,
   verifyTruecaller,
   getApiBaseUrl,
-  fetchUserOrders
+  fetchUserOrders,
+  getWishlistKey
 } from "@/utils/api";
 
 interface Order {
@@ -137,11 +138,12 @@ export default function UserAccountPage() {
     }
   }, [isLoggedIn, user]);
 
-  // Sync wishlist from localStorage on tab change or mount
+  // Sync wishlist from localStorage on tab change, user change, or mount
   useEffect(() => {
     async function loadWishlist() {
       try {
-        const savedIds = localStorage.getItem("vrix-wishlist");
+        const key = getWishlistKey(user?.email);
+        const savedIds = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
         const ids = savedIds ? JSON.parse(savedIds) : [];
         if (ids.length > 0) {
           const allProducts = await fetchProducts();
@@ -157,7 +159,7 @@ export default function UserAccountPage() {
     if (activeTab === "wishlist" || activeTab === "dashboard") {
       loadWishlist();
     }
-  }, [activeTab]);
+  }, [activeTab, user?.email]);
 
   const [userOrders, setUserOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -931,7 +933,10 @@ export default function UserAccountPage() {
                           <button onClick={() => {
                             const updated = wishlist.filter(w => w.id !== item.id);
                             setWishlist(updated);
-                            localStorage.setItem("vrix-wishlist", JSON.stringify(updated.map(w => w.id)));
+                            const key = getWishlistKey(user?.email);
+                            const ids = updated.map(w => w.id);
+                            localStorage.setItem(key, JSON.stringify(ids));
+                            localStorage.setItem("vrix-wishlist", JSON.stringify(ids));
                             triggerFeedback("Removed from wishlist.");
                           }} className="font-button text-[9px] tracking-widest text-red-600 uppercase cursor-pointer">REMOVE</button>
                         </div>

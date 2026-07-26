@@ -5,7 +5,7 @@ import Image from "next/image";
 import SkeletonImage from "@/components/shop/SkeletonImage";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { fetchDb, fetchProducts } from "@/utils/api";
+import { fetchDb, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
@@ -115,10 +115,13 @@ export default function Header() {
       .catch((err) => console.error("Error loading products for search drawer:", err));
   }, []);
 
-  // Load wishlist from localStorage
+  // Load wishlist from localStorage per user email
   const loadWishlist = () => {
     try {
-      const savedIds = localStorage.getItem("vrix-wishlist");
+      const key = getWishlistKey(user?.email);
+      const savedUserKey = localStorage.getItem(key);
+      const fallbackKey = localStorage.getItem("vrix-wishlist");
+      const savedIds = savedUserKey || fallbackKey;
       const ids = savedIds ? JSON.parse(savedIds) : [];
       if (ids.length > 0 && allProducts.length > 0) {
         setWishlist(allProducts.filter((p: any) => ids.includes(p.id)));
@@ -130,19 +133,21 @@ export default function Header() {
     }
   };
 
-  // Keep wishlist updated when drawer opens or products load
+  // Keep wishlist updated when drawer opens, products load, or user changes
   useEffect(() => {
-    if (isWishlistOpen && allProducts.length > 0) {
+    if (allProducts.length > 0) {
       loadWishlist();
     }
-  }, [isWishlistOpen, allProducts]);
+  }, [isWishlistOpen, allProducts, user?.email]);
 
   // Remove from wishlist helper
   const handleRemoveFromWishlist = (id: string) => {
     try {
-      const savedIds = localStorage.getItem("vrix-wishlist");
+      const key = getWishlistKey(user?.email);
+      const savedIds = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
       const ids = savedIds ? JSON.parse(savedIds) : [];
       const updated = ids.filter((wid: string) => wid !== id);
+      localStorage.setItem(key, JSON.stringify(updated));
       localStorage.setItem("vrix-wishlist", JSON.stringify(updated));
       loadWishlist();
     } catch (e) {

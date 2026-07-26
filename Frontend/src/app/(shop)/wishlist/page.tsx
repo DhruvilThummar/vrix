@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { fetchProducts } from "@/utils/api";
+import { fetchProducts, getWishlistKey } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 interface Product {
   id: string;
@@ -16,6 +17,7 @@ interface Product {
 
 export default function WishlistPage() {
   const { addItem } = useCart();
+  const { user } = useAuth();
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
@@ -28,7 +30,8 @@ export default function WishlistPage() {
   useEffect(() => {
     async function loadWishlist() {
       try {
-        const saved = localStorage.getItem("vrix-wishlist");
+        const key = getWishlistKey(user?.email);
+        const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
         const ids = saved ? JSON.parse(saved) : [];
         const allProducts = await fetchProducts();
         const filtered = allProducts.filter((p: any) => ids.includes(p.id));
@@ -40,13 +43,15 @@ export default function WishlistPage() {
       }
     }
     loadWishlist();
-  }, []);
+  }, [user?.email]);
 
   const handleRemove = (id: string, title: string) => {
     try {
-      const saved = localStorage.getItem("vrix-wishlist");
+      const key = getWishlistKey(user?.email);
+      const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
       let ids = saved ? JSON.parse(saved) : [];
       ids = ids.filter((item: string) => item !== id);
+      localStorage.setItem(key, JSON.stringify(ids));
       localStorage.setItem("vrix-wishlist", JSON.stringify(ids));
       setWishlist(wishlist.filter((item) => item.id !== id));
       showToast(`Removed "${title}" from Wishlist.`);
@@ -67,9 +72,11 @@ export default function WishlistPage() {
         size: "52"
       });
       // Remove from wishlist
-      const saved = localStorage.getItem("vrix-wishlist");
+      const key = getWishlistKey(user?.email);
+      const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
       let ids = saved ? JSON.parse(saved) : [];
       ids = ids.filter((item: string) => item !== product.id);
+      localStorage.setItem(key, JSON.stringify(ids));
       localStorage.setItem("vrix-wishlist", JSON.stringify(ids));
       setWishlist(wishlist.filter((item) => item.id !== product.id));
       showToast(`Moved "${product.title}" to Bag.`);

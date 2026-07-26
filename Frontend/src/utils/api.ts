@@ -12,6 +12,13 @@ export function getApiBaseUrl(): string {
   return "http://localhost:5000/api";
 }
 
+export function getWishlistKey(email?: string): string {
+  if (email && email.trim()) {
+    return `vrix-wishlist_${email.trim().toLowerCase()}`;
+  }
+  return "vrix-wishlist";
+}
+
 const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || "vrix_admin_secret_change_me_in_production";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
