@@ -87,9 +87,9 @@ export async function getTransporter() {
           port: port,
           secure: port === 465,
           auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
+          connectionTimeout: 3000,
+          greetingTimeout: 3000,
+          socketTimeout: 3000,
         });
       } catch (err) {
         console.warn("Nodemailer: Dynamic configuration failed, using fallback.", err.message);
@@ -111,15 +111,36 @@ export async function getTransporter() {
         port: port,
         secure: port === 465,
         auth: { user, pass },
-        connectionTimeout: 8000,
-        greetingTimeout: 8000,
-        socketTimeout: 8000,
+        connectionTimeout: 3000,
+        greetingTimeout: 3000,
+        socketTimeout: 3000,
       });
     } catch (err) {
       console.warn("Nodemailer: fallback env config failed.", err.message);
     }
   }
   return null;
+}
+
+export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeoutMs = 3000) {
+  if (!activeTransporter) return false;
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      console.warn(`[SMTP] Email sending timed out after ${timeoutMs}ms. Falling back.`);
+      resolve(false);
+    }, timeoutMs);
+
+    activeTransporter.sendMail(mailOptions)
+      .then((info) => {
+        clearTimeout(timer);
+        resolve(info || true);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        console.warn("[SMTP] Email send failed:", err.message);
+        resolve(false);
+      });
+  });
 }
 
 export async function getTruecallerConfig() {

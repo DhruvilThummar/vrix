@@ -105,14 +105,32 @@ export async function ensureTablesExist() {
   if (!prisma) return;
   try {
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "users" ("email" TEXT PRIMARY KEY, "name" TEXT, "phone" TEXT, "password" TEXT, "is_vrix_plus_member" BOOLEAN DEFAULT false, "vrix_plus_joined_date" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(e => console.warn("Notice: users table creation issue:", e.message));
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "cms_settings" ("key" TEXT PRIMARY KEY, "value" JSONB NOT NULL, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "journal" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "excerpt" TEXT, "content" TEXT NOT NULL, "image" TEXT NOT NULL, "date" TEXT, "read_time" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "delivery_staff" ("email" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "role" TEXT NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "redeem_codes" ("code" TEXT PRIMARY KEY, "discount" DOUBLE PRECISION NOT NULL, "type" TEXT DEFAULT 'percentage', "is_active" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "description" TEXT, "min_subtotal" DOUBLE PRECISION, "usage_limit" INTEGER, "used_count" INTEGER DEFAULT 0, "expiry_date" TEXT);`).catch(() => {});
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "security_logs" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "event" TEXT NOT NULL, "user_email" TEXT, "status" TEXT NOT NULL);`).catch(() => {});
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "payments" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "order_id" TEXT UNIQUE NOT NULL, "payment_id" TEXT, "signature" TEXT, "amount" DOUBLE PRECISION NOT NULL, "currency" TEXT DEFAULT 'INR', "status" TEXT DEFAULT 'created', "user_email" TEXT, "customer_name" TEXT, "customer_phone" TEXT, "address" TEXT, "city" TEXT, "postal_code" TEXT, "assigned_agent" TEXT);`).catch(() => {});
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "verification_otps" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "email" TEXT NOT NULL, "otp" TEXT NOT NULL, "expires_at" TIMESTAMP NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => {});
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "cms_settings" ("key" TEXT PRIMARY KEY, "value" JSONB NOT NULL, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "journal" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "excerpt" TEXT, "content" TEXT NOT NULL, "image" TEXT NOT NULL, "date" TEXT, "read_time" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "delivery_staff" ("email" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "role" TEXT NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "redeem_codes" ("code" TEXT PRIMARY KEY, "discount" DOUBLE PRECISION NOT NULL, "type" TEXT DEFAULT 'percentage', "is_active" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "description" TEXT, "min_subtotal" DOUBLE PRECISION, "usage_limit" INTEGER, "used_count" INTEGER DEFAULT 0, "expiry_date" TEXT);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "security_logs" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "event" TEXT NOT NULL, "user_email" TEXT, "status" TEXT NOT NULL);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "payments" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "order_id" TEXT UNIQUE NOT NULL, "payment_id" TEXT, "signature" TEXT, "amount" DOUBLE PRECISION NOT NULL, "currency" TEXT DEFAULT 'INR', "status" TEXT DEFAULT 'created', "user_email" TEXT, "customer_name" TEXT, "customer_phone" TEXT, "address" TEXT, "city" TEXT, "postal_code" TEXT, "assigned_agent" TEXT);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "verification_otps" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "email" TEXT NOT NULL, "otp" TEXT NOT NULL, "expires_at" TIMESTAMP NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+
+    // Structural migrations for missing columns
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_visible" BOOLEAN DEFAULT true;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_vrix_plus_exclusive" BOOLEAN DEFAULT false;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "vrix_plus_price" DOUBLE PRECISION;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
+
+    // Database Performance Indexing
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_users_email" ON "users" ("email");').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_users_phone" ON "users" ("phone");').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_verification_otps_email_otp" ON "verification_otps" ("email", "otp");').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_verification_otps_expires_at" ON "verification_otps" ("expires_at");').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_security_logs_user_email" ON "security_logs" ("user_email");').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_products_is_visible" ON "products" ("is_visible");').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_payments_order_id" ON "payments" ("order_id");').catch(() => { });
+
     tablesCreated = true;
   } catch (e) {
     console.error("ensureTablesExist error:", e.message);
@@ -137,42 +155,54 @@ const productSelect = {
   createdAt: true,
 };
 
-const productSelectWithoutImages = Object.fromEntries(
-  Object.entries(productSelect).filter(([key]) => key !== "images")
-);
-
-const isMissingColumnError = (error) => {
-  const message = String(error?.message || "");
-  return (
-    message.includes("is_vrix_plus_exclusive") ||
-    message.includes("vrix_plus_price") ||
-    message.includes("products.images") ||
-    error?.code === "P2022"
-  );
+const productSelectWithoutImages = {
+  id: true,
+  title: true,
+  material: true,
+  type: true,
+  price: true,
+  image: true,
+  description: true,
+  alt: true,
+  collection: true,
+  stock: true,
+  createdAt: true,
 };
 
-const withImageGalleryFallback = (product) => (
-  product && !("images" in product)
-    ? { ...product, images: product.image ? [product.image] : [] }
-    : product
-);
+const withProductDefaults = (product) => {
+  if (!product) return product;
+  return {
+    ...product,
+    images: Array.isArray(product.images) ? product.images : (product.image ? [product.image] : []),
+    isVisible: product.isVisible !== undefined ? product.isVisible : true,
+    isVrixPlusExclusive: !!product.isVrixPlusExclusive,
+    vrixPlusPrice: product.vrixPlusPrice ?? null,
+  };
+};
 
 const runProductQuery = async (queryWithImages, queryWithoutImages) => {
   try {
-    return await queryWithImages();
+    const res = await queryWithImages();
+    return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
   } catch (error) {
     if (prisma) {
       try {
         await ensureTablesExist();
-        return await queryWithImages();
+        const res = await queryWithImages();
+        return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
       } catch (retryErr) {
-        console.warn("Product query retry failed:", retryErr.message);
+        // Safe fallback using basic select if columns are missing in DB
       }
     }
-    const result = await queryWithoutImages().catch(() => []);
-    return Array.isArray(result)
-      ? result.map(withImageGalleryFallback)
-      : withImageGalleryFallback(result);
+    if (queryWithoutImages) {
+      try {
+        const res = await queryWithoutImages();
+        return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
+      } catch (e) { }
+    }
+    const localData = readLocalDb();
+    const products = localData.products || [];
+    return products.map(withProductDefaults);
   }
 };
 
@@ -627,187 +657,170 @@ export const db = {
   },
 
   // Users / Customers
+  // Users / Customers
   users: {
     findMany: async () => {
       let result = [];
-      if (supabase) {
-        try {
-          const { data, error } = await supabase.from("users").select("*");
-          if (!error && Array.isArray(data)) {
-            result = data;
-          }
-        } catch (e) {}
-      }
-      if (result.length === 0 && db.isConnected()) {
+      if (db.isConnected()) {
         try {
           result = await prisma.user.findMany();
         } catch (err) {
           await ensureTablesExist();
-          try {
-            result = await prisma.user.findMany();
-          } catch (retryErr) {
-            console.error("Prisma users.findMany failed:", retryErr.message);
-          }
+          try { result = await prisma.user.findMany(); } catch (retryErr) {}
         }
+      }
+      if (result.length === 0 && supabase) {
+        try {
+          const { data, error } = await withTimeout(supabase.from("users").select("*"), 400);
+          if (!error && Array.isArray(data)) result = data;
+        } catch (e) {}
       }
 
       const localData = readLocalDb();
       const localUsers = localData.users || [];
 
-      // Merge database records and local file records by email
       const map = new Map();
-      for (const u of [...result, ...localUsers]) {
+      for (const u of [...result, ...localUsers, ...Array.from(userMemoryMap.values())]) {
         if (u && u.email) {
-          const key = u.email.toLowerCase();
+          const key = String(u.email).toLowerCase().trim();
           const existing = map.get(key) || {};
-          map.set(key, { ...existing, ...u });
+          const merged = { ...existing, ...u, email: key };
+          map.set(key, merged);
+          syncUserToMemory(merged);
         }
       }
       return Array.from(map.values());
     },
+
     findUnique: async ({ where: { email } }) => {
       if (!email) return null;
-      const targetEmail = email.toLowerCase();
+      const targetEmail = String(email).toLowerCase().trim();
 
+      // FAST PATH 1: Check In-Memory Map Cache (0ms)
+      if (userMemoryMap.has(targetEmail)) {
+        return userMemoryMap.get(targetEmail);
+      }
+
+      // FAST PATH 2: Check Prisma Postgres DB if connected
+      if (db.isConnected()) {
+        try {
+          const user = await prisma.user.findUnique({ where: { email: targetEmail } });
+          if (user) {
+            syncUserToMemory(user);
+            return user;
+          }
+        } catch (err) {}
+      }
+
+      // FAST PATH 3: Check Supabase (300ms max timeout)
       if (supabase) {
         try {
-          const { data, error } = await supabase.from("users").select("*").eq("email", targetEmail).maybeSingle();
-          if (!error && data) return data;
+          const { data, error } = await withTimeout(supabase.from("users").select("*").eq("email", targetEmail).maybeSingle(), 300);
+          if (!error && data) {
+            syncUserToMemory(data);
+            return data;
+          }
         } catch (e) {}
       }
 
-      if (db.isConnected()) {
-        try {
-          return await prisma.user.findUnique({ where: { email: targetEmail } });
-        } catch (err) {
-          await ensureTablesExist();
-          try {
-            return await prisma.user.findUnique({ where: { email: targetEmail } });
-          } catch (retryErr) {
-            console.error(`Prisma users.findUnique(${email}) failed:`, retryErr.message);
-            const localData = readLocalDb();
-            const users = localData.users || [];
-            return users.find(u => u.email && u.email.toLowerCase() === targetEmail) || null;
-          }
-        }
-      } else {
-        const localData = readLocalDb();
-        const users = localData.users || [];
-        return users.find(u => u.email && u.email.toLowerCase() === targetEmail) || null;
-      }
+      // FAST PATH 4: Check local db.json
+      const localData = readLocalDb();
+      const users = localData.users || [];
+      const user = users.find(u => u.email && u.email.toLowerCase().trim() === targetEmail) || null;
+      if (user) syncUserToMemory(user);
+      return user;
     },
+
     create: async ({ data }) => {
-      const emailLower = data.email ? data.email.toLowerCase() : "";
-      const recordData = { ...data, email: emailLower };
+      const emailLower = data.email ? String(data.email).toLowerCase().trim() : "";
+      const recordData = { createdAt: new Date().toISOString(), ...data, email: emailLower };
+      syncUserToMemory(recordData);
 
-      if (supabase) {
-        try {
-          const { data: supaUser, error } = await supabase.from("users").upsert([recordData]).select().single();
-          if (!error && supaUser) return supaUser;
-        } catch (e) {}
-      }
-
-      if (db.isConnected()) {
-        try {
-          return await prisma.user.create({ data: recordData });
-        } catch (err) {
-          await ensureTablesExist();
-          try {
-            return await prisma.user.create({ data: recordData });
-          } catch (retryErr) {
-            console.error("Prisma users.create failed:", retryErr.message);
-          }
+      // Async background persistence
+      (async () => {
+        if (db.isConnected()) {
+          try { await prisma.user.create({ data: recordData }); } catch (err) {}
         }
-      }
+        if (supabase) {
+          try { await supabase.from("users").upsert([recordData]); } catch (e) {}
+        }
+        const localData = readLocalDb();
+        localData.users = localData.users || [];
+        const idx = localData.users.findIndex(u => u.email && u.email.toLowerCase().trim() === emailLower);
+        if (idx !== -1) {
+          localData.users[idx] = { ...localData.users[idx], ...recordData };
+        } else {
+          localData.users.push(recordData);
+        }
+        writeLocalDb(localData);
+      })();
 
-      const localData = readLocalDb();
-      localData.users = localData.users || [];
-      const idx = localData.users.findIndex(u => u.email && u.email.toLowerCase() === emailLower);
-      const record = { createdAt: new Date().toISOString(), ...recordData };
-      if (idx !== -1) {
-        localData.users[idx] = { ...localData.users[idx], ...record };
-      } else {
-        localData.users.push(record);
-      }
-      writeLocalDb(localData);
-      return record;
+      return recordData;
     },
+
     update: async ({ where: { email }, data }) => {
-      const targetEmail = email ? email.toLowerCase() : "";
+      const targetEmail = email ? String(email).toLowerCase().trim() : "";
+      const existing = userMemoryMap.get(targetEmail) || {};
+      const updated = { ...existing, ...data, email: targetEmail };
+      syncUserToMemory(updated);
 
-      if (supabase) {
-        try {
-          const { data: supaUser, error } = await supabase.from("users").update(data).eq("email", targetEmail).select().single();
-          if (!error && supaUser) return supaUser;
-        } catch (e) {}
-      }
-
-      if (db.isConnected()) {
-        try {
-          return await prisma.user.update({ where: { email: targetEmail }, data });
-        } catch (err) {
-          await ensureTablesExist();
-          try {
-            return await prisma.user.update({ where: { email: targetEmail }, data });
-          } catch (retryErr) {
-            console.error(`Prisma users.update(${email}) failed:`, retryErr.message);
-          }
+      // Async background persistence
+      (async () => {
+        if (db.isConnected()) {
+          try { await prisma.user.update({ where: { email: targetEmail }, data }); } catch (err) {}
         }
-      }
+        if (supabase) {
+          try { await supabase.from("users").update(data).eq("email", targetEmail); } catch (e) {}
+        }
+        const localData = readLocalDb();
+        localData.users = localData.users || [];
+        const idx = localData.users.findIndex(u => u.email && u.email.toLowerCase().trim() === targetEmail);
+        if (idx !== -1) {
+          localData.users[idx] = { ...localData.users[idx], ...data };
+          writeLocalDb(localData);
+        }
+      })();
 
-      const localData = readLocalDb();
-      localData.users = localData.users || [];
-      const index = localData.users.findIndex(u => u.email && u.email.toLowerCase() === targetEmail);
-      if (index !== -1) {
-        localData.users[index] = { ...localData.users[index], ...data };
-      } else {
-        localData.users.push({ email: targetEmail, createdAt: new Date().toISOString(), ...data });
-      }
-      writeLocalDb(localData);
-      return localData.users.find(u => u.email && u.email.toLowerCase() === targetEmail);
+      return updated;
     },
+
     upsert: async ({ where: { email }, update, create }) => {
-      const targetEmail = email ? email.toLowerCase() : "";
-
-      if (supabase) {
-        try {
-          const payload = { ...create, ...update, email: targetEmail };
-          const { data: supaUser, error } = await supabase.from("users").upsert([payload]).select().single();
-          if (!error && supaUser) return supaUser;
-        } catch (e) {}
+      const targetEmail = email ? String(email).toLowerCase().trim() : "";
+      const existing = userMemoryMap.get(targetEmail);
+      let record;
+      if (existing) {
+        record = { ...existing, ...update, email: targetEmail };
+      } else {
+        record = { createdAt: new Date().toISOString(), ...create, email: targetEmail };
       }
+      syncUserToMemory(record);
 
-      if (db.isConnected()) {
-        try {
-          return await prisma.user.upsert({
-            where: { email: targetEmail },
-            update,
-            create: { ...create, email: targetEmail }
-          });
-        } catch (err) {
-          await ensureTablesExist();
+      // Async background persistence
+      (async () => {
+        if (db.isConnected()) {
           try {
-            return await prisma.user.upsert({
+            await prisma.user.upsert({
               where: { email: targetEmail },
               update,
               create: { ...create, email: targetEmail }
             });
-          } catch (retryErr) {
-            console.error("Prisma users.upsert failed:", retryErr.message);
-          }
+          } catch (err) {}
         }
-      }
+        if (supabase) {
+          try { await supabase.from("users").upsert([{ ...create, ...update, email: targetEmail }]); } catch (e) {}
+        }
+        const localData = readLocalDb();
+        localData.users = localData.users || [];
+        const idx = localData.users.findIndex(u => u.email && u.email.toLowerCase().trim() === targetEmail);
+        if (idx !== -1) {
+          localData.users[idx] = { ...localData.users[idx], ...update };
+        } else {
+          localData.users.push({ createdAt: new Date().toISOString(), ...create, email: targetEmail });
+        }
+        writeLocalDb(localData);
+      })();
 
-      const localData = readLocalDb();
-      localData.users = localData.users || [];
-      const index = localData.users.findIndex(u => u.email && u.email.toLowerCase() === targetEmail);
-      if (index !== -1) {
-        localData.users[index] = { ...localData.users[index], ...update };
-      } else {
-        localData.users.push({ createdAt: new Date().toISOString(), ...create, email: targetEmail });
-      }
-      writeLocalDb(localData);
-      return localData.users.find(u => u.email && u.email.toLowerCase() === targetEmail);
+      return record;
     }
   },
 
@@ -1180,17 +1193,22 @@ export async function migrateIfNeeded() {
 
   try {
     // Structural migrations
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB').catch(() => {});
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "description" TEXT').catch(() => {});
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "min_subtotal" DOUBLE PRECISION').catch(() => {});
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "usage_limit" INTEGER').catch(() => {});
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "used_count" INTEGER DEFAULT 0').catch(() => {});
-    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "expiry_date" TEXT').catch(() => {});
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_visible" BOOLEAN DEFAULT true;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_vrix_plus_exclusive" BOOLEAN DEFAULT false;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "vrix_plus_price" DOUBLE PRECISION;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "description" TEXT;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "min_subtotal" DOUBLE PRECISION;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "usage_limit" INTEGER').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "used_count" INTEGER DEFAULT 0').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "expiry_date" TEXT').catch(() => { });
 
     // Automatic Row Level Security (RLS) enforcement for Supabase database security
     const tablesToSecure = ["cms_settings", "products", "journal", "security_logs", "payments", "delivery_staff", "verification_otps", "redeem_codes", "users"];
     for (const table of tablesToSecure) {
-      await prisma.$executeRawUnsafe(`ALTER TABLE IF EXISTS "${table}" ENABLE ROW LEVEL SECURITY;`).catch(() => {});
+      await prisma.$executeRawUnsafe(`ALTER TABLE IF EXISTS "${table}" ENABLE ROW LEVEL SECURITY;`).catch(() => { });
     }
 
     const productCount = await prisma.product.count().catch(() => null);
@@ -1206,7 +1224,7 @@ export async function migrateIfNeeded() {
             where: { key },
             update: { value: localData[key] },
             create: { key, value: localData[key] }
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
 
@@ -1226,7 +1244,7 @@ export async function migrateIfNeeded() {
               alt: p.alt || "",
               collection: p.collection || ""
             }
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
 
@@ -1243,7 +1261,7 @@ export async function migrateIfNeeded() {
               date: j.date || "",
               readTime: j.readTime || ""
             }
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
 
@@ -1261,7 +1279,7 @@ export async function migrateIfNeeded() {
               userEmail: log.user || "",
               status: log.status
             }
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
 
@@ -1272,14 +1290,14 @@ export async function migrateIfNeeded() {
           discount: 20,
           type: "percentage"
         }
-      }).catch(() => {});
+      }).catch(() => { });
       await prisma.redeemCode.create({
         data: {
           code: "WELCOME10",
           discount: 10,
           type: "fixed"
         }
-      }).catch(() => {});
+      }).catch(() => { });
 
       console.log("Database Access Layer: Seeding completed successfully.");
     }
@@ -1288,9 +1306,9 @@ export async function migrateIfNeeded() {
     const staffCount = await prisma.deliveryStaff.count().catch(() => null);
     if (staffCount === 0) {
       console.log("Database Access Layer: Seeding default delivery staff in Postgres...");
-      await prisma.deliveryStaff.create({ data: { email: "manager@vrix.com", name: "VRIX Manager", role: "manager" } }).catch(() => {});
-      await prisma.deliveryStaff.create({ data: { email: "agent@vrix.com", name: "VRIX Agent", role: "agent" } }).catch(() => {});
-      await prisma.deliveryStaff.create({ data: { email: "dhruv@vrix.com", name: "Dhruv Agent", role: "agent" } }).catch(() => {});
+      await prisma.deliveryStaff.create({ data: { email: "manager@vrix.com", name: "VRIX Manager", role: "manager" } }).catch(() => { });
+      await prisma.deliveryStaff.create({ data: { email: "agent@vrix.com", name: "VRIX Agent", role: "agent" } }).catch(() => { });
+      await prisma.deliveryStaff.create({ data: { email: "dhruv@vrix.com", name: "Dhruv Agent", role: "agent" } }).catch(() => { });
     }
   } catch (error) {
     console.error("Database Access Layer: Migration/seeding failed:", error);

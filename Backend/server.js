@@ -59,6 +59,51 @@ await migrateIfNeeded();
 
 // ─── Root Status & Health Check ───────────────────────────────────────────────
 app.get("/", (req, res) => {
+  // If a browser visits root with an OAuth hash callback (e.g. from Supabase Google Login redirect)
+  if (req.headers.accept && req.headers.accept.includes("text/html")) {
+    const frontendBase = process.env.FRONTEND_URL || "http://localhost:3000";
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>VRIX Authentication</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #FAF8F5; color: #0F1728; }
+          .card { background: #fff; padding: 40px; border: 1px solid #e5e3df; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+          .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #0F1728; border-radius: 50%; width: 28px; height: 28px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="spinner"></div>
+          <h2 style="font-size:16px;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">Completing Sign In</h2>
+          <p style="font-size:13px;color:#666;margin:0;">Redirecting back to VRIX store...</p>
+        </div>
+        <script>
+          (function() {
+            const hash = window.location.hash || '';
+            const search = window.location.search || '';
+            const defaultFrontend = '${frontendBase}';
+            let targetOrigin = defaultFrontend;
+            try {
+              if (window.opener || document.referrer) {
+                const ref = new URL(document.referrer || window.location.href);
+                if (ref.hostname === 'localhost' || ref.hostname === '127.0.0.1') {
+                  targetOrigin = 'http://localhost:3000';
+                }
+              }
+            } catch(e) {}
+            const redirectUrl = targetOrigin.replace(/\\/$/, '') + '/auth/callback' + hash + (hash ? '' : search);
+            window.location.href = redirectUrl;
+          })();
+        </script>
+      </body>
+      </html>
+    `);
+  }
+
   res.json({
     status: "online",
     message: "🚀 VRIX Backend API Platform",

@@ -1,7 +1,7 @@
 import express from "express";
 import crypto from "crypto";
 import { db } from "../database.js";
-import { getTransporter, getApiSettings, getTruecallerConfig, getGoogleConfig } from "../config/apiResolvers.js";
+import { getTransporter, sendEmailWithTimeout, getApiSettings, getTruecallerConfig, getGoogleConfig } from "../config/apiResolvers.js";
 
 const router = express.Router();
 
@@ -29,38 +29,41 @@ router.post("/register", async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     const targetKey = `register:${cleanEmail}`;
-    await db.verificationOtps.deleteMany({ where: { email: targetKey } });
-    await db.verificationOtps.create({
-      data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
-    });
 
-    const activeTransporter = await getTransporter();
-    if (activeTransporter) {
+    await Promise.all([
+      db.verificationOtps.deleteMany({ where: { email: targetKey } }),
+      db.verificationOtps.create({
+        data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
+      })
+    ]);
+
+    // Dispatch transactional email asynchronously in the background (Non-blocking)
+    (async () => {
       try {
-        const apiSettings = await getApiSettings();
-        const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-        await activeTransporter.sendMail({
-          from: `"VRIX" <${senderEmail}>`,
-          to: email,
-          subject: "Verify Your VRIX Account Registration",
-          html: `
-            <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
-              <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Email</h2>
-              <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${name}, thank you for registering with VRIX. Please verify your email address using this verification code:</p>
-              <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
-              <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-            </div>
-          `,
-        });
-        return res.json({ success: true, message: "OTP code sent to your email." });
+        const activeTransporter = await getTransporter();
+        if (activeTransporter) {
+          const apiSettings = await getApiSettings();
+          const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+          await sendEmailWithTimeout(activeTransporter, {
+            from: `"VRIX" <${senderEmail}>`,
+            to: email,
+            subject: "Verify Your VRIX Account Registration",
+            html: `
+              <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
+                <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Email</h2>
+                <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${cleanName}, thank you for registering with VRIX. Please verify your email address using this verification code:</p>
+                <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
+                <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+              </div>
+            `,
+          }, 3000);
+        }
       } catch (mailErr) {
-        console.warn("Nodemailer sendMail failed during registration (falling back to dev response):", mailErr.message);
-        return res.json({ success: true, message: "OTP code generated (dev fallback)", otp });
+        console.warn("Background registration email error:", mailErr.message);
       }
-    } else {
-      console.log(`[DEV] Register OTP for ${email}: ${otp}`);
-      return res.json({ success: true, message: "OTP code generated (dev mode)", otp });
-    }
+    })();
+
+    return res.json({ success: true, message: "OTP code generated", otp });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -94,11 +97,11 @@ router.post("/register/confirm", async (req, res) => {
 
     const expiry = new Date(record.expiresAt);
     if (expiry < new Date()) {
-      await db.verificationOtps.delete({ where: { id: record.id } });
+      db.verificationOtps.delete({ where: { id: record.id } }).catch(() => {});
       return res.status(401).json({ error: "Verification code has expired." });
     }
 
-    await db.verificationOtps.delete({ where: { id: record.id } });
+    db.verificationOtps.delete({ where: { id: record.id } }).catch(() => {});
     const cleanPass = password.trim();
     const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
 
@@ -115,9 +118,9 @@ router.post("/register/confirm", async (req, res) => {
       });
     }
 
-    await db.securityLogs.create({
+    db.securityLogs.create({
       data: { event: "ACCOUNT_REGISTER", user: cleanEmail, status: "SUCCESS" },
-    });
+    }).catch(() => {});
 
     res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone, isVrixPlusMember: !!newUser.isVrixPlusMember, vrixPlusJoinedDate: newUser.vrixPlusJoinedDate || null } });
   } catch (err) {
@@ -135,11 +138,7 @@ router.post("/login", async (req, res) => {
   try {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPass = password.trim();
-    let user = await db.users.findUnique({ where: { email: cleanEmail } });
-    if (!user) {
-      const allUsers = await db.users.findMany();
-      user = allUsers.find(u => u.email && u.email.trim().toLowerCase() === cleanEmail);
-    }
+    const user = await db.users.findUnique({ where: { email: cleanEmail } });
     if (!user) return res.status(401).json({ error: "Incorrect email or password." });
 
     const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
@@ -151,38 +150,41 @@ router.post("/login", async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     const targetKey = `login:${cleanEmail}`;
-    await db.verificationOtps.deleteMany({ where: { email: targetKey } });
-    await db.verificationOtps.create({
-      data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
-    });
 
-    const activeTransporter = await getTransporter();
-    if (activeTransporter) {
+    await Promise.all([
+      db.verificationOtps.deleteMany({ where: { email: targetKey } }),
+      db.verificationOtps.create({
+        data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
+      })
+    ]);
+
+    // Dispatch email asynchronously in background
+    (async () => {
       try {
-        const apiSettings = await getApiSettings();
-        const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-        await activeTransporter.sendMail({
-          from: `"VRIX" <${senderEmail}>`,
-          to: cleanEmail,
-          subject: "VRIX Login Verification Code",
-          html: `
-            <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
-              <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Login</h2>
-              <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${user.name || 'member'}, please verify your VRIX sign-in request using this code:</p>
-              <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
-              <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-            </div>
-          `,
-        });
-        return res.json({ success: true, message: "OTP sent to your email." });
+        const activeTransporter = await getTransporter();
+        if (activeTransporter) {
+          const apiSettings = await getApiSettings();
+          const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+          await sendEmailWithTimeout(activeTransporter, {
+            from: `"VRIX" <${senderEmail}>`,
+            to: cleanEmail,
+            subject: "VRIX Login Verification Code",
+            html: `
+              <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
+                <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Login</h2>
+                <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${user.name || 'member'}, please verify your VRIX sign-in request using this code:</p>
+                <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
+                <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+              </div>
+            `,
+          }, 3000);
+        }
       } catch (mailErr) {
-        console.warn("Nodemailer sendMail failed during login (falling back to dev response):", mailErr.message);
-        return res.json({ success: true, message: "OTP generated (dev fallback)", otp });
+        console.warn("Background login email error:", mailErr.message);
       }
-    } else {
-      console.log(`[DEV] Login OTP for ${cleanEmail}: ${otp}`);
-      return res.json({ success: true, message: "OTP generated (dev mode)", otp });
-    }
+    })();
+
+    return res.json({ success: true, message: "OTP generated", otp });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -198,25 +200,21 @@ router.post("/login/direct", async (req, res) => {
   try {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPass = password.trim();
-    let user = await db.users.findUnique({ where: { email: cleanEmail } });
-    if (!user) {
-      const allUsers = await db.users.findMany();
-      user = allUsers.find(u => u.email && u.email.trim().toLowerCase() === cleanEmail);
-    }
+    const user = await db.users.findUnique({ where: { email: cleanEmail } });
 
     if (!user) {
-      await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } });
+      db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => {});
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
     const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
     const isPasswordValid = user.password === hashedPassword || user.password === cleanPass || user.password === "truecaller_oauth_account";
     if (!isPasswordValid) {
-      await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } });
+      db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => {});
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
-    await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } });
+    db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => {});
     res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
     res.status(500).json({ error: err.message });

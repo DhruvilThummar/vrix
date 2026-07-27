@@ -1,6 +1,6 @@
 import express from "express";
 import { db } from "../database.js";
-import { getTransporter, getApiSettings } from "../config/apiResolvers.js";
+import { getTransporter, sendEmailWithTimeout, getApiSettings } from "../config/apiResolvers.js";
 
 const router = express.Router();
 
@@ -19,10 +19,11 @@ router.post("/send", async (req, res) => {
     });
 
     const activeTransporter = await getTransporter();
+    let emailSent = false;
     if (activeTransporter) {
       const apiSettings = await getApiSettings();
       const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-      await activeTransporter.sendMail({
+      const info = await sendEmailWithTimeout(activeTransporter, {
         from: `"VRIX" <${senderEmail}>`,
         to: email,
         subject: "Your VRIX Verification Code",
@@ -34,11 +35,15 @@ router.post("/send", async (req, res) => {
             <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
           </div>
         `,
-      });
+      }, 3000);
+      emailSent = !!info;
+    }
+
+    if (emailSent) {
       res.json({ success: true, message: "OTP sent to " + email });
     } else {
-      console.log(`[DEV] OTP for ${email}: ${otp}`);
-      res.json({ success: true, message: "OTP generated (dev mode)", otp });
+      console.log(`[DEV/FALLBACK] OTP for ${email}: ${otp}`);
+      res.json({ success: true, message: "OTP generated (dev fallback)", otp });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
