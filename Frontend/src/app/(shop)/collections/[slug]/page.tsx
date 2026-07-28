@@ -355,19 +355,19 @@ function CollectionContent() {
 
         {/* Empty State / Loading State / Product Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-gutter">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex flex-col">
-                <div className="relative w-full aspect-[4/5] bg-soft-linen overflow-hidden mb-2">
+                <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden mb-2">
                   <Skeleton height="100%" containerClassName="absolute inset-0 block h-full w-full" />
                 </div>
-                <div className="mt-stack-sm flex justify-between items-start pt-2">
-                  <div className="flex flex-col space-y-1 w-2/3">
-                    <Skeleton height={20} width="80%" />
-                    <Skeleton height={12} width="50%" />
+                <div className="mt-1 md:mt-stack-sm flex flex-col md:flex-row md:justify-between md:items-start pt-1 md:pt-2 gap-1">
+                  <div className="flex flex-col space-y-0.5 md:space-y-1">
+                    <Skeleton height={14} width="80%" />
+                    <Skeleton height={10} width="50%" />
                   </div>
-                  <div className="w-16">
-                    <Skeleton height={20} width="100%" />
+                  <div className="w-12 md:w-16">
+                    <Skeleton height={14} width="100%" />
                   </div>
                 </div>
               </div>
@@ -386,7 +386,7 @@ function CollectionContent() {
           </div>
         ) : (
           /* Product Grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-gutter">
             {processedProducts.map((p) => {
               const isWishlisted = wishlist.includes(p.id);
               return (
@@ -396,22 +396,22 @@ function CollectionContent() {
                   className="flex flex-col group cursor-pointer"
                 >
                   {/* Image Container */}
-                  <div className="relative w-full aspect-[4/5] bg-soft-linen overflow-hidden">
+                  <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden">
                     <Image
                       alt={p.title}
                       fill
                       className="object-cover object-center mix-blend-multiply opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
                       src={p.image}
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
                     />
                     {/* Wishlist Button */}
                     <button
                       onClick={(e) => toggleWishlist(p.id, p.title, e)}
                       aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                      className="absolute top-4 right-4 text-slate-grey hover:text-deep-navy transition-colors z-10 cursor-pointer p-1"
+                      className="absolute top-2 right-2 md:top-4 md:right-4 text-slate-grey hover:text-deep-navy transition-colors z-10 cursor-pointer p-1"
                     >
                       <span
-                        className="material-symbols-outlined text-xl"
+                        className="material-symbols-outlined text-lg md:text-xl"
                         style={{
                           fontVariationSettings: `'FILL' ${isWishlisted ? 1 : 0}, 'wght' 200`,
                           color: isWishlisted ? "#ba1a1a" : "inherit",
@@ -422,16 +422,16 @@ function CollectionContent() {
                     </button>
                   </div>
                   {/* Details */}
-                  <div className="mt-stack-sm flex justify-between items-start pt-2">
-                    <div className="flex flex-col space-y-1">
-                      <h2 className="font-body-md text-body-md text-on-surface font-medium">
+                  <div className="mt-1.5 md:mt-stack-sm flex flex-col md:flex-row md:justify-between md:items-start pt-1 md:pt-2 gap-0.5">
+                    <div className="flex flex-col space-y-0.5 md:space-y-1 min-w-0">
+                      <h2 className="font-body-md text-[11px] md:text-body-md text-on-surface font-medium truncate">
                         {p.title}
                       </h2>
-                      <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[10px]">
+                      <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
                         {p.material}
                       </span>
                     </div>
-                    <span className="font-body-md text-body-md text-on-surface font-semibold">
+                    <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">
                       ${p.price}
                     </span>
                   </div>

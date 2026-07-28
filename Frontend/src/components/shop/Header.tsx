@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import SkeletonImage from "@/components/shop/SkeletonImage";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { fetchDb, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
@@ -28,6 +28,24 @@ export default function Header() {
   const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem } = useCart();
   const { user, isLoggedIn } = useAuth();
 
+  // Transparent navbar state for home page
+  const isHomePage = pathname === "/";
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!isHomePage) {
+      setScrolled(true);
+      return;
+    }
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isHomePage]);
+
+
   // Navigation states
   const [navLinks, setNavLinks] = useState(DEFAULT_LINKS);
   const [logoUrl, setLogoUrl] = useState("/logos/black.png");
@@ -35,6 +53,24 @@ export default function Header() {
   const [bespokeEnabled, setBespokeEnabled] = useState(true);
   const [collections, setCollections] = useState<any[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
+
+  // Derived style states for transparent vs solid header
+  const isTransparent = isHomePage && !scrolled;
+  const headerBg = isTransparent
+    ? "bg-transparent text-pure-white border-transparent shadow-none"
+    : "bg-pure-white text-ink-black border-soft-linen shadow-sm";
+  const iconColor = isTransparent
+    ? "text-pure-white hover:text-pure-white/80"
+    : "hover:text-deep-navy";
+  const navLinkColor = isTransparent
+    ? "text-pure-white/90 hover:text-pure-white"
+    : "text-ink-black/70 hover:text-ink-black";
+  const navLinkActiveColor = isTransparent
+    ? "text-pure-white font-semibold border-pure-white"
+    : "text-ink-black border-ink-black font-semibold";
+  const displayLogo = isTransparent
+    ? "/logos/white.png"
+    : (logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl);
 
   // Announcement Bar State
   const [announcementBar, setAnnouncementBar] = useState<any>({
@@ -201,14 +237,14 @@ export default function Header() {
       )}
 
       {/* ─── DESKTOP NAVIGATION ─── */}
-      <header className="hidden md:block sticky top-0 z-40 bg-pure-white text-ink-black border-b border-soft-linen shadow-sm">
+      <header className={`hidden md:block fixed top-0 left-0 right-0 z-40 border-b transition-all duration-500 ease-out ${headerBg}`}>
         {/* Brand Banner Row */}
         <div className="w-full max-w-container-max mx-auto px-margin-desktop py-4 grid grid-cols-3 items-center">
           {/* Left space */}
-          <div className="flex justify-start text-xs text-slate-grey font-label-caps">
+          <div className={`flex justify-start text-xs font-label-caps ${isTransparent ? 'text-pure-white/70' : 'text-slate-grey'}`}>
             {isLoggedIn && user?.isVrixPlusMember && (
-              <Link href="/vrix-plus" className="flex items-center gap-1.5 text-deep-navy font-semibold hover:opacity-85 transition-opacity">
-                <span className="material-symbols-outlined text-[15px] font-bold text-deep-navy animate-pulse">stars</span>
+              <Link href="/vrix-plus" className={`flex items-center gap-1.5 font-semibold hover:opacity-85 transition-opacity ${isTransparent ? 'text-pure-white' : 'text-deep-navy'}`}>
+                <span className={`material-symbols-outlined text-[15px] font-bold animate-pulse ${isTransparent ? 'text-pure-white' : 'text-deep-navy'}`}>stars</span>
                 VRIX+ ACTIVE MEMBER
               </Link>
             )}
@@ -217,10 +253,10 @@ export default function Header() {
           {/* Center Brand Logo */}
           <div className="flex justify-center">
             <Link href="/" className="flex items-center">
-              {logoUrl && logoUrl !== "" ? (
+              {displayLogo && displayLogo !== "" ? (
                 <div className="relative h-8 w-32">
                   <Image
-                    src={logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl}
+                    src={displayLogo}
                     alt={brandName}
                     fill
                     className="object-contain"
@@ -229,7 +265,7 @@ export default function Header() {
                   />
                 </div>
               ) : (
-                <span className="font-display-lg text-3xl font-light tracking-[0.25em] uppercase text-ink-black select-none hover:opacity-80 transition-opacity">
+                <span className={`font-display-lg text-3xl font-light tracking-[0.25em] uppercase select-none hover:opacity-80 transition-opacity ${isTransparent ? 'text-pure-white' : 'text-ink-black'}`}>
                   {brandName}
                 </span>
               )}
@@ -240,38 +276,38 @@ export default function Header() {
           <div className="flex justify-end items-center gap-6">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-1 hover:text-deep-navy transition-colors duration-300 cursor-pointer flex items-center justify-center"
+              className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center ${iconColor}`}
               aria-label="Search Catalog"
             >
               <i className="fa-solid fa-magnifying-glass text-[18px]"></i>
             </button>
             <button
               onClick={() => setIsWishlistOpen(true)}
-              className="p-1 hover:text-deep-navy transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
+              className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative ${iconColor}`}
               aria-label="View Wishlist"
             >
               <i className="fa-regular fa-heart text-[19px]"></i>
               {wishlist.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className={`absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isTransparent ? 'bg-pure-white text-ink-black' : 'bg-black text-white'}`}>
                   {wishlist.length}
                 </span>
               )}
             </button>
             <button
               onClick={() => setIsAuthOpen(true)}
-              className="p-1 hover:text-deep-navy transition-colors duration-300 cursor-pointer flex items-center justify-center"
+              className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center ${iconColor}`}
               aria-label="User Account"
             >
               <i className="fa-regular fa-user text-[19px]"></i>
             </button>
             <button
               onClick={() => setIsCartOpen(true)}
-              className="p-1 hover:text-deep-navy transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
+              className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative ${iconColor}`}
               aria-label="Open Shopping Bag"
             >
               <i className="fa-solid fa-bag-shopping text-[19px]"></i>
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                <span className={`absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${isTransparent ? 'bg-pure-white text-ink-black' : 'bg-black text-white'}`}>
                   {totalItems}
                 </span>
               )}
@@ -280,14 +316,16 @@ export default function Header() {
         </div>
 
         {/* Links Navigation Row */}
-        <div className="w-full border-t border-soft-linen py-3 bg-pure-white">
+        <div className={`w-full border-t py-3 transition-all duration-500 ${isTransparent ? 'border-pure-white/15 bg-transparent' : 'border-soft-linen bg-pure-white'}`}>
           <nav className="flex justify-center gap-8 items-center max-w-container-max mx-auto px-margin-desktop">
             {navLinks.map((link, idx) => (
               <Link
                 key={idx}
                 href={link.path}
-                className={`font-label-caps text-xs tracking-[0.15em] uppercase transition-colors py-1 border-b border-transparent hover:border-ink-black/40 ${
-                  isActive(link.path) ? "text-ink-black border-ink-black font-semibold" : "text-ink-black/70 hover:text-ink-black"
+                className={`font-label-caps text-xs tracking-[0.15em] uppercase transition-colors py-1 border-b border-transparent ${
+                  isActive(link.path)
+                    ? navLinkActiveColor
+                    : `${navLinkColor} ${isTransparent ? 'hover:border-pure-white/40' : 'hover:border-ink-black/40'}`
                 }`}
               >
                 {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}

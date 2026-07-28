@@ -16,9 +16,13 @@ export default function ShopLayout({
     return <>{children}</>;
   }
 
+  const isHomePage = pathname === "/";
+
   return (
     <>
       <Header />
+      {/* Spacer for fixed desktop header on non-home pages */}
+      {!isHomePage && <div className="hidden md:block h-[105px]" />}
       <main className="flex-grow">{children}</main>
       <Footer />
     </>

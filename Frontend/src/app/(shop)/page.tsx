@@ -68,7 +68,7 @@ export default function Home() {
   return (
     <div className="w-full">
       {/* ─── Hero Section ─── */}
-      <section className="relative h-[819px] md:h-[calc(100vh-65px)] w-full flex items-center bg-[#EBEAE4] overflow-hidden">
+      <section className="relative h-[819px] md:h-screen w-full flex items-center bg-[#EBEAE4] overflow-hidden">
         {loading ? (
           <div className="absolute inset-0 z-0">
             <Skeleton height="100%" borderRadius="0px" containerClassName="w-full h-full block" />

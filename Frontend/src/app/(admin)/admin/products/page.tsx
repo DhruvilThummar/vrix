@@ -59,7 +59,7 @@ export default function AdminProductsPage() {
   const [fImage, setFImage] = useState("");
   const [fImages, setFImages] = useState<string[]>([]);
   const [fDescription, setFDescription] = useState("");
-  const [fCollection, setFCollection] = useState("silent-center");
+  const [fCollection, setFCollection] = useState("");
   const [fStock, setFStock] = useState(999);
   const [fVisible, setFVisible] = useState(true);
   const [fVrixPlusExclusive, setFVrixPlusExclusive] = useState(false);
@@ -114,7 +114,7 @@ export default function AdminProductsPage() {
     setFImage(p.image || "");
     setFImages(normalizeImages(p.image || "", p.images));
     setFDescription(p.description || "");
-    setFCollection(p.collection || "silent-center");
+    setFCollection(p.collection || "");
     setFStock(p.stock ?? 999); setFVisible(p.isVisible !== false);
     setFVrixPlusExclusive(!!p.isVrixPlusExclusive);
     setFVrixPlusPrice(p.vrixPlusPrice || 0);
@@ -124,7 +124,7 @@ export default function AdminProductsPage() {
     setSelectedProduct(null); setIsNew(true);
     setFTitle(""); setFMaterial(""); setFType("Ring");
     setFPrice(0); setFImage(""); setFImages([]); setFDescription("");
-    setFCollection("silent-center"); setFStock(999); setFVisible(true);
+    setFCollection(""); setFStock(999); setFVisible(true);
     setFVrixPlusExclusive(false); setFVrixPlusPrice(0);
   };
 
@@ -200,7 +200,7 @@ export default function AdminProductsPage() {
     const prodData = {
       title: fTitle, material: fMaterial, type: fType,
       price: Number(fPrice), image: fImage || productImages[0], images: productImages, description: fDescription,
-      collection: fCollection, stock: Number(fStock), isVisible: fVisible,
+      collection: fCollection || undefined, stock: Number(fStock), isVisible: fVisible,
       isVrixPlusExclusive: fVrixPlusExclusive,
       vrixPlusPrice: Number(fVrixPlusPrice) || undefined,
       alt: `A minimalist architectural ${fType} by VRIX from the ${collectionLabels[fCollection] || fCollection} collection.`,
@@ -406,6 +406,7 @@ export default function AdminProductsPage() {
                     <div className="flex flex-col gap-1.5">
                       <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Collection</label>
                       <select value={fCollection} onChange={(e) => setFCollection(e.target.value)} className="border-b border-slate-grey/30 py-1.5 bg-transparent focus:border-deep-navy outline-none font-body-md text-sm cursor-pointer">
+                        <option value="">None (No Collection)</option>
                         {collectionOptions.map((c) => <option key={c} value={c}>{collectionLabels[c] || c}</option>)}
                       </select>
                     </div>
