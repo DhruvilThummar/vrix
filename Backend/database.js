@@ -207,6 +207,17 @@ const runProductQuery = async (queryWithImages, queryWithoutImages) => {
   }
 };
 
+// withTimeout: wraps a promise with a timeout, rejects if too slow
+const withTimeout = (promise, ms) => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`DB query timed out after ${ms}ms`)), ms);
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); }
+    );
+  });
+};
+
 const userMemoryMap = new Map();
 const syncUserToMemory = (user) => {
   if (user && user.email) {
@@ -679,9 +690,9 @@ export const db = {
       }
       if (result.length === 0 && supabase) {
         try {
-          const { data, error } = await withTimeout(supabase.from("users").select("*"), 400);
+          const { data, error } = await withTimeout(supabase.from("users").select("*"), 5000);
           if (!error && Array.isArray(data)) result = data;
-        } catch (e) {}
+        } catch (e) { console.warn("Supabase users findMany failed:", e.message); }
       }
 
       const localData = readLocalDb();
@@ -720,15 +731,15 @@ export const db = {
         } catch (err) {}
       }
 
-      // FAST PATH 3: Check Supabase (300ms max timeout)
+      // FAST PATH 3: Check Supabase (5000ms timeout for cold starts)
       if (supabase) {
         try {
-          const { data, error } = await withTimeout(supabase.from("users").select("*").eq("email", targetEmail).maybeSingle(), 300);
+          const { data, error } = await withTimeout(supabase.from("users").select("*").eq("email", targetEmail).maybeSingle(), 5000);
           if (!error && data) {
             syncUserToMemory(data);
             return data;
           }
-        } catch (e) {}
+        } catch (e) { console.warn("Supabase user lookup failed:", e.message); }
       }
 
       // FAST PATH 4: Check local db.json
