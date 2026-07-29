@@ -550,5 +550,15 @@
       "otp": "941605",
       "expiresAt": "2026-07-24T11:49:51.444Z"
     }
+  ],
+  "users": [
+    {
+      "email": "admin@xyz.com",
+      "name": "Admin",
+      "phone": "1234567890",
+      "password": "240753c490f2a4726b23d9b4b087a1cf143a505e608034a7428807d9f7831d3f",
+      "isVrixPlusMember": false,
+      "vrixPlusJoinedDate": null
+    }
   ]
 }
