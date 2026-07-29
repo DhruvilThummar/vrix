@@ -152,6 +152,7 @@ export default function AdminCMSPage() {
   const [invoiceAddressLine1, setInvoiceAddressLine1] = useState("VRIX Architectural Fine Jewelry");
   const [invoiceAddressLine2, setInvoiceAddressLine2] = useState("Mumbai, India");
   const [invoiceFooterNotes, setInvoiceFooterNotes] = useState("This is a computer generated document. Signed under official luxury brand licensing.");
+  const [invoiceLogoUrl, setInvoiceLogoUrl] = useState("");
 
   // --- Dynamic Multi-Currency & Internationalization States ---
   const [usdRate, setUsdRate] = useState(85.0);
@@ -332,6 +333,7 @@ export default function AdminCMSPage() {
           setInvoiceAddressLine1(res.invoice_settings.addressLine1 || "VRIX Architectural Fine Jewelry");
           setInvoiceAddressLine2(res.invoice_settings.addressLine2 || "Mumbai, India");
           setInvoiceFooterNotes(res.invoice_settings.footerNotes || "");
+          setInvoiceLogoUrl(res.invoice_settings.logoUrl || "");
         }
         // Internationalization / Currencies
         if (res.currency_settings) {
@@ -478,7 +480,8 @@ export default function AdminCMSPage() {
           companyGst: invoiceCompanyGst,
           addressLine1: invoiceAddressLine1,
           addressLine2: invoiceAddressLine2,
-          footerNotes: invoiceFooterNotes
+          footerNotes: invoiceFooterNotes,
+          logoUrl: invoiceLogoUrl
         },
         currency_settings: {
           usdRate: Number(usdRate),
@@ -1910,6 +1913,17 @@ export default function AdminCMSPage() {
                       />
                     </div>
 
+                    <div className="flex flex-col gap-2 md:col-span-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Company Image Logo URL (Optional)</label>
+                      <input
+                        type="text"
+                        value={invoiceLogoUrl}
+                        onChange={(e) => setInvoiceLogoUrl(e.target.value)}
+                        placeholder="e.g. /logos/black.png or https://example.com/logo.png"
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none bg-transparent"
+                      />
+                    </div>
+
                     <div className="flex flex-col gap-2">
                       <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Seller GST Number</label>
                       <input
@@ -1978,15 +1992,25 @@ export default function AdminCMSPage() {
                     {/* Header Row */}
                     <div className="flex justify-between items-start pb-6 border-b-2 mb-6" style={{ borderColor: invoiceThemeColor }}>
                       <div>
-                        <div 
-                          className="font-bold tracking-widest uppercase text-deep-navy" 
-                          style={{ 
-                            fontSize: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 28}px`,
-                            color: invoiceThemeColor
-                          }}
-                        >
-                          {invoiceCompanyName || "VRIX"}
-                        </div>
+                        {invoiceLogoUrl ? (
+                          <div className="relative mb-2 flex items-center" style={{ height: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 32}px`, width: "auto" }}>
+                            <img
+                              src={invoiceLogoUrl}
+                              alt={invoiceCompanyName || "Brand Logo"}
+                              style={{ height: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 32}px`, objectFit: "contain" }}
+                            />
+                          </div>
+                        ) : (
+                          <div 
+                            className="font-bold tracking-widest uppercase text-deep-navy" 
+                            style={{ 
+                              fontSize: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 28}px`,
+                              color: invoiceThemeColor
+                            }}
+                          >
+                            {invoiceCompanyName || "VRIX"}
+                          </div>
+                        )}
                         <div className="text-[10px] uppercase tracking-wider text-slate-grey mt-1 font-semibold">Official Tax Invoice</div>
                         {invoiceCompanyGst && (
                           <div className="text-[9px] text-slate-grey mt-1 font-semibold">GSTIN: {invoiceCompanyGst}</div>
