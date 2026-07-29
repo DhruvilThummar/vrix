@@ -425,7 +425,7 @@ router.get("/invoice/:orderId", async (req, res) => {
         <div class="container">
           <div class="header">
             <div>
-              <div class="brand" style="font-size: ${cfg.logoWidth}px">${cfg.companyName}</div>
+              <div class="brand" style="font-size: ${cfg.logoWidth || '28'}px">${cfg.companyName || 'VRIX'}</div>
               <div class="title">Official Tax Invoice</div>
               ${cfg.companyGst ? `<div style="font-size: 10px; color: #555; margin-top: 5px;">GSTIN: <strong>${cfg.companyGst}</strong></div>` : ""}
             </div>
