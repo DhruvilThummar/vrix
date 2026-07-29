@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { fetchProducts, fetchPaymentLogs, fetchUsers, fetchDb } from "@/utils/api";
+import { useRouter, usePathname } from "next/navigation";
+import { fetchProducts, fetchPaymentLogs, fetchUsers } from "@/utils/api";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminProfileModal from "@/components/admin/AdminProfileModal";
@@ -12,19 +11,19 @@ const DEFAULT_AVATAR = "https://lh3.googleusercontent.com/aida-public/AB6AXuCEmD
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, isLoggedIn, logout } = useAuth();
+  const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // ── Admin-specific Auth State (completely separate from customer auth) ──
+  const [adminUser, setAdminUser] = useState<{ email: string; name: string; role: string } | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Profile State
   const [adminName, setAdminName] = useState("Admin User");
   const [adminAvatar, setAdminAvatar] = useState(DEFAULT_AVATAR);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Guard State
-  const [adminEmail, setAdminEmail] = useState("admin@xyz.com");
-  const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,50 +34,57 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  // Load admin profile and email config on mount
+  // ── Check vrix-admin-token on mount ──────────────────────────────────────
   useEffect(() => {
-    const savedName = localStorage.getItem("vrix_admin_name");
-    const savedAvatar = localStorage.getItem("vrix_admin_avatar");
-    if (savedName) setAdminName(savedName);
-    if (savedAvatar) setAdminAvatar(savedAvatar);
+    // If on the login page, don't run guard
+    if (pathname === "/admin/login") {
+      setCheckingAuth(false);
+      return;
+    }
 
-    let active = true;
-    fetchDb()
-      .then((res) => {
-        if (active && res && res.admin_email) {
-          setAdminEmail(res.admin_email);
+    try {
+      const stored = localStorage.getItem("vrix-admin-token");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.role === "admin") {
+          setAdminUser(parsed);
+          // Load display name/avatar
+          const savedName = localStorage.getItem("vrix_admin_name");
+          const savedAvatar = localStorage.getItem("vrix_admin_avatar");
+          if (savedName) setAdminName(savedName);
+          else if (parsed.name) setAdminName(parsed.name);
+          if (savedAvatar) setAdminAvatar(savedAvatar);
+          setCheckingAuth(false);
+          return;
         }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (active) setCheckingAuth(false);
-      });
+      }
+    } catch {}
 
-    return () => {
-      active = false;
-    };
-  }, []);
+    // Not authenticated as admin → redirect to admin login
+    router.replace("/admin/login");
+    setCheckingAuth(false);
+  }, [pathname, router]);
 
-  // Close dropdown on click outside
+  // Close dropdown on outside click
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsDropdownOpen(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Close search on click outside
+  // Close search on outside click
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+    const handler = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setIsSearchFocused(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const loadSearchData = async () => {
@@ -100,43 +106,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
-  // Compile unique customers from users + orders
-  const customers = React.useMemo(() => {
-    const map = new Map<string, { name: string; email: string; phone?: string; type: "registered" | "guest" }>();
-    usersCache.forEach(u => {
-      if (u.email) {
-        map.set(u.email.toLowerCase(), { name: u.name || "Unnamed", email: u.email, phone: u.phone, type: "registered" });
-      }
-    });
-    ordersCache.forEach(o => {
-      if (o.userEmail) {
-        const emailKey = o.userEmail.toLowerCase();
-        if (!map.has(emailKey)) {
-          map.set(emailKey, { name: o.customerName || "Guest Buyer", email: o.userEmail, phone: o.customerPhone, type: "guest" });
-        } else {
-          const existing = map.get(emailKey)!;
-          if (existing.name === "Unnamed" && o.customerName) existing.name = o.customerName;
-          if (!existing.phone && o.customerPhone) existing.phone = o.customerPhone;
-        }
-      }
-    });
-    return Array.from(map.values());
-  }, [usersCache, ordersCache]);
+  const customers = React.useMemo(() =>
+    usersCache.map((u: any) => ({
+      name: u.name || u.email,
+      email: u.email,
+      orders: ordersCache.filter((o: any) => o.userEmail === u.email).length,
+    })),
+    [usersCache, ordersCache]
+  );
 
   const searchResults = React.useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return { products: [], orders: [], customers: [] };
     return {
-      products: productsCache.filter(p =>
-        p.title?.toLowerCase().includes(q) || p.collection?.toLowerCase().includes(q) ||
-        p.material?.toLowerCase().includes(q) || p.id?.toLowerCase().includes(q) || p.type?.toLowerCase().includes(q)
+      products: productsCache.filter((p: any) =>
+        p.title?.toLowerCase().includes(q) || p.type?.toLowerCase().includes(q)
       ).slice(0, 5),
-      orders: ordersCache.filter(o =>
-        o.orderId?.toLowerCase().includes(q) || o.paymentId?.toLowerCase().includes(q) ||
-        o.userEmail?.toLowerCase().includes(q) || o.customerName?.toLowerCase().includes(q) || o.status?.toLowerCase().includes(q)
+      orders: ordersCache.filter((o: any) =>
+        o.orderId?.toLowerCase().includes(q) || o.userEmail?.toLowerCase().includes(q)
       ).slice(0, 5),
-      customers: customers.filter(c =>
-        c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q)
+      customers: customers.filter((c: any) =>
+        c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q)
       ).slice(0, 5),
     };
   }, [searchQuery, productsCache, ordersCache, customers]);
@@ -149,15 +139,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return list;
   }, [searchResults]);
 
-  // Route Guard Effect
-  useEffect(() => {
-    if (!checkingAuth) {
-      if (!isLoggedIn || (user && user.email.toLowerCase() !== adminEmail.toLowerCase())) {
-        router.replace("/account");
-      }
-    }
-  }, [isLoggedIn, user, adminEmail, checkingAuth, router]);
-
   const handleSaveProfile = (name: string, avatar: string) => {
     setAdminName(name);
     setAdminAvatar(avatar);
@@ -167,18 +148,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem("vrix-admin-token");
+    localStorage.removeItem("vrix_admin_name");
+    localStorage.removeItem("vrix_admin_avatar");
     localStorage.removeItem("vrix_delivery_user");
+    setAdminUser(null);
     setIsDropdownOpen(false);
     setIsSearchFocused(false);
     setSearchQuery("");
-    router.replace("/account");
+    router.replace("/admin/login");
   };
 
-  if (checkingAuth || !isLoggedIn || (user && user.email.toLowerCase() !== adminEmail.toLowerCase())) {
+  // ── If on login page, render children directly (no sidebar/header) ───────
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  // ── Loading / not authenticated ───────────────────────────────────────────
+  if (checkingAuth || !adminUser) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-soft-linen gap-4 text-slate-grey font-label-caps text-xs tracking-widest">
-        <div className="w-8 h-8 border-2 border-deep-navy border-t-transparent rounded-full animate-spin"></div>
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-[#0a0c14] gap-4 text-white/40 text-xs tracking-widest">
+        <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
         Authenticating Administrator...
       </div>
     );
