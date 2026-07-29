@@ -93,14 +93,21 @@ function ProductContent() {
     }
     setBagLoading(true);
     setTimeout(() => {
+      let basePrice = (product.isVrixPlusExclusive && product.vrixPlusPrice) ? product.vrixPlusPrice : product.price;
+      
+      let customizationPrice = 0;
+      if (engraving && product.engravingOptions?.enabled) customizationPrice += (product.engravingOptions.price || 0);
+      if (giftNote && product.giftNoteOptions?.enabled) customizationPrice += (product.giftNoteOptions.price || 0);
+
       addItem({
         id: product.id,
         title: product.title,
-        price: (product.isVrixPlusExclusive && product.vrixPlusPrice) ? product.vrixPlusPrice : product.price,
+        price: basePrice + customizationPrice,
         image: product.image,
         material: selectedMetal || product.material || "18K Gold Vermeil",
         size,
         engraving,
+        giftNote,
       });
       setBagLoading(false);
       showToast(`"${product.title}" has been added to your bag.`);
@@ -286,42 +293,46 @@ function ProductContent() {
                 </div>
  
                 {/* Engraving (Optional) */}
-                <div className="flex flex-col gap-2 mt-2">
-                  <div className="flex justify-between items-center">
-                    <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="engraving">
-                      Engraving (Optional)
-                    </label>
-                    <span className="font-label-caps text-slate-grey text-[10px]">{engraving.length}/25</span>
+                {product.engravingOptions?.enabled && (
+                  <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="engraving">
+                        Engraving (Optional) {product.engravingOptions.price > 0 && `(+$${product.engravingOptions.price})`}
+                      </label>
+                      <span className="font-label-caps text-slate-grey text-[10px]">{engraving.length}/{product.engravingOptions.limit || 25}</span>
+                    </div>
+                    <input
+                      className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
+                      id="engraving"
+                      placeholder="Add a personal message"
+                      type="text"
+                      maxLength={product.engravingOptions.limit || 25}
+                      value={engraving}
+                      onChange={(e) => setEngraving(e.target.value)}
+                    />
                   </div>
-                  <input
-                    className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
-                    id="engraving"
-                    placeholder="Add a personal message"
-                    type="text"
-                    maxLength={25}
-                    value={engraving}
-                    onChange={(e) => setEngraving(e.target.value)}
-                  />
-                </div>
+                )}
  
                 {/* Gift Note (Optional) */}
-                <div className="flex flex-col gap-2 mt-2">
-                  <div className="flex justify-between items-center">
-                    <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="gift-note">
-                      Gift Note (Optional)
-                    </label>
-                    <span className="font-label-caps text-slate-grey text-[10px]">{giftNote.length}/120</span>
+                {product.giftNoteOptions?.enabled && (
+                  <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="gift-note">
+                        Gift Note (Optional) {product.giftNoteOptions.price > 0 && `(+$${product.giftNoteOptions.price})`}
+                      </label>
+                      <span className="font-label-caps text-slate-grey text-[10px]">{giftNote.length}/{product.giftNoteOptions.limit || 120}</span>
+                    </div>
+                    <textarea
+                      className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0 resize-none"
+                      id="gift-note"
+                      placeholder="Write your message"
+                      rows={2}
+                      maxLength={product.giftNoteOptions.limit || 120}
+                      value={giftNote}
+                      onChange={(e) => setGiftNote(e.target.value)}
+                    />
                   </div>
-                  <input
-                    className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
-                    id="gift-note"
-                    placeholder="Write your message"
-                    type="text"
-                    maxLength={120}
-                    value={giftNote}
-                    onChange={(e) => setGiftNote(e.target.value)}
-                  />
-                </div>
+                )}
               </div>
  
               {/* Actions */}

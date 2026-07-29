@@ -31,6 +31,8 @@ model Product {
   isVisible           Boolean  @default(true)  @map("is_visible")
   isVrixPlusExclusive Boolean  @default(false) @map("is_vrix_plus_exclusive")
   vrixPlusPrice       Float?   @map("vrix_plus_price")
+  engravingOptions    Json?    @map("engraving_options")
+  giftNoteOptions     Json?    @map("gift_note_options")
   createdAt           DateTime @default(now()) @map("created_at")
 
   @@map("products")

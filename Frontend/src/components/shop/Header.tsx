@@ -28,22 +28,17 @@ export default function Header() {
   const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem } = useCart();
   const { user, isLoggedIn } = useAuth();
 
-  // Transparent navbar state for home page
   const isHomePage = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    if (!isHomePage) {
-      setScrolled(true);
-      return;
-    }
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isHomePage]);
+  }, [pathname]);
 
 
   // Navigation states
@@ -55,7 +50,7 @@ export default function Header() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
 
   // Derived style states for transparent vs solid header
-  const isTransparent = isHomePage && !scrolled;
+  const isTransparent = !scrolled;
   const headerBg = isTransparent
     ? "bg-transparent text-pure-white border-transparent shadow-none"
     : "bg-pure-white text-ink-black border-soft-linen shadow-sm";

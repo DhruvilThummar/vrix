@@ -11,6 +11,7 @@ export interface CartItem {
   quantity: number;
   size?: string;
   engraving?: string;
+  giftNote?: string;
 }
 
 interface CartContextType {

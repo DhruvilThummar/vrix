@@ -31,6 +31,8 @@ type Product = {
   isVisible?: boolean;
   isVrixPlusExclusive?: boolean;
   vrixPlusPrice?: number;
+  engravingOptions?: { enabled: boolean; limit: number; price: number };
+  giftNoteOptions?: { enabled: boolean; limit: number; price: number };
   alt?: string;
 };
 
@@ -64,6 +66,14 @@ export default function AdminProductsPage() {
   const [fVisible, setFVisible] = useState(true);
   const [fVrixPlusExclusive, setFVrixPlusExclusive] = useState(false);
   const [fVrixPlusPrice, setFVrixPlusPrice] = useState(0);
+
+  const [fEngravingEnabled, setFEngravingEnabled] = useState(false);
+  const [fEngravingLimit, setFEngravingLimit] = useState(25);
+  const [fEngravingPrice, setFEngravingPrice] = useState(0);
+
+  const [fGiftNoteEnabled, setFGiftNoteEnabled] = useState(false);
+  const [fGiftNoteLimit, setFGiftNoteLimit] = useState(120);
+  const [fGiftNotePrice, setFGiftNotePrice] = useState(0);
 
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -118,6 +128,12 @@ export default function AdminProductsPage() {
     setFStock(p.stock ?? 999); setFVisible(p.isVisible !== false);
     setFVrixPlusExclusive(!!p.isVrixPlusExclusive);
     setFVrixPlusPrice(p.vrixPlusPrice || 0);
+    setFEngravingEnabled(p.engravingOptions?.enabled || false);
+    setFEngravingLimit(p.engravingOptions?.limit || 25);
+    setFEngravingPrice(p.engravingOptions?.price || 0);
+    setFGiftNoteEnabled(p.giftNoteOptions?.enabled || false);
+    setFGiftNoteLimit(p.giftNoteOptions?.limit || 120);
+    setFGiftNotePrice(p.giftNoteOptions?.price || 0);
   };
 
   const handleNewProduct = () => {
@@ -126,6 +142,8 @@ export default function AdminProductsPage() {
     setFPrice(0); setFImage(""); setFImages([]); setFDescription("");
     setFCollection(""); setFStock(999); setFVisible(true);
     setFVrixPlusExclusive(false); setFVrixPlusPrice(0);
+    setFEngravingEnabled(false); setFEngravingLimit(25); setFEngravingPrice(0);
+    setFGiftNoteEnabled(false); setFGiftNoteLimit(120); setFGiftNotePrice(0);
   };
 
   useEffect(() => {
@@ -203,6 +221,8 @@ export default function AdminProductsPage() {
       collection: fCollection || undefined, stock: Number(fStock), isVisible: fVisible,
       isVrixPlusExclusive: fVrixPlusExclusive,
       vrixPlusPrice: Number(fVrixPlusPrice) || undefined,
+      engravingOptions: { enabled: fEngravingEnabled, limit: fEngravingLimit, price: fEngravingPrice },
+      giftNoteOptions: { enabled: fGiftNoteEnabled, limit: fGiftNoteLimit, price: fGiftNotePrice },
       alt: `A minimalist architectural ${fType} by VRIX from the ${collectionLabels[fCollection] || fCollection} collection.`,
     };
     try {
@@ -464,6 +484,59 @@ export default function AdminProductsPage() {
                         />
                       </div>
                     )}
+                  </div>
+
+                  {/* Product Customizations: Engraving & Gift Notes */}
+                  <div className="p-4 border border-slate-grey/20 bg-slate-50/50 space-y-4">
+                    <h4 className="font-label-caps text-[10px] text-deep-navy uppercase tracking-widest font-semibold border-b border-slate-grey/15 pb-2">
+                      Customizations & Personalization
+                    </h4>
+                    
+                    {/* Engraving */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="engraving-toggle" className="font-label-caps text-[10px] text-ink-black uppercase tracking-widest flex items-center gap-2 cursor-pointer">
+                          <span className="material-symbols-outlined text-[14px]">edit_square</span>
+                          Enable Engraving
+                        </label>
+                        <input type="checkbox" id="engraving-toggle" checked={fEngravingEnabled} onChange={(e) => setFEngravingEnabled(e.target.checked)} className="w-4 h-4 cursor-pointer" />
+                      </div>
+                      {fEngravingEnabled && (
+                        <div className="grid grid-cols-2 gap-4 pl-6 border-l-2 border-slate-grey/10 ml-1">
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[8px] text-slate-grey uppercase tracking-widest">Max Characters</label>
+                            <input type="number" value={fEngravingLimit} onChange={(e) => setFEngravingLimit(Number(e.target.value))} min={1} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[8px] text-slate-grey uppercase tracking-widest">Extra Charge ($)</label>
+                            <input type="number" value={fEngravingPrice} onChange={(e) => setFEngravingPrice(Number(e.target.value))} min={0} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Gift Note */}
+                    <div className="space-y-3 pt-2 border-t border-slate-grey/10">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="giftnote-toggle" className="font-label-caps text-[10px] text-ink-black uppercase tracking-widest flex items-center gap-2 cursor-pointer">
+                          <span className="material-symbols-outlined text-[14px]">card_membership</span>
+                          Enable Gift Note
+                        </label>
+                        <input type="checkbox" id="giftnote-toggle" checked={fGiftNoteEnabled} onChange={(e) => setFGiftNoteEnabled(e.target.checked)} className="w-4 h-4 cursor-pointer" />
+                      </div>
+                      {fGiftNoteEnabled && (
+                        <div className="grid grid-cols-2 gap-4 pl-6 border-l-2 border-slate-grey/10 ml-1">
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[8px] text-slate-grey uppercase tracking-widest">Max Characters</label>
+                            <input type="number" value={fGiftNoteLimit} onChange={(e) => setFGiftNoteLimit(Number(e.target.value))} min={1} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="font-label-caps text-[8px] text-slate-grey uppercase tracking-widest">Extra Charge ($)</label>
+                            <input type="number" value={fGiftNotePrice} onChange={(e) => setFGiftNotePrice(Number(e.target.value))} min={0} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Images */}
