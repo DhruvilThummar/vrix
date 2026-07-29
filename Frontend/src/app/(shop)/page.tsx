@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { fetchDbPublic as fetchDb } from "@/utils/api";
+import { useEffect, useState, useMemo } from "react";
+import { fetchDbPublic as fetchDb, fetchProducts } from "@/utils/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import SkeletonImage from "@/components/shop/SkeletonImage";
@@ -44,18 +44,23 @@ const DEFAULT_DATA = {
         description: "A piece for every\nchapter of you."
       }
     ],
-    categories: [] as any[]
+    categories: [] as any[],
+    featuredCollections: [] as string[],
+    newArrivals: [] as string[],
+    featuredProducts: [] as string[]
   },
   collections: [] as any[],
 };
 
 export default function Home() {
   const [store, setStore] = useState(DEFAULT_DATA);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDb()
-      .then((res) => {
+    Promise.all([fetchDb(), fetchProducts()])
+      .then(([res, prodRes]) => {
+        setAllProducts(prodRes || []);
         if (res.homepage && Array.isArray(res.collections)) {
           setStore({
             homepage: {
@@ -72,6 +77,31 @@ export default function Home() {
         setTimeout(() => setLoading(false), 600);
       });
   }, []);
+
+  // Filter collections and products based on admin layout options
+  const featuredCollectionsList = useMemo(() => {
+    const ids = store.homepage.featuredCollections || [];
+    if (ids.length === 0) return store.collections.slice(0, 4);
+    return ids
+      .map((id) => store.collections.find((c) => c.id === id))
+      .filter(Boolean);
+  }, [store.homepage.featuredCollections, store.collections]);
+
+  const newArrivalsList = useMemo(() => {
+    const ids = store.homepage.newArrivals || [];
+    if (ids.length === 0) return allProducts.slice(0, 4);
+    return ids
+      .map((id) => allProducts.find((p) => p.id === id))
+      .filter(Boolean);
+  }, [store.homepage.newArrivals, allProducts]);
+
+  const featuredProductsList = useMemo(() => {
+    const ids = store.homepage.featuredProducts || [];
+    if (ids.length === 0) return allProducts.slice(4, 8);
+    return ids
+      .map((id) => allProducts.find((p) => p.id === id))
+      .filter(Boolean);
+  }, [store.homepage.featuredProducts, allProducts]);
 
   return (
     <div className="w-full">
@@ -150,7 +180,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-            {store.collections.map((col) => (
+            {featuredCollectionsList.map((col: any) => (
               <Link
                 key={col.id}
                 href={col.link || `/collections/silent-center?collection=${col.id}`}
@@ -234,8 +264,110 @@ export default function Home() {
         )}
       </section>
 
+      {/* ─── New Arrivals Product Section ─── */}
+      <section className="py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
+        <div className="text-center mb-section-gap">
+          <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
+            Atelier Releases
+          </p>
+          <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
+            New Arrivals
+          </h2>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex flex-col">
+                <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden mb-2">
+                  <Skeleton height="100%" containerClassName="absolute inset-0 block h-full w-full" />
+                </div>
+                <div className="mt-2 flex justify-between">
+                  <Skeleton height={14} width="70%" />
+                  <Skeleton height={14} width="20%" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+            {newArrivalsList.map((p: any) => (
+              <Link key={p.id} href={`/product/${p.id}`} className="flex flex-col group cursor-pointer">
+                <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden border border-slate-grey/10">
+                  <Image
+                    alt={p.title}
+                    fill
+                    className="object-cover object-center mix-blend-multiply opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
+                    src={p.image}
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                  />
+                </div>
+                <div className="mt-3 flex justify-between items-start">
+                  <div className="flex flex-col min-w-0">
+                    <h3 className="font-body-md text-sm text-ink-black font-medium truncate">{p.title}</h3>
+                    <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{p.material}</span>
+                  </div>
+                  <span className="font-body-md text-sm text-ink-black font-semibold">${p.price}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ─── Featured Products Section ─── */}
+      <section className="py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
+        <div className="text-center mb-section-gap">
+          <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
+            Curated Atelier Picks
+          </p>
+          <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
+            Featured Products
+          </h2>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex flex-col">
+                <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden mb-2">
+                  <Skeleton height="100%" containerClassName="absolute inset-0 block h-full w-full" />
+                </div>
+                <div className="mt-2 flex justify-between">
+                  <Skeleton height={14} width="70%" />
+                  <Skeleton height={14} width="20%" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+            {featuredProductsList.map((p: any) => (
+              <Link key={p.id} href={`/product/${p.id}`} className="flex flex-col group cursor-pointer">
+                <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden border border-slate-grey/10">
+                  <Image
+                    alt={p.title}
+                    fill
+                    className="object-cover object-center mix-blend-multiply opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
+                    src={p.image}
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                  />
+                </div>
+                <div className="mt-3 flex justify-between items-start">
+                  <div className="flex flex-col min-w-0">
+                    <h3 className="font-body-md text-sm text-ink-black font-medium truncate">{p.title}</h3>
+                    <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{p.material}</span>
+                  </div>
+                  <span className="font-body-md text-sm text-ink-black font-semibold">${p.price}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* ─── Brand Philosophy / Features ─── */}
-      <section className="bg-[#F5F4F0] py-section-gap border-t border-b border-slate-grey/25">
+      <section className="bg-[#F5F4F0] py-section-gap border-t border-slate-grey/25">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">
           <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
             The World of VRIX
