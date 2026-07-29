@@ -392,7 +392,7 @@ export default function AdminNavigationPage() {
         </div>
 
         {/* Live Interactive Navigation Preview */}
-        <section className="bg-pure-white border border-slate-grey/25 p-6 shadow-sm space-y-4 rounded relative">
+        <section className="bg-pure-white border border-slate-grey/25 p-6 shadow-sm space-y-4 rounded relative z-40">
           <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
             <div>
               <h3 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider uppercase flex items-center gap-1.5">
