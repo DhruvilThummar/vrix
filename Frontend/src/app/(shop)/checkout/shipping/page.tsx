@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { fetchDbPublic as fetchDb, verifyTruecaller } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
+import { useCurrency } from "@/utils/useCurrency";
 
 export default function Page() {
   const router = useRouter();
@@ -96,6 +97,14 @@ export default function Page() {
     }
   };
 
+  const { convertPrice, currency, getTaxRate } = useCurrency();
+  const [country, setCountry] = useState("IN");
+
+  // Update country mapping from select field
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCountry(e.target.value.toUpperCase());
+  };
+
   const discountAmount =
     promoType === "percentage"
       ? (subtotal * discount) / 100
@@ -104,8 +113,16 @@ export default function Page() {
       : 0;
 
   const finalSubtotal = subtotal - discountAmount;
-  const shippingFee = finalSubtotal >= 150 ? 0 : 15;
-  const grandTotal = finalSubtotal + shippingFee;
+  // Convert standard shipping limits (e.g. ₹150 limit)
+  const convertedSubtotal = convertPrice(finalSubtotal);
+  const rawShippingFee = finalSubtotal >= 150 ? 0 : 15;
+  const shippingFee = convertPrice(rawShippingFee);
+
+  // Apply country-specific tax rules
+  const taxRate = getTaxRate();
+  const taxAmount = Number(((convertedSubtotal + shippingFee) * (taxRate / 100)).toFixed(2));
+  
+  const grandTotal = Number((convertedSubtotal + shippingFee + taxAmount).toFixed(2));
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -113,7 +130,6 @@ export default function Page() {
     
     const email = fd.get("email") as string;
     const fullName = fd.get("full-name") as string;
-    const country = fd.get("country") as string;
     const address = fd.get("address") as string;
     const apartment = fd.get("apartment") as string;
     const city = fd.get("city") as string;
@@ -130,7 +146,7 @@ export default function Page() {
       postalCode,
       phone,
       grandTotal,
-      currency: "INR"
+      currency
     };
 
     sessionStorage.setItem("vrix-shipping", JSON.stringify(shippingData));
@@ -194,8 +210,19 @@ export default function Page() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
                 <div className="relative col-span-1 md:col-span-2">
                   <label className="sr-only" htmlFor="country">Country/Region</label>
-                  <select autoComplete="country-name" className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 pr-10 text-ink-black focus:border-deep-navy focus:ring-0 sm:text-body-md appearance-none transition-colors duration-300" id="country" name="country">
-                    <option value="india">India</option>
+                  <select 
+                    autoComplete="country-name" 
+                    value={country.toLowerCase()} 
+                    onChange={handleCountryChange} 
+                    className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 pr-10 text-ink-black focus:border-deep-navy focus:ring-0 sm:text-body-md appearance-none transition-colors duration-300" 
+                    id="country" 
+                    name="country"
+                  >
+                    <option value="in">India</option>
+                    <option value="us">United States</option>
+                    <option value="fr">France</option>
+                    <option value="de">Germany</option>
+                    <option value="gb">United Kingdom</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                     <span aria-hidden="true" className="material-symbols-outlined text-slate-grey" style={{ fontSize: "20px" }}>expand_more</span>

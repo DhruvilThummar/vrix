@@ -9,6 +9,7 @@ import { fetchDb, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
+import { useCurrency } from "@/utils/useCurrency";
 
 const NAV_DATA = [
   {
@@ -52,6 +53,7 @@ export default function Header() {
   const router = useRouter();
   const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem } = useCart();
   const { user, isLoggedIn } = useAuth();
+  const { currency, changeCurrency } = useCurrency();
 
   const isHomePage = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
@@ -323,6 +325,17 @@ export default function Header() {
 
           {/* Right Action Icons */}
           <div className="flex justify-end items-center gap-6">
+            <select
+              value={currency}
+              onChange={(e) => changeCurrency(e.target.value as any)}
+              className={`bg-transparent text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2 ${
+                isTransparent ? (isHome ? 'text-pure-white bg-[#000]' : 'text-ink-black') : 'text-ink-black'
+              }`}
+            >
+              <option value="INR" style={{ color: "#000" }}>INR (₹)</option>
+              <option value="USD" style={{ color: "#000" }}>USD ($)</option>
+              <option value="EUR" style={{ color: "#000" }}>EUR (€)</option>
+            </select>
             <button
               onClick={() => setIsSearchOpen(true)}
               className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center ${iconColor}`}

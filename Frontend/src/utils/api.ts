@@ -86,6 +86,8 @@ export async function updateCMS(data: {
   gift_wrapping?: any;
   metal_types?: any[];
   announcement_bar?: any;
+  invoice_settings?: any;
+  currency_settings?: any;
 }) {
   return apiFetch<any>("/cms", {
     method: "POST",

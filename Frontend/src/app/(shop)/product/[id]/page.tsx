@@ -10,6 +10,7 @@ import ProductImageGrid2x2 from "@/components/pdp/ProductImageGrid2x2";
 import MetalSwatches from "@/components/pdp/MetalSwatches";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useCurrency } from "@/utils/useCurrency";
  
 const DEFAULT_PRODUCT = {
   id: "silent-center-ring",
@@ -26,6 +27,7 @@ function ProductContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isLoggedIn } = useAuth();
+  const { formatPrice } = useCurrency();
   const productId = (params?.id as string) || searchParams.get("id");
   const { addItem } = useCart();
  
@@ -240,12 +242,12 @@ function ProductContent() {
                 <div className="flex items-baseline gap-3 mt-2">
                   {product.isVrixPlusExclusive && product.vrixPlusPrice ? (
                     <>
-                      <span className="font-headline-md text-deep-navy text-2xl font-semibold">${product.vrixPlusPrice}</span>
+                      <span className="font-headline-md text-deep-navy text-2xl font-semibold">{formatPrice(product.vrixPlusPrice)}</span>
                       <span className="font-label-caps text-[10px] text-amber-700 uppercase font-bold tracking-wider">Member Price</span>
-                      <span className="font-body-md text-slate-grey/60 line-through text-sm">${product.price}</span>
+                      <span className="font-body-md text-slate-grey/60 line-through text-sm">{formatPrice(product.price)}</span>
                     </>
                   ) : (
-                    <p className="font-headline-md text-ink-black text-2xl font-semibold">${product.price}</p>
+                    <p className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(product.price)}</p>
                   )}
                 </div>
 

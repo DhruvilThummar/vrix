@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer";
+type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings";
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
@@ -152,6 +152,14 @@ export default function AdminCMSPage() {
   const [invoiceAddressLine1, setInvoiceAddressLine1] = useState("VRIX Architectural Fine Jewelry");
   const [invoiceAddressLine2, setInvoiceAddressLine2] = useState("Mumbai, India");
   const [invoiceFooterNotes, setInvoiceFooterNotes] = useState("This is a computer generated document. Signed under official luxury brand licensing.");
+
+  // --- Dynamic Multi-Currency & Internationalization States ---
+  const [usdRate, setUsdRate] = useState(85.0);
+  const [eurRate, setEurRate] = useState(92.0);
+  const [inTaxRate, setInTaxRate] = useState(18);
+  const [usTaxRate, setUsTaxRate] = useState(0);
+  const [euTaxRate, setEuTaxRate] = useState(20);
+  const [alwaysCeilingPrice, setAlwaysCeilingPrice] = useState(true);
 
   // --- Custom Pages States ---
   const [customPages, setCustomPages] = useState<Record<string, any>>({
@@ -325,6 +333,15 @@ export default function AdminCMSPage() {
           setInvoiceAddressLine2(res.invoice_settings.addressLine2 || "Mumbai, India");
           setInvoiceFooterNotes(res.invoice_settings.footerNotes || "");
         }
+        // Internationalization / Currencies
+        if (res.currency_settings) {
+          setUsdRate(Number(res.currency_settings.usdRate || 85));
+          setEurRate(Number(res.currency_settings.eurRate || 92));
+          setInTaxRate(Number(res.currency_settings.inTaxRate || 18));
+          setUsTaxRate(Number(res.currency_settings.usTaxRate || 0));
+          setEuTaxRate(Number(res.currency_settings.euTaxRate || 20));
+          setAlwaysCeilingPrice(res.currency_settings.alwaysCeilingPrice !== false);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -462,6 +479,14 @@ export default function AdminCMSPage() {
           addressLine1: invoiceAddressLine1,
           addressLine2: invoiceAddressLine2,
           footerNotes: invoiceFooterNotes
+        },
+        currency_settings: {
+          usdRate: Number(usdRate),
+          eurRate: Number(eurRate),
+          inTaxRate: Number(inTaxRate),
+          usTaxRate: Number(usTaxRate),
+          euTaxRate: Number(euTaxRate),
+          alwaysCeilingPrice: !!alwaysCeilingPrice
         }
       });
       showToast("CMS updated successfully.");
@@ -562,6 +587,7 @@ export default function AdminCMSPage() {
     { id: "legal", label: "Legal Policies", icon: "gavel", category: "System", description: "Privacy & terms docs" },
     { id: "api-integrations", label: "API Configuration", icon: "api", category: "System", description: "Razorpay, Cloudinary, Auth" },
     { id: "invoice-customizer", label: "Invoice Theme", icon: "receipt", category: "System", description: "Customize invoice PDF styling" },
+    { id: "currency-settings", label: "Currency & Taxes", icon: "currency_exchange", category: "System", description: "Exchange rates & tax structures" },
   ];
 
   return (
@@ -1926,6 +1952,96 @@ export default function AdminCMSPage() {
                       />
                     </div>
                   </div>
+                </section>
+              </div>
+            )}
+
+            {/* 13. MULTI-CURRENCY & INTERNATIONALIZATION TAB */}
+            {activeTab === "currency-settings" && (
+              <div className="space-y-6 animate-fade-in">
+                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+                  <div className="border-b border-slate-grey/15 pb-2">
+                    <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                      Exchange Rates &amp; Taxation Configurations
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">USD Exchange Rate (1 USD in INR)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={usdRate}
+                        onChange={(e) => setUsdRate(Number(e.target.value))}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none font-bold"
+                        placeholder="e.g. 85.00"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">EUR Exchange Rate (1 EUR in INR)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={eurRate}
+                        onChange={(e) => setEurRate(Number(e.target.value))}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none font-bold"
+                        placeholder="e.g. 92.00"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">India GST Tax Rate (%)</label>
+                      <input
+                        type="number"
+                        value={inTaxRate}
+                        onChange={(e) => setInTaxRate(Number(e.target.value))}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">US Sales Tax Rate (%)</label>
+                      <input
+                        type="number"
+                        value={usTaxRate}
+                        onChange={(e) => setUsTaxRate(Number(e.target.value))}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">European Union VAT Rate (%)</label>
+                      <input
+                        type="number"
+                        value={euTaxRate}
+                        onChange={(e) => setEuTaxRate(Number(e.target.value))}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-4">
+                      <input
+                        type="checkbox"
+                        id="always-ceiling-price"
+                        checked={alwaysCeilingPrice}
+                        onChange={(e) => setAlwaysCeilingPrice(e.target.checked)}
+                        className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                      />
+                      <label htmlFor="always-ceiling-price" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer font-bold">
+                        Always Round Up (Math.ceil)
+                      </label>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-grey italic">
+                    Note: Round Up logic ensures that converting minor values like ₹95 does not yield fractional decimals (e.g. $1.23 becomes $2.00, protecting international margins).
+                  </p>
                 </section>
               </div>
             )}

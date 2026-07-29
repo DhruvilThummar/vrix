@@ -116,12 +116,16 @@ export default function AdminOrdersPage() {
   const handleStatusUpdate = async (order: Order, newStatus: string) => {
     setUpdatingStatus(true);
     try {
-      const { apiFetch } = await import("@/utils/api");
-      await (apiFetch as any)(`/payment/status/${order.orderId}`, {
+      const { getApiBaseUrl } = await import("@/utils/api");
+      const url = `${getApiBaseUrl()}/payment/status/${order.orderId}`;
+      const res = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+      if (!res.ok) {
+        throw new Error("Failed to update status");
+      }
       await loadOrders();
       // Refresh selected order
       setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);

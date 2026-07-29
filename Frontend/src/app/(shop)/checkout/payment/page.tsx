@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { createPaymentOrder, fetchPaymentConfig, verifyPayment } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
+import { useCurrency } from "@/utils/useCurrency";
 
 declare global {
   interface Window {
@@ -29,6 +30,7 @@ interface ShippingData {
 export default function PaymentPage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
+  const { convertPrice } = useCurrency();
   const { items, subtotal, discount, promoCode, promoType, clearCart, isGiftWrapped, giftMessage, giftWrapPrice } = useCart();
   const [shipping, setShipping] = useState<ShippingData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -377,7 +379,7 @@ export default function PaymentPage() {
                 <span className="material-symbols-outlined text-[18px]">lock</span>
                 {!paymentConfig || (!paymentConfig.devMode && !sdkReady)
                   ? "Loading secure checkout..."
-                  : `Pay ₹${grandTotal.toFixed(2)} Securely`}
+                  : `Pay ${shipping?.currency || "INR"} ${grandTotal.toFixed(2)} Securely`}
               </button>
             )}
 
@@ -404,12 +406,14 @@ export default function PaymentPage() {
                     <img src={item.image} alt={item.title} className="w-full h-full object-cover mix-blend-multiply" />
                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-deep-navy text-pure-white text-[8px] flex items-center justify-center rounded-full font-bold">{item.quantity}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-grow min-w-0">
                     <p className="text-xs font-body-md text-ink-black truncate">{item.title}</p>
                     <p className="text-[10px] text-slate-grey">{item.material}</p>
                     {item.size && <p className="text-[10px] text-slate-grey">Size: {item.size}</p>}
                   </div>
-                  <p className="text-xs font-semibold text-deep-navy">₹{(item.price * item.quantity).toLocaleString()}</p>
+                  <p className="text-xs font-semibold text-deep-navy">
+                    {shipping?.currency || "INR"} {Number(item.price * item.quantity).toLocaleString()}
+                  </p>
                 </div>
               ))}
             </div>
@@ -417,22 +421,12 @@ export default function PaymentPage() {
             {/* Price breakdown */}
             <div className="space-y-2 text-sm font-body-md text-ink-black border-t border-slate-grey/20 pt-4">
               <div className="flex justify-between">
-                <span className="text-slate-grey">Subtotal</span>
-                <span>₹{subtotal.toLocaleString()}</span>
-              </div>
-              {discountAmount > 0 && (
-                <div className="flex justify-between text-green-700">
-                  <span>Discount ({promoCode})</span>
-                  <span>−₹{discountAmount.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-slate-grey">Shipping</span>
-                <span>{grandTotal >= 150 ? <span className="text-green-700">Free</span> : "₹15"}</span>
+                <span className="text-slate-grey">Checkout Subtotal</span>
+                <span>{shipping?.currency || "INR"} {grandTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between font-headline-md text-lg border-t border-slate-grey/20 pt-3 mt-2">
-                <span>Total</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
+                <span>Total Due</span>
+                <span>{shipping?.currency || "INR"} {grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
