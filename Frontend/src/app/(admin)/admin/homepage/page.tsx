@@ -142,64 +142,96 @@ export default function AdminHomepageLayoutPage() {
 
         {/* 1. Featured Collections Showcase */}
         <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-          <div className="flex justify-between items-center border-b border-slate-grey/10 pb-4">
+          <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-slate-grey/10 pb-4 gap-4">
             <div>
               <h3 className="font-headline-md text-base text-deep-navy uppercase tracking-wider font-semibold">
                 Showcase Collections Grid
               </h3>
               <p className="text-xs text-slate-grey">Featured collections appearing directly below the Hero banner.</p>
             </div>
-            <select
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val && !featuredCollections.includes(val)) {
-                  setFeaturedCollections([...featuredCollections, val]);
-                }
-                e.target.value = "";
-              }}
-              value=""
-              className="border border-slate-grey/30 bg-pure-white text-xs px-3 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer rounded"
-            >
-              <option value="">+ Add Collection</option>
-              {allCollections.map((c: any) => (
-                <option key={c.id} value={c.id}>{c.title}</option>
-              ))}
-            </select>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-bold">Section Tagline Slogan</label>
+                <input
+                  type="text"
+                  value={homepageTagline}
+                  onChange={(e) => setHomepageTagline(e.target.value)}
+                  className="border-b border-slate-grey/30 px-2 py-1 text-xs outline-none focus:border-deep-navy text-deep-navy font-bold w-48"
+                  placeholder="e.g. FEEL THE LUXURY"
+                />
+              </div>
+
+              <select
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val && !featuredCollections.includes(val)) {
+                    setFeaturedCollections([...featuredCollections, val]);
+                  }
+                  e.target.value = "";
+                }}
+                value=""
+                className="border border-slate-grey/30 bg-pure-white text-xs px-3 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer rounded self-end"
+              >
+                <option value="">+ Add Collection</option>
+                {allCollections.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.title}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {featuredCollections.map((cId) => {
-              const col = allCollections.find((c) => c.id === cId);
-              return (
-                <div key={cId} className="border border-slate-grey/20 p-4 bg-soft-linen/5 rounded flex flex-col justify-between gap-4 relative group">
-                  <button
-                    type="button"
-                    onClick={() => setFeaturedCollections(featuredCollections.filter((id) => id !== cId))}
-                    className="absolute top-2 right-2 text-slate-grey hover:text-red-600 text-sm p-1 transition-colors"
-                  >
-                    ✕
-                  </button>
-                  <div className="flex flex-col gap-3">
-                    <div className="aspect-[4/5] relative bg-soft-linen rounded overflow-hidden border border-slate-grey/10">
-                      {col?.image ? (
-                        <img src={col.image} alt={col.title} className="object-cover w-full h-full" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-slate-400 italic">No image</div>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-deep-navy truncate">{col?.title || "Unknown Collection"}</p>
-                      <p className="text-[10px] text-slate-grey truncate">{col?.tagline || "No tagline set"}</p>
+          {/* Live Storefront Preview container */}
+          <div className="bg-[#F5F4F0]/40 p-6 border border-dashed border-slate-grey/20 rounded space-y-8">
+            <div className="text-center">
+              <p className="font-label-caps text-[10px] tracking-widest text-slate-grey uppercase font-bold">
+                Our Collections
+              </p>
+              <h2 className="font-headline-md text-lg text-deep-navy font-light uppercase tracking-wider mt-1">
+                {homepageTagline || "FEEL THE LUXURY"}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {featuredCollections.map((cId) => {
+                const col = allCollections.find((c) => c.id === cId);
+                return (
+                  <div key={cId} className="border border-slate-grey/20 p-4 bg-pure-white rounded flex flex-col justify-between gap-4 relative group shadow-xs">
+                    <button
+                      type="button"
+                      onClick={() => setFeaturedCollections(featuredCollections.filter((id) => id !== cId))}
+                      className="absolute top-2 right-2 text-slate-grey hover:text-red-600 text-sm p-1 transition-colors z-10"
+                    >
+                      ✕
+                    </button>
+                    <div className="flex flex-col gap-3">
+                      <div className="aspect-[4/5] relative bg-soft-linen rounded overflow-hidden border border-slate-grey/10">
+                        {col?.image ? (
+                          <img src={col.image} alt={col.title} className="object-cover w-full h-full" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs text-slate-400 italic">No image</div>
+                        )}
+                      </div>
+                      <div className="min-w-0 text-center">
+                        <p className="text-xs font-semibold text-deep-navy truncate uppercase tracking-wider">{col?.title || "Unknown Collection"}</p>
+                        <p className="text-[9px] text-slate-grey truncate mt-0.5">{col?.tagline || "No tagline set"}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-            {featuredCollections.length === 0 && (
-              <p className="col-span-4 text-center py-12 border border-dashed border-slate-grey/20 text-xs text-slate-grey/50 italic rounded">
-                No collections selected. Fallback defaults will be loaded on the homepage.
-              </p>
-            )}
+                );
+              })}
+              {featuredCollections.length === 0 && (
+                <p className="col-span-4 text-center py-12 text-xs text-slate-grey/50 italic">
+                  No collections selected. Fallback defaults will be loaded on the homepage.
+                </p>
+              )}
+            </div>
+
+            <div className="text-center border-t border-slate-grey/10 pt-4">
+              <span className="inline-block font-button text-[10px] text-deep-navy uppercase tracking-widest border-b border-deep-navy pb-1 cursor-default opacity-85">
+                Explore All Collections
+              </span>
+            </div>
           </div>
         </section>
 
