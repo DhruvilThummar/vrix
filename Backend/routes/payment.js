@@ -387,7 +387,7 @@ router.get("/invoice/:orderId", async (req, res) => {
             margin-bottom: 30px; 
           }
           .brand { 
-            font-size: 28px; 
+            font-size: ${cfg.logoWidth || '28'}px; 
             font-weight: 700; 
             letter-spacing: 4px; 
             text-transform: uppercase; 
