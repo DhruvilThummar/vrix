@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, fetchProducts, fetchCollections } from "@/utils/api";
-import Image from "next/image";
 
 // Preset standard pages
 const STANDARD_PAGES = [
@@ -14,6 +13,16 @@ const STANDARD_PAGES = [
   { label: "VRIX+ Club", path: "/vrix-plus" },
   { label: "Search Catalog", path: "/search" },
   { label: "New Arrivals / Trending", path: "/collections/silent-center" },
+];
+
+const DEFAULT_NAV_LINKS = [
+  { label: "Collections", path: "/collections" },
+  { label: "The World of VRIX", path: "/story" },
+  { label: "Journal", path: "/journal" },
+  { label: "Gifts", path: "/search" },
+  { label: "Bespoke", path: "/bespoke" },
+  { label: "New Arrivals", path: "/collections/silent-center" },
+  { label: "VRIX+", path: "/vrix-plus" }
 ];
 
 export default function AdminNavigationPage() {
@@ -46,6 +55,8 @@ export default function AdminNavigationPage() {
       .then(([dbRes, prodRes, collRes]) => {
         if (Array.isArray(dbRes.navigation)) {
           setNavLinks(dbRes.navigation);
+        } else {
+          setNavLinks(DEFAULT_NAV_LINKS);
         }
         if (dbRes.homepage && Array.isArray(dbRes.homepage.categories)) {
           setHomepageCategories(dbRes.homepage.categories);
@@ -86,9 +97,19 @@ export default function AdminNavigationPage() {
     }
   };
 
+  // Restore Default VRIX Links helper
+  const handleRestoreDefaults = () => {
+    if (window.confirm("Are you sure you want to restore the default VRIX navigation links? This will replace your current links.")) {
+      setNavLinks(DEFAULT_NAV_LINKS);
+      setSelectedLinkIndex(null);
+      showToast("Restored default header links stack.");
+    }
+  };
+
   // Helper to add top-level link
   const addTopLevelLink = () => {
     setNavLinks([...navLinks, { label: "NEW LINK", path: "/" }]);
+    setSelectedLinkIndex(navLinks.length);
   };
 
   // Helper to remove top-level link
@@ -104,12 +125,38 @@ export default function AdminNavigationPage() {
     setNavLinks(next);
   };
 
+  // Up / Down order triggers
+  const moveLinkUp = (idx: number) => {
+    if (idx === 0) return;
+    const next = [...navLinks];
+    const temp = next[idx - 1];
+    next[idx - 1] = next[idx];
+    next[idx] = temp;
+    setNavLinks(next);
+    if (selectedLinkIndex === idx) setSelectedLinkIndex(idx - 1);
+    else if (selectedLinkIndex === idx - 1) setSelectedLinkIndex(idx);
+  };
+
+  const moveLinkDown = (idx: number) => {
+    if (idx === navLinks.length - 1) return;
+    const next = [...navLinks];
+    const temp = next[idx + 1];
+    next[idx + 1] = next[idx];
+    next[idx] = temp;
+    setNavLinks(next);
+    if (selectedLinkIndex === idx) setSelectedLinkIndex(idx + 1);
+    else if (selectedLinkIndex === idx + 1) setSelectedLinkIndex(idx);
+  };
+
   // Mega-menu category helpers
   const addMegaCategory = (linkIdx: number) => {
     const next = [...navLinks];
     const item = next[linkIdx];
     if (!item.megaMenu) {
       item.megaMenu = { categories: [], featured: { title: "", image: "", link: "" } };
+    }
+    if (!item.megaMenu.categories) {
+      item.megaMenu.categories = [];
     }
     item.megaMenu.categories.push({ title: "NEW COLUMN", links: [] });
     setNavLinks(next);
@@ -174,22 +221,23 @@ export default function AdminNavigationPage() {
 
   // Zero-Coding Path Selector component rendered inline for simplicity
   const PathSelector = ({ value, onChange }: { value: string; onChange: (val: string) => void }) => {
-    // Determine current type
     let type = "custom";
     let selectedIdOrSlug = "";
 
-    if (value === "/" || STANDARD_PAGES.some(p => p.path === value)) {
+    const valStr = value || "/";
+
+    if (valStr === "/" || STANDARD_PAGES.some(p => p.path === valStr)) {
       type = "page";
-      selectedIdOrSlug = value;
-    } else if (value.startsWith("/product/")) {
+      selectedIdOrSlug = valStr;
+    } else if (valStr.startsWith("/product/")) {
       type = "product";
-      selectedIdOrSlug = value.replace("/product/", "");
-    } else if (value.startsWith("/collections/") && value !== "/collections") {
+      selectedIdOrSlug = valStr.replace("/product/", "");
+    } else if (valStr.startsWith("/collections/") && valStr !== "/collections") {
       type = "collection";
-      selectedIdOrSlug = value.replace("/collections/", "");
+      selectedIdOrSlug = valStr.replace("/collections/", "");
     } else {
       type = "custom";
-      selectedIdOrSlug = value;
+      selectedIdOrSlug = valStr;
     }
 
     const handleTypeChange = (newType: string) => {
@@ -233,11 +281,11 @@ export default function AdminNavigationPage() {
           <select
             value={selectedIdOrSlug}
             onChange={(e) => handleSelectionChange(e.target.value)}
-            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer"
+            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
           >
             {STANDARD_PAGES.map((p) => (
               <option key={p.path} value={p.path}>
-                {p.label} ({p.path})
+                {p.label}
               </option>
             ))}
           </select>
@@ -247,17 +295,17 @@ export default function AdminNavigationPage() {
           <select
             value={selectedIdOrSlug}
             onChange={(e) => handleSelectionChange(e.target.value)}
-            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer"
+            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
           >
-            <option value="silent-center">All Collections / Default</option>
-            {allCollections.map((c: any) => {
-              const slug = c.slug || c.id || "";
-              return (
-                <option key={slug} value={slug}>
-                  {c.name || c.title || slug}
+            {allCollections.length > 0 ? (
+              allCollections.map((c) => (
+                <option key={c.id || c.slug} value={c.id || c.slug}>
+                  {c.name || c.title || c.slug}
                 </option>
-              );
-            })}
+              ))
+            ) : (
+              <option value="all">All Jewelry</option>
+            )}
           </select>
         )}
 
@@ -265,11 +313,11 @@ export default function AdminNavigationPage() {
           <select
             value={selectedIdOrSlug}
             onChange={(e) => handleSelectionChange(e.target.value)}
-            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer"
+            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
           >
-            {allProducts.map((p: any) => (
+            {allProducts.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.title} (${p.price})
+                {p.title}
               </option>
             ))}
           </select>
@@ -278,10 +326,10 @@ export default function AdminNavigationPage() {
         {type === "custom" && (
           <input
             type="text"
-            value={value}
+            value={selectedIdOrSlug}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Enter custom URL path (e.g. /custom-page)"
-            className="border border-slate-grey/30 px-2 py-1 bg-pure-white text-xs outline-none text-slate-grey flex-1"
+            className="border border-slate-grey/30 px-3 py-1 text-xs outline-none text-ink-black flex-1"
+            placeholder="e.g. /custom-url"
           />
         )}
       </div>
@@ -290,9 +338,9 @@ export default function AdminNavigationPage() {
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-soft-linen text-slate-grey font-label-caps text-xs tracking-widest gap-2">
-        <div className="w-8 h-8 border-2 border-deep-navy border-t-transparent rounded-full animate-spin"></div>
-        Loading Navigation Editor...
+      <div className="w-full h-screen bg-soft-linen/30 flex items-center justify-center gap-3 font-label-caps text-xs text-slate-grey uppercase tracking-widest">
+        <div className="w-5 h-5 border-2 border-deep-navy border-t-transparent rounded-full animate-spin" />
+        Initializing visual builder...
       </div>
     );
   }
@@ -310,26 +358,35 @@ export default function AdminNavigationPage() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="max-w-6xl mx-auto flex flex-col gap-8">
+      <form onSubmit={handleSave} className="max-w-7xl mx-auto flex flex-col gap-8">
         {/* Banner Section */}
-        <div className="bg-pure-white border border-slate-grey/20 p-6 md:p-8 shadow-sm flex flex-col gap-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-deep-navy via-amber-600/40 to-deep-navy" />
+        <div className="bg-pure-white border border-slate-grey/25 p-6 md:p-8 shadow-sm flex flex-col gap-6 relative overflow-hidden rounded">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-deep-navy" />
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-grey/15 pb-6">
             <div className="space-y-1.5">
-              <h1 className="font-display-lg text-headline-md text-deep-navy uppercase tracking-wide">
-                Menu Navigation &amp; Homepage Grid Designer
+              <h1 className="font-display-lg text-xl text-deep-navy uppercase tracking-wider">
+                Shop Menu &amp; Categories Designer
               </h1>
-              <p className="text-slate-grey font-body-md text-sm">
-                Rearrange, design, and preview your shop menu layout and category grids with zero coding knowledge.
+              <p className="text-slate-grey font-body-md text-xs">
+                Rearrange links, design mega-menus, and select pages with absolutely zero coding knowledge.
               </p>
             </div>
-            <button
-              type="submit"
-              disabled={saveLoading}
-              className="px-6 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-all font-label-caps text-xs tracking-widest uppercase cursor-pointer disabled:opacity-50 shadow-md hover:translate-y-[-1px]"
-            >
-              {saveLoading ? "Saving Changes..." : "Publish Navigation"}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleRestoreDefaults}
+                className="px-4 py-3 border border-slate-grey/30 text-slate-grey hover:text-ink-black transition-all font-label-caps text-xs tracking-wider uppercase cursor-pointer bg-transparent rounded"
+              >
+                Restore VRIX Defaults
+              </button>
+              <button
+                type="submit"
+                disabled={saveLoading}
+                className="px-6 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-all font-label-caps text-xs tracking-widest uppercase cursor-pointer disabled:opacity-50 shadow-md rounded"
+              >
+                {saveLoading ? "Saving Changes..." : "Publish Navigation"}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -343,8 +400,8 @@ export default function AdminNavigationPage() {
               </h3>
               <p className="text-[10px] text-slate-grey mt-0.5">Click or hover over the mock navigation bar below to preview dropdowns and mega-menus.</p>
             </div>
-            <span className="bg-emerald-50 text-emerald-700 text-[9px] px-2 py-0.5 font-semibold tracking-wider rounded border border-emerald-200">
-              Interactive Preview
+            <span className="bg-emerald-50 text-emerald-700 text-[9px] px-2 py-0.5 font-semibold tracking-wider rounded border border-emerald-200 uppercase">
+              Interactive preview (Solid Header)
             </span>
           </div>
 
@@ -352,7 +409,7 @@ export default function AdminNavigationPage() {
           <div className="border border-slate-grey/15 bg-pure-white rounded shadow-inner overflow-visible relative min-h-[64px]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-grey/10 bg-pure-white">
               {/* Mock Brand Logo */}
-              <div className="font-display-lg text-lg tracking-widest text-deep-navy font-bold flex items-center gap-2">
+              <div className="font-display-lg text-base tracking-widest text-deep-navy font-bold flex items-center gap-2">
                 VRIX
               </div>
 
@@ -387,7 +444,7 @@ export default function AdminNavigationPage() {
             {/* Simulated Mega-Menu Dropdown */}
             {activePreviewLink && activePreviewLink.megaMenu && (
               <div
-                className="absolute left-0 right-0 top-[53px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-30 transition-all duration-300 animate-fade-in flex justify-between"
+                className="absolute left-0 right-0 top-[53px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-30 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
                 onMouseEnter={() => {
                   if (hoveredPreviewIndex === null && selectedLinkIndex !== null) {
                     setHoveredPreviewIndex(selectedLinkIndex);
@@ -436,7 +493,7 @@ export default function AdminNavigationPage() {
                       {activePreviewLink.megaMenu.featured.image ? (
                         <div className="w-full h-32 relative bg-soft-linen/50 overflow-hidden border border-slate-grey/15 rounded">
                           <img
-                            alt="Featured Preview"
+                            alt="Featured Promo"
                             src={activePreviewLink.megaMenu.featured.image}
                             className="object-cover w-full h-full"
                             onError={(e) => {
@@ -471,7 +528,7 @@ export default function AdminNavigationPage() {
             <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
               <div>
                 <h3 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider uppercase">
-                  Header Navigation Links
+                  Navbar Main Tabs
                 </h3>
                 <p className="text-[9px] text-slate-grey">Top level tabs seen on site</p>
               </div>
@@ -480,11 +537,11 @@ export default function AdminNavigationPage() {
                 onClick={addTopLevelLink}
                 className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase cursor-pointer hover:bg-ink-black transition-colors rounded shadow-xs"
               >
-                + Add Link
+                + Add Tab
               </button>
             </div>
 
-            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+            <div className="space-y-4 max-h-[550px] overflow-y-auto pr-1">
               {navLinks.map((link, idx) => (
                 <div
                   key={idx}
@@ -495,30 +552,48 @@ export default function AdminNavigationPage() {
                       : "border-slate-grey/15 bg-surface/30 hover:border-slate-grey/30"
                   }`}
                 >
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeTopLevelLink(idx);
-                    }}
-                    className="absolute top-3 right-3 text-red-500 hover:text-red-700 text-[10px] font-label-caps cursor-pointer hover:underline"
-                  >
-                    Delete Link
-                  </button>
+                  <div className="absolute top-3 right-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={(e) => { e.stopPropagation(); moveLinkUp(idx); }}
+                      className="text-slate-grey hover:text-deep-navy text-xs font-bold disabled:opacity-30"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === navLinks.length - 1}
+                      onClick={(e) => { e.stopPropagation(); moveLinkDown(idx); }}
+                      className="text-slate-grey hover:text-deep-navy text-xs font-bold disabled:opacity-30"
+                    >
+                      ▼
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeTopLevelLink(idx);
+                      }}
+                      className="text-red-500 hover:text-red-700 text-[10px] font-label-caps cursor-pointer hover:underline ml-2"
+                    >
+                      Delete
+                    </button>
+                  </div>
 
-                  <div className="flex flex-col gap-1 pr-16">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Menu Title</label>
+                  <div className="flex flex-col gap-1 pr-24">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Tab Name</label>
                     <input
                       type="text"
                       value={link.label}
                       onChange={(e) => updateTopLevelLink(idx, "label", e.target.value)}
                       onClick={(e) => e.stopPropagation()}
-                      className="border-b border-slate-grey/20 py-1 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy"
+                      className="border-b border-slate-grey/20 py-1 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy bg-transparent"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1 w-full">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Link Destination</label>
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Points to Page</label>
                     <div onClick={(e) => e.stopPropagation()}>
                       <PathSelector
                         value={link.path}
@@ -527,10 +602,10 @@ export default function AdminNavigationPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 mt-1">
+                  <div className="flex items-center gap-1.5 mt-1 border-t border-slate-grey/10 pt-2">
                     <span className="material-symbols-outlined text-xs text-deep-navy">info</span>
                     <span className="text-[9px] text-slate-grey">
-                      {link.megaMenu ? "Contains a dropdown menu" : "Standard single link"}
+                      {link.megaMenu ? "Dropdown enabled — click to configure columns" : "Direct tab (no dropdown)"}
                     </span>
                   </div>
                 </div>
@@ -542,13 +617,13 @@ export default function AdminNavigationPage() {
           <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 lg:col-span-2 rounded">
             <h3 className="font-headline-md text-base text-deep-navy uppercase border-b border-slate-grey/15 pb-3 flex items-center gap-2">
               <span className="material-symbols-outlined">menu_open</span>
-              Mega Menu Structure Configurator
+              Visual Dropdown Menu Column Designer
             </h3>
 
             {selectedLinkIndex === null ? (
               <div className="h-64 flex flex-col gap-2 items-center justify-center border-2 border-dashed border-slate-grey/30 text-slate-grey font-label-caps text-xs tracking-wider rounded bg-soft-linen/5">
                 <span className="material-symbols-outlined text-lg">touch_app</span>
-                Select a top-level link from the left panel to configure its Mega-Menu
+                Click a Tab from the left panel to configure its Dropdown columns
               </div>
             ) : (
               <div className="space-y-8 animate-fade-in">
@@ -556,33 +631,33 @@ export default function AdminNavigationPage() {
                 <div className="p-4 bg-soft-linen/10 border border-slate-grey/10 flex justify-between items-center rounded">
                   <div>
                     <h4 className="font-headline-md text-sm text-deep-navy font-semibold">
-                      Editing Dropdown: {navLinks[selectedLinkIndex].label}
+                      Dropdown Settings: {navLinks[selectedLinkIndex].label}
                     </h4>
-                    <p className="text-[10px] text-slate-grey mt-0.5">Configure sub-navigation columns and promotional featured content below.</p>
+                    <p className="text-[10px] text-slate-grey mt-0.5">Add, change, or remove columns of links for this tab's dropdown.</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => addMegaCategory(selectedLinkIndex)}
                     className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black transition-colors rounded"
                   >
-                    + Add Column
+                    + Add Link Column
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Mega-menu categories columns */}
                   <div className="space-y-6 md:border-r md:border-slate-grey/15 md:pr-6">
-                    <h5 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase flex items-center gap-1">
+                    <h5 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-xs">view_column</span>
-                      Sub-Category Columns
+                      Link Columns list
                     </h5>
 
                     {(!navLinks[selectedLinkIndex].megaMenu ||
                       !navLinks[selectedLinkIndex].megaMenu.categories ||
                       navLinks[selectedLinkIndex].megaMenu.categories.length === 0) ? (
                       <div className="text-slate-grey text-xs py-8 text-center border border-dashed border-slate-grey/20 rounded bg-soft-linen/5 space-y-1">
-                        <p className="font-semibold">No Columns Configured</p>
-                        <p className="text-[10px]">This link behaves as a direct link without any dropdown.</p>
+                        <p className="font-semibold text-deep-navy">No Dropdown Columns</p>
+                        <p className="text-[10px]">This tab points directly to its page. Click "+ Add Link Column" to enable a dropdown.</p>
                       </div>
                     ) : (
                       navLinks[selectedLinkIndex].megaMenu.categories.map((cat: any, catIdx: number) => (
@@ -592,32 +667,32 @@ export default function AdminNavigationPage() {
                             onClick={() => removeMegaCategory(selectedLinkIndex, catIdx)}
                             className="absolute top-3 right-3 text-red-500 hover:text-red-700 text-[10px] font-label-caps cursor-pointer"
                           >
-                            Remove Column
+                            Delete Column
                           </button>
 
                           <div className="flex flex-col gap-1 pr-24">
-                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Column Header Title</label>
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Column Title</label>
                             <input
                               type="text"
                               value={cat.title}
                               onChange={(e) => updateMegaCategoryTitle(selectedLinkIndex, catIdx, e.target.value)}
-                              className="border-b border-slate-grey/30 py-1 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy"
+                              className="border-b border-slate-grey/30 py-1 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy bg-transparent"
                             />
                           </div>
 
                           <div className="space-y-3 pt-2">
                             <div className="flex justify-between items-center border-t border-slate-grey/10 pt-3">
-                              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Links inside Column</label>
+                              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Column Items</label>
                               <button
                                 type="button"
                                 onClick={() => addMegaLink(selectedLinkIndex, catIdx)}
                                 className="text-deep-navy text-[10px] font-label-caps hover:underline flex items-center gap-0.5"
                               >
-                                + Add Link
+                                + Add Link Item
                               </button>
                             </div>
 
-                            {cat.links.map((lnk: any, lnkIdx: number) => (
+                            {cat.links && cat.links.map((lnk: any, lnkIdx: number) => (
                               <div key={lnkIdx} className="flex flex-col gap-2 bg-pure-white p-3 border border-slate-grey/15 rounded shadow-2xs">
                                 <div className="flex justify-between items-center">
                                   <input
@@ -650,19 +725,19 @@ export default function AdminNavigationPage() {
 
                   {/* Mega-menu featured promotion card */}
                   <div className="space-y-4">
-                    <h5 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase flex items-center gap-1">
+                    <h5 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-xs">campaign</span>
-                      Featured Dropdown Banner
+                      Featured Dropdown Banner Card
                     </h5>
                     <div className="border border-slate-grey/25 p-4 bg-soft-linen/5 space-y-4 rounded">
                       <div className="flex flex-col gap-1">
-                        <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Promo Title</label>
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Promo Image Title</label>
                         <input
                           type="text"
                           value={navLinks[selectedLinkIndex]?.megaMenu?.featured?.title || ""}
                           onChange={(e) => updateFeaturedMega(selectedLinkIndex, "title", e.target.value)}
                           placeholder="e.g. New Arrivals"
-                          className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-semibold"
+                          className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-semibold bg-transparent"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -671,8 +746,8 @@ export default function AdminNavigationPage() {
                           type="text"
                           value={navLinks[selectedLinkIndex]?.megaMenu?.featured?.image || ""}
                           onChange={(e) => updateFeaturedMega(selectedLinkIndex, "image", e.target.value)}
-                          placeholder="e.g. /images/promo.jpg"
-                          className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy"
+                          placeholder="e.g. https://images.unsplash.com/..."
+                          className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy bg-transparent"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -738,7 +813,7 @@ export default function AdminNavigationPage() {
                       type="text"
                       value={cat.title}
                       onChange={(e) => updateHomepageCategory(idx, "title", e.target.value)}
-                      className="border-b border-slate-grey/30 py-0.5 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy"
+                      className="border-b border-slate-grey/30 py-0.5 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy bg-transparent"
                     />
                   </div>
                 </div>
@@ -749,7 +824,7 @@ export default function AdminNavigationPage() {
                     type="text"
                     value={cat.image}
                     onChange={(e) => updateHomepageCategory(idx, "image", e.target.value)}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy text-slate-grey"
+                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy text-slate-grey bg-transparent"
                     placeholder="https://example.com/image.jpg"
                   />
                 </div>
