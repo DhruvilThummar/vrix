@@ -422,13 +422,13 @@ export default function PaymentPage() {
             <div className="space-y-2 text-xs font-body-md text-ink-black border-t border-slate-grey/20 pt-4">
               <div className="flex justify-between">
                 <span className="text-slate-grey font-medium">Checkout Subtotal</span>
-                <span>{shipping?.currency || "INR"} {(subtotal - (isGiftWrapped ? 0 : 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>{shipping?.currency || "INR"} {Number(subtotal - discountAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               
               {isGiftWrapped && (
-                <div className="flex justify-between text-emerald-700 bg-emerald-50/50 px-2 py-1 rounded">
-                  <span className="flex items-center gap-1 font-semibold">
-                    <span className="material-symbols-outlined text-xs">featured_seasonal</span>
+                <div className="flex justify-between text-emerald-700 bg-emerald-50/50 px-2 py-1.5 rounded items-center">
+                  <span className="flex items-center gap-1.5 font-semibold text-[11px]">
+                    <i className="fa-solid fa-gift text-xs"></i>
                     Signature Packaging
                   </span>
                   <span className="font-bold">+{shipping?.currency || "INR"} {(giftWrapPrice || 250).toLocaleString()}</span>
