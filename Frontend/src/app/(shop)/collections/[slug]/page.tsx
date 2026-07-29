@@ -8,6 +8,7 @@ import { fetchCollections, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useCurrency } from "@/utils/useCurrency";
 
 const DEFAULT_PRODUCTS: any[] = [];
 
@@ -16,6 +17,7 @@ function CollectionContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isLoggedIn } = useAuth();
+  const { formatPrice } = useCurrency();
   
   // Use slug from URL if available, otherwise fall back to 'collection' search param, or default to 'silent-center'
   const collectionSlug = (params.slug as string) || searchParams.get("collection") || "silent-center";
@@ -511,7 +513,7 @@ function CollectionContent() {
                       </span>
                     </div>
                     <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">
-                      ${p.price}
+                      {formatPrice(p.price)}
                     </span>
                   </div>
                 </Link>

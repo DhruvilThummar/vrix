@@ -18,7 +18,7 @@ const NAV_DATA = [
     megaMenu: {
       categories: [
         { title: "Shop by Recipient", links: [{ label: "For Her", path: "/search?q=her" }, { label: "For Him", path: "/search?q=him" }] },
-        { title: "Shop by Price", links: [{ label: "Under $150", path: "/search?price_max=150" }, { label: "Luxury Gifts", path: "/search?price_min=500" }] }
+        { title: "Shop by Price", links: [{ label: "Gifts of Value", path: "/search?price_max=150" }, { label: "Luxury Gifts", path: "/search?price_min=500" }] }
       ],
       featured: { title: "The Gift Guide", image: "/images/gift-guide.jpg", link: "/search?filter=gifts" }
     }
