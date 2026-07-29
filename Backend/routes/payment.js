@@ -7,7 +7,13 @@ const router = express.Router();
 
 const getRazorpayCredentials = async () => {
   const apiSettings = await getApiSettings();
-  if (apiSettings?.razorpayEnabled && apiSettings.razorpayKeyId && apiSettings.razorpayKeySecret) {
+  if (
+    apiSettings?.razorpayEnabled &&
+    apiSettings.razorpayKeyId &&
+    apiSettings.razorpayKeyId !== "rzp_test_YourKeyIdHere" &&
+    apiSettings.razorpayKeySecret &&
+    apiSettings.razorpayKeySecret !== "YourKeySecretHere"
+  ) {
     return {
       keyId: apiSettings.razorpayKeyId,
       keySecret: apiSettings.razorpayKeySecret,
@@ -15,7 +21,12 @@ const getRazorpayCredentials = async () => {
     };
   }
 
-  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  if (
+    process.env.RAZORPAY_KEY_ID &&
+    process.env.RAZORPAY_KEY_ID !== "rzp_test_YourKeyIdHere" &&
+    process.env.RAZORPAY_KEY_SECRET &&
+    process.env.RAZORPAY_KEY_SECRET !== "YourKeySecretHere"
+  ) {
     return {
       keyId: process.env.RAZORPAY_KEY_ID,
       keySecret: process.env.RAZORPAY_KEY_SECRET,

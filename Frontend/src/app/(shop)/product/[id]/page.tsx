@@ -93,7 +93,7 @@ function ProductContent() {
     }
     setBagLoading(true);
     setTimeout(() => {
-      let basePrice = (product.isVrixPlusExclusive && product.vrixPlusPrice) ? product.vrixPlusPrice : product.price;
+      const basePrice = (product.isVrixPlusExclusive && product.vrixPlusPrice) ? product.vrixPlusPrice : product.price;
       
       let customizationPrice = 0;
       if (engraving && product.engravingOptions?.enabled) customizationPrice += (product.engravingOptions.price || 0);
@@ -336,7 +336,7 @@ function ProductContent() {
               </div>
  
               {/* Actions */}
-              <div className="flex flex-col gap-4 mt-4">
+              <div className="flex flex-col sm:flex-row gap-4 mt-4">
                 <button
                   onClick={handleAddToBag}
                   disabled={bagLoading}

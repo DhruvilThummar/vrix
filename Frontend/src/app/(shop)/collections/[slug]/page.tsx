@@ -21,14 +21,49 @@ function CollectionContent() {
   const collectionSlug = (params.slug as string) || searchParams.get("collection") || "silent-center";
   const collectionQuery = collectionSlug;
 
+  // Sync with searchParams
+  const getParam = (key: string, fallback: string) => searchParams.get(key) || fallback;
+
   const [products, setProducts] = useState(DEFAULT_PRODUCTS);
   const [collections, setCollections] = useState<any[]>([]);
-  const [selectedMaterial, setSelectedMaterial] = useState("All");
-  const [selectedType, setSelectedType] = useState("All");
-  const [sortBy, setSortBy] = useState("Curated");
+  const [selectedMaterial, setSelectedMaterial] = useState(() => getParam("material", "All"));
+  const [selectedType, setSelectedType] = useState(() => getParam("type", "All"));
+  const [sortBy, setSortBy] = useState(() => getParam("sort", "Curated"));
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Sync state when URL params change
+  useEffect(() => {
+    setSelectedMaterial(getParam("material", "All"));
+    setSelectedType(getParam("type", "All"));
+    setSortBy(getParam("sort", "Curated"));
+  }, [searchParams]);
+
+  const updateQueryParam = (key: string, value: string) => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    if (value === "All" || !value) {
+      nextParams.delete(key);
+    } else {
+      nextParams.set(key, value);
+    }
+    router.push(`?${nextParams.toString()}`, { scroll: false });
+  };
+
+  const handleMaterialChange = (mat: string) => {
+    setSelectedMaterial(mat);
+    updateQueryParam("material", mat);
+  };
+
+  const handleTypeChange = (type: string) => {
+    setSelectedType(type);
+    updateQueryParam("type", type);
+  };
+
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort);
+    updateQueryParam("sort", sort);
+  };
 
   // Sync wishlist from localStorage on mount or user change
   useEffect(() => {
@@ -140,6 +175,8 @@ function CollectionContent() {
   const handleResetFilters = () => {
     setSelectedMaterial("All");
     setSelectedType("All");
+    updateQueryParam("material", "All");
+    updateQueryParam("type", "All");
     showToast("Filters reset successfully.");
   };
 
@@ -164,7 +201,7 @@ function CollectionContent() {
 
     // Filter by Type
     if (selectedType !== "All") {
-      result = result.filter((p) => p.type === selectedType);
+      result = result.filter((p) => p.type.toLowerCase() === selectedType.toLowerCase());
     }
 
     // Sort by selection
@@ -207,36 +244,35 @@ function CollectionContent() {
         </header>
 
         {/* Filter & Sort Bar */}
-        <div className="border-t border-b border-slate-grey/30 py-4 mb-stack-lg flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 relative z-20">
-          
-          {/* Filters Controls */}
-          <div className="flex flex-wrap items-center gap-6">
+        <div className="border-t border-b border-slate-grey/30 py-4 mb-stack-lg flex justify-between items-center relative z-20">
+          {/* Mobile Filters Toggle */}
+          <div className="flex items-center gap-4">
             <button
               onClick={() => {
                 setFiltersOpen(!filtersOpen);
                 setSortOpen(false);
               }}
-              className="font-label-caps text-label-caps text-on-surface hover:text-deep-navy uppercase tracking-widest flex items-center space-x-1 group transition-colors cursor-pointer"
+              className="md:hidden font-label-caps text-label-caps text-on-surface hover:text-deep-navy uppercase tracking-widest flex items-center space-x-1 group transition-colors cursor-pointer"
             >
               <span>Filters</span>
-              <span
-                className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${
-                  filtersOpen ? "rotate-180" : ""
-                }`}
-              >
+              <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${filtersOpen ? "rotate-180" : ""}`}>
                 expand_more
               </span>
             </button>
 
+            <span className="hidden md:inline font-label-caps text-xs text-slate-grey uppercase tracking-widest">
+              Faceted Search / {processedProducts.length} Items
+            </span>
+
             {/* Quick Status indicators */}
             {(selectedMaterial !== "All" || selectedType !== "All") && (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-body-md text-slate-grey bg-soft-linen px-2 py-1 uppercase tracking-wider">
+                <span className="text-[10px] font-body-md text-slate-grey bg-soft-linen px-2 py-0.5 uppercase tracking-wider">
                   Active Filters
                 </span>
                 <button
                   onClick={handleResetFilters}
-                  className="text-xs font-label-caps text-deep-navy underline cursor-pointer hover:text-slate-grey"
+                  className="text-[10px] font-label-caps text-deep-navy underline cursor-pointer hover:text-slate-grey"
                 >
                   Clear All
                 </button>
@@ -254,13 +290,9 @@ function CollectionContent() {
               className="font-label-caps text-label-caps text-on-surface hover:text-deep-navy uppercase tracking-widest flex items-center space-x-1 group transition-colors cursor-pointer"
             >
               <span>
-                Sort by: {sortBy === "Curated" ? "Curated" : sortBy === "PriceLowHigh" ? "Price: Low to High" : "Price: High to Low"}
+                Sort: {sortBy === "Curated" ? "Curated" : sortBy === "PriceLowHigh" ? "Price: Low to High" : "Price: High to Low"}
               </span>
-              <span
-                className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${
-                  sortOpen ? "rotate-180" : ""
-                }`}
-              >
+              <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${sortOpen ? "rotate-180" : ""}`}>
                 expand_more
               </span>
             </button>
@@ -268,60 +300,37 @@ function CollectionContent() {
             {/* Sort Dropdown */}
             {sortOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 bg-pure-white border border-slate-grey/20 shadow-xl py-2 flex flex-col z-30">
-                <button
-                  onClick={() => {
-                    setSortBy("Curated");
-                    setSortOpen(false);
-                  }}
-                  className={`px-4 py-2 text-left font-label-caps text-xs tracking-wider uppercase hover:bg-soft-linen cursor-pointer ${
-                    sortBy === "Curated" ? "text-deep-navy font-semibold" : "text-slate-grey"
-                  }`}
-                >
-                  Curated
-                </button>
-                <button
-                  onClick={() => {
-                    setSortBy("PriceLowHigh");
-                    setSortOpen(false);
-                  }}
-                  className={`px-4 py-2 text-left font-label-caps text-xs tracking-wider uppercase hover:bg-soft-linen cursor-pointer ${
-                    sortBy === "PriceLowHigh" ? "text-deep-navy font-semibold" : "text-slate-grey"
-                  }`}
-                >
-                  Price: Low to High
-                </button>
-                <button
-                  onClick={() => {
-                    setSortBy("PriceHighLow");
-                    setSortOpen(false);
-                  }}
-                  className={`px-4 py-2 text-left font-label-caps text-xs tracking-wider uppercase hover:bg-soft-linen cursor-pointer ${
-                    sortBy === "PriceHighLow" ? "text-deep-navy font-semibold" : "text-slate-grey"
-                  }`}
-                >
-                  Price: High to Low
-                </button>
+                {["Curated", "PriceLowHigh", "PriceHighLow"].map((sort) => (
+                  <button
+                    key={sort}
+                    onClick={() => {
+                      handleSortChange(sort);
+                      setSortOpen(false);
+                    }}
+                    className={`px-4 py-2 text-left font-label-caps text-xs tracking-wider uppercase hover:bg-soft-linen cursor-pointer ${
+                      sortBy === sort ? "text-deep-navy font-semibold" : "text-slate-grey"
+                    }`}
+                  >
+                    {sort === "Curated" ? "Curated" : sort === "PriceLowHigh" ? "Price: Low to High" : "Price: High to Low"}
+                  </button>
+                ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* Filters Panel Expandable */}
+        {/* Mobile Filters Dropdown panel */}
         {filtersOpen && (
-          <div className="bg-soft-linen/30 border border-slate-grey/10 p-6 mb-stack-lg grid grid-cols-1 md:grid-cols-2 gap-8 z-10 relative">
+          <div className="md:hidden bg-soft-linen/30 border border-slate-grey/10 p-6 mb-stack-lg grid grid-cols-2 gap-6 z-10 relative">
             <div>
-              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-4">
-                Material
-              </h4>
-              <div className="flex flex-wrap gap-3">
+              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-4">Material</h4>
+              <div className="flex flex-wrap gap-2">
                 {["All", "Gold", "Silver"].map((mat) => (
                   <button
                     key={mat}
-                    onClick={() => setSelectedMaterial(mat)}
-                    className={`px-4 py-2 text-xs font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${
-                      selectedMaterial === mat
-                        ? "border-deep-navy bg-deep-navy text-pure-white"
-                        : "border-slate-grey/20 bg-pure-white text-slate-grey hover:border-slate-grey"
+                    onClick={() => handleMaterialChange(mat)}
+                    className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${
+                      selectedMaterial === mat ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"
                     }`}
                   >
                     {mat}
@@ -331,18 +340,14 @@ function CollectionContent() {
             </div>
 
             <div>
-              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-4">
-                Product Type
-              </h4>
-              <div className="flex flex-wrap gap-3">
+              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-4">Product Type</h4>
+              <div className="flex flex-wrap gap-2">
                 {["All", "Ring", "Necklace", "Earring", "Bracelet"].map((type) => (
                   <button
                     key={type}
-                    onClick={() => setSelectedType(type)}
-                    className={`px-4 py-2 text-xs font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${
-                      selectedType === type
-                        ? "border-deep-navy bg-deep-navy text-pure-white"
-                        : "border-slate-grey/20 bg-pure-white text-slate-grey hover:border-slate-grey"
+                    onClick={() => handleTypeChange(type)}
+                    className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${
+                      selectedType === type ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"
                     }`}
                   >
                     {type}
@@ -353,8 +358,82 @@ function CollectionContent() {
           </div>
         )}
 
-        {/* Empty State / Loading State / Product Grid */}
-        {loading ? (
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          {/* Desktop Sticky Faceted Sidebar */}
+          <aside className="hidden md:block w-64 shrink-0 sticky top-24 space-y-8 bg-soft-linen/10 p-6 border border-slate-grey/15">
+            <div>
+              <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
+                Collections
+              </h4>
+              <ul className="space-y-2">
+                {collections.map((col) => (
+                  <li key={col.id}>
+                    <Link
+                      href={`/collections/${col.id}`}
+                      className={`font-body-md text-xs transition-colors block py-1 ${
+                        collectionQuery === col.id ? "text-deep-navy font-semibold" : "text-slate-grey hover:text-ink-black"
+                      }`}
+                    >
+                      {col.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
+                Materials
+              </h4>
+              <div className="flex flex-col gap-2">
+                {["All", "Gold", "Silver"].map((mat) => (
+                  <label key={mat} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                    <input
+                      type="radio"
+                      name="material"
+                      checked={selectedMaterial === mat}
+                      onChange={() => handleMaterialChange(mat)}
+                      className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy"
+                    />
+                    <span className={selectedMaterial === mat ? "text-deep-navy font-semibold" : ""}>{mat}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
+                Product Type
+              </h4>
+              <div className="flex flex-col gap-2">
+                {["All", "Ring", "Necklace", "Earring", "Bracelet"].map((type) => (
+                  <label key={type} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                    <input
+                      type="radio"
+                      name="type"
+                      checked={selectedType === type}
+                      onChange={() => handleTypeChange(type)}
+                      className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy"
+                    />
+                    <span className={selectedType === type ? "text-deep-navy font-semibold" : ""}>{type}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {(selectedMaterial !== "All" || selectedType !== "All") && (
+              <button
+                onClick={handleResetFilters}
+                className="w-full py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black transition-colors"
+              >
+                Reset Filters
+              </button>
+            )}
+          </aside>
+
+          {/* Product Grid container */}
+          <div className="flex-grow w-full">
+            {loading ? (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-gutter">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex flex-col">
@@ -440,6 +519,8 @@ function CollectionContent() {
             })}
           </div>
         )}
+          </div>
+        </div>
       </main>
     </div>
   );

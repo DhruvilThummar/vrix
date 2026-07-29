@@ -29,7 +29,7 @@ interface ShippingData {
 export default function PaymentPage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const { items, subtotal, discount, promoCode, promoType, clearCart } = useCart();
+  const { items, subtotal, discount, promoCode, promoType, clearCart, isGiftWrapped, giftMessage, giftWrapPrice } = useCart();
   const [shipping, setShipping] = useState<ShippingData | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "processing" | "verifying" | "success" | "error">("idle");
@@ -141,6 +141,9 @@ export default function PaymentPage() {
             razorpay_signature: "dev_signature",
             items: items,
             promoCode: promoCode || undefined,
+            isGiftWrapped,
+            giftMessage,
+            giftWrapPrice,
           });
           setPaidOrderId(order.id);
           clearCart();
@@ -203,6 +206,9 @@ export default function PaymentPage() {
               razorpay_signature: response.razorpay_signature,
               items: items,
               promoCode: promoCode || undefined,
+              isGiftWrapped,
+              giftMessage,
+              giftWrapPrice,
             });
 
             // 5. Fulfillment successful. Clear cart and redirect to confirmation.

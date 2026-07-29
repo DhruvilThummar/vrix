@@ -9,7 +9,7 @@ import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
 
 export default function Page() {
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const { subtotal, discount, promoType } = useCart();
 
   useEffect(() => {
@@ -17,6 +17,18 @@ export default function Page() {
       router.push("/account");
     }
   }, [isLoggedIn, router]);
+
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setEmail(user.email || "");
+      setFullName(user.name || "");
+      setPhone(user.phone || "");
+    }
+  }, [user]);
 
   const [truecallerEnabled, setTruecallerEnabled] = useState(false);
   const [truecallerSandbox, setTruecallerSandbox] = useState(true);
@@ -69,14 +81,9 @@ export default function Page() {
       const res = await verifyTruecaller(base64Payload, "mock-signature", "RSA-SHA512");
       
       if (res.success && res.profile) {
-        const emailInput = document.getElementById("email") as HTMLInputElement;
-        const nameInput = document.getElementById("full-name") as HTMLInputElement;
-        const phoneInput = document.getElementById("phone") as HTMLInputElement;
-        
-        if (emailInput) emailInput.value = res.profile.email;
-        if (nameInput) nameInput.value = res.profile.name;
-        if (phoneInput) phoneInput.value = res.profile.phone;
-        
+        setEmail(res.profile.email);
+        setFullName(res.profile.name);
+        setPhone(res.profile.phone);
         triggerToast("⚡ Profile successfully autofilled via Truecaller!");
       } else {
         triggerToast("Truecaller verification failed.");
@@ -178,7 +185,7 @@ export default function Page() {
               <h2 className="font-label-caps text-label-caps text-slate-grey uppercase mb-stack-sm">Contact</h2>
               <div className="relative">
                 <label className="sr-only" htmlFor="email">Email address</label>
-                <input autoComplete="email" className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 pr-10 text-ink-black placeholder:text-slate-grey focus:border-deep-navy focus:ring-0 sm:text-body-md transition-colors duration-300" id="email" name="email" placeholder="Email address" required={true} type="email" />
+                <input autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 pr-10 text-ink-black placeholder:text-slate-grey focus:border-deep-navy focus:ring-0 sm:text-body-md transition-colors duration-300" id="email" name="email" placeholder="Email address" required={true} type="email" />
               </div>
             </div>
 
@@ -196,7 +203,7 @@ export default function Page() {
                 </div>
                 <div className="relative col-span-1 md:col-span-2">
                   <label className="sr-only" htmlFor="full-name">Full name</label>
-                  <input autoComplete="name" className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 text-ink-black placeholder:text-slate-grey focus:border-deep-navy focus:ring-0 sm:text-body-md transition-colors duration-300" id="full-name" name="full-name" placeholder="Full name" required={true} type="text" />
+                  <input autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 text-ink-black placeholder:text-slate-grey focus:border-deep-navy focus:ring-0 sm:text-body-md transition-colors duration-300" id="full-name" name="full-name" placeholder="Full name" required={true} type="text" />
                 </div>
                 <div className="relative col-span-1 md:col-span-2">
                   <label className="sr-only" htmlFor="address">Address</label>
@@ -216,7 +223,7 @@ export default function Page() {
                 </div>
                 <div className="relative col-span-1 md:col-span-2 mt-stack-sm">
                   <label className="sr-only" htmlFor="phone">Phone number</label>
-                  <input autoComplete="tel" className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 text-ink-black placeholder:text-slate-grey focus:border-deep-navy focus:ring-0 sm:text-body-md transition-colors duration-300" id="phone" name="phone" placeholder="Phone number" required={true} type="tel" />
+                  <input autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="block w-full border-0 border-b border-slate-grey/30 bg-transparent py-3 pl-0 text-ink-black placeholder:text-slate-grey focus:border-deep-navy focus:ring-0 sm:text-body-md transition-colors duration-300" id="phone" name="phone" placeholder="Phone number" required={true} type="tel" />
                 </div>
               </div>
             </div>

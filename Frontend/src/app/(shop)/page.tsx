@@ -8,6 +8,13 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import SkeletonImage from "@/components/shop/SkeletonImage";
 
+const DEFAULT_CATEGORIES = [
+  { title: "Rings", image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop", link: "/collections/silent-center?type=rings" },
+  { title: "Necklaces", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop", link: "/collections/silent-center?type=necklace" },
+  { title: "Earrings", image: "https://images.unsplash.com/photo-1635767798638-3e25273a8236?q=80&w=600&auto=format&fit=crop", link: "/collections/silent-center?type=earrings" },
+  { title: "Bracelets", image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=600&auto=format&fit=crop", link: "/collections/silent-center?type=bracelet" },
+];
+
 const DEFAULT_DATA = {
   homepage: {
     heroTitle: "the moments that belong only to you.",
@@ -36,7 +43,8 @@ const DEFAULT_DATA = {
         title: "Personal Connection",
         description: "A piece for every\nchapter of you."
       }
-    ]
+    ],
+    categories: [] as any[]
   },
   collections: [] as any[],
 };
@@ -182,6 +190,48 @@ export default function Home() {
             </Link>
           )}
         </div>
+      </section>
+
+      {/* ─── Shop by Category Section ─── */}
+      <section className="py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
+        <div className="text-center mb-section-gap">
+          <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
+            Atelier Selections
+          </p>
+          <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
+            Shop by Category
+          </h2>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="aspect-square w-full">
+                <Skeleton height="100%" borderRadius="0px" containerClassName="w-full h-full block" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+            {(store.homepage.categories && store.homepage.categories.length > 0 ? store.homepage.categories : DEFAULT_CATEGORIES).map((cat: any, idx: number) => (
+              <Link key={idx} href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block">
+                <SkeletonImage
+                  alt={cat.title}
+                  fill
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
+                  sizes="(max-width: 640px) 50vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-5 transition-opacity duration-300 group-hover:opacity-95">
+                  <div className="w-full flex justify-between items-center text-pure-white">
+                    <span className="font-label-caps text-sm tracking-widest uppercase font-semibold">{cat.title}</span>
+                    <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* ─── Brand Philosophy / Features ─── */}

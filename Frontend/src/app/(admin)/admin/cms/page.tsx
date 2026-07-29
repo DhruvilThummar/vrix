@@ -1002,61 +1002,6 @@ export default function AdminCMSPage() {
                       </p>
                     </section>
 
-                    <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
-                      <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
-                        Navigation Menu Links
-                      </h3>
-                      
-                      <div className="space-y-4">
-                        {navLinks.map((link, i) => (
-                          <div key={i} className="flex gap-4 items-center bg-soft-linen/10 p-2 border border-slate-grey/5">
-                            <div className="flex-1 grid grid-cols-2 gap-4">
-                              <input
-                                type="text"
-                                value={link.label}
-                                onChange={(e) => {
-                                  const next = [...navLinks];
-                                  next[i].label = e.target.value;
-                                  setNavLinks(next);
-                                }}
-                                className="border-b border-slate-grey/30 py-1 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black"
-                                placeholder="Link Label"
-                                required
-                              />
-                              <input
-                                type="text"
-                                value={link.path}
-                                onChange={(e) => {
-                                  const next = [...navLinks];
-                                  next[i].path = e.target.value;
-                                  setNavLinks(next);
-                                }}
-                                className="border-b border-slate-grey/30 py-1 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black"
-                                placeholder="Link Path"
-                                required
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNavLinks(navLinks.filter((_, idx) => idx !== i));
-                              }}
-                              className="text-error hover:text-error/80 cursor-pointer font-label-caps text-[10px]"
-                            >
-                              DELETE
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setNavLinks([...navLinks, { label: "", path: "" }])}
-                        className="border border-deep-navy text-deep-navy px-4 py-2 font-button uppercase text-[10px] tracking-wider hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer"
-                      >
-                        Add Navigation Link
-                      </button>
-                    </section>
 
                     <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
                       <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">

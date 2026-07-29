@@ -3,22 +3,47 @@
 import Link from "next/link";
 import Image from "next/image";
 import SkeletonImage from "@/components/shop/SkeletonImage";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { fetchDb, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
 
-const DEFAULT_LINKS = [
+const NAV_DATA = [
+  {
+    label: "Gifts",
+    path: "/search?filter=gifts",
+    megaMenu: {
+      categories: [
+        { title: "Shop by Recipient", links: [{ label: "For Her", path: "/search?q=her" }, { label: "For Him", path: "/search?q=him" }] },
+        { title: "Shop by Price", links: [{ label: "Under $150", path: "/search?price_max=150" }, { label: "Luxury Gifts", path: "/search?price_min=500" }] }
+      ],
+      featured: { title: "The Gift Guide", image: "/images/gift-guide.jpg", link: "/search?filter=gifts" }
+    }
+  },
+  {
+    label: "Jewelry",
+    path: "/collections",
+    megaMenu: {
+      categories: [
+        { title: "Shop by Type", links: [{ label: "Necklaces", path: "/collections/silent-center?type=necklace" }, { label: "Earrings", path: "/collections/silent-center?type=earrings" }, { label: "Bracelets", path: "/collections/silent-center?type=bracelet" }, { label: "Rings", path: "/collections/silent-center?type=rings" }, { label: "Charms", path: "/collections/silent-center?type=charms" }] },
+        { title: "Shop by Material", links: [{ label: "18K Gold Vermeil", path: "/search?material=gold" }, { label: "Sterling Silver", path: "/search?material=silver" }] }
+      ],
+      featured: { title: "New Arrivals", image: "/images/new-arrivals.jpg", link: "/collections/silent-center?filter=trending" }
+    }
+  },
   { label: "Trending", path: "/collections/silent-center?filter=trending" },
-  { label: "Necklaces", path: "/collections/silent-center?type=necklace" },
-  { label: "Earrings", path: "/collections/silent-center?type=earrings" },
-  { label: "Bracelets", path: "/collections/silent-center?type=bracelet" },
-  { label: "Rings", path: "/collections/silent-center?type=rings" },
-  { label: "Charms", path: "/collections/silent-center?type=charms" },
-  { label: "Collection", path: "/collections" },
-  { label: "Gifts", path: "/search?filter=gifts" },
+  { label: "VRIX+", path: "/vrix-plus" }
+];
+
+const DEFAULT_LINKS = [
+  { label: "Collections", path: "/collections" },
+  { label: "The World of VRIX", path: "/story" },
+  { label: "Journal", path: "/journal" },
+  { label: "Gifts", path: "/search" },
+  { label: "Bespoke", path: "/bespoke" },
+  { label: "New Arrivals", path: "/collections/silent-center" },
   { label: "VRIX+", path: "/vrix-plus" }
 ];
 
@@ -30,6 +55,7 @@ export default function Header() {
 
   const isHomePage = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
+  const [activeMegaMenu, setActiveMegaMenu] = useState<any | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,20 +77,22 @@ export default function Header() {
 
   // Derived style states for transparent vs solid header
   const isTransparent = !scrolled;
+  const isHome = isHomePage;
+  
   const headerBg = isTransparent
-    ? "bg-transparent text-pure-white border-transparent shadow-none"
+    ? `bg-transparent ${isHome ? "text-pure-white" : "text-ink-black"} border-transparent shadow-none`
     : "bg-pure-white text-ink-black border-soft-linen shadow-sm";
   const iconColor = isTransparent
-    ? "text-pure-white hover:text-pure-white/80"
+    ? (isHome ? "text-pure-white hover:text-pure-white/80" : "text-ink-black hover:text-ink-black/80")
     : "hover:text-deep-navy";
   const navLinkColor = isTransparent
-    ? "text-pure-white/90 hover:text-pure-white"
+    ? (isHome ? "text-pure-white/90 hover:text-pure-white" : "text-ink-black/90 hover:text-ink-black")
     : "text-ink-black/70 hover:text-ink-black";
   const navLinkActiveColor = isTransparent
-    ? "text-pure-white font-semibold border-pure-white"
+    ? (isHome ? "text-pure-white font-semibold border-pure-white" : "text-ink-black border-ink-black font-semibold")
     : "text-ink-black border-ink-black font-semibold";
   const displayLogo = isTransparent
-    ? "/logos/white.png"
+    ? (isHome ? "/logos/white.png" : (logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl))
     : (logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl);
 
   // Announcement Bar State
@@ -211,6 +239,32 @@ export default function Header() {
       )
     : [];
 
+  const predictiveResults = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return { products: [], collections: [], categories: [] };
+
+    const matchedProducts = allProducts.filter((p) =>
+      p.title.toLowerCase().includes(query) ||
+      (p.description && p.description.toLowerCase().includes(query))
+    ).slice(0, 5);
+
+    const matchedCollections = collections.filter((col) =>
+      col.title.toLowerCase().includes(query) ||
+      col.id.toLowerCase().includes(query)
+    ).slice(0, 3);
+
+    const allTypes = ["Necklaces", "Rings", "Earrings", "Bracelets", "Bespoke"];
+    const matchedCategories = allTypes.filter((t) =>
+      t.toLowerCase().includes(query)
+    );
+
+    return {
+      products: matchedProducts,
+      collections: matchedCollections,
+      categories: matchedCategories
+    };
+  }, [searchQuery, allProducts, collections]);
+
   const isActive = (path: string) => pathname === path;
 
   return (
@@ -311,22 +365,102 @@ export default function Header() {
         </div>
 
         {/* Links Navigation Row */}
-        <div className={`w-full border-t py-3 transition-all duration-500 ${isTransparent ? 'border-pure-white/15 bg-transparent' : 'border-soft-linen bg-pure-white'}`}>
+        <div
+          className={`w-full border-t py-3 transition-all duration-500 relative ${isTransparent ? 'border-pure-white/15 bg-transparent' : 'border-soft-linen bg-pure-white'}`}
+          onMouseLeave={() => setActiveMegaMenu(null)}
+        >
           <nav className="flex justify-center gap-8 items-center max-w-container-max mx-auto px-margin-desktop">
-            {navLinks.map((link, idx) => (
-              <Link
-                key={idx}
-                href={link.path}
-                className={`font-label-caps text-xs tracking-[0.15em] uppercase transition-colors py-1 border-b border-transparent ${
-                  isActive(link.path)
-                    ? navLinkActiveColor
-                    : `${navLinkColor} ${isTransparent ? 'hover:border-pure-white/40' : 'hover:border-ink-black/40'}`
-                }`}
-              >
-                {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
-              </Link>
-            ))}
+            {navLinks.map((link, idx) => {
+              const matchedItem = NAV_DATA.find((item) => item.label.toLowerCase() === link.label.toLowerCase());
+              const megaMenuData = link.megaMenu || matchedItem?.megaMenu;
+              return (
+                <div
+                  key={idx}
+                  onMouseEnter={() => {
+                    if (megaMenuData) setActiveMegaMenu(megaMenuData);
+                  }}
+                  className="py-1"
+                >
+                  <Link
+                    href={link.path}
+                    className={`font-label-caps text-xs tracking-[0.15em] uppercase transition-colors py-1 border-b border-transparent ${
+                      isActive(link.path)
+                        ? navLinkActiveColor
+                        : `${navLinkColor} ${isTransparent ? 'hover:border-pure-white/40' : 'hover:border-ink-black/40'}`
+                    }`}
+                  >
+                    {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
+                  </Link>
+                </div>
+              );
+            })}
           </nav>
+
+          {/* Premium Glassmorphic Mega Menu */}
+          {activeMegaMenu && (
+            <div
+              className="absolute top-full left-0 right-0 bg-pure-white/80 backdrop-blur-md border-b border-soft-linen shadow-lg animate-fade-in z-30"
+              onMouseEnter={() => setActiveMegaMenu(activeMegaMenu)}
+              onMouseLeave={() => setActiveMegaMenu(null)}
+            >
+              <div className="max-w-container-max mx-auto px-margin-desktop py-8 grid grid-cols-4 gap-8">
+                {/* Categories */}
+                <div className="col-span-3 grid grid-cols-3 gap-6">
+                  {activeMegaMenu.categories.map((cat: any, cIdx: number) => (
+                    <div key={cIdx} className="space-y-4">
+                      <h4 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2">
+                        {cat.title}
+                      </h4>
+                      <ul className="space-y-2">
+                        {cat.links.map((lnk: any, lIdx: number) => (
+                          <li key={lIdx}>
+                            <Link
+                              href={lnk.path}
+                              onClick={() => setActiveMegaMenu(null)}
+                              className="font-body-md text-xs text-slate-grey hover:text-ink-black transition-colors block py-0.5"
+                            >
+                              {lnk.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Featured Promo Banner */}
+                {activeMegaMenu.featured && (
+                  <div className="col-span-1 border-l border-slate-grey/15 pl-8 space-y-3">
+                    <h4 className="font-label-caps text-[9px] text-slate-grey tracking-widest uppercase">
+                      Featured
+                    </h4>
+                    <Link
+                      href={activeMegaMenu.featured.link}
+                      onClick={() => setActiveMegaMenu(null)}
+                      className="group block space-y-2"
+                    >
+                      <div className="relative aspect-video w-full bg-soft-linen overflow-hidden">
+                        <Image
+                          src={activeMegaMenu.featured.image}
+                          alt={activeMegaMenu.featured.title}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-label-caps text-xs text-ink-black font-semibold tracking-wider group-hover:text-deep-navy transition-colors">
+                          {activeMegaMenu.featured.title}
+                        </span>
+                        <span className="material-symbols-outlined text-sm text-slate-grey group-hover:translate-x-1 transition-transform">
+                          arrow_forward
+                        </span>
+                      </div>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -622,33 +756,91 @@ export default function Header() {
                 ))}
               </div>
             </div>
-          ) : searchResults.length === 0 ? (
+          ) : predictiveResults.products.length === 0 &&
+            predictiveResults.collections.length === 0 &&
+            predictiveResults.categories.length === 0 ? (
             <p className="text-center text-slate-grey font-body-md text-sm py-12">No results found for "{searchQuery}".</p>
           ) : (
-            <div className="space-y-4">
-              <h4 className="font-label-caps text-[10px] text-slate-grey tracking-widest uppercase">Results ({searchResults.length})</h4>
-              <div className="space-y-3">
-                {searchResults.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/collections/silent-center?product=${item.id}`}
-                    onClick={() => {
-                      setIsSearchOpen(false);
-                      setSearchQuery("");
-                    }}
-                    className="flex gap-4 p-2 border border-soft-linen hover:border-slate-grey/30 bg-surface/10 hover:bg-surface/50 transition-all cursor-pointer"
-                  >
-                    <div className="w-14 h-16 bg-soft-linen relative shrink-0">
-                      <Image src={item.image} alt={item.title} fill className="object-cover" sizes="50px" />
-                    </div>
-                    <div className="flex flex-col justify-center">
-                      <h5 className="font-label-caps text-xs font-semibold uppercase text-deep-navy leading-none mb-1">{item.title}</h5>
-                      <span className="text-[10px] text-slate-grey uppercase tracking-wider">{item.material} • {item.type}</span>
-                      <span className="font-body-md text-xs font-semibold mt-1">${item.price}</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+            <div className="space-y-8 animate-fade-in">
+              {/* Categories segment */}
+              {predictiveResults.categories.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-label-caps text-[9px] text-slate-grey tracking-widest uppercase border-b border-slate-grey/10 pb-1.5">
+                    Suggested Categories
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {predictiveResults.categories.map((cat) => (
+                      <Link
+                        key={cat}
+                        href={`/collections/silent-center?type=${cat.toLowerCase()}`}
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery("");
+                        }}
+                        className="px-3 py-1 bg-soft-linen/35 border border-slate-grey/15 text-xs text-ink-black uppercase font-label-caps hover:bg-deep-navy hover:text-pure-white transition-colors"
+                      >
+                        {cat}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Collections segment */}
+              {predictiveResults.collections.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-label-caps text-[9px] text-slate-grey tracking-widest uppercase border-b border-slate-grey/10 pb-1.5">
+                    Matching Collections
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    {predictiveResults.collections.map((col) => (
+                      <Link
+                        key={col.id}
+                        href={`/collections/${col.id}`}
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery("");
+                        }}
+                        className="flex justify-between items-center py-2 px-3 border border-slate-grey/15 bg-soft-linen/10 hover:bg-soft-linen/25 transition-colors cursor-pointer"
+                      >
+                        <span className="font-label-caps text-xs font-semibold text-deep-navy uppercase">{col.title}</span>
+                        <span className="material-symbols-outlined text-sm text-slate-grey">arrow_forward</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Products segment */}
+              {predictiveResults.products.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-label-caps text-[9px] text-slate-grey tracking-widest uppercase border-b border-slate-grey/10 pb-1.5">
+                    Matched Products
+                  </h4>
+                  <div className="space-y-3">
+                    {predictiveResults.products.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/product/${item.id}`}
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setSearchQuery("");
+                        }}
+                        className="flex gap-4 p-2 border border-soft-linen hover:border-slate-grey/30 bg-surface/10 hover:bg-surface/50 transition-all cursor-pointer"
+                      >
+                        <div className="w-14 h-16 bg-soft-linen relative shrink-0">
+                          <Image src={item.image} alt={item.title} fill className="object-cover" sizes="50px" />
+                        </div>
+                        <div className="flex flex-col justify-center">
+                          <h5 className="font-label-caps text-xs font-semibold uppercase text-deep-navy leading-none mb-1">{item.title}</h5>
+                          <span className="text-[10px] text-slate-grey uppercase tracking-wider">{item.material} • {item.type}</span>
+                          <span className="font-body-md text-xs font-semibold mt-1">${item.price}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
