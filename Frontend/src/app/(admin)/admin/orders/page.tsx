@@ -370,15 +370,52 @@ export default function AdminOrdersPage() {
                     ))}
 
                     {/* Cart Items */}
-                    {selectedOrder.cartItems && selectedOrder.cartItems.length > 0 && (
+                    {selectedOrder.cartItems && (
                       <div className="space-y-1.5 pt-2 border-t border-slate-grey/10">
                         <p className="font-label-caps text-[9px] uppercase tracking-widest text-slate-grey">Items Ordered</p>
-                        {selectedOrder.cartItems.map((item: any, i: number) => (
-                          <div key={i} className="flex justify-between items-center bg-soft-linen/30 px-3 py-2 rounded">
-                            <span className="text-xs text-ink-black font-medium">{item.title || item.name || `Item ${i+1}`}</span>
-                            <span className="text-[10px] text-slate-grey">×{item.quantity || 1}</span>
+                        {(() => {
+                          let parsedItems = [];
+                          try {
+                            parsedItems = typeof selectedOrder.cartItems === "string" ? JSON.parse(selectedOrder.cartItems) : selectedOrder.cartItems;
+                          } catch (e) {
+                            parsedItems = [];
+                          }
+                          if (!Array.isArray(parsedItems) || parsedItems.length === 0) {
+                            return <p className="text-[10px] text-slate-grey italic">No details saved</p>;
+                          }
+                          return parsedItems.map((item: any, i: number) => {
+                            const details = [
+                              item.type ? `Category: ${item.type.toUpperCase()}` : "",
+                              item.material ? `Material: ${item.material}` : "",
+                              item.size ? `Size: ${item.size}` : "",
+                              item.engraving ? `Engraved: "${item.engraving}"` : ""
+                            ].filter(Boolean).join(" | ");
+                            return (
+                              <div key={i} className="flex flex-col bg-soft-linen/30 px-3 py-2 rounded gap-0.5">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-xs text-ink-black font-semibold">{item.title || item.name || `Item ${i+1}`}</span>
+                                  <span className="text-[10px] text-slate-grey">×{item.quantity || 1}</span>
+                                </div>
+                                {details && <p className="text-[9px] text-slate-grey">{details}</p>}
+                              </div>
+                            );
+                          });
+                        })()}
+                        {/* Gift Wrap Status */}
+                        {(selectedOrder.isGiftWrapped || selectedOrder.giftWrapPrice) && (
+                          <div className="flex flex-col bg-emerald-50 border border-emerald-100 px-3 py-2 rounded gap-0.5 mt-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-emerald-800 font-semibold flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">featured_seasonal</span>
+                                Signature Gift Pack
+                              </span>
+                              <span className="text-[10px] text-emerald-700">+{selectedOrder.giftWrapPrice || 250}</span>
+                            </div>
+                            {selectedOrder.giftMessage && (
+                              <p className="text-[9px] text-emerald-600 italic">Note: "{selectedOrder.giftMessage}"</p>
+                            )}
                           </div>
-                        ))}
+                        )}
                       </div>
                     )}
                   </div>

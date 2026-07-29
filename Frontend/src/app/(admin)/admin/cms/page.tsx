@@ -1946,10 +1946,137 @@ export default function AdminCMSPage() {
                       <textarea
                         value={invoiceFooterNotes}
                         onChange={(e) => setInvoiceFooterNotes(e.target.value)}
-                        className="border border-slate-grey/30 p-3 rounded text-xs outline-none"
+                        className="border border-slate-grey/30 p-3 rounded text-xs outline-none bg-transparent"
                         rows={3}
                         placeholder="e.g. Thank you for your luxury purchase. Certified authentic architectural jewels."
                       />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Simulated Live Invoice Print Preview */}
+                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+                    <div>
+                      <h4 className="font-headline-md text-base text-deep-navy uppercase">
+                        Live Simulated Invoice Printout Preview
+                      </h4>
+                      <p className="text-[10px] text-slate-grey mt-0.5">Displays how customer invoices will look when printed or saved as PDF.</p>
+                    </div>
+                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] px-2 py-0.5 rounded uppercase font-semibold">
+                      Live Preview Enabled
+                    </span>
+                  </div>
+
+                  {/* Simulated Invoice Sheet Container */}
+                  <div 
+                    className="border border-slate-grey/20 p-8 shadow-inner bg-pure-white rounded max-w-2xl mx-auto"
+                    style={{
+                      fontFamily: invoiceFontFamily === "serif" ? "'Times New Roman', Georgia, serif" : invoiceFontFamily === "monospace" ? "'Courier New', Courier, monospace" : "'Helvetica Neue', Arial, sans-serif"
+                    }}
+                  >
+                    {/* Header Row */}
+                    <div className="flex justify-between items-start pb-6 border-b-2 mb-6" style={{ borderColor: invoiceThemeColor }}>
+                      <div>
+                        <div 
+                          className="font-bold tracking-widest uppercase text-deep-navy" 
+                          style={{ 
+                            fontSize: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 28}px`,
+                            color: invoiceThemeColor
+                          }}
+                        >
+                          {invoiceCompanyName || "VRIX"}
+                        </div>
+                        <div className="text-[10px] uppercase tracking-wider text-slate-grey mt-1 font-semibold">Official Tax Invoice</div>
+                        {invoiceCompanyGst && (
+                          <div className="text-[9px] text-slate-grey mt-1 font-semibold">GSTIN: {invoiceCompanyGst}</div>
+                        )}
+                      </div>
+                      <div className="text-right text-[11px] text-slate-grey space-y-0.5">
+                        <div>Invoice Date: 29 July 2026</div>
+                        <div>Order ID: <strong className="text-ink-black font-semibold">order_dev_1785319053475</strong></div>
+                        <div>Payment ID: pay_dev_1785334592</div>
+                      </div>
+                    </div>
+
+                    {/* Shipped & Seller side-by-side block */}
+                    <div className="flex justify-between gap-6 mb-6">
+                      <div className="flex-1 bg-soft-linen/10 border border-slate-grey/15 p-4 rounded text-xs leading-relaxed">
+                        <h5 className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest mb-1.5 font-bold">Billed &amp; Shipped To</h5>
+                        <div><strong className="text-deep-navy">Dhruvil Thummar</strong></div>
+                        <div>ahn, ahm</div>
+                        <div>ahm, 380063</div>
+                        <div>Email: dhruvilthummar1303@gmail.com</div>
+                        <div>Phone: 9265809361</div>
+                      </div>
+
+                      <div className="flex-1 bg-soft-linen/10 border border-slate-grey/15 p-4 rounded text-xs leading-relaxed">
+                        <h5 className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest mb-1.5 font-bold">Seller Details</h5>
+                        <div><strong className="text-deep-navy">{invoiceCompanyName || "VRIX Jewels"}</strong></div>
+                        <div>{invoiceAddressLine1 || "VRIX Architectural Fine Jewelry"}</div>
+                        <div>{invoiceAddressLine2 || "Mumbai, India"}</div>
+                        {invoiceCompanyGst && <div>GSTIN: {invoiceCompanyGst}</div>}
+                      </div>
+                    </div>
+
+                    {/* Table row */}
+                    <table className="w-full text-left border-collapse text-xs mb-6">
+                      <thead>
+                        <tr className="border-b-2" style={{ borderColor: invoiceThemeColor }}>
+                          <th className="py-2.5 font-semibold text-slate-grey uppercase tracking-wider text-[9px]">Description</th>
+                          <th className="py-2.5 font-semibold text-slate-grey text-center w-12 uppercase tracking-wider text-[9px]">Qty</th>
+                          <th className="py-2.5 font-semibold text-slate-grey text-right w-24 uppercase tracking-wider text-[9px]">Unit Price</th>
+                          <th className="py-2.5 font-semibold text-slate-grey text-right w-24 uppercase tracking-wider text-[9px]">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-slate-grey/10">
+                          <td className="py-3">
+                            <div className="font-bold text-ink-black" style={{ color: invoiceThemeColor }}>VRIX Fine Jewelry Purchase</div>
+                            <div className="text-[10px] text-slate-grey mt-1">Collection Category: RINGS | Material Swatch: 18K YELLOW GOLD | Size Option: 6</div>
+                          </td>
+                          <td className="py-3 text-center">1</td>
+                          <td className="py-3 text-right">INR 329.66</td>
+                          <td className="py-3 text-right font-bold">INR 329.66</td>
+                        </tr>
+                        {/* Gift Wrap Row */}
+                        <tr className="border-b border-slate-grey/10">
+                          <td className="py-3">
+                            <div className="font-bold text-ink-black">Signature Gift Packaging</div>
+                            <div className="text-[10px] text-slate-grey mt-1">Note: "Happy Anniversary!"</div>
+                          </td>
+                          <td className="py-3 text-center">1</td>
+                          <td className="py-3 text-right">INR 250.00</td>
+                          <td className="py-3 text-right font-bold">INR 250.00</td>
+                        </tr>
+
+                        {/* Calculations */}
+                        <tr className="border-t border-slate-grey/20">
+                          <td colSpan={2}></td>
+                          <td className="py-2 text-right text-slate-grey">Subtotal (excl. tax)</td>
+                          <td className="py-2 text-right">INR 579.66</td>
+                        </tr>
+                        <tr>
+                          <td colSpan={2}></td>
+                          <td className="py-2 text-right text-slate-grey">CGST (9%)</td>
+                          <td className="py-2 text-right">INR 52.17</td>
+                        </tr>
+                        <tr>
+                          <td colSpan={2}></td>
+                          <td className="py-2 text-right text-slate-grey">SGST (9%)</td>
+                          <td className="py-2 text-right">INR 52.17</td>
+                        </tr>
+                        <tr className="font-bold text-sm bg-soft-linen/5 border-t border-b border-slate-grey/25">
+                          <td colSpan={2} className="py-3"></td>
+                          <td className="py-3 text-right text-deep-navy">Grand Total</td>
+                          <td className="py-3 text-right text-deep-navy" style={{ color: invoiceThemeColor }}>INR 684.00</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    {/* Footer sign off */}
+                    <div className="text-center text-[10px] text-slate-grey leading-relaxed mt-8 border-t border-slate-grey/10 pt-4">
+                      {invoiceFooterNotes || "This is a computer generated document. Signed under official luxury brand licensing."}
                     </div>
                   </div>
                 </section>

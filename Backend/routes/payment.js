@@ -141,7 +141,14 @@ router.post("/verify", async (req, res) => {
         // 1. Update payment status to SUCCESS
         const updatedPayment = await tx.payments.update({
           where: { orderId: razorpay_order_id },
-          data: { status: "SUCCESS", paymentId: razorpay_payment_id },
+          data: { 
+            status: "SUCCESS", 
+            paymentId: razorpay_payment_id,
+            cartItems: items ? (typeof items === "string" ? items : JSON.stringify(items)) : "[]",
+            isGiftWrapped: !!isGiftWrapped,
+            giftMessage: giftMessage || "",
+            giftWrapPrice: giftWrapPrice ? Number(giftWrapPrice) : 0
+          },
         });
 
         // 2. Create security log for audit trail
@@ -436,8 +443,8 @@ router.get("/invoice/:orderId", async (req, res) => {
             </div>
           </div>
 
-          <div class="grid">
-            <div class="card">
+          <div class="grid" style="display: flex; justify-content: space-between; gap: 20px; width: 100%;">
+            <div class="card" style="flex: 1; min-width: 0; box-sizing: border-box;">
               <h4>Billed & Shipped To</h4>
               <div><strong>${payment.customerName || payment.userEmail || "Customer"}</strong></div>
               <div>${payment.address || "Address Provided at Checkout"}</div>
@@ -445,11 +452,11 @@ router.get("/invoice/:orderId", async (req, res) => {
               <div>Email: ${payment.userEmail || "N/A"}</div>
               <div>Phone: ${payment.customerPhone || "N/A"}</div>
             </div>
-            <div class="card">
+            <div class="card" style="flex: 1; min-width: 0; box-sizing: border-box;">
               <h4>Seller Details</h4>
-              <div><strong>${cfg.companyName}</strong></div>
-              <div>${cfg.addressLine1}</div>
-              <div>${cfg.addressLine2}</div>
+              <div><strong>${cfg.companyName || "VRIX Jewels"}</strong></div>
+              <div>${cfg.addressLine1 || "VRIX Architectural Fine Jewelry"}</div>
+              <div>${cfg.addressLine2 || "Mumbai, India"}</div>
               ${cfg.companyGst ? `<div>GSTIN: ${cfg.companyGst}</div>` : ""}
             </div>
           </div>
@@ -485,16 +492,17 @@ router.get("/invoice/:orderId", async (req, res) => {
                     const qtyVal = Number(item.quantity || 1);
                     const nameStr = item.title || item.name || "VRIX Jewelry Piece";
                     const options = [
-                      item.material ? `Material: ${item.material}` : "",
-                      item.size ? `Size: ${item.size}` : "",
-                      item.engraving ? `Engraving: "${item.engraving}"` : ""
+                      item.type ? `Collection Category: ${item.type.toUpperCase()}` : "",
+                      item.material ? `Material Swatch: ${item.material}` : "",
+                      item.size ? `Size Option: ${item.size}` : "",
+                      item.engraving ? `Engraving Signature: "${item.engraving}"` : ""
                     ].filter(Boolean).join(" | ");
 
                     itemsHtml += `
                       <tr>
                         <td>
-                          <div style="font-weight: bold;">${nameStr}</div>
-                          ${options ? `<div style="font-size: 11px; color: #666; margin-top: 3px;">${options}</div>` : ""}
+                          <div style="font-weight: bold; color: ${cfg.themeColor};">${nameStr}</div>
+                          ${options ? `<div style="font-size: 11px; color: #555; margin-top: 5px; font-family: sans-serif; line-height: 1.4;">${options}</div>` : ""}
                         </td>
                         <td style="text-align: center;">${qtyVal}</td>
                         <td style="text-align: right;">${payment.currency || "INR"} ${priceVal.toLocaleString()}</td>
