@@ -406,45 +406,59 @@ export default function AdminNavigationPage() {
           </div>
 
           {/* Mini-Navbar Mock Shell */}
-          <div className="border border-slate-grey/15 bg-pure-white rounded shadow-inner overflow-visible relative min-h-[64px]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-grey/10 bg-pure-white">
-              {/* Mock Brand Logo */}
-              <div className="font-display-lg text-base tracking-widest text-deep-navy font-bold flex items-center gap-2">
-                VRIX
+          <div className="border border-slate-grey/15 bg-pure-white rounded shadow-inner overflow-visible relative min-h-[90px] flex flex-col justify-between">
+            {/* Top row - Brand Logo, Icons */}
+            <div className="grid grid-cols-3 items-center px-6 py-3 border-b border-slate-grey/10">
+              {/* Left Column (Spacer) */}
+              <div className="text-[10px] font-label-caps text-slate-grey uppercase tracking-widest">
+                VRIX Luxury Fine Jewelry
               </div>
 
-              {/* Main Links */}
-              <div className="flex items-center gap-6">
-                {navLinks.map((link, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onMouseEnter={() => setHoveredPreviewIndex(idx)}
-                    onMouseLeave={() => setHoveredPreviewIndex(null)}
-                    onClick={() => setSelectedLinkIndex(idx)}
-                    className={`font-label-caps text-[11px] tracking-widest uppercase pb-1 border-b-2 transition-all cursor-pointer ${
-                      selectedLinkIndex === idx
-                        ? "border-deep-navy text-deep-navy font-bold"
-                        : "border-transparent text-slate-grey hover:text-deep-navy hover:border-slate-grey/30"
-                    }`}
-                  >
-                    {link.label || "Unnamed Link"}
-                  </button>
-                ))}
+              {/* Center Column (Brand Logo) */}
+              <div className="flex justify-center">
+                <span className="font-display-lg text-2xl font-light tracking-[0.25em] uppercase select-none text-ink-black">
+                  VRIX
+                </span>
               </div>
 
-              {/* Mock Right Side Icons */}
-              <div className="flex items-center gap-4 text-slate-grey text-sm">
+              {/* Right Column (Mock Action Icons) */}
+              <div className="flex justify-end items-center gap-5 text-slate-grey text-sm">
+                <select
+                  disabled
+                  className="bg-transparent text-xs font-semibold uppercase tracking-wider border-none outline-none text-ink-black mr-2 opacity-70 cursor-not-allowed"
+                >
+                  <option>INR (₹)</option>
+                </select>
                 <span className="material-symbols-outlined text-lg">search</span>
-                <span className="material-symbols-outlined text-lg">favorite</span>
+                <span className="material-symbols-outlined text-lg font-light">favorite</span>
                 <span className="material-symbols-outlined text-lg">shopping_bag</span>
               </div>
+            </div>
+
+            {/* Bottom Row - Centered Navigation links */}
+            <div className="flex justify-center gap-8 py-2.5 bg-pure-white select-none">
+              {navLinks.map((link, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onMouseEnter={() => setHoveredPreviewIndex(idx)}
+                  onMouseLeave={() => setHoveredPreviewIndex(null)}
+                  onClick={() => setSelectedLinkIndex(idx)}
+                  className={`font-label-caps text-[11px] tracking-[0.15em] uppercase pb-1 border-b-2 transition-all cursor-pointer ${
+                    selectedLinkIndex === idx
+                      ? "border-deep-navy text-deep-navy font-bold"
+                      : "border-transparent text-slate-grey hover:text-deep-navy hover:border-slate-grey/30"
+                  }`}
+                >
+                  {link.label || "Unnamed Link"}
+                </button>
+              ))}
             </div>
 
             {/* Simulated Mega-Menu Dropdown */}
             {activePreviewLink && activePreviewLink.megaMenu && (
               <div
-                className="absolute left-0 right-0 top-[53px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-30 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
+                className="absolute left-0 right-0 top-[95px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-30 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
                 onMouseEnter={() => {
                   if (hoveredPreviewIndex === null && selectedLinkIndex !== null) {
                     setHoveredPreviewIndex(selectedLinkIndex);
