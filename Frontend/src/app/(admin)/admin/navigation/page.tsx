@@ -429,7 +429,7 @@ export default function AdminNavigationPage() {
 
           {/* Mini-Navbar Mock Shell */}
           <div 
-            className={`border rounded shadow-inner overflow-visible relative min-h-[140px] flex flex-col justify-between transition-all duration-500 ${
+            className={`border rounded shadow-inner overflow-visible relative z-40 min-h-[140px] flex flex-col justify-between transition-all duration-500 ${
               previewTheme === "transparent"
                 ? "bg-[url('https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1000')] bg-cover bg-center border-transparent"
                 : "border-slate-grey/15 bg-pure-white"
@@ -470,7 +470,7 @@ export default function AdminNavigationPage() {
                     previewTheme === "transparent" ? "text-pure-white" : "text-ink-black"
                   }`}
                 >
-                  <option style={{ color: "#000" }}>INR (₹)</option>
+                  <option style={{ color: "#000" }}>INR (₹) </option>
                 </select>
                 <span className="material-symbols-outlined text-lg">search</span>
                 <span className="material-symbols-outlined text-lg font-light">favorite</span>
@@ -503,7 +503,7 @@ export default function AdminNavigationPage() {
             {/* Simulated Mega-Menu Dropdown */}
             {activePreviewLink && activePreviewLink.megaMenu && (
               <div
-                className="absolute left-0 right-0 top-[138px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-30 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
+                className="absolute left-0 right-0 top-[138px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-50 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
                 onMouseEnter={() => {
                   if (hoveredPreviewIndex === null && selectedLinkIndex !== null) {
                     setHoveredPreviewIndex(selectedLinkIndex);
