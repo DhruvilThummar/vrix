@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections } from "@/utils/api";
+import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections, uploadMedia } from "@/utils/api";
 
 type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings";
 
@@ -1914,7 +1914,30 @@ export default function AdminCMSPage() {
                     </div>
 
                     <div className="flex flex-col gap-2 md:col-span-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Company Image Logo URL (Optional)</label>
+                      <div className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold flex justify-between items-center">
+                        <span>Company Image Logo URL (Optional)</span>
+                        <label className="text-[9px] text-deep-navy font-semibold cursor-pointer underline hover:text-slate-grey">
+                          Or Upload File
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                showToast("Uploading logo...");
+                                const res = await uploadMedia(file);
+                                setInvoiceLogoUrl(res.url);
+                                showToast("Logo uploaded successfully!");
+                              } catch (err: any) {
+                                console.error("Upload error:", err);
+                                showToast(err.message || "Failed to upload logo.");
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
                       <input
                         type="text"
                         value={invoiceLogoUrl}
