@@ -63,7 +63,7 @@ router.post("/register", async (req, res) => {
       }
     })();
 
-    return res.json({ success: true, message: "OTP code generated", otp });
+    return res.json({ success: true, message: "OTP code generated" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -184,7 +184,7 @@ router.post("/login", async (req, res) => {
       }
     })();
 
-    return res.json({ success: true, message: "OTP generated", otp });
+    return res.json({ success: true, message: "OTP generated" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -484,6 +484,7 @@ router.post("/google", async (req, res) => {
 // GET /api/auth/me — Fetch authenticated user profile directly from Supabase / DB
 router.get("/me", async (req, res) => {
   const { email } = req.query;
+
   if (!email) {
     return res.status(400).json({ error: "Email query parameter is required." });
   }

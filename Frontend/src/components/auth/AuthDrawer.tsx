@@ -106,13 +106,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
           return;
         }
         const res = await registerUser({ email: cleanEmail, password, name: cleanName, phone: cleanPhone });
-        if (res.otp) {
-          const digits = String(res.otp).split("").slice(0, 6);
-          if (digits.length === 6) setOtpInput(digits);
-          triggerToast(`Verification code generated! (Dev code: ${res.otp})`);
-        } else {
-          triggerToast("Verification code sent to your email!");
-        }
+        triggerToast("Verification code sent to your email!");
         setAuthStep("otp");
       } else {
         const res = await loginUserDirect({ email: cleanEmail, password });
@@ -135,13 +129,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     setErrorMsg(null);
     try {
       const res = await registerUser({ email: cleanEmail, password, name: cleanName, phone: cleanPhone });
-      if (res.otp) {
-        const digits = String(res.otp).split("").slice(0, 6);
-        if (digits.length === 6) setOtpInput(digits);
-        triggerToast(`Code resent! (Dev code: ${res.otp})`);
-      } else {
-        triggerToast("A new verification code has been sent to your email.");
-      }
+      triggerToast("A new verification code has been sent to your email.");
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to resend code.");
     } finally {
