@@ -18,6 +18,9 @@ interface Order {
   city?: string;
   postalCode?: string;
   cartItems?: any[];
+  isGiftWrapped?: boolean;
+  giftWrapPrice?: number;
+  giftMessage?: string;
   createdAt: string;
 }
 
@@ -37,6 +40,9 @@ function normalizeOrder(raw: any): Order {
     city: raw.city || "",
     postalCode: raw.postalCode || raw.postal_code || "",
     cartItems: raw.cartItems || raw.cart_items || [],
+    isGiftWrapped: !!(raw.isGiftWrapped || raw.is_gift_wrapped),
+    giftWrapPrice: Number(raw.giftWrapPrice || raw.gift_wrap_price || 0),
+    giftMessage: raw.giftMessage || raw.gift_message || "",
     createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
   };
 }

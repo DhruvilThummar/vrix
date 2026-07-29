@@ -52,9 +52,10 @@ function ProductContent() {
  
   const product = useMemo(() => {
     if (!productId) return DEFAULT_PRODUCT;
-    const found = products.find((p) => p.id === productId);
+    const found = products.find((p) => String(p.id).trim().toLowerCase() === String(productId).trim().toLowerCase());
+    if (!found && loading) return null;
     return found || { ...DEFAULT_PRODUCT, id: productId };
-  }, [products, productId]);
+  }, [products, productId, loading]);
  
   useEffect(() => {
     try {
@@ -68,6 +69,7 @@ function ProductContent() {
   }, [product, user?.email]);
  
   const galleryImages = useMemo(() => {
+    if (!product) return [];
     const urls = [product.image, ...(Array.isArray(product.images) ? product.images : [])]
       .filter((url): url is string => typeof url === "string")
       .filter(Boolean)
@@ -84,6 +86,7 @@ function ProductContent() {
   };
  
   const handleAddToBag = () => {
+    if (!product) return;
     if (!isLoggedIn) {
       showToast("Please sign in to add items to your bag.");
       setTimeout(() => router.push("/account"), 1000);
@@ -100,7 +103,7 @@ function ProductContent() {
       let customizationPrice = 0;
       if (engraving && product.engravingOptions?.enabled) customizationPrice += (product.engravingOptions.price || 0);
       if (giftNote && product.giftNoteOptions?.enabled) customizationPrice += (product.giftNoteOptions.price || 0);
-
+ 
       addItem({
         id: product.id,
         title: product.title,
@@ -117,6 +120,7 @@ function ProductContent() {
   };
  
   const handleAddToWishlist = () => {
+    if (!product) return;
     if (!isLoggedIn) {
       showToast("Please sign in to add items to your wishlist.");
       setTimeout(() => router.push("/account"), 1000);
@@ -150,7 +154,7 @@ function ProductContent() {
     }, 4000);
   };
  
-  if (loading) {
+  if (loading || !product) {
     return (
       <div className="relative w-full">
         <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-section-gap">
@@ -168,7 +172,7 @@ function ProductContent() {
                 ))}
               </div>
             </div>
-
+ 
             {/* Right Column: Sticky Product Information Skeletons */}
             <div className="md:col-span-5 relative mt-8 md:mt-0">
               <div className="flex flex-col gap-stack-lg">
@@ -238,7 +242,7 @@ function ProductContent() {
                     </span>
                   )}
                 </p>
-
+ 
                 <div className="flex items-baseline gap-3 mt-2">
                   {product.isVrixPlusExclusive && product.vrixPlusPrice ? (
                     <>
@@ -250,12 +254,12 @@ function ProductContent() {
                     <p className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(product.price)}</p>
                   )}
                 </div>
-
+ 
                 <p className="font-body-md text-on-surface-variant mt-2 leading-relaxed text-sm">
                   {product.description || "A symbol of inner balance. Designed to remind you that you are your own center. Minimalist architecture translated into an intimate everyday companion."}
                 </p>
               </div>
-
+ 
               {/* Metal / Material Finish Swatches */}
               <MetalSwatches
                 selectedMetal={selectedMetal}
@@ -318,18 +322,14 @@ function ProductContent() {
                 {/* Gift Note (Optional) */}
                 {product.giftNoteOptions?.enabled && (
                   <div className="flex flex-col gap-2 mt-2">
-                    <div className="flex justify-between items-center">
-                      <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="gift-note">
-                        Gift Note (Optional) {product.giftNoteOptions.price > 0 && `(+$${product.giftNoteOptions.price})`}
-                      </label>
-                      <span className="font-label-caps text-slate-grey text-[10px]">{giftNote.length}/{product.giftNoteOptions.limit || 120}</span>
-                    </div>
-                    <textarea
-                      className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0 resize-none"
-                      id="gift-note"
-                      placeholder="Write your message"
-                      rows={2}
-                      maxLength={product.giftNoteOptions.limit || 120}
+                    <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="giftNote">
+                      Gift Message (Optional) {product.giftNoteOptions.price > 0 && `(+$${product.giftNoteOptions.price})`}
+                    </label>
+                    <input
+                      className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
+                      id="giftNote"
+                      placeholder="Add a gift message"
+                      type="text"
                       value={giftNote}
                       onChange={(e) => setGiftNote(e.target.value)}
                     />
@@ -337,71 +337,35 @@ function ProductContent() {
                 )}
               </div>
  
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-4 mt-4">
+              {/* Add to Bag and Wishlist Actions */}
+              <div className="flex flex-col gap-4 mt-4">
                 <button
                   onClick={handleAddToBag}
                   disabled={bagLoading}
-                  className="w-full bg-deep-navy text-pure-white py-4 font-button uppercase tracking-widest hover:bg-ink-black transition-colors duration-300 cursor-pointer flex justify-center items-center gap-2"
+                  className="w-full bg-deep-navy text-pure-white py-5 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-3 text-sm"
                 >
                   {bagLoading ? (
-                    <div className="w-5 h-5 border-2 border-pure-white border-t-transparent rounded-full animate-spin"></div>
+                    <>
+                      <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
+                      Adding to Bag...
+                    </>
                   ) : (
                     "Add to Bag"
                   )}
                 </button>
                 <button
                   onClick={handleAddToWishlist}
-                  className={`w-full bg-transparent border py-4 font-button uppercase tracking-widest flex justify-center items-center gap-2 transition-colors duration-300 cursor-pointer ${
-                    wishlistActive
-                      ? "border-deep-navy text-deep-navy bg-soft-linen/20"
-                      : "border-slate-grey/30 text-ink-black hover:border-ink-black"
-                  }`}
+                  className="w-full border border-slate-grey/30 py-5 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-2 text-sm text-ink-black bg-transparent"
                 >
-                  <span
-                    className="material-symbols-outlined text-[18px]"
-                    style={{ fontVariationSettings: `'FILL' ${wishlistActive ? 1 : 0}, 'wght' 300` }}
-                  >
-                    favorite
+                  <span className={`material-symbols-outlined text-[18px] ${wishlistActive ? "text-red-600 fill-red-600" : ""}`}>
+                    {wishlistActive ? "favorite" : "favorite_border"}
                   </span>
-                  {wishlistActive ? "Wishlisted" : "Add to Wishlist"}
+                  {wishlistActive ? "In Wishlist" : "Add to Wishlist"}
                 </button>
               </div>
  
-              {/* Trust Badges */}
-              <div className="grid grid-cols-2 gap-y-6 gap-x-4 mt-8 py-8 border-y border-slate-grey/20">
-                <div className="flex gap-3 items-start">
-                  <span className="material-symbols-outlined text-slate-grey">local_shipping</span>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-label-caps text-ink-black text-[10px]">Free Shipping</span>
-                    <span className="text-[12px] text-slate-grey font-body-md leading-tight">For all orders over $150</span>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <span className="material-symbols-outlined text-slate-grey">sync</span>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-label-caps text-ink-black text-[10px]">Easy Returns</span>
-                    <span className="text-[12px] text-slate-grey font-body-md leading-tight">30 days return</span>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <span className="material-symbols-outlined text-slate-grey">verified_user</span>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-label-caps text-ink-black text-[10px]">2 Year Warranty</span>
-                    <span className="text-[12px] text-slate-grey font-body-md leading-tight">Quality you can trust</span>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <span className="material-symbols-outlined text-slate-grey">card_giftcard</span>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-label-caps text-ink-black text-[10px]">Gift Packaging</span>
-                    <span className="text-[12px] text-slate-grey font-body-md leading-tight">Always included</span>
-                  </div>
-                </div>
-              </div>
- 
-              {/* Accordions */}
-              <div className="flex flex-col mt-2">
+              {/* Product Info Accordions */}
+              <div className="flex flex-col border-t border-slate-grey/20 mt-8">
                 {/* Details Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
@@ -419,37 +383,11 @@ function ProductContent() {
                   </button>
                   <div
                     className={`overflow-hidden transition-all duration-300 ${
-                      activeAccordion === "details" ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0"
+                      activeAccordion === "details" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
                     <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
-                      Handcrafted with care. VRIX products are made from ethically sourced metals and premium gemstones. Meticulous design lines serving as a structural extension of your personality.
-                    </p>
-                  </div>
-                </div>
- 
-                {/* Shipping Accordion */}
-                <div className="border-b border-slate-grey/20">
-                  <button
-                    onClick={() => toggleAccordion("shipping")}
-                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
-                  >
-                    <span>Shipping & Delivery</span>
-                    <span
-                      className={`material-symbols-outlined transition-transform duration-300 ${
-                        activeAccordion === "shipping" ? "rotate-180" : ""
-                      }`}
-                    >
-                      expand_more
-                    </span>
-                  </button>
-                  <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      activeAccordion === "shipping" ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0"
-                    }`}
-                  >
-                    <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
-                      Orders are processed within 1-2 business days. Complimentary standard shipping on all orders over $150.
+                      {product.description}
                     </p>
                   </div>
                 </div>
@@ -460,7 +398,7 @@ function ProductContent() {
                     onClick={() => toggleAccordion("returns")}
                     className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
                   >
-                    <span>Returns & Exchanges</span>
+                    <span>Delivery &amp; Returns</span>
                     <span
                       className={`material-symbols-outlined transition-transform duration-300 ${
                         activeAccordion === "returns" ? "rotate-180" : ""
