@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages";
+type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer";
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
@@ -142,6 +142,16 @@ export default function AdminCMSPage() {
   const [announcementFontSize, setAnnouncementFontSize] = useState("11px");
   const [announcementLines, setAnnouncementLines] = useState<string[]>([]);
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
+
+  // --- Invoice PDF Customizer States ---
+  const [invoiceThemeColor, setInvoiceThemeColor] = useState("#0f1728");
+  const [invoiceFontFamily, setInvoiceFontFamily] = useState("sans-serif");
+  const [invoiceLogoWidth, setInvoiceLogoWidth] = useState("32");
+  const [invoiceCompanyName, setInvoiceCompanyName] = useState("VRIX Jewels");
+  const [invoiceCompanyGst, setInvoiceCompanyGst] = useState("");
+  const [invoiceAddressLine1, setInvoiceAddressLine1] = useState("VRIX Architectural Fine Jewelry");
+  const [invoiceAddressLine2, setInvoiceAddressLine2] = useState("Mumbai, India");
+  const [invoiceFooterNotes, setInvoiceFooterNotes] = useState("This is a computer generated document. Signed under official luxury brand licensing.");
 
   // --- Custom Pages States ---
   const [customPages, setCustomPages] = useState<Record<string, any>>({
@@ -304,6 +314,17 @@ export default function AdminCMSPage() {
         if (res.custom_pages) {
           setCustomPages((prev) => ({ ...prev, ...res.custom_pages }));
         }
+        // Invoice Customizer
+        if (res.invoice_settings) {
+          setInvoiceThemeColor(res.invoice_settings.themeColor || "#0f1728");
+          setInvoiceFontFamily(res.invoice_settings.fontFamily || "sans-serif");
+          setInvoiceLogoWidth(res.invoice_settings.logoWidth || "32");
+          setInvoiceCompanyName(res.invoice_settings.companyName || "VRIX Jewels");
+          setInvoiceCompanyGst(res.invoice_settings.companyGst || "");
+          setInvoiceAddressLine1(res.invoice_settings.addressLine1 || "VRIX Architectural Fine Jewelry");
+          setInvoiceAddressLine2(res.invoice_settings.addressLine2 || "Mumbai, India");
+          setInvoiceFooterNotes(res.invoice_settings.footerNotes || "");
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -431,7 +452,17 @@ export default function AdminCMSPage() {
           fontSize: announcementFontSize,
           lines: announcementLines
         },
-        custom_pages: customPages
+        custom_pages: customPages,
+        invoice_settings: {
+          themeColor: invoiceThemeColor,
+          fontFamily: invoiceFontFamily,
+          logoWidth: invoiceLogoWidth,
+          companyName: invoiceCompanyName,
+          companyGst: invoiceCompanyGst,
+          addressLine1: invoiceAddressLine1,
+          addressLine2: invoiceAddressLine2,
+          footerNotes: invoiceFooterNotes
+        }
       });
       showToast("CMS updated successfully.");
       loadCMSData();
@@ -530,6 +561,7 @@ export default function AdminCMSPage() {
     { id: "metal-types", label: "Metal Swatches", icon: "palette", category: "Experience", description: "Gold & platinum types" },
     { id: "legal", label: "Legal Policies", icon: "gavel", category: "System", description: "Privacy & terms docs" },
     { id: "api-integrations", label: "API Configuration", icon: "api", category: "System", description: "Razorpay, Cloudinary, Auth" },
+    { id: "invoice-customizer", label: "Invoice Theme", icon: "receipt", category: "System", description: "Customize invoice PDF styling" },
   ];
 
   return (
@@ -1783,6 +1815,115 @@ export default function AdminCMSPage() {
                           />
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {/* 12. INVOICE PDF CUSTOMIZER TAB */}
+            {activeTab === "invoice-customizer" && (
+              <div className="space-y-6 animate-fade-in">
+                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+                  <div className="border-b border-slate-grey/15 pb-2">
+                    <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                      Tax Invoice Customizer &amp; PDF Styling
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Theme Color Accent</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={invoiceThemeColor}
+                          onChange={(e) => setInvoiceThemeColor(e.target.value)}
+                          className="w-10 h-10 border border-slate-grey/30 rounded cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={invoiceThemeColor}
+                          onChange={(e) => setInvoiceThemeColor(e.target.value)}
+                          className="border border-slate-grey/30 px-3 py-2 text-xs flex-1 uppercase font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Typography font</label>
+                      <select
+                        value={invoiceFontFamily}
+                        onChange={(e) => setInvoiceFontFamily(e.target.value)}
+                        className="bg-pure-white border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none cursor-pointer"
+                      >
+                        <option value="sans-serif">Sans-serif (Modern Clean)</option>
+                        <option value="serif">Serif (Traditional Luxury)</option>
+                        <option value="monospace">Monospace (Technical Detail)</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Logo Font Size (px)</label>
+                      <input
+                        type="number"
+                        value={invoiceLogoWidth}
+                        onChange={(e) => setInvoiceLogoWidth(e.target.value)}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                        placeholder="e.g. 28"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Company Name</label>
+                      <input
+                        type="text"
+                        value={invoiceCompanyName}
+                        onChange={(e) => setInvoiceCompanyName(e.target.value)}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Seller GST Number</label>
+                      <input
+                        type="text"
+                        value={invoiceCompanyGst}
+                        onChange={(e) => setInvoiceCompanyGst(e.target.value)}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none uppercase"
+                        placeholder="e.g. 22AAAAA0000A1Z5"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Office Address Line 1</label>
+                      <input
+                        type="text"
+                        value={invoiceAddressLine1}
+                        onChange={(e) => setInvoiceAddressLine1(e.target.value)}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2 md:col-span-3">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Office Address Line 2</label>
+                      <input
+                        type="text"
+                        value={invoiceAddressLine2}
+                        onChange={(e) => setInvoiceAddressLine2(e.target.value)}
+                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2 md:col-span-3">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Bottom Footer Invoice Note</label>
+                      <textarea
+                        value={invoiceFooterNotes}
+                        onChange={(e) => setInvoiceFooterNotes(e.target.value)}
+                        className="border border-slate-grey/30 p-3 rounded text-xs outline-none"
+                        rows={3}
+                        placeholder="e.g. Thank you for your luxury purchase. Certified authentic architectural jewels."
+                      />
                     </div>
                   </div>
                 </section>

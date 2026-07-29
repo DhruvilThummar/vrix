@@ -162,6 +162,12 @@ router.post("/send-otp", async (req, res) => {
       data: { email: `delivery:${orderId}`, otp, expiresAt: expiresAt.toISOString() },
     });
 
+    // Update order status in main ledger to reflect OTP dispatch (out for delivery)
+    await db.payments.update({
+      where: { orderId },
+      data: { status: "OTP_SENT" }
+    });
+
     const activeTransporter = await getTransporter();
     if (activeTransporter) {
       const apiSettings = await getApiSettings();

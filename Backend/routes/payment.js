@@ -310,22 +310,72 @@ router.get("/invoice/:orderId", async (req, res) => {
       return res.status(404).send("<h2 style='font-family:sans-serif;text-align:center;padding:50px;'>Invoice not found.</h2>");
     }
 
-    const dateStr = new Date(payment.createdAt).toLocaleDateString("en-US", {
+    // Load dynamic customizer settings from CMS
+    let cfg = {
+      themeColor: "#0f1728",
+      fontFamily: "sans-serif",
+      logoWidth: "120",
+      companyName: "VRIX",
+      companyGst: "",
+      addressLine1: "VRIX Architectural Fine Jewelry",
+      addressLine2: "Mumbai, India",
+      footerNotes: "This is a computer generated document. Signed under official luxury brand licensing.",
+      layoutMode: "modern"
+    };
+
+    try {
+      const dbCms = await db.cmsSettings.findUnique({ where: { key: "invoice_settings" } });
+      if (dbCms) {
+        cfg = { ...cfg, ...dbCms };
+      }
+    } catch (e) {
+      console.warn("Failed to load invoice_settings CMS config, using defaults:", e.message);
+    }
+
+    const dateStr = new Date(payment.createdAt || Date.now()).toLocaleDateString("en-IN", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
 
+    const isIndia = String(payment.city || "").toLowerCase().includes("india") || 
+                    String(payment.address || "").toLowerCase().includes("india") ||
+                    !payment.currency || payment.currency === "INR";
+
+    const subtotal = Number(payment.amount || 0);
+    const taxRate = isIndia ? 0.18 : 0.05; // 18% GST default for India
+    const taxAmount = subtotal * (taxRate / (1 + taxRate)); // inclusive tax calculation
+    const baseAmount = subtotal - taxAmount;
+
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
-        <title>VRIX Invoice - ${payment.orderId}</title>
+        <title>${cfg.companyName} Invoice - ${payment.orderId}</title>
         <style>
-          body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #0f1728; margin: 0; padding: 40px; }
+          body { 
+            font-family: ${cfg.fontFamily === "serif" ? "'Times New Roman', Georgia, serif" : cfg.fontFamily === "monospace" ? "'Courier New', Courier, monospace" : "'Helvetica Neue', Arial, sans-serif"}; 
+            background: #fff; 
+            color: #0f1728; 
+            margin: 0; 
+            padding: 40px; 
+          }
           .container { max-width: 750px; margin: auto; border: 1px solid #e5e3df; padding: 40px; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f1728; padding-bottom: 20px; margin-bottom: 30px; }
-          .brand { font-size: 28px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; }
+          .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            border-bottom: 2px solid ${cfg.themeColor}; 
+            padding-bottom: 20px; 
+            margin-bottom: 30px; 
+          }
+          .brand { 
+            font-size: 28px; 
+            font-weight: 700; 
+            letter-spacing: 4px; 
+            text-transform: uppercase; 
+            color: ${cfg.themeColor};
+          }
           .title { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #666; margin-top: 5px; }
           .meta { text-align: right; font-size: 12px; color: #555; }
           .meta strong { font-size: 16px; color: #0f1728; display: block; margin-top: 4px; }
@@ -333,10 +383,31 @@ router.get("/invoice/:orderId", async (req, res) => {
           .card { background: #f9f8f6; padding: 20px; border: 1px solid #e5e3df; font-size: 13px; line-height: 1.6; }
           .card h4 { margin: 0 0 10px 0; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; color: #888; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-          th { text-align: left; padding: 12px; border-bottom: 2px solid #0f1728; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #666; }
+          th { 
+            text-align: left; 
+            padding: 12px; 
+            border-bottom: 2px solid ${cfg.themeColor}; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            color: #666; 
+          }
           td { padding: 14px 12px; border-bottom: 1px solid #e5e3df; font-size: 14px; }
           .total-row { font-size: 18px; font-weight: bold; background: #f9f8f6; }
-          .print-btn { display: block; width: 180px; margin: 30px auto 0; text-align: center; background: #0f1728; color: #fff; padding: 12px; text-decoration: none; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; }
+          .print-btn { 
+            display: block; 
+            width: 180px; 
+            margin: 30px auto 0; 
+            text-align: center; 
+            background: ${cfg.themeColor}; 
+            color: #fff; 
+            padding: 12px; 
+            text-decoration: none; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            border-radius: 4px;
+          }
           @media print { .print-btn { display: none; } }
         </style>
       </head>
@@ -344,8 +415,9 @@ router.get("/invoice/:orderId", async (req, res) => {
         <div class="container">
           <div class="header">
             <div>
-              <div class="brand">VRIX</div>
+              <div class="brand" style="font-size: ${cfg.logoWidth}px">${cfg.companyName}</div>
               <div class="title">Official Tax Invoice</div>
+              ${cfg.companyGst ? `<div style="font-size: 10px; color: #555; margin-top: 5px;">GSTIN: <strong>${cfg.companyGst}</strong></div>` : ""}
             </div>
             <div class="meta">
               <div>Invoice Date: ${dateStr}</div>
@@ -364,10 +436,11 @@ router.get("/invoice/:orderId", async (req, res) => {
               <div>Phone: ${payment.customerPhone || "N/A"}</div>
             </div>
             <div class="card">
-              <h4>Payment & Order Status</h4>
-              <div>Payment Gateway: <strong>Razorpay / Online</strong></div>
-              <div>Currency: <strong>${payment.currency || "INR"}</strong></div>
-              <div>Payment Status: <strong style="color: green;">${payment.status || "SUCCESS"}</strong></div>
+              <h4>Seller Details</h4>
+              <div><strong>${cfg.companyName}</strong></div>
+              <div>${cfg.addressLine1}</div>
+              <div>${cfg.addressLine2}</div>
+              ${cfg.companyGst ? `<div>GSTIN: ${cfg.companyGst}</div>` : ""}
             </div>
           </div>
 
@@ -375,22 +448,122 @@ router.get("/invoice/:orderId", async (req, res) => {
             <thead>
               <tr>
                 <th>Description</th>
-                <th style="text-align: center;">Qty</th>
-                <th style="text-align: right;">Amount</th>
+                <th style="text-align: center; width: 80px;">Qty</th>
+                <th style="text-align: right; width: 120px;">Unit Price</th>
+                <th style="text-align: right; width: 140px;">Amount</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td><strong>VRIX Architectural Fine Jewelry Order</strong><br/><span style="font-size:12px;color:#777;">Order Receipt: ${payment.orderId}</span></td>
-                <td style="text-align: center;">1</td>
-                <td style="text-align: right;">₹${payment.amount.toLocaleString()}</td>
+              ${(() => {
+                let itemsHtml = "";
+                let hasItems = false;
+                
+                // Read cart_items from payment table if stored as JSON/object
+                let orderItems = [];
+                if (payment.cartItems) {
+                  try {
+                    orderItems = typeof payment.cartItems === "string" ? JSON.parse(payment.cartItems) : payment.cartItems;
+                  } catch (e) {
+                    orderItems = [];
+                  }
+                }
+                
+                if (Array.isArray(orderItems) && orderItems.length > 0) {
+                  hasItems = true;
+                  orderItems.forEach(item => {
+                    const priceVal = Number(item.price || 0);
+                    const qtyVal = Number(item.quantity || 1);
+                    const nameStr = item.title || item.name || "VRIX Jewelry Piece";
+                    const options = [
+                      item.material ? `Material: ${item.material}` : "",
+                      item.size ? `Size: ${item.size}` : "",
+                      item.engraving ? `Engraving: "${item.engraving}"` : ""
+                    ].filter(Boolean).join(" | ");
+
+                    itemsHtml += `
+                      <tr>
+                        <td>
+                          <div style="font-weight: bold;">${nameStr}</div>
+                          ${options ? `<div style="font-size: 11px; color: #666; margin-top: 3px;">${options}</div>` : ""}
+                        </td>
+                        <td style="text-align: center;">${qtyVal}</td>
+                        <td style="text-align: right;">${payment.currency || "INR"} ${priceVal.toLocaleString()}</td>
+                        <td style="text-align: right; font-weight: bold;">${payment.currency || "INR"} ${(priceVal * qtyVal).toLocaleString()}</td>
+                      </tr>
+                    `;
+                  });
+                }
+
+                // Fallback row if order details not stored
+                if (!hasItems) {
+                  itemsHtml += `
+                    <tr>
+                      <td>
+                        <strong>VRIX Fine Jewelry Purchase</strong>
+                        <div style="font-size: 11px; color: #666; margin-top: 3px;">Order Receipt: ${payment.orderId}</div>
+                      </td>
+                      <td style="text-align: center;">1</td>
+                      <td style="text-align: right;">${payment.currency || "INR"} ${baseAmount.toLocaleString()}</td>
+                      <td style="text-align: right; font-weight: bold;">${payment.currency || "INR"} ${baseAmount.toLocaleString()}</td>
+                    </tr>
+                  `;
+                }
+
+                // Add gift wrap row if selected
+                if (payment.isGiftWrapped || payment.giftWrapPrice) {
+                  const wrapPrice = Number(payment.giftWrapPrice || 250);
+                  itemsHtml += `
+                    <tr>
+                      <td>
+                        <strong>Signature Gift Packaging</strong>
+                        ${payment.giftMessage ? `<div style="font-size: 11px; color: #666; margin-top: 3px; font-style: italic;">Note: "${payment.giftMessage}"</div>` : ""}
+                      </td>
+                      <td style="text-align: center;">1</td>
+                      <td style="text-align: right;">${payment.currency || "INR"} ${wrapPrice.toLocaleString()}</td>
+                      <td style="text-align: right; font-weight: bold;">${payment.currency || "INR"} ${wrapPrice.toLocaleString()}</td>
+                    </tr>
+                  `;
+                }
+
+                return itemsHtml;
+              })()}
+
+              <tr style="border-top: 2px solid #e5e3df;">
+                <td colspan="2" style="border: none;"></td>
+                <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">Subtotal (excl. tax)</td>
+                <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${payment.currency || "INR"} ${baseAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
+              
+              ${isIndia ? `
+                <tr>
+                  <td colspan="2" style="border: none;"></td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">CGST (9%)</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${payment.currency || "INR"} ${(taxAmount / 2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="border: none;"></td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">SGST (9%)</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${payment.currency || "INR"} ${(taxAmount / 2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+              ` : `
+                <tr>
+                  <td colspan="2" style="border: none;"></td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">VAT / Tax (${Math.round(taxRate * 100)}%)</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${payment.currency || "INR"} ${taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+              `}
+
               <tr class="total-row">
-                <td colspan="2" style="text-align: right;"><strong>Total Paid:</strong></td>
-                <td style="text-align: right;"><strong>₹${payment.amount.toLocaleString()}</strong></td>
+                <td colspan="2" style="border: none; background: transparent;"></td>
+                <td style="text-align: right;">Grand Total</td>
+                <td style="text-align: right; color: ${cfg.themeColor};">${payment.currency || "INR"} ${subtotal.toLocaleString()}</td>
               </tr>
             </tbody>
           </table>
+
+          <div style="font-size: 11px; color: #888; text-align: center; margin-top: 40px; padding-top: 20px; border-t: 1px solid #e5e3df; line-height: 1.5;">
+            ${cfg.footerNotes}
+          </div>
 
           <a href="#" onclick="window.print(); return false;" class="print-btn">Print / Save Invoice</a>
         </div>
@@ -406,10 +579,55 @@ router.get("/invoice/:orderId", async (req, res) => {
 // GET /api/payment/logs — Get payment logs (admin)
 router.get("/logs", async (req, res) => {
   try {
-    res.json(await db.payments.findMany());
+    const payments = await db.payments.findMany();
+    res.json(payments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/payment/status/:orderId — Update order status (admin)
+const ALLOWED_TRANSITIONS = {
+  CREATED:   ["SUCCESS", "FAILED"],
+  SUCCESS:   ["DELIVERED", "REFUNDED"],
+  DELIVERED: ["REFUNDED"],
+  FAILED:    [],
+  REFUNDED:  [],
+};
+
+router.patch("/status/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+  const { status: newStatus } = req.body;
+
+  if (!newStatus) return res.status(400).json({ error: "status is required" });
+
+  try {
+    const payment = await db.payments.findUnique({ where: { orderId } });
+    if (!payment) return res.status(404).json({ error: "Order not found" });
+
+    const currentStatus = (payment.status || "CREATED").toUpperCase();
+    const allowed = ALLOWED_TRANSITIONS[currentStatus] || [];
+
+    if (!allowed.includes(newStatus.toUpperCase())) {
+      return res.status(400).json({
+        error: `Cannot transition from ${currentStatus} to ${newStatus}. Allowed: ${allowed.join(", ") || "none"}`
+      });
+    }
+
+    const updated = await db.payments.update({
+      where: { orderId },
+      data: { status: newStatus.toUpperCase() },
+    });
+
+    db.securityLogs.create({
+      data: { event: "ORDER_STATUS_UPDATE", user: orderId, status: newStatus.toUpperCase() }
+    }).catch(() => {});
+
+    res.json({ success: true, order: updated });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 export default router;
+

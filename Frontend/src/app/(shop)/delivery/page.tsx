@@ -13,7 +13,7 @@ import {
   assignDeliveryOrder,
 } from "@/utils/api";
 
-type DeliveryStatus = "CREATED" | "SUCCESS" | "DELIVERED" | "FAILED";
+type DeliveryStatus = "CREATED" | "SUCCESS" | "DELIVERED" | "FAILED" | "OTP_SENT";
 
 interface DeliveryOrder {
   id: string;
@@ -38,11 +38,12 @@ interface StaffMember {
   role: "agent" | "manager";
 }
 
-const STATUS_COLORS: Record<DeliveryStatus, string> = {
-  CREATED: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  SUCCESS: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  DELIVERED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  FAILED: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+const STATUS_CONFIG: Record<DeliveryStatus, { label: string; className: string; dotClass: string }> = {
+  CREATED: { label: "Pending", className: "bg-amber-500/10 text-amber-400 border-amber-500/20", dotClass: "bg-amber-500" },
+  SUCCESS: { label: "Paid", className: "bg-blue-500/10 text-blue-400 border-blue-500/20", dotClass: "bg-blue-500" },
+  OTP_SENT: { label: "OTP Sent / Out for Delivery", className: "bg-purple-500/10 text-purple-400 border-purple-500/20", dotClass: "bg-purple-500 animate-pulse" },
+  DELIVERED: { label: "Delivered", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dotClass: "bg-emerald-500" },
+  FAILED: { label: "Failed", className: "bg-rose-500/10 text-rose-400 border-rose-500/20", dotClass: "bg-rose-500" },
 };
 
 export default function DeliveryPanelPage() {
@@ -185,7 +186,13 @@ export default function DeliveryPanelPage() {
     setSelectedOrder(order);
     setCustomerEmailOverride(order.userEmail || "");
     setConfirmOtp(["", "", "", "", "", ""]);
-    setConfirmStep("idle");
+    
+    // If the order status is already OTP_SENT, guide user to entering OTP
+    if (order.status === "OTP_SENT") {
+      setConfirmStep("otp");
+    } else {
+      setConfirmStep("idle");
+    }
   };
 
   const handleTriggerDeliveryOtp = async () => {
@@ -198,6 +205,15 @@ export default function DeliveryPanelPage() {
     setConfirmStep("sending");
     try {
       const res = await sendDeliveryOtp(selectedOrder.orderId, emailToUse);
+      
+      // Update our local state to reflect that OTP is sent
+      setOrders(prev =>
+        prev.map(o => o.orderId === selectedOrder.orderId ? { ...o, status: "OTP_SENT" } : o)
+      );
+      if (selectedOrder) {
+        setSelectedOrder(prev => prev ? { ...prev, status: "OTP_SENT" } : null);
+      }
+
       showToast(res.message || "OTP code sent to customer.");
       if (res.otp) showToast(`[DEV MODE] OTP: ${res.otp}`, "success");
       setConfirmStep("otp");
@@ -219,6 +235,17 @@ export default function DeliveryPanelPage() {
   const handleConfirmOtpKeyDown = (idx: number, e: React.KeyboardEvent) => {
     if (e.key === "Backspace" && !confirmOtp[idx] && idx > 0) {
       confirmOtpRefs.current[idx - 1]?.focus();
+    }
+  };
+
+  // Auto-paste handler for OTP boxes
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").trim();
+    if (/^\d{6}$/.test(pastedData)) {
+      const digits = pastedData.split("");
+      setConfirmOtp(digits);
+      confirmOtpRefs.current[5]?.focus();
     }
   };
 
@@ -315,7 +342,6 @@ export default function DeliveryPanelPage() {
   const handleMockScan = () => {
     setShowScannerMock(true);
     setTimeout(() => {
-      // Pick a random pending order ID if available
       const pending = orders.find((o) => o.status !== "DELIVERED");
       if (pending) {
         setSearchQuery(pending.orderId);
@@ -330,55 +356,52 @@ export default function DeliveryPanelPage() {
   // Render Login Component
   if (!currentUser) {
     return (
-      <div className="w-full min-h-screen bg-[#0f1728] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
-        {/* Background glow effects */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute bottom-1/4 left-1/3 w-[250px] h-[250px] bg-purple-500/10 rounded-full blur-[70px] pointer-events-none" />
+      <div className="w-full min-h-screen bg-[#070913] flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden">
+        {/* Ambient background glows */}
+        <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[250px] h-[250px] bg-indigo-500/10 rounded-full blur-[70px] pointer-events-none" />
 
-        {/* Header Bar */}
         <div className="w-full max-w-md text-center mb-8 z-10">
-          <div className="inline-flex items-center gap-3 mb-3 text-blue-400">
-            <span className="material-symbols-outlined text-4xl">local_shipping</span>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-[0_0_30px_rgba(59,130,246,0.3)] mb-4 text-white">
+            <span className="material-symbols-outlined text-3xl">local_shipping</span>
           </div>
-          <h1 className="text-pure-white font-display-lg text-2xl uppercase tracking-widest">VRIX Logis</h1>
-          <p className="text-white/40 text-xs font-label-caps uppercase tracking-widest mt-1">Delivery Operations Portal</p>
+          <h1 className="text-white font-sans text-2xl font-bold tracking-[0.2em] uppercase">VRIX Logis</h1>
+          <p className="text-white/40 text-xs tracking-widest mt-1 uppercase">Delivery Operations Portal</p>
         </div>
 
-        {/* Login Box */}
-        <div className="w-full max-w-md bg-white/5 border border-white/10 backdrop-blur-xl p-8 rounded-none space-y-6 z-10 shadow-2xl">
+        <div className="w-full max-w-md bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl p-8 rounded-2xl z-10 shadow-2xl">
           {authStep === "email" ? (
-            <form onSubmit={handleAuthSubmit} className="space-y-5">
+            <form onSubmit={handleAuthSubmit} className="space-y-6">
               <div className="space-y-2">
-                <h2 className="text-white font-semibold text-lg font-body-md">Staff Authentication</h2>
-                <p className="text-white/55 text-xs font-body-md">Enter your registered staff email address to receive a portal access code.</p>
+                <h2 className="text-white font-semibold text-lg">Staff Authentication</h2>
+                <p className="text-white/50 text-xs leading-relaxed">Enter your registered staff email address to receive a secure portal access code.</p>
               </div>
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
-                  <label className="font-label-caps text-[10px] text-white/55 uppercase tracking-widest">Email Address</label>
+                  <label className="text-[10px] tracking-[0.1em] text-white/40 uppercase font-semibold">Email Address</label>
                   <input
                     type="email"
                     value={authEmail}
                     onChange={(e) => setAuthEmail(e.target.value)}
                     placeholder="name@vrix.com"
                     required
-                    className="bg-white/5 border border-white/15 text-white text-sm px-4 py-3 outline-none focus:border-blue-400 focus:bg-white/10 transition-all font-body-md placeholder-white/20"
+                    className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-blue-500/60 focus:bg-white/[0.08] transition-all"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-button text-[11px] uppercase tracking-widest py-4 transition-colors flex items-center justify-center gap-2 cursor-pointer border border-blue-500"
+                  className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-semibold tracking-[0.1em] uppercase shadow-[0_0_20px_rgba(59,130,246,0.2)] hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {authLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Request Login Code"}
                 </button>
               </div>
 
-              <div className="pt-2 text-center">
-                <p className="text-[10px] text-white/30 font-body-md leading-relaxed">
-                  Default testing accounts: <br />
-                  Manager: <strong className="text-white/55">manager@vrix.com</strong> · Agent: <strong className="text-white/55">agent@vrix.com</strong>
+              <div className="pt-4 border-t border-white/[0.05] text-center">
+                <p className="text-[10px] text-white/30 leading-relaxed uppercase tracking-wider">
+                  Testing: <span className="text-white/60 font-semibold">manager@vrix.com</span> · <span className="text-white/60 font-semibold">agent@vrix.com</span>
                 </p>
               </div>
             </form>
@@ -388,13 +411,13 @@ export default function DeliveryPanelPage() {
                 <button
                   type="button"
                   onClick={() => setAuthStep("email")}
-                  className="text-blue-400 text-xs font-body-md hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-blue-400 text-xs font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[14px]">arrow_back</span> Back
                 </button>
-                <h2 className="text-white font-semibold text-lg font-body-md mt-2">Enter Verification Code</h2>
-                <p className="text-white/55 text-xs font-body-md">
-                  We've generated a 6-digit access code for <strong className="text-white/70">{authEmail}</strong>.
+                <h2 className="text-white font-semibold text-lg mt-2">Enter Verification Code</h2>
+                <p className="text-white/50 text-xs">
+                  We've sent a 6-digit access code to <strong className="text-white/70">{authEmail}</strong>.
                 </p>
               </div>
 
@@ -410,7 +433,7 @@ export default function DeliveryPanelPage() {
                       value={digit}
                       onChange={(e) => handleAuthOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleAuthOtpKeyDown(idx, e)}
-                      className="w-12 h-14 text-center text-xl font-bold bg-white/5 border border-white/20 focus:border-blue-400 focus:bg-white/10 outline-none text-white transition-all rounded-none"
+                      className="w-12 h-14 text-center text-xl font-bold bg-white/[0.05] border border-white/[0.1] rounded-xl focus:border-blue-400 focus:bg-white/[0.08] outline-none text-white transition-all"
                     />
                   ))}
                 </div>
@@ -418,7 +441,7 @@ export default function DeliveryPanelPage() {
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-button text-[11px] uppercase tracking-widest py-4 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm font-semibold tracking-[0.1em] uppercase shadow-[0_0_20px_rgba(59,130,246,0.2)] disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {authLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Verify & Sign In"}
                 </button>
@@ -427,7 +450,7 @@ export default function DeliveryPanelPage() {
               <button
                 type="button"
                 onClick={handleAuthSubmit}
-                className="w-full text-center text-[10px] text-white/30 hover:text-white/60 font-body-md underline cursor-pointer"
+                className="w-full text-center text-[10px] text-white/40 hover:text-white font-semibold underline cursor-pointer uppercase tracking-wider"
               >
                 Resend verification code
               </button>
@@ -435,10 +458,10 @@ export default function DeliveryPanelPage() {
           )}
         </div>
 
-        {/* Global Toast Alert inside login */}
+        {/* Toast Alert */}
         {toast && (
-          <div className={`fixed top-6 right-6 z-50 px-6 py-4 border shadow-2xl flex items-center gap-3 animate-fade-in text-sm font-body-md ${
-            toast.type === "success" ? "bg-deep-navy text-pure-white border-slate-grey/30" : "bg-red-900 text-white border-red-700"
+          <div className={`fixed bottom-6 right-6 z-50 px-6 py-4 shadow-2xl flex items-center gap-3 text-sm border animate-fade-in rounded-xl ${
+            toast.type === "success" ? "bg-slate-900/90 text-white border-white/10" : "bg-red-900/90 text-white border-red-700/50"
           }`}>
             <span className="material-symbols-outlined text-[16px]">{toast.type === "success" ? "check_circle" : "error"}</span>
             {toast.msg}
@@ -448,15 +471,14 @@ export default function DeliveryPanelPage() {
     );
   }
 
-  // Render Portal Console
   return (
-    <div className="w-full min-h-screen bg-[#0b0f19] text-white flex flex-col font-body-md select-none">
+    <div className="w-full min-h-screen bg-[#070913] text-white flex flex-col font-sans select-none pb-12">
       {/* Toast Alert */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 px-6 py-4 border border-white/10 backdrop-blur-xl shadow-2xl flex items-center gap-3 animate-fade-in text-sm font-body-md ${
-          toast.type === "success" ? "bg-blue-950/90 text-blue-200" : "bg-rose-950/90 text-rose-200"
+        <div className={`fixed bottom-6 right-6 z-50 px-6 py-4 border border-white/10 bg-slate-900/95 backdrop-blur-md shadow-2xl rounded-xl flex items-center gap-3 animate-fade-in text-sm ${
+          toast.type === "success" ? "text-emerald-400" : "text-rose-400"
         }`}>
-          <span className="material-symbols-outlined text-[16px]">{toast.type === "success" ? "check_circle" : "error"}</span>
+          <span className="material-symbols-outlined text-[18px]">{toast.type === "success" ? "check_circle" : "error"}</span>
           {toast.msg}
         </div>
       )}
@@ -464,25 +486,24 @@ export default function DeliveryPanelPage() {
       {/* Barcode scanner overlay mockup */}
       {showScannerMock && (
         <div className="fixed inset-0 z-50 bg-[#05070a]/90 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-          <div className="relative w-64 h-64 border-2 border-blue-500/50 flex items-center justify-center overflow-hidden">
-            {/* Laser line animation */}
-            <div className="absolute left-0 w-full h-0.5 bg-blue-400 shadow-md shadow-blue-500/50 animate-bounce" style={{ animationDuration: "2s" }} />
-            <span className="material-symbols-outlined text-white/20 text-6xl">qr_code_scanner</span>
+          <div className="relative w-64 h-64 border-2 border-blue-500/50 rounded-2xl flex items-center justify-center overflow-hidden bg-black/40">
+            <div className="absolute left-0 w-full h-0.5 bg-blue-400 shadow-md shadow-blue-500/50 animate-bounce" style={{ animationDuration: "2.s" }} />
+            <span className="material-symbols-outlined text-white/10 text-6xl">qr_code_scanner</span>
           </div>
-          <h3 className="font-label-caps text-xs uppercase tracking-widest text-blue-400 mt-6 animate-pulse">Scanning Shipment Barcode...</h3>
-          <p className="text-white/40 text-[10px] mt-2">Simulating device camera integration</p>
+          <h3 className="text-xs uppercase tracking-widest text-blue-400 mt-6 animate-pulse font-semibold">Scanning Shipment Barcode...</h3>
+          <p className="text-white/40 text-[10px] mt-2 uppercase">Simulating camera integration</p>
         </div>
       )}
 
       {/* Header Bar */}
-      <header className="border-b border-white/5 bg-[#0e1424] px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md">
+      <header className="border-b border-white/[0.05] bg-[#0c0f1e]/90 px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-600 flex items-center justify-center text-white">
-            <span className="material-symbols-outlined text-[20px]">local_shipping</span>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg">
+            <span className="material-symbols-outlined text-[22px]">local_shipping</span>
           </div>
           <div>
-            <h1 className="font-display-lg text-sm tracking-widest uppercase">VRIX Logis</h1>
-            <p className="text-white/40 text-[9px] font-label-caps uppercase tracking-widest">
+            <h1 className="text-sm font-bold tracking-[0.15em] uppercase">VRIX Logis</h1>
+            <p className="text-white/40 text-[9px] tracking-widest uppercase font-semibold">
               {currentUser.role === "manager" ? "Control Console" : "Agent Workstation"}
             </p>
           </div>
@@ -491,11 +512,11 @@ export default function DeliveryPanelPage() {
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex flex-col text-right">
             <span className="text-xs text-white/70 font-semibold">{currentUser.name}</span>
-            <span className="text-[9px] text-white/30 uppercase tracking-widest font-label-caps">{currentUser.email}</span>
+            <span className="text-[9px] text-white/30 uppercase tracking-widest font-semibold">{currentUser.role}</span>
           </div>
           <button
             onClick={handleLogout}
-            className="border border-white/10 hover:border-white/25 px-3 py-1.5 text-[9px] font-label-caps uppercase tracking-widest text-white/50 hover:text-white transition-colors cursor-pointer"
+            className="border border-white/10 hover:border-white/25 rounded-lg px-3 py-1.5 text-[9px] tracking-widest uppercase text-white/50 hover:text-white transition-colors cursor-pointer"
           >
             Log Out
           </button>
@@ -509,70 +530,70 @@ export default function DeliveryPanelPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {currentUser.role === "manager" ? (
             <>
-              <div className="bg-[#121a2e] border border-white/5 p-4 flex flex-col justify-between">
-                <span className="text-white/40 font-label-caps text-[9px] uppercase tracking-widest">Total Shipments</span>
-                <span className="text-xl font-bold mt-2">{orders.length}</span>
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
+                <span className="text-white/40 font-semibold text-[9px] uppercase tracking-widest">Total Shipments</span>
+                <span className="text-2xl font-bold mt-2">{orders.length}</span>
               </div>
-              <div className="bg-[#121a2e] border border-white/5 p-4 flex flex-col justify-between">
-                <span className="text-white/40 font-label-caps text-[9px] uppercase tracking-widest">Pending Route</span>
-                <span className="text-xl font-bold text-amber-400 mt-2">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
+                <span className="text-white/40 font-semibold text-[9px] uppercase tracking-widest">Pending</span>
+                <span className="text-2xl font-bold text-amber-400 mt-2">
                   {orders.filter((o) => o.status !== "DELIVERED").length}
                 </span>
               </div>
-              <div className="bg-[#121a2e] border border-white/5 p-4 flex flex-col justify-between">
-                <span className="text-white/40 font-label-caps text-[9px] uppercase tracking-widest">Completed</span>
-                <span className="text-xl font-bold text-emerald-400 mt-2">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
+                <span className="text-white/40 font-semibold text-[9px] uppercase tracking-widest">Completed</span>
+                <span className="text-2xl font-bold text-emerald-400 mt-2">
                   {orders.filter((o) => o.status === "DELIVERED").length}
                 </span>
               </div>
-              <div className="bg-[#121a2e] border border-white/5 p-4 flex flex-col justify-between">
-                <span className="text-white/40 font-label-caps text-[9px] uppercase tracking-widest">Active Staff</span>
-                <span className="text-xl font-bold text-purple-400 mt-2">{staff.length}</span>
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
+                <span className="text-white/40 font-semibold text-[9px] uppercase tracking-widest">Active Staff</span>
+                <span className="text-2xl font-bold text-purple-400 mt-2">{staff.length}</span>
               </div>
             </>
           ) : (
             <>
-              <div className="bg-[#121a2e] border border-white/5 p-4 flex flex-col justify-between">
-                <span className="text-white/40 font-label-caps text-[9px] uppercase tracking-widest">My Assignments</span>
-                <span className="text-xl font-bold mt-2">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
+                <span className="text-white/40 font-semibold text-[9px] uppercase tracking-widest">My Active Tasks</span>
+                <span className="text-2xl font-bold mt-2">
                   {orders.filter((o) => o.assignedAgent === currentUser.email && o.status !== "DELIVERED").length}
                 </span>
               </div>
-              <div className="bg-[#121a2e] border border-white/5 p-4 flex flex-col justify-between">
-                <span className="text-white/40 font-label-caps text-[9px] uppercase tracking-widest">Completed Today</span>
-                <span className="text-xl font-bold text-emerald-400 mt-2">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
+                <span className="text-white/40 font-semibold text-[9px] uppercase tracking-widest">Delivered Today</span>
+                <span className="text-2xl font-bold text-emerald-400 mt-2">
                   {orders.filter((o) => o.assignedAgent === currentUser.email && o.status === "DELIVERED").length}
                 </span>
               </div>
-              <div className="bg-[#121a2e] border border-white/5 p-4 flex flex-col justify-between">
-                <span className="text-white/40 font-label-caps text-[9px] uppercase tracking-widest">Unassigned Pool</span>
-                <span className="text-xl font-bold text-blue-400 mt-2">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
+                <span className="text-white/40 font-semibold text-[9px] uppercase tracking-widest">Open Pool</span>
+                <span className="text-2xl font-bold text-blue-400 mt-2">
                   {orders.filter((o) => !o.assignedAgent && o.status !== "DELIVERED").length}
                 </span>
               </div>
-              <div className="bg-[#121a2e] border border-white/5 p-4 flex flex-col justify-between">
-                <span className="text-white/40 font-label-caps text-[9px] uppercase tracking-widest">Efficiency Rating</span>
-                <span className="text-xl font-bold text-amber-400 mt-2">98.4%</span>
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col justify-between">
+                <span className="text-white/40 font-semibold text-[9px] uppercase tracking-widest">Efficiency</span>
+                <span className="text-2xl font-bold text-amber-400 mt-2">99.2%</span>
               </div>
             </>
           )}
         </div>
 
-        {/* --- Role Switch tabs for Manager --- */}
+        {/* Tabs for Manager */}
         {currentUser.role === "manager" && (
-          <div className="flex border-b border-white/5">
+          <div className="flex border-b border-white/[0.05]">
             <button
               onClick={() => setActiveTab("deliveries")}
-              className={`px-6 py-3 font-label-caps text-xs uppercase tracking-widest border-b-2 cursor-pointer ${
-                activeTab === "deliveries" ? "border-blue-500 text-blue-400 font-semibold" : "border-transparent text-white/50 hover:text-white"
+              className={`px-6 py-3 text-xs uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                activeTab === "deliveries" ? "border-blue-500 text-blue-400 font-bold" : "border-transparent text-white/50 hover:text-white"
               }`}
             >
               Shipments
             </button>
             <button
               onClick={() => setActiveTab("staff")}
-              className={`px-6 py-3 font-label-caps text-xs uppercase tracking-widest border-b-2 cursor-pointer ${
-                activeTab === "staff" ? "border-blue-500 text-blue-400 font-semibold" : "border-transparent text-white/50 hover:text-white"
+              className={`px-6 py-3 text-xs uppercase tracking-widest border-b-2 cursor-pointer transition-all ${
+                activeTab === "staff" ? "border-blue-500 text-blue-400 font-bold" : "border-transparent text-white/50 hover:text-white"
               }`}
             >
               Delivery Staff
@@ -580,17 +601,17 @@ export default function DeliveryPanelPage() {
           </div>
         )}
 
-        {/* --- Search & Barcode Scans Header (Mobile optimised) --- */}
+        {/* Search header */}
         {!(currentUser.role === "manager" && activeTab === "staff") && (
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[18px]">search</span>
+              <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30 text-[18px]">search</span>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search order ID, address or customer..."
-                className="w-full bg-[#121a2e] border border-white/5 text-white pl-10 pr-4 py-3 text-sm outline-none focus:border-blue-500 transition-all font-body-md placeholder-white/20"
+                placeholder="Search order ID, city or customer..."
+                className="w-full bg-white/[0.02] border border-white/[0.08] text-white pl-11 pr-10 py-3.5 rounded-xl text-sm outline-none focus:border-blue-500/55 transition-all placeholder-white/20"
               />
               {searchQuery && (
                 <button
@@ -603,94 +624,89 @@ export default function DeliveryPanelPage() {
             </div>
             <button
               onClick={handleMockScan}
-              title="Barcode Scanner Mock"
-              className="bg-blue-600 hover:bg-blue-700 border border-blue-500 px-4 flex items-center justify-center text-white cursor-pointer"
+              title="Scan Shipment Barcode"
+              className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl px-4 flex items-center justify-center text-white cursor-pointer active:scale-95 transition-all shadow-[0_0_15px_rgba(59,130,246,0.15)]"
             >
               <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
             </button>
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════════════════════════════════════
-            AGENT VIEW
-            ══════════════════════════════════════════════════════════════════════════════ */}
+        {/* ═════════ AGENT VIEW ═════════ */}
         {currentUser.role === "agent" && (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Orders Panel */}
+            
+            {/* Left Queue List */}
             <div className="lg:col-span-3 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest">Active Task Queue</h3>
+                <h3 className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Active Task Queue</h3>
                 <button
                   onClick={() => loadDashboardData(currentUser.role, currentUser.email)}
-                  className="text-blue-400 text-xs font-body-md hover:underline cursor-pointer flex items-center gap-1"
+                  className="text-blue-400 text-xs font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[14px]">refresh</span> Reload
+                  <span className="material-symbols-outlined text-[14px]">refresh</span> Reload Queue
                 </button>
               </div>
 
               {loading ? (
-                <div className="p-12 text-center text-white/30 font-label-caps text-xs tracking-widest animate-pulse">Loading orders...</div>
+                <div className="p-12 text-center text-white/30 tracking-widest animate-pulse uppercase text-xs">Loading Task List...</div>
               ) : filteredOrders.length === 0 ? (
-                <div className="bg-[#121a2e] border border-white/5 p-12 text-center text-white/30 flex flex-col items-center gap-2">
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-12 text-center text-white/30 flex flex-col items-center gap-2">
                   <span className="material-symbols-outlined text-4xl text-white/10">inventory_2</span>
-                  <span className="font-label-caps text-xs uppercase tracking-widest">No shipments found</span>
+                  <span className="text-xs uppercase tracking-widest">No active shipments in queue</span>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {filteredOrders.map((order) => {
                     const isSelected = selectedOrder?.orderId === order.orderId;
                     const isAssignedToMe = order.assignedAgent === currentUser.email;
                     const isDelivered = order.status === "DELIVERED";
+                    const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG["CREATED"];
 
                     return (
                       <button
                         key={order.id}
                         onClick={() => handleSelectOrder(order)}
-                        className={`w-full text-left p-4 border transition-all flex flex-col justify-between gap-3 rounded-none cursor-pointer ${
+                        className={`w-full text-left p-5 border rounded-2xl transition-all flex flex-col gap-3.5 cursor-pointer relative overflow-hidden ${
                           isDelivered
-                            ? "border-white/5 opacity-55 hover:opacity-80"
+                            ? "border-white/[0.03] bg-white/[0.01] opacity-50 hover:opacity-80"
                             : isSelected
-                            ? "border-blue-500 bg-blue-900/10"
-                            : "border-white/5 bg-[#121a2e] hover:border-white/15 hover:bg-[#16203a]"
+                            ? "border-blue-500/70 bg-blue-500/[0.06] shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+                            : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.12] hover:bg-white/[0.05]"
                         }`}
                       >
                         <div className="flex justify-between items-start w-full">
                           <div className="space-y-1">
-                            <span className="text-white font-semibold text-sm tracking-wide block font-body-md">
+                            <span className="text-white font-bold text-sm tracking-wide block font-mono">
                               {order.orderId}
                             </span>
-                            <span className="text-[10px] text-white/50 block font-body-md">
+                            <span className="text-[11px] text-white/60 block font-semibold">
                               {order.customerName || "VRIX Customer"}
                             </span>
                           </div>
-                          <span className={`text-[8px] font-label-caps uppercase tracking-widest px-2.5 py-0.5 border ${STATUS_COLORS[order.status]}`}>
-                            {order.status}
+                          <span className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 border rounded-full ${statusConfig.className}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dotClass}`} />
+                            {statusConfig.label}
                           </span>
                         </div>
 
-                        <div className="text-[11px] text-white/40 space-y-1 font-body-md">
+                        <div className="text-xs text-white/40 space-y-1 font-medium">
                           <p className="truncate">📍 {order.address || "No Address Provided"}</p>
-                          <div className="flex justify-between text-[10px] text-white/30 pt-1">
-                            <span>₹{order.amount?.toLocaleString()}</span>
+                          <div className="flex justify-between text-[10px] text-white/30 pt-1 border-t border-white/[0.05]">
+                            <span>₹{Number(order.amount).toLocaleString("en-IN")}</span>
                             <span>{new Date(order.createdAt).toLocaleDateString("en-IN")}</span>
                           </div>
                         </div>
 
-                        {/* Extra indicators */}
+                        {/* Assignment flags */}
                         <div className="flex justify-between items-center text-[9px] pt-1">
                           {isAssignedToMe ? (
-                            <span className="text-blue-400 font-label-caps uppercase tracking-wider flex items-center gap-1 font-semibold">
-                              <span className="material-symbols-outlined text-[12px]">assignment_turned_in</span> Assigned to Me
+                            <span className="text-blue-400 uppercase tracking-widest font-semibold flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px]">assignment_turned_in</span> Assigned to Me
                             </span>
                           ) : (
-                            <span className="text-amber-400/70 font-label-caps uppercase tracking-wider flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[12px]">group</span> Open Pool
-                            </span>
-                          )}
-
-                          {isDelivered && (
-                            <span className="text-emerald-400 font-label-caps uppercase tracking-wider flex items-center gap-1">
-                              <span className="material-symbols-outlined text-[12px]">check_circle</span> Delivered
+                            <span className="text-amber-400/80 uppercase tracking-widest font-semibold flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px]">group</span> Open Pool
                             </span>
                           )}
                         </div>
@@ -701,56 +717,56 @@ export default function DeliveryPanelPage() {
               )}
             </div>
 
-            {/* OTP Confirmation Panel (Mobile efficient side sheet) */}
+            {/* Right Action Panel */}
             <div className="lg:col-span-2">
-              <div className="bg-[#121a2e] border border-white/5 p-5 space-y-6 sticky top-24">
+              <div className="bg-white/[0.02] border border-white/[0.08] p-5 rounded-2xl space-y-6 sticky top-24 backdrop-blur-xl">
                 {!selectedOrder ? (
                   <div className="text-center py-16 text-white/30 flex flex-col items-center gap-3">
                     <span className="material-symbols-outlined text-5xl text-white/10">touch_app</span>
-                    <p className="font-label-caps text-xs uppercase tracking-widest">Select a shipment to begin delivery</p>
+                    <p className="text-xs uppercase tracking-widest font-semibold">Select a shipment to begin</p>
                   </div>
                 ) : (
                   <>
-                    <div className="flex justify-between items-start border-b border-white/5 pb-3">
+                    <div className="flex justify-between items-start border-b border-white/[0.05] pb-3">
                       <div>
-                        <h3 className="text-white font-semibold font-body-md text-sm">{selectedOrder.orderId}</h3>
-                        <p className="text-white/40 text-[10px] uppercase font-label-caps tracking-widest">Delivery Confirmation Card</p>
+                        <h3 className="text-white font-bold text-sm font-mono">{selectedOrder.orderId}</h3>
+                        <p className="text-white/40 text-[9px] uppercase tracking-widest font-semibold mt-0.5">Verification & Delivery Card</p>
                       </div>
                       <button onClick={() => setSelectedOrder(null)} className="text-white/40 hover:text-white text-xs">✕</button>
                     </div>
 
-                    {/* Order Details list */}
-                    <div className="space-y-3 text-xs bg-white/5 border border-white/5 p-4 font-body-md">
+                    {/* Order Details List */}
+                    <div className="space-y-3.5 text-xs bg-white/[0.02] border border-white/[0.05] p-4 rounded-xl">
                       <div className="flex justify-between">
-                        <span className="text-white/40 uppercase tracking-widest text-[9px] font-label-caps">Customer</span>
-                        <span className="text-white/80 font-semibold">{selectedOrder.customerName || "VRIX Customer"}</span>
+                        <span className="text-white/40 uppercase tracking-widest text-[9px] font-semibold">Customer</span>
+                        <span className="text-white/80 font-bold">{selectedOrder.customerName || "VRIX Customer"}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-white/40 uppercase tracking-widest text-[9px] font-label-caps">Phone</span>
-                        <span className="text-white/80">{selectedOrder.customerPhone || "Not provided"}</span>
+                        <span className="text-white/40 uppercase tracking-widest text-[9px] font-semibold">Phone</span>
+                        <span className="text-white/80 font-mono">{selectedOrder.customerPhone || "Not provided"}</span>
                       </div>
-                      <div className="flex flex-col gap-1 border-t border-white/5 pt-2 mt-2">
-                        <span className="text-white/40 uppercase tracking-widest text-[9px] font-label-caps">Address</span>
-                        <span className="text-white/70 text-[11px] leading-relaxed">{selectedOrder.address}, {selectedOrder.city}</span>
+                      <div className="flex flex-col gap-1 border-t border-white/[0.05] pt-2">
+                        <span className="text-white/40 uppercase tracking-widest text-[9px] font-semibold">Delivery Address</span>
+                        <span className="text-white/70 text-[11px] leading-relaxed">{selectedOrder.address}, {selectedOrder.city} - {selectedOrder.postalCode}</span>
                       </div>
-                      <div className="flex justify-between border-t border-white/5 pt-2 mt-2 font-semibold">
-                        <span className="text-white/40 uppercase tracking-widest text-[9px] font-label-caps">Amount</span>
-                        <span className="text-blue-400">₹{selectedOrder.amount?.toLocaleString()}</span>
+                      <div className="flex justify-between border-t border-white/[0.05] pt-2 font-bold">
+                        <span className="text-white/40 uppercase tracking-widest text-[9px] font-semibold">Total Price</span>
+                        <span className="text-blue-400">₹{Number(selectedOrder.amount).toLocaleString("en-IN")}</span>
                       </div>
                     </div>
 
-                    {/* Mobile helper action buttons: Call & Navigate */}
+                    {/* Actions */}
                     {selectedOrder.status !== "DELIVERED" && (
                       <div className="grid grid-cols-2 gap-2">
                         <a
                           href={selectedOrder.customerPhone ? `tel:${selectedOrder.customerPhone}` : "#"}
-                          className={`flex items-center justify-center gap-2 py-3 text-xs font-label-caps uppercase tracking-widest border transition-all ${
+                          className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all ${
                             selectedOrder.customerPhone
-                              ? "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white"
-                              : "border-white/5 bg-transparent text-white/20 cursor-not-allowed pointer-events-none"
+                              ? "border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                              : "border-white/5 text-white/20 cursor-not-allowed pointer-events-none"
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[16px]">call</span> Call Customer
+                          <span className="material-symbols-outlined text-[16px]">call</span> Call User
                         </a>
                         <a
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
@@ -758,7 +774,7 @@ export default function DeliveryPanelPage() {
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 py-3 text-xs font-label-caps uppercase tracking-widest border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white transition-all"
+                          className="flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border border-white/10 bg-white/5 hover:bg-white/10 text-white transition-all"
                         >
                           <span className="material-symbols-outlined text-[16px]">navigation</span> Navigate
                         </a>
@@ -770,8 +786,8 @@ export default function DeliveryPanelPage() {
                         <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto rounded-full">
                           <span className="material-symbols-outlined text-emerald-400 text-2xl">check_circle</span>
                         </div>
-                        <h4 className="font-headline-md text-base text-emerald-400 uppercase">Order Delivered</h4>
-                        <p className="text-white/40 text-xs font-body-md">This shipment was successfully validated and delivered.</p>
+                        <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Order Delivered</h4>
+                        <p className="text-white/40 text-xs">This shipment has been verified by OTP and successfully delivered.</p>
                       </div>
                     ) : (
                       <>
@@ -779,39 +795,39 @@ export default function DeliveryPanelPage() {
                         {confirmStep === "idle" && (
                           <div className="space-y-4">
                             <div className="flex flex-col gap-2">
-                              <label className="font-label-caps text-[10px] text-white/55 uppercase tracking-widest">
-                                Dispatch Delivery OTP to Email
+                              <label className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">
+                                Dispatch Verification OTP to Email
                               </label>
                               <input
                                 type="email"
                                 value={customerEmailOverride}
                                 onChange={(e) => setCustomerEmailOverride(e.target.value)}
                                 placeholder="customer@email.com"
-                                className="bg-white/5 border border-white/15 text-white text-xs px-3 py-2.5 outline-none focus:border-blue-500 font-body-md placeholder-white/20"
+                                className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-3 py-2.5 text-white text-xs outline-none focus:border-blue-500/50"
                               />
                             </div>
                             <button
                               onClick={handleTriggerDeliveryOtp}
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-button text-[11px] uppercase tracking-widest py-3.5 flex items-center justify-center gap-2 border border-blue-500 cursor-pointer"
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-98 transition-all"
                             >
-                              <span className="material-symbols-outlined text-[16px]">send</span> Send Delivery OTP
+                              <span className="material-symbols-outlined text-[16px]">send</span> Send Verification OTP
                             </button>
                           </div>
                         )}
 
                         {confirmStep === "sending" && (
-                          <div className="py-6 text-center text-white/55 font-label-caps text-xs tracking-widest flex items-center justify-center gap-2">
+                          <div className="py-6 text-center text-white/50 tracking-widest text-xs flex items-center justify-center gap-2">
                             <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                            Requesting OTP...
+                            DISPATCHING OTP...
                           </div>
                         )}
 
                         {confirmStep === "otp" && (
                           <form onSubmit={handleVerifyDelivery} className="space-y-5">
                             <div className="space-y-1">
-                              <h4 className="text-white font-semibold text-xs font-body-md">Verify Delivery Code</h4>
-                              <p className="text-white/45 text-[10px] font-body-md">
-                                Enter the 6-digit verification code sent to <strong className="text-white/60">{customerEmailOverride}</strong>.
+                              <h4 className="text-white font-bold text-xs">Verify Delivery Code</h4>
+                              <p className="text-white/40 text-[10px]">
+                                Code sent to <strong className="text-white/60">{customerEmailOverride}</strong>.
                               </p>
                             </div>
 
@@ -826,7 +842,8 @@ export default function DeliveryPanelPage() {
                                   value={digit}
                                   onChange={(e) => handleConfirmOtpChange(idx, e.target.value)}
                                   onKeyDown={(e) => handleConfirmOtpKeyDown(idx, e)}
-                                  className="w-10 h-12 text-center text-lg font-bold bg-white/5 border border-white/20 focus:border-blue-400 outline-none text-white rounded-none transition-all"
+                                  onPaste={idx === 0 ? handleOtpPaste : undefined}
+                                  className="w-10 h-12 text-center text-lg font-bold bg-white/[0.05] border border-white/[0.1] focus:border-blue-400 focus:bg-white/[0.08] outline-none text-white rounded-xl transition-all"
                                 />
                               ))}
                             </div>
@@ -835,7 +852,7 @@ export default function DeliveryPanelPage() {
                               <button
                                 type="submit"
                                 disabled={actionLoading}
-                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-button text-[11px] uppercase tracking-widest py-3.5 flex items-center justify-center gap-2 cursor-pointer border border-emerald-500"
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer border border-emerald-500 active:scale-98 transition-all"
                               >
                                 {actionLoading ? (
                                   <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -848,7 +865,7 @@ export default function DeliveryPanelPage() {
                               <button
                                 type="button"
                                 onClick={() => setConfirmStep("idle")}
-                                className="border border-white/10 hover:border-white/20 hover:bg-white/5 text-white/50 hover:text-white px-4 font-button text-[11px] uppercase tracking-widest cursor-pointer"
+                                className="border border-white/10 hover:border-white/20 text-white/50 hover:text-white px-4 rounded-xl text-[11px] font-bold uppercase tracking-widest cursor-pointer"
                               >
                                 Back
                               </button>
@@ -857,9 +874,9 @@ export default function DeliveryPanelPage() {
                             <button
                               type="button"
                               onClick={handleTriggerDeliveryOtp}
-                              className="w-full text-center text-[9px] text-white/30 hover:text-white/60 font-body-md underline cursor-pointer"
+                              className="w-full text-center text-[9px] text-white/30 hover:text-white/60 font-semibold underline cursor-pointer uppercase tracking-wider"
                             >
-                              Resend delivery code
+                              Resend OTP Code
                             </button>
                           </form>
                         )}
@@ -869,11 +886,11 @@ export default function DeliveryPanelPage() {
                             <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto rounded-full">
                               <span className="material-symbols-outlined text-emerald-400 text-2xl animate-bounce">check_circle</span>
                             </div>
-                            <h4 className="font-headline-md text-base text-emerald-400 uppercase">Package Delivered</h4>
-                            <p className="text-white/40 text-xs font-body-md">The shipment has been successfully marked as DELIVERED.</p>
+                            <h4 className="text-sm font-bold text-emerald-400 uppercase tracking-wider">Package Delivered</h4>
+                            <p className="text-white/40 text-xs">Shipment status has been updated to DELIVERED.</p>
                             <button
                               onClick={() => setSelectedOrder(null)}
-                              className="border border-white/10 hover:border-white/20 px-6 py-2.5 font-button text-[10px] uppercase tracking-widest text-white/60 hover:text-white cursor-pointer w-full mt-2"
+                              className="border border-white/10 hover:border-white/20 rounded-xl py-3 text-[10px] font-bold uppercase tracking-widest text-white/60 hover:text-white cursor-pointer w-full mt-2"
                             >
                               Dismiss Card
                             </button>
@@ -888,83 +905,76 @@ export default function DeliveryPanelPage() {
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════════════════════════════════════
-            MANAGER VIEW
-            ══════════════════════════════════════════════════════════════════════════════ */}
+        {/* ═════════ MANAGER VIEW ═════════ */}
         {currentUser.role === "manager" && activeTab === "deliveries" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest">Active Shipment Log ({filteredOrders.length})</h3>
+              <h3 className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Active Shipment Log ({filteredOrders.length})</h3>
               <button
                 onClick={() => loadDashboardData(currentUser.role, currentUser.email)}
-                className="text-blue-400 text-xs font-body-md hover:underline cursor-pointer flex items-center gap-1"
+                className="text-blue-400 text-xs font-semibold hover:underline cursor-pointer flex items-center gap-1"
               >
                 <span className="material-symbols-outlined text-[14px]">refresh</span> Reload Log
               </button>
             </div>
 
             {loading ? (
-              <div className="p-12 text-center text-white/30 font-label-caps text-xs tracking-widest animate-pulse">Loading orders...</div>
+              <div className="p-12 text-center text-white/30 tracking-widest animate-pulse uppercase text-xs">Loading Shipments...</div>
             ) : filteredOrders.length === 0 ? (
-              <div className="bg-[#121a2e] border border-white/5 p-12 text-center text-white/30 flex flex-col items-center gap-2">
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-12 text-center text-white/30 flex flex-col items-center gap-2">
                 <span className="material-symbols-outlined text-4xl text-white/10">inventory_2</span>
-                <span className="font-label-caps text-xs uppercase tracking-widest">No shipments recorded</span>
+                <span className="text-xs uppercase tracking-widest">No shipments recorded</span>
               </div>
             ) : (
-              /* Mobile-optimized shipment card list for Manager */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredOrders.map((order) => {
                   const isDelivered = order.status === "DELIVERED";
+                  const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG["CREATED"];
                   return (
                     <div
                       key={order.id}
-                      className="bg-[#121a2e] border border-white/5 p-5 space-y-4 flex flex-col justify-between"
+                      className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 space-y-4 flex flex-col justify-between"
                     >
                       <div className="space-y-2">
                         <div className="flex justify-between items-start">
                           <div>
-                            <span className="text-white font-semibold text-sm block font-body-md">{order.orderId}</span>
-                            <span className="text-white/40 text-[10px] font-body-md">
+                            <span className="text-white font-bold text-sm block font-mono">{order.orderId}</span>
+                            <span className="text-white/40 text-[10px]">
                               {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                             </span>
                           </div>
-                          <span className={`text-[8px] font-label-caps uppercase tracking-widest px-2.5 py-0.5 border ${STATUS_COLORS[order.status]}`}>
-                            {order.status}
+                          <span className={`inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest px-2.5 py-1 border rounded-full ${statusConfig.className}`}>
+                            <span className={`w-1 h-1 rounded-full ${statusConfig.dotClass}`} />
+                            {statusConfig.label}
                           </span>
                         </div>
 
-                        <div className="text-xs space-y-1 pt-1 border-t border-white/5 font-body-md">
-                          <p className="text-white/80 font-medium">👤 {order.customerName || "VRIX Customer"}</p>
+                        <div className="text-xs space-y-1 pt-1.5 border-t border-white/[0.05]">
+                          <p className="text-white/80 font-semibold">👤 {order.customerName || "VRIX Customer"}</p>
                           <p className="text-white/60 truncate">📍 {order.address}, {order.city}</p>
-                          <p className="text-white/40 text-[10px]">📞 {order.customerPhone || "No contact info"}</p>
+                          <p className="text-white/40 font-mono text-[10px]">📞 {order.customerPhone || "No contact info"}</p>
                         </div>
                       </div>
 
-                      <div className="space-y-3 pt-3 border-t border-white/5">
+                      <div className="space-y-3 pt-3 border-t border-white/[0.05]">
                         <div className="flex flex-col gap-1.5">
-                          <label className="font-label-caps text-[9px] text-white/40 uppercase tracking-widest">Assigned Delivery Agent</label>
+                          <label className="text-[9px] text-white/40 uppercase tracking-widest font-semibold">Assigned Agent</label>
                           <select
                             value={order.assignedAgent || "unassigned"}
                             disabled={isDelivered || actionLoading}
                             onChange={(e) => handleAssignAgent(order.orderId, e.target.value)}
-                            className="bg-[#0b0f19] border border-white/10 text-white/80 text-xs px-3 py-2 outline-none focus:border-blue-500 font-body-md bg-transparent rounded-none disabled:opacity-50"
+                            className="bg-[#0c0f1e] border border-white/10 text-white/80 text-xs px-3 py-2 rounded-xl outline-none focus:border-blue-500 bg-transparent disabled:opacity-50"
                           >
-                            <option value="unassigned" className="bg-[#0e1424]">Unassigned (Pool)</option>
+                            <option value="unassigned">Unassigned (Pool)</option>
                             {staff
                               .filter((s) => s.role === "agent")
                               .map((agent) => (
-                                <option key={agent.email} value={agent.email} className="bg-[#0e1424]">
+                                <option key={agent.email} value={agent.email}>
                                   {agent.name} ({agent.email})
                                 </option>
                               ))}
                           </select>
                         </div>
-
-                        {isDelivered && (
-                          <div className="flex items-center gap-1.5 text-emerald-400 text-[10px] font-label-caps uppercase tracking-widest font-semibold pt-1">
-                            <span className="material-symbols-outlined text-[14px]">check_circle</span> Delivered
-                          </div>
-                        )}
                       </div>
                     </div>
                   );
@@ -978,59 +988,58 @@ export default function DeliveryPanelPage() {
         {currentUser.role === "manager" && activeTab === "staff" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest">Logistics Staff ({staff.length})</h3>
+              <h3 className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Logistics Staff ({staff.length})</h3>
               <button
                 onClick={() => setShowAddStaffModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-button text-[10px] uppercase tracking-widest px-4 py-2 border border-blue-500 flex items-center gap-1.5 cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[14px]">person_add</span> Register Agent
               </button>
             </div>
 
-            {/* Slide Down Add Staff form inside modal overlay */}
             {showAddStaffModal && (
               <div className="fixed inset-0 bg-[#05070a]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-[#0e1424] border border-white/10 p-6 max-w-md w-full space-y-5 animate-slide-down">
+                <div className="bg-[#0c0f1e] border border-white/10 p-6 rounded-2xl max-w-md w-full space-y-5 animate-slide-down">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="text-white font-semibold font-body-md text-base">Add Logistics Staff</h4>
-                      <p className="text-white/40 text-[10px] font-body-md">Register new delivery staff email credentials.</p>
+                      <h4 className="text-white font-bold text-base">Add Logistics Staff</h4>
+                      <p className="text-white/40 text-[10px]">Register new delivery staff email credentials.</p>
                     </div>
                     <button onClick={() => setShowAddStaffModal(false)} className="text-white/40 hover:text-white">✕</button>
                   </div>
 
-                  <form onSubmit={handleAddStaffMember} className="space-y-4 font-body-md">
+                  <form onSubmit={handleAddStaffMember} className="space-y-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-caps text-[9px] text-white/50 uppercase tracking-widest">Full Name</label>
+                      <label className="text-[9px] text-white/50 uppercase tracking-widest font-semibold">Full Name</label>
                       <input
                         type="text"
                         value={newStaffName}
                         onChange={(e) => setNewStaffName(e.target.value)}
                         placeholder="John Doe"
                         required
-                        className="bg-[#121a2e] border border-white/15 text-white text-xs px-3 py-2.5 outline-none focus:border-blue-500"
+                        className="bg-white/[0.04] border border-white/10 rounded-xl text-white text-xs px-3 py-2.5 outline-none focus:border-blue-500"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-caps text-[9px] text-white/50 uppercase tracking-widest">Email Address</label>
+                      <label className="text-[9px] text-white/50 uppercase tracking-widest font-semibold">Email Address</label>
                       <input
                         type="email"
                         value={newStaffEmail}
                         onChange={(e) => setNewStaffEmail(e.target.value)}
                         placeholder="agent@vrix.com"
                         required
-                        className="bg-[#121a2e] border border-white/15 text-white text-xs px-3 py-2.5 outline-none focus:border-blue-500"
+                        className="bg-white/[0.04] border border-white/10 rounded-xl text-white text-xs px-3 py-2.5 outline-none focus:border-blue-500"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-caps text-[9px] text-white/50 uppercase tracking-widest">Portal Role</label>
+                      <label className="text-[9px] text-white/50 uppercase tracking-widest font-semibold">Portal Role</label>
                       <select
                         value={newStaffRole}
                         onChange={(e) => setNewStaffRole(e.target.value as any)}
-                        className="bg-[#121a2e] border border-white/15 text-white text-xs px-3 py-2.5 outline-none focus:border-blue-500 bg-transparent rounded-none"
+                        className="bg-[#0c0f1e] border border-white/10 rounded-xl text-white text-xs px-3 py-2.5 outline-none focus:border-blue-500"
                       >
-                        <option value="agent" className="bg-[#0e1424]">Delivery Agent</option>
-                        <option value="manager" className="bg-[#0e1424]">Portal Manager</option>
+                        <option value="agent">Delivery Agent</option>
+                        <option value="manager">Portal Manager</option>
                       </select>
                     </div>
 
@@ -1038,14 +1047,14 @@ export default function DeliveryPanelPage() {
                       <button
                         type="submit"
                         disabled={actionLoading}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-button text-[11px] uppercase tracking-widest py-3 border border-blue-500 cursor-pointer"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] uppercase tracking-widest py-3 rounded-xl cursor-pointer"
                       >
                         {actionLoading ? "Saving..." : "Register Staff"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowAddStaffModal(false)}
-                        className="border border-white/10 hover:border-white/20 text-white/50 hover:text-white px-4 font-button text-[11px] uppercase tracking-widest cursor-pointer"
+                        className="border border-white/10 hover:border-white/20 text-white/50 hover:text-white px-4 rounded-xl text-[11px] font-bold uppercase tracking-widest cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -1056,19 +1065,18 @@ export default function DeliveryPanelPage() {
             )}
 
             {loading ? (
-              <div className="p-12 text-center text-white/30 font-label-caps text-xs tracking-widest animate-pulse">Loading staff directory...</div>
+              <div className="p-12 text-center text-white/30 tracking-widest animate-pulse uppercase text-xs">Loading Staff...</div>
             ) : (
-              /* Mobile-optimized staff list cards */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {staff.map((s) => (
                   <div
                     key={s.email}
-                    className="bg-[#121a2e] border border-white/5 p-4 flex justify-between items-center"
+                    className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 flex justify-between items-center"
                   >
                     <div className="space-y-1">
-                      <h4 className="text-white font-semibold text-sm font-body-md">{s.name}</h4>
-                      <p className="text-white/40 text-[10px] font-body-md">{s.email}</p>
-                      <span className={`inline-block text-[8px] font-label-caps uppercase tracking-widest px-2 py-0.5 border rounded-full mt-1 ${
+                      <h4 className="text-white font-semibold text-sm">{s.name}</h4>
+                      <p className="text-white/40 text-[10px]">{s.email}</p>
+                      <span className={`inline-block text-[8px] font-bold uppercase tracking-widest px-2.5 py-0.5 border rounded-full mt-1.5 ${
                         s.role === "manager"
                           ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
                           : "bg-blue-500/10 text-blue-400 border-blue-500/20"
@@ -1081,7 +1089,7 @@ export default function DeliveryPanelPage() {
                       <button
                         disabled={actionLoading}
                         onClick={() => handleDeleteStaffMember(s.email)}
-                        className="text-rose-400 hover:text-rose-300 font-label-caps text-[10px] uppercase tracking-widest transition-colors cursor-pointer"
+                        className="text-rose-400 hover:text-rose-300 font-bold text-[10px] uppercase tracking-widest transition-colors cursor-pointer"
                       >
                         Revoke
                       </button>
