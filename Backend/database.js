@@ -672,6 +672,20 @@ export const db = {
         }
         throw new Error(`Payment with orderId ${orderId} not found`);
       }
+    },
+    findUnique: async ({ where: { orderId } }) => {
+      if (db.isConnected()) {
+        try {
+          return await prisma.payment.findUnique({ where: { orderId } });
+        } catch (err) {
+          console.error(`Prisma payments.findUnique(${orderId}) failed:`, err.message);
+          const localData = readLocalDb();
+          return (localData.payments || []).find(p => p.orderId === orderId) || null;
+        }
+      } else {
+        const localData = readLocalDb();
+        return (localData.payments || []).find(p => p.orderId === orderId) || null;
+      }
     }
   },
 
