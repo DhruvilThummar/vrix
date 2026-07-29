@@ -68,7 +68,7 @@ export default function Header() {
 
 
   // Navigation states
-  const [navLinks, setNavLinks] = useState(DEFAULT_LINKS);
+  const [navLinks, setNavLinks] = useState<any[]>(DEFAULT_LINKS);
   const [logoUrl, setLogoUrl] = useState("/logos/black.png");
   const [brandName, setBrandName] = useState("VRIX");
   const [bespokeEnabled, setBespokeEnabled] = useState(true);

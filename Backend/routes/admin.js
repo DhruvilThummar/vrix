@@ -70,4 +70,43 @@ router.get("/stats", async (req, res) => {
   }
 });
 
+// POST /api/admin/update-credentials
+import crypto from "crypto";
+router.post("/update-credentials", async (req, res) => {
+  const { oldEmail, newEmail, newPassword } = req.body;
+  if (!oldEmail || !newEmail) {
+    return res.status(400).json({ error: "Current email and new email are required." });
+  }
+
+  try {
+    const cleanOld = String(oldEmail).trim().toLowerCase();
+    const cleanNew = String(newEmail).trim().toLowerCase();
+
+    const existing = await db.users.findUnique({ where: { email: cleanOld } });
+    if (!existing) {
+      return res.status(404).json({ error: "Admin user not found." });
+    }
+
+    const updateData = { email: cleanNew };
+    if (newPassword && newPassword.trim()) {
+      updateData.password = crypto.createHash("sha256").update(newPassword.trim()).digest("hex");
+    }
+
+    await db.users.update({
+      where: { email: cleanOld },
+      data: updateData,
+    });
+
+    await db.cmsSettings.upsert({
+      where: { key: "admin_email" },
+      update: { value: cleanNew },
+      create: { key: "admin_email", value: cleanNew },
+    });
+
+    res.json({ success: true, message: "Credentials updated successfully.", newEmail: cleanNew });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

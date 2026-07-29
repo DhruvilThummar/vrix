@@ -433,6 +433,9 @@ export async function verifyPayment(data: {
   razorpay_signature: string;
   items?: any[];
   promoCode?: string;
+  isGiftWrapped?: boolean;
+  giftMessage?: string;
+  giftWrapPrice?: number;
 }) {
   return apiFetch<{ success: boolean; paymentId: string }>("/payment/verify", {
     method: "POST",

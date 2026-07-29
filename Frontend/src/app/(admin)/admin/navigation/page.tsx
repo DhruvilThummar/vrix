@@ -1,18 +1,37 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { fetchDb, updateCMS } from "@/utils/api";
+import { fetchDb, updateCMS, fetchProducts, fetchCollections } from "@/utils/api";
 import Image from "next/image";
+
+// Preset standard pages
+const STANDARD_PAGES = [
+  { label: "Home Page", path: "/" },
+  { label: "Collections Catalog", path: "/collections" },
+  { label: "Bespoke Configurator", path: "/bespoke" },
+  { label: "Our Story", path: "/story" },
+  { label: "Journal", path: "/journal" },
+  { label: "VRIX+ Club", path: "/vrix-plus" },
+  { label: "Search Catalog", path: "/search" },
+  { label: "New Arrivals / Trending", path: "/collections/silent-center" },
+];
 
 export default function AdminNavigationPage() {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // States
+  // Database configurations
   const [navLinks, setNavLinks] = useState<any[]>([]);
   const [homepageCategories, setHomepageCategories] = useState<any[]>([]);
   const [selectedLinkIndex, setSelectedLinkIndex] = useState<number | null>(null);
+
+  // Dynamic products and collections list for selectors
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [allCollections, setAllCollections] = useState<any[]>([]);
+
+  // Preview interactive state
+  const [hoveredPreviewIndex, setHoveredPreviewIndex] = useState<number | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -23,20 +42,22 @@ export default function AdminNavigationPage() {
 
   const loadCMSData = () => {
     setLoading(true);
-    fetchDb()
-      .then((res) => {
-        if (Array.isArray(res.navigation)) {
-          setNavLinks(res.navigation);
+    Promise.all([fetchDb(), fetchProducts(), fetchCollections()])
+      .then(([dbRes, prodRes, collRes]) => {
+        if (Array.isArray(dbRes.navigation)) {
+          setNavLinks(dbRes.navigation);
         }
-        if (res.homepage && Array.isArray(res.homepage.categories)) {
-          setHomepageCategories(res.homepage.categories);
+        if (dbRes.homepage && Array.isArray(dbRes.homepage.categories)) {
+          setHomepageCategories(dbRes.homepage.categories);
         }
+        setAllProducts(prodRes || []);
+        setAllCollections(collRes || []);
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
-        showToast("Error loading navigation configurations.");
+        showToast("Error loading configurations.");
       });
   };
 
@@ -59,7 +80,7 @@ export default function AdminNavigationPage() {
       loadCMSData();
     } catch (error) {
       console.error(error);
-      showToast("Error saving navigation.");
+      showToast("Error saving changes.");
     } finally {
       setSaveLoading(false);
     }
@@ -90,7 +111,7 @@ export default function AdminNavigationPage() {
     if (!item.megaMenu) {
       item.megaMenu = { categories: [], featured: { title: "", image: "", link: "" } };
     }
-    item.megaMenu.categories.push({ title: "NEW CATEGORY", links: [] });
+    item.megaMenu.categories.push({ title: "NEW COLUMN", links: [] });
     setNavLinks(next);
   };
 
@@ -151,69 +172,326 @@ export default function AdminNavigationPage() {
     setHomepageCategories(homepageCategories.filter((_, i) => i !== idx));
   };
 
+  // Zero-Coding Path Selector component rendered inline for simplicity
+  const PathSelector = ({ value, onChange }: { value: string; onChange: (val: string) => void }) => {
+    // Determine current type
+    let type = "custom";
+    let selectedIdOrSlug = "";
+
+    if (value === "/" || STANDARD_PAGES.some(p => p.path === value)) {
+      type = "page";
+      selectedIdOrSlug = value;
+    } else if (value.startsWith("/product/")) {
+      type = "product";
+      selectedIdOrSlug = value.replace("/product/", "");
+    } else if (value.startsWith("/collections/") && value !== "/collections") {
+      type = "collection";
+      selectedIdOrSlug = value.replace("/collections/", "");
+    } else {
+      type = "custom";
+      selectedIdOrSlug = value;
+    }
+
+    const handleTypeChange = (newType: string) => {
+      if (newType === "page") {
+        onChange("/");
+      } else if (newType === "product") {
+        const firstProd = allProducts[0]?.id || "";
+        onChange(firstProd ? `/product/${firstProd}` : "/");
+      } else if (newType === "collection") {
+        const firstColl = allCollections[0]?.id || allCollections[0]?.slug || "all";
+        onChange(`/collections/${firstColl}`);
+      } else {
+        onChange("/");
+      }
+    };
+
+    const handleSelectionChange = (newVal: string) => {
+      if (type === "product") {
+        onChange(`/product/${newVal}`);
+      } else if (type === "collection") {
+        onChange(`/collections/${newVal}`);
+      } else {
+        onChange(newVal);
+      }
+    };
+
+    return (
+      <div className="flex flex-col md:flex-row gap-2 mt-1 w-full">
+        <select
+          value={type}
+          onChange={(e) => handleTypeChange(e.target.value)}
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer flex-shrink-0"
+        >
+          <option value="page">Standard Page</option>
+          <option value="collection">Collection Page</option>
+          <option value="product">Individual Product</option>
+          <option value="custom">Custom Web Link</option>
+        </select>
+
+        {type === "page" && (
+          <select
+            value={selectedIdOrSlug}
+            onChange={(e) => handleSelectionChange(e.target.value)}
+            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer"
+          >
+            {STANDARD_PAGES.map((p) => (
+              <option key={p.path} value={p.path}>
+                {p.label} ({p.path})
+              </option>
+            ))}
+          </select>
+        )}
+
+        {type === "collection" && (
+          <select
+            value={selectedIdOrSlug}
+            onChange={(e) => handleSelectionChange(e.target.value)}
+            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer"
+          >
+            <option value="silent-center">All Collections / Default</option>
+            {allCollections.map((c: any) => {
+              const slug = c.slug || c.id || "";
+              return (
+                <option key={slug} value={slug}>
+                  {c.name || c.title || slug}
+                </option>
+              );
+            })}
+          </select>
+        )}
+
+        {type === "product" && (
+          <select
+            value={selectedIdOrSlug}
+            onChange={(e) => handleSelectionChange(e.target.value)}
+            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer"
+          >
+            {allProducts.map((p: any) => (
+              <option key={p.id} value={p.id}>
+                {p.title} (${p.price})
+              </option>
+            ))}
+          </select>
+        )}
+
+        {type === "custom" && (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Enter custom URL path (e.g. /custom-page)"
+            className="border border-slate-grey/30 px-2 py-1 bg-pure-white text-xs outline-none text-slate-grey flex-1"
+          />
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-soft-linen text-slate-grey font-label-caps text-xs tracking-widest">
+      <div className="h-screen flex flex-col items-center justify-center bg-soft-linen text-slate-grey font-label-caps text-xs tracking-widest gap-2">
+        <div className="w-8 h-8 border-2 border-deep-navy border-t-transparent rounded-full animate-spin"></div>
         Loading Navigation Editor...
       </div>
     );
   }
 
+  // Get currently active preview mega menu
+  const previewIndex = hoveredPreviewIndex !== null ? hoveredPreviewIndex : selectedLinkIndex;
+  const activePreviewLink = previewIndex !== null ? navLinks[previewIndex] : null;
+
   return (
-    <div className="w-full min-h-screen bg-soft-linen/50 p-6 md:p-12 relative">
+    <div className="w-full min-h-screen bg-soft-linen/30 p-6 md:p-12 relative font-body-md text-ink-black">
       {toastMessage && (
-        <div className="fixed bottom-8 right-8 z-50 bg-deep-navy text-pure-white px-6 py-4 border border-slate-grey/30 shadow-2xl flex items-center gap-3 animate-fade-in">
+        <div className="fixed bottom-8 right-8 z-50 bg-deep-navy text-pure-white px-6 py-4 border border-slate-grey/30 shadow-2xl flex items-center gap-3 animate-fade-in rounded">
           <span className="material-symbols-outlined text-sm">info</span>
           <p className="font-body-md text-sm tracking-wide">{toastMessage}</p>
         </div>
       )}
 
       <form onSubmit={handleSave} className="max-w-6xl mx-auto flex flex-col gap-8">
+        {/* Banner Section */}
         <div className="bg-pure-white border border-slate-grey/20 p-6 md:p-8 shadow-sm flex flex-col gap-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-deep-navy via-amber-600/40 to-deep-navy" />
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-deep-navy via-amber-600/40 to-deep-navy" />
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-grey/15 pb-6">
             <div className="space-y-1.5">
               <h1 className="font-display-lg text-headline-md text-deep-navy uppercase tracking-wide">
-                Menu Navigation &amp; Homepage Categories
+                Menu Navigation &amp; Homepage Grid Designer
               </h1>
               <p className="text-slate-grey font-body-md text-sm">
-                Redefine top-level links, glassmorphic mega-menu column paths, featured banner promotions, and homepage category grids.
+                Rearrange, design, and preview your shop menu layout and category grids with zero coding knowledge.
               </p>
             </div>
             <button
               type="submit"
               disabled={saveLoading}
-              className="px-6 py-2.5 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors font-label-caps text-xs tracking-widest uppercase cursor-pointer disabled:opacity-50"
+              className="px-6 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-all font-label-caps text-xs tracking-widest uppercase cursor-pointer disabled:opacity-50 shadow-md hover:translate-y-[-1px]"
             >
-              {saveLoading ? "Saving..." : "Save Navigation"}
+              {saveLoading ? "Saving Changes..." : "Publish Navigation"}
             </button>
           </div>
         </div>
 
-        {/* Part 1: Top Navigation Links Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <section className="bg-pure-white border border-slate-grey/25 p-6 shadow-sm space-y-6 lg:col-span-1">
-            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-              <h3 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider uppercase">
-                Header Links
+        {/* Live Interactive Navigation Preview */}
+        <section className="bg-pure-white border border-slate-grey/25 p-6 shadow-sm space-y-4 rounded relative">
+          <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+            <div>
+              <h3 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider uppercase flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">visibility</span>
+                Live Navbar Interactive Preview
               </h3>
+              <p className="text-[10px] text-slate-grey mt-0.5">Click or hover over the mock navigation bar below to preview dropdowns and mega-menus.</p>
+            </div>
+            <span className="bg-emerald-50 text-emerald-700 text-[9px] px-2 py-0.5 font-semibold tracking-wider rounded border border-emerald-200">
+              Interactive Preview
+            </span>
+          </div>
+
+          {/* Mini-Navbar Mock Shell */}
+          <div className="border border-slate-grey/15 bg-pure-white rounded shadow-inner overflow-visible relative min-h-[64px]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-grey/10 bg-pure-white">
+              {/* Mock Brand Logo */}
+              <div className="font-display-lg text-lg tracking-widest text-deep-navy font-bold flex items-center gap-2">
+                VRIX
+              </div>
+
+              {/* Main Links */}
+              <div className="flex items-center gap-6">
+                {navLinks.map((link, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onMouseEnter={() => setHoveredPreviewIndex(idx)}
+                    onMouseLeave={() => setHoveredPreviewIndex(null)}
+                    onClick={() => setSelectedLinkIndex(idx)}
+                    className={`font-label-caps text-[11px] tracking-widest uppercase pb-1 border-b-2 transition-all cursor-pointer ${
+                      selectedLinkIndex === idx
+                        ? "border-deep-navy text-deep-navy font-bold"
+                        : "border-transparent text-slate-grey hover:text-deep-navy hover:border-slate-grey/30"
+                    }`}
+                  >
+                    {link.label || "Unnamed Link"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Mock Right Side Icons */}
+              <div className="flex items-center gap-4 text-slate-grey text-sm">
+                <span className="material-symbols-outlined text-lg">search</span>
+                <span className="material-symbols-outlined text-lg">favorite</span>
+                <span className="material-symbols-outlined text-lg">shopping_bag</span>
+              </div>
+            </div>
+
+            {/* Simulated Mega-Menu Dropdown */}
+            {activePreviewLink && activePreviewLink.megaMenu && (
+              <div
+                className="absolute left-0 right-0 top-[53px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-30 transition-all duration-300 animate-fade-in flex justify-between"
+                onMouseEnter={() => {
+                  if (hoveredPreviewIndex === null && selectedLinkIndex !== null) {
+                    setHoveredPreviewIndex(selectedLinkIndex);
+                  }
+                }}
+                onMouseLeave={() => setHoveredPreviewIndex(null)}
+              >
+                <div className="flex-1 grid grid-cols-3 gap-8">
+                  {activePreviewLink.megaMenu.categories && activePreviewLink.megaMenu.categories.length > 0 ? (
+                    activePreviewLink.megaMenu.categories.map((cat: any, cIdx: number) => (
+                      <div key={cIdx} className="space-y-3">
+                        <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider border-b border-slate-grey/10 pb-1.5">
+                          {cat.title || "Column Header"}
+                        </h4>
+                        <ul className="space-y-2">
+                          {cat.links && cat.links.length > 0 ? (
+                            cat.links.map((lnk: any, lIdx: number) => (
+                              <li key={lIdx}>
+                                <a
+                                  href="#"
+                                  onClick={(e) => e.preventDefault()}
+                                  className="text-xs text-slate-grey hover:text-deep-navy transition-colors block"
+                                >
+                                  {lnk.label || "Sublink Label"}
+                                </a>
+                              </li>
+                            ))
+                          ) : (
+                            <li className="text-[10px] text-slate-grey/60 italic">No sublinks yet</li>
+                          )}
+                        </ul>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-3 text-center py-6 text-xs text-slate-grey/60 italic">
+                      This link has a mega menu container but no columns added yet.
+                    </div>
+                  )}
+                </div>
+
+                {/* Featured Promo Panel inside Mega Menu */}
+                {activePreviewLink.megaMenu.featured && (
+                  <div className="w-64 border-l border-slate-grey/10 pl-8 flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest mb-2.5">Featured Showcase</h4>
+                      {activePreviewLink.megaMenu.featured.image ? (
+                        <div className="w-full h-32 relative bg-soft-linen/50 overflow-hidden border border-slate-grey/15 rounded">
+                          <img
+                            alt="Featured Preview"
+                            src={activePreviewLink.megaMenu.featured.image}
+                            className="object-cover w-full h-full"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=300";
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-32 flex items-center justify-center border border-dashed border-slate-grey/30 bg-soft-linen/20 rounded text-[10px] text-slate-grey italic">
+                          No promotional image set
+                        </div>
+                      )}
+                      <h5 className="font-headline-md text-xs font-semibold text-deep-navy mt-3">
+                        {activePreviewLink.megaMenu.featured.title || "Promotional Banner"}
+                      </h5>
+                    </div>
+                    <span className="text-[10px] text-deep-navy uppercase tracking-wider font-semibold border-b border-deep-navy w-fit mt-2">
+                      Shop Now →
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Builder Work Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Header Links Management Panel (Left) */}
+          <section className="bg-pure-white border border-slate-grey/25 p-6 shadow-sm space-y-6 lg:col-span-1 rounded">
+            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+              <div>
+                <h3 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider uppercase">
+                  Header Navigation Links
+                </h3>
+                <p className="text-[9px] text-slate-grey">Top level tabs seen on site</p>
+              </div>
               <button
                 type="button"
                 onClick={addTopLevelLink}
-                className="px-2.5 py-1 bg-deep-navy text-pure-white text-[9px] font-label-caps uppercase cursor-pointer hover:bg-ink-black"
+                className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase cursor-pointer hover:bg-ink-black transition-colors rounded shadow-xs"
               >
                 + Add Link
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
               {navLinks.map((link, idx) => (
                 <div
                   key={idx}
                   onClick={() => setSelectedLinkIndex(idx)}
-                  className={`p-3 border transition-all cursor-pointer flex flex-col gap-2 relative ${
+                  className={`p-4 border transition-all cursor-pointer flex flex-col gap-3 relative rounded ${
                     selectedLinkIndex === idx
-                      ? "border-deep-navy bg-soft-linen/25 shadow-xs"
+                      ? "border-deep-navy bg-soft-linen/10 shadow-sm ring-1 ring-deep-navy/30"
                       : "border-slate-grey/15 bg-surface/30 hover:border-slate-grey/30"
                   }`}
                 >
@@ -223,130 +501,145 @@ export default function AdminNavigationPage() {
                       e.stopPropagation();
                       removeTopLevelLink(idx);
                     }}
-                    className="absolute top-2 right-2 text-error text-[9px] font-label-caps cursor-pointer hover:underline"
+                    className="absolute top-3 right-3 text-red-500 hover:text-red-700 text-[10px] font-label-caps cursor-pointer hover:underline"
                   >
-                    Delete
+                    Delete Link
                   </button>
-                  <div className="flex flex-col gap-1 pr-12">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase">Link Label</label>
+
+                  <div className="flex flex-col gap-1 pr-16">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Menu Title</label>
                     <input
                       type="text"
                       value={link.label}
                       onChange={(e) => updateTopLevelLink(idx, "label", e.target.value)}
                       onClick={(e) => e.stopPropagation()}
-                      className="border-b border-slate-grey/20 py-1 text-xs outline-none font-semibold text-deep-navy"
+                      className="border-b border-slate-grey/20 py-1 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy"
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase">Link Path</label>
-                    <input
-                      type="text"
-                      value={link.path}
-                      onChange={(e) => updateTopLevelLink(idx, "path", e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="border-b border-slate-grey/20 py-1 text-xs outline-none text-slate-grey"
-                    />
+
+                  <div className="flex flex-col gap-1 w-full">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Link Destination</label>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <PathSelector
+                        value={link.path}
+                        onChange={(val) => updateTopLevelLink(idx, "path", val)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="material-symbols-outlined text-xs text-deep-navy">info</span>
+                    <span className="text-[9px] text-slate-grey">
+                      {link.megaMenu ? "Contains a dropdown menu" : "Standard single link"}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* Part 2: Mega Menu Nested Columns Configuration */}
-          <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 lg:col-span-2">
-            <h3 className="font-headline-md text-base text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+          {/* Mega Menu Structures Panel (Right/Center) */}
+          <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 lg:col-span-2 rounded">
+            <h3 className="font-headline-md text-base text-deep-navy uppercase border-b border-slate-grey/15 pb-3 flex items-center gap-2">
+              <span className="material-symbols-outlined">menu_open</span>
               Mega Menu Structure Configurator
             </h3>
 
             {selectedLinkIndex === null ? (
-              <div className="h-64 flex items-center justify-center border border-dashed border-slate-grey/30 text-slate-grey font-label-caps text-xs tracking-wider">
+              <div className="h-64 flex flex-col gap-2 items-center justify-center border-2 border-dashed border-slate-grey/30 text-slate-grey font-label-caps text-xs tracking-wider rounded bg-soft-linen/5">
+                <span className="material-symbols-outlined text-lg">touch_app</span>
                 Select a top-level link from the left panel to configure its Mega-Menu
               </div>
             ) : (
               <div className="space-y-8 animate-fade-in">
-                <div className="p-4 bg-soft-linen/10 border border-slate-grey/10 flex justify-between items-center">
+                {/* Active Link Configuration Info */}
+                <div className="p-4 bg-soft-linen/10 border border-slate-grey/10 flex justify-between items-center rounded">
                   <div>
                     <h4 className="font-headline-md text-sm text-deep-navy font-semibold">
-                      Editing: {navLinks[selectedLinkIndex].label}
+                      Editing Dropdown: {navLinks[selectedLinkIndex].label}
                     </h4>
                     <p className="text-[10px] text-slate-grey mt-0.5">Configure sub-navigation columns and promotional featured content below.</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => addMegaCategory(selectedLinkIndex)}
-                    className="px-3 py-1 bg-deep-navy text-pure-white text-[9px] font-label-caps uppercase hover:bg-ink-black"
+                    className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black transition-colors rounded"
                   >
                     + Add Column
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Mega-menu categories columns */}
                   <div className="space-y-6 md:border-r md:border-slate-grey/15 md:pr-6">
-                    <h5 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase">
+                    <h5 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">view_column</span>
                       Sub-Category Columns
                     </h5>
 
                     {(!navLinks[selectedLinkIndex].megaMenu ||
                       !navLinks[selectedLinkIndex].megaMenu.categories ||
                       navLinks[selectedLinkIndex].megaMenu.categories.length === 0) ? (
-                      <p className="text-slate-grey text-xs py-4">No columns configured. This link will behave as a standard link without a dropdown.</p>
+                      <div className="text-slate-grey text-xs py-8 text-center border border-dashed border-slate-grey/20 rounded bg-soft-linen/5 space-y-1">
+                        <p className="font-semibold">No Columns Configured</p>
+                        <p className="text-[10px]">This link behaves as a direct link without any dropdown.</p>
+                      </div>
                     ) : (
                       navLinks[selectedLinkIndex].megaMenu.categories.map((cat: any, catIdx: number) => (
-                        <div key={catIdx} className="border border-slate-grey/25 p-4 bg-soft-linen/20 space-y-4 relative">
+                        <div key={catIdx} className="border border-slate-grey/25 p-4 bg-soft-linen/5 space-y-4 relative rounded">
                           <button
                             type="button"
                             onClick={() => removeMegaCategory(selectedLinkIndex, catIdx)}
-                            className="absolute top-2 right-2 text-error text-[9px] font-label-caps cursor-pointer"
+                            className="absolute top-3 right-3 text-red-500 hover:text-red-700 text-[10px] font-label-caps cursor-pointer"
                           >
                             Remove Column
                           </button>
 
-                          <div className="flex flex-col gap-1 pr-20">
-                            <label className="font-label-caps text-[9px] text-slate-grey uppercase">Column Header Title</label>
+                          <div className="flex flex-col gap-1 pr-24">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Column Header Title</label>
                             <input
                               type="text"
                               value={cat.title}
                               onChange={(e) => updateMegaCategoryTitle(selectedLinkIndex, catIdx, e.target.value)}
-                              className="border-b border-slate-grey/30 py-1 text-xs outline-none font-bold"
+                              className="border-b border-slate-grey/30 py-1 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy"
                             />
                           </div>
 
-                          <div className="space-y-2 pt-2">
-                            <div className="flex justify-between items-center">
-                              <label className="font-label-caps text-[8px] text-slate-grey uppercase tracking-wider">Sublinks list</label>
+                          <div className="space-y-3 pt-2">
+                            <div className="flex justify-between items-center border-t border-slate-grey/10 pt-3">
+                              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Links inside Column</label>
                               <button
                                 type="button"
                                 onClick={() => addMegaLink(selectedLinkIndex, catIdx)}
-                                className="text-deep-navy text-[9px] font-label-caps hover:underline"
+                                className="text-deep-navy text-[10px] font-label-caps hover:underline flex items-center gap-0.5"
                               >
-                                + Add sublink
+                                + Add Link
                               </button>
                             </div>
 
                             {cat.links.map((lnk: any, lnkIdx: number) => (
-                              <div key={lnkIdx} className="flex gap-2 items-center bg-pure-white p-2 border border-slate-grey/10">
-                                <input
-                                  type="text"
-                                  value={lnk.label}
-                                  onChange={(e) => updateMegaLink(selectedLinkIndex, catIdx, lnkIdx, "label", e.target.value)}
-                                  placeholder="Sublink label"
-                                  className="flex-1 text-xs border-b border-transparent focus:border-deep-navy outline-none py-0.5"
-                                />
-                                <input
-                                  type="text"
+                              <div key={lnkIdx} className="flex flex-col gap-2 bg-pure-white p-3 border border-slate-grey/15 rounded shadow-2xs">
+                                <div className="flex justify-between items-center">
+                                  <input
+                                    type="text"
+                                    value={lnk.label}
+                                    onChange={(e) => updateMegaLink(selectedLinkIndex, catIdx, lnkIdx, "label", e.target.value)}
+                                    placeholder="Sublink label"
+                                    className="text-xs border-b border-transparent focus:border-deep-navy outline-none py-0.5 font-semibold text-deep-navy flex-1 mr-4"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeMegaLink(selectedLinkIndex, catIdx, lnkIdx)}
+                                    className="text-red-500 hover:text-red-700 text-xs p-1"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                                
+                                <PathSelector
                                   value={lnk.path}
-                                  onChange={(e) => updateMegaLink(selectedLinkIndex, catIdx, lnkIdx, "path", e.target.value)}
-                                  placeholder="Sublink path"
-                                  className="flex-1 text-xs border-b border-transparent focus:border-deep-navy outline-none py-0.5 text-slate-grey"
+                                  onChange={(val) => updateMegaLink(selectedLinkIndex, catIdx, lnkIdx, "path", val)}
                                 />
-                                <button
-                                  type="button"
-                                  onClick={() => removeMegaLink(selectedLinkIndex, catIdx, lnkIdx)}
-                                  className="text-error text-[10px]"
-                                >
-                                  ✕
-                                </button>
                               </div>
                             ))}
                           </div>
@@ -357,38 +650,36 @@ export default function AdminNavigationPage() {
 
                   {/* Mega-menu featured promotion card */}
                   <div className="space-y-4">
-                    <h5 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase">
-                      Featured Promo Banner
+                    <h5 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">campaign</span>
+                      Featured Dropdown Banner
                     </h5>
-                    <div className="border border-slate-grey/25 p-4 bg-soft-linen/20 space-y-4">
+                    <div className="border border-slate-grey/25 p-4 bg-soft-linen/5 space-y-4 rounded">
                       <div className="flex flex-col gap-1">
-                        <label className="font-label-caps text-[9px] text-slate-grey uppercase">Promo Card Title</label>
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Promo Title</label>
                         <input
                           type="text"
                           value={navLinks[selectedLinkIndex]?.megaMenu?.featured?.title || ""}
                           onChange={(e) => updateFeaturedMega(selectedLinkIndex, "title", e.target.value)}
-                          placeholder="e.g. The Spring Collection"
-                          className="border-b border-slate-grey/30 py-1 text-xs outline-none"
+                          placeholder="e.g. New Arrivals"
+                          className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-semibold"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="font-label-caps text-[9px] text-slate-grey uppercase">Promo Image URL</label>
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Promo Image URL</label>
                         <input
                           type="text"
                           value={navLinks[selectedLinkIndex]?.megaMenu?.featured?.image || ""}
                           onChange={(e) => updateFeaturedMega(selectedLinkIndex, "image", e.target.value)}
                           placeholder="e.g. /images/promo.jpg"
-                          className="border-b border-slate-grey/30 py-1 text-xs outline-none"
+                          className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="font-label-caps text-[9px] text-slate-grey uppercase">Promo Destination Link</label>
-                        <input
-                          type="text"
-                          value={navLinks[selectedLinkIndex]?.megaMenu?.featured?.link || ""}
-                          onChange={(e) => updateFeaturedMega(selectedLinkIndex, "link", e.target.value)}
-                          placeholder="e.g. /collections/spring"
-                          className="border-b border-slate-grey/30 py-1 text-xs outline-none"
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Link Destination</label>
+                        <PathSelector
+                          value={navLinks[selectedLinkIndex]?.megaMenu?.featured?.link || "/"}
+                          onChange={(val) => updateFeaturedMega(selectedLinkIndex, "link", val)}
                         />
                       </div>
                     </div>
@@ -399,59 +690,75 @@ export default function AdminNavigationPage() {
           </section>
         </div>
 
-        {/* Part 3: Homepage Categories Grid Section */}
-        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
-          <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-            <h3 className="font-headline-md text-base text-deep-navy uppercase">
-              Homepage "Shop by Category" Grid Configuration
-            </h3>
+        {/* Homepage Categories Grid Section */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+          <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+            <div>
+              <h3 className="font-headline-md text-base text-deep-navy uppercase flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">grid_view</span>
+                Homepage "Shop by Category" Grid Configuration
+              </h3>
+              <p className="text-[10px] text-slate-grey mt-0.5">Customize the visual category cards displayed on the store homepage.</p>
+            </div>
             <button
               type="button"
               onClick={addHomepageCategory}
-              className="px-3 py-1 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black cursor-pointer"
+              className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black transition-colors rounded shadow-xs"
             >
-              + Add Category Grid Card
+              + Add Category Card
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {homepageCategories.map((cat, idx) => (
-              <div key={idx} className="border border-slate-grey/20 p-4 bg-soft-linen/25 space-y-4 relative">
+              <div key={idx} className="border border-slate-grey/20 p-4 bg-soft-linen/5 space-y-4 relative rounded">
                 <button
                   type="button"
                   onClick={() => removeHomepageCategory(idx)}
-                  className="absolute top-2 right-2 text-error text-[10px] font-label-caps cursor-pointer"
+                  className="absolute top-3 right-3 text-red-500 hover:text-red-700 text-[10px] font-label-caps cursor-pointer"
                 >
-                  Remove
+                  Remove Card
                 </button>
 
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Category Card Title</label>
-                  <input
-                    type="text"
-                    value={cat.title}
-                    onChange={(e) => updateHomepageCategory(idx, "title", e.target.value)}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none font-semibold text-deep-navy"
-                  />
+                {/* Micro Image Thumbnail */}
+                <div className="flex items-center gap-3 border-b border-slate-grey/10 pb-3">
+                  <div className="w-12 h-12 relative overflow-hidden bg-soft-linen border border-slate-grey/15 rounded flex-shrink-0">
+                    <img
+                      alt={cat.title || "Category Preview"}
+                      src={cat.image}
+                      className="object-cover w-full h-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100";
+                      }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-full">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Category Title</label>
+                    <input
+                      type="text"
+                      value={cat.title}
+                      onChange={(e) => updateHomepageCategory(idx, "title", e.target.value)}
+                      className="border-b border-slate-grey/30 py-0.5 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Grid Card Image URL</label>
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Image URL</label>
                   <input
                     type="text"
                     value={cat.image}
                     onChange={(e) => updateHomepageCategory(idx, "image", e.target.value)}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none text-slate-grey"
+                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy text-slate-grey"
+                    placeholder="https://example.com/image.jpg"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Link Destination Path</label>
-                  <input
-                    type="text"
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Link Destination</label>
+                  <PathSelector
                     value={cat.link}
-                    onChange={(e) => updateHomepageCategory(idx, "link", e.target.value)}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none text-slate-grey"
+                    onChange={(val) => updateHomepageCategory(idx, "link", val)}
                   />
                 </div>
               </div>

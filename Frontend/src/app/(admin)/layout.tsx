@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { fetchProducts, fetchPaymentLogs, fetchUsers } from "@/utils/api";
+import { fetchProducts, fetchPaymentLogs, fetchUsers, fetchDb } from "@/utils/api";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminProfileModal from "@/components/admin/AdminProfileModal";
@@ -12,7 +12,7 @@ const DEFAULT_AVATAR = "https://lh3.googleusercontent.com/aida-public/AB6AXuCEmD
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, isLoggedIn, logout } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
@@ -21,6 +21,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminAvatar, setAdminAvatar] = useState(DEFAULT_AVATAR);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Guard State
+  const [adminEmail, setAdminEmail] = useState("admin@xyz.com");
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,12 +35,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  // Load admin profile from localStorage on mount
+  // Load admin profile and email config on mount
   useEffect(() => {
     const savedName = localStorage.getItem("vrix_admin_name");
     const savedAvatar = localStorage.getItem("vrix_admin_avatar");
     if (savedName) setAdminName(savedName);
     if (savedAvatar) setAdminAvatar(savedAvatar);
+
+    let active = true;
+    fetchDb()
+      .then((res) => {
+        if (active && res && res.admin_email) {
+          setAdminEmail(res.admin_email);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setCheckingAuth(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Close dropdown on click outside
@@ -129,6 +149,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return list;
   }, [searchResults]);
 
+  // Route Guard Effect
+  useEffect(() => {
+    if (!checkingAuth) {
+      if (!isLoggedIn || (user && user.email.toLowerCase() !== adminEmail.toLowerCase())) {
+        router.replace("/account");
+      }
+    }
+  }, [isLoggedIn, user, adminEmail, checkingAuth, router]);
+
   const handleSaveProfile = (name: string, avatar: string) => {
     setAdminName(name);
     setAdminAvatar(avatar);
@@ -145,6 +174,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setSearchQuery("");
     router.replace("/account");
   };
+
+  if (checkingAuth || !isLoggedIn || (user && user.email.toLowerCase() !== adminEmail.toLowerCase())) {
+    return (
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-soft-linen gap-4 text-slate-grey font-label-caps text-xs tracking-widest">
+        <div className="w-8 h-8 border-2 border-deep-navy border-t-transparent rounded-full animate-spin"></div>
+        Authenticating Administrator...
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-soft-linen">
