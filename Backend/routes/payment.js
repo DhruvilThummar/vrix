@@ -326,8 +326,17 @@ router.get("/invoice/:orderId", async (req, res) => {
     try {
       const dbCms = await db.cmsSettings.findUnique({ where: { key: "invoice_settings" } });
       if (dbCms && dbCms.value) {
-        const val = typeof dbCms.value === "string" ? JSON.parse(dbCms.value) : dbCms.value;
-        cfg = { ...cfg, ...val };
+        let val = dbCms.value;
+        if (typeof val === "string") {
+          try {
+            val = JSON.parse(val);
+          } catch (e) {
+            val = {};
+          }
+        }
+        if (val && typeof val === "object") {
+          cfg = { ...cfg, ...val };
+        }
       }
     } catch (e) {
       console.warn("Failed to load invoice_settings CMS config, using defaults:", e.message);

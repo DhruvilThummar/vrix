@@ -395,6 +395,7 @@ export default function AdminOrdersPage() {
                     <a
                       href={`/api/payment/invoice/${selectedOrder.orderId}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="w-full flex items-center justify-center gap-2 border border-slate-grey/25 py-2 text-[10px] font-label-caps uppercase tracking-widest text-slate-grey hover:border-deep-navy hover:text-deep-navy transition-colors cursor-pointer rounded"
                     >
                       <span className="material-symbols-outlined text-[14px]">receipt</span>
