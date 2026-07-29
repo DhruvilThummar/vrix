@@ -11,6 +11,7 @@ import MetalSwatches from "@/components/pdp/MetalSwatches";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useCurrency } from "@/utils/useCurrency";
+import Link from "next/link";
  
 const DEFAULT_PRODUCT = {
   id: "silent-center-ring",
@@ -51,10 +52,10 @@ function ProductContent() {
   }, []);
  
   const product = useMemo(() => {
-    if (!productId) return DEFAULT_PRODUCT;
+    if (!productId) return null;
     const found = products.find((p) => String(p.id).trim().toLowerCase() === String(productId).trim().toLowerCase());
     if (!found && loading) return null;
-    return found || { ...DEFAULT_PRODUCT, id: productId };
+    return found || null;
   }, [products, productId, loading]);
  
   useEffect(() => {
@@ -154,7 +155,7 @@ function ProductContent() {
     }, 4000);
   };
  
-  if (loading || !product) {
+  if (loading) {
     return (
       <div className="relative w-full">
         <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-section-gap">
@@ -196,6 +197,21 @@ function ProductContent() {
             </div>
           </div>
         </main>
+      </div>
+    );
+  }
+ 
+  if (!product && !loading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4">
+        <span className="material-symbols-outlined text-slate-grey text-5xl" style={{ fontVariationSettings: "'FILL' 0, 'wght' 200" }}>inventory_2</span>
+        <div className="text-center space-y-2">
+          <h1 className="font-display-lg text-xl text-deep-navy uppercase tracking-widest">Piece Not Found</h1>
+          <p className="font-body-md text-slate-grey text-sm">The jewelry item you requested is unavailable or has been archived.</p>
+        </div>
+        <Link href="/collections" className="bg-deep-navy text-pure-white font-button text-xs px-8 py-3.5 uppercase tracking-widest hover:bg-ink-black transition-colors">
+          Browse Collections
+        </Link>
       </div>
     );
   }
