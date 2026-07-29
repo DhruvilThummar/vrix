@@ -11,6 +11,7 @@ const navItems = [
   { name: "Orders", href: "/admin/orders", icon: "receipt_long" },
   { name: "Marketing", href: "/admin/marketing", icon: "confirmation_number" },
   { name: "CMS", href: "/admin/cms", icon: "article" },
+  { name: "Homepage Layout", href: "/admin/homepage", icon: "view_quilt" },
   { name: "Navigation", href: "/admin/navigation", icon: "navigation" },
   { name: "Bespoke Configurator", href: "/admin/bespoke", icon: "diamond" },
   { name: "Media Library", href: "/admin/media", icon: "perm_media" },
