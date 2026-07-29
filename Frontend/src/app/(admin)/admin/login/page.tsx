@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { adminLogin } from "@/utils/api";
+import { loginUserDirect } from "@/utils/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -33,9 +33,23 @@ export default function AdminLoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await adminLogin({ email: email.trim(), password: password.trim() });
-      if (res.success && res.admin) {
-        localStorage.setItem("vrix-admin-token", JSON.stringify(res.admin));
+      // Uses the same login/direct route that already works for customers
+      const res = await loginUserDirect({ email: email.trim(), password: password.trim() });
+
+      if (res.success && res.user) {
+        const userRole = (res.user as any).role || "customer";
+
+        if (userRole !== "admin") {
+          setError("Access denied. You do not have admin privileges.");
+          return;
+        }
+
+        // Save admin token (separate from customer auth)
+        localStorage.setItem("vrix-admin-token", JSON.stringify({
+          email: res.user.email,
+          name: res.user.name || "Admin",
+          role: "admin",
+        }));
         router.replace("/admin");
       } else {
         setError("Login failed. Please try again.");
@@ -96,18 +110,16 @@ export default function AdminLoginPage() {
               <label className="block text-[10px] tracking-[0.2em] text-white/40 uppercase mb-2 font-medium">
                 Email Address
               </label>
-              <div className="relative">
-                <input
-                  id="admin-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(null); }}
-                  className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-amber-400/60 focus:bg-white/[0.08] transition-all duration-200"
-                  placeholder="admin@yourdomain.com"
-                  required
-                  autoComplete="email"
-                />
-              </div>
+              <input
+                id="admin-email"
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-amber-400/60 focus:bg-white/[0.08] transition-all duration-200"
+                placeholder="admin@yourdomain.com"
+                required
+                autoComplete="email"
+              />
             </div>
 
             {/* Password */}
@@ -175,7 +187,6 @@ export default function AdminLoginPage() {
           </form>
         </div>
 
-        {/* Footer note */}
         <p className="text-center text-[10px] text-white/20 mt-6 tracking-widest uppercase">
           VRIX Jewels · Admin Portal · Restricted
         </p>

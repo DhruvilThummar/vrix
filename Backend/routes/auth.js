@@ -215,7 +215,7 @@ router.post("/login/direct", async (req, res) => {
     }
 
     db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => {});
-    res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
+    res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, role: user.role || "customer", isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
