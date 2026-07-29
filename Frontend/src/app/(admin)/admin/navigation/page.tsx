@@ -41,6 +41,7 @@ export default function AdminNavigationPage() {
 
   // Preview interactive state
   const [hoveredPreviewIndex, setHoveredPreviewIndex] = useState<number | null>(null);
+  const [previewTheme, setPreviewTheme] = useState<"solid" | "transparent">("solid");
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -400,34 +401,76 @@ export default function AdminNavigationPage() {
               </h3>
               <p className="text-[10px] text-slate-grey mt-0.5">Click or hover over the mock navigation bar below to preview dropdowns and mega-menus.</p>
             </div>
-            <span className="bg-emerald-50 text-emerald-700 text-[9px] px-2 py-0.5 font-semibold tracking-wider rounded border border-emerald-200 uppercase">
-              Interactive preview (Solid Header)
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPreviewTheme("solid")}
+                className={`px-3 py-1.5 text-[9px] font-label-caps uppercase tracking-wider border rounded cursor-pointer transition-all ${
+                  previewTheme === "solid"
+                    ? "bg-deep-navy text-pure-white border-deep-navy"
+                    : "border-slate-grey/20 text-slate-grey hover:border-deep-navy/45 bg-pure-white"
+                }`}
+              >
+                Solid Header Mode
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewTheme("transparent")}
+                className={`px-3 py-1.5 text-[9px] font-label-caps uppercase tracking-wider border rounded cursor-pointer transition-all ${
+                  previewTheme === "transparent"
+                    ? "bg-deep-navy text-pure-white border-deep-navy"
+                    : "border-slate-grey/20 text-slate-grey hover:border-deep-navy/45 bg-pure-white"
+                }`}
+              >
+                Transparent Header Mode
+              </button>
+            </div>
           </div>
 
           {/* Mini-Navbar Mock Shell */}
-          <div className="border border-slate-grey/15 bg-pure-white rounded shadow-inner overflow-visible relative min-h-[90px] flex flex-col justify-between">
+          <div 
+            className={`border rounded shadow-inner overflow-visible relative min-h-[140px] flex flex-col justify-between transition-all duration-500 ${
+              previewTheme === "transparent"
+                ? "bg-[url('https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1000')] bg-cover bg-center border-transparent"
+                : "border-slate-grey/15 bg-pure-white"
+            }`}
+          >
+            {/* Overlay background dim filter for transparent view */}
+            {previewTheme === "transparent" && (
+              <div className="absolute inset-0 bg-ink-black/25 z-0 rounded pointer-events-none" />
+            )}
+
             {/* Top row - Brand Logo, Icons */}
-            <div className="grid grid-cols-3 items-center px-6 py-3 border-b border-slate-grey/10">
+            <div className={`grid grid-cols-3 items-center px-6 py-3 z-10 border-b ${
+              previewTheme === "transparent" ? "border-pure-white/15 text-pure-white" : "border-slate-grey/10 text-ink-black"
+            }`}>
               {/* Left Column (Spacer) */}
-              <div className="text-[10px] font-label-caps text-slate-grey uppercase tracking-widest">
+              <div className={`text-[10px] font-label-caps uppercase tracking-widest ${
+                previewTheme === "transparent" ? "text-pure-white/80" : "text-slate-grey"
+              }`}>
                 VRIX Luxury Fine Jewelry
               </div>
 
               {/* Center Column (Brand Logo) */}
               <div className="flex justify-center">
-                <span className="font-display-lg text-2xl font-light tracking-[0.25em] uppercase select-none text-ink-black">
+                <span className={`font-display-lg text-2xl font-light tracking-[0.25em] uppercase select-none ${
+                  previewTheme === "transparent" ? "text-pure-white" : "text-ink-black"
+                }`}>
                   VRIX
                 </span>
               </div>
 
               {/* Right Column (Mock Action Icons) */}
-              <div className="flex justify-end items-center gap-5 text-slate-grey text-sm">
+              <div className={`flex justify-end items-center gap-5 text-sm ${
+                previewTheme === "transparent" ? "text-pure-white" : "text-slate-grey"
+              }`}>
                 <select
                   disabled
-                  className="bg-transparent text-xs font-semibold uppercase tracking-wider border-none outline-none text-ink-black mr-2 opacity-70 cursor-not-allowed"
+                  className={`bg-transparent text-xs font-semibold uppercase tracking-wider border-none outline-none mr-2 opacity-70 cursor-not-allowed ${
+                    previewTheme === "transparent" ? "text-pure-white" : "text-ink-black"
+                  }`}
                 >
-                  <option>INR (₹)</option>
+                  <option style={{ color: "#000" }}>INR (₹)</option>
                 </select>
                 <span className="material-symbols-outlined text-lg">search</span>
                 <span className="material-symbols-outlined text-lg font-light">favorite</span>
@@ -436,7 +479,9 @@ export default function AdminNavigationPage() {
             </div>
 
             {/* Bottom Row - Centered Navigation links */}
-            <div className="flex justify-center gap-8 py-2.5 bg-pure-white select-none">
+            <div className={`flex justify-center gap-8 py-3 select-none z-10 ${
+              previewTheme === "transparent" ? "bg-transparent text-pure-white/95" : "bg-pure-white text-ink-black"
+            }`}>
               {navLinks.map((link, idx) => (
                 <button
                   key={idx}
@@ -446,8 +491,8 @@ export default function AdminNavigationPage() {
                   onClick={() => setSelectedLinkIndex(idx)}
                   className={`font-label-caps text-[11px] tracking-[0.15em] uppercase pb-1 border-b-2 transition-all cursor-pointer ${
                     selectedLinkIndex === idx
-                      ? "border-deep-navy text-deep-navy font-bold"
-                      : "border-transparent text-slate-grey hover:text-deep-navy hover:border-slate-grey/30"
+                      ? `${previewTheme === "transparent" ? "border-pure-white text-pure-white font-bold" : "border-deep-navy text-deep-navy font-bold"}`
+                      : `${previewTheme === "transparent" ? "border-transparent text-pure-white/75 hover:text-pure-white hover:border-pure-white/30" : "border-transparent text-slate-grey hover:text-deep-navy hover:border-slate-grey/30"}`
                   }`}
                 >
                   {link.label || "Unnamed Link"}
@@ -458,7 +503,7 @@ export default function AdminNavigationPage() {
             {/* Simulated Mega-Menu Dropdown */}
             {activePreviewLink && activePreviewLink.megaMenu && (
               <div
-                className="absolute left-0 right-0 top-[95px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-30 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
+                className="absolute left-0 right-0 top-[138px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-30 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
                 onMouseEnter={() => {
                   if (hoveredPreviewIndex === null && selectedLinkIndex !== null) {
                     setHoveredPreviewIndex(selectedLinkIndex);
