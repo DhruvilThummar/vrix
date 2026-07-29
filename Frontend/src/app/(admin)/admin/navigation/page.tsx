@@ -503,7 +503,7 @@ export default function AdminNavigationPage() {
             {/* Simulated Mega-Menu Dropdown */}
             {activePreviewLink && activePreviewLink.megaMenu && (
               <div
-                className="absolute left-0 right-0 top-[138px] bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-xl p-8 z-50 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
+                className="relative w-full bg-pure-white/95 backdrop-blur-md border-b border-slate-grey/25 shadow-sm p-8 z-50 transition-all duration-300 animate-fade-in flex justify-between rounded-b"
                 onMouseEnter={() => {
                   if (hoveredPreviewIndex === null && selectedLinkIndex !== null) {
                     setHoveredPreviewIndex(selectedLinkIndex);
