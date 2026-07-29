@@ -206,6 +206,13 @@ const runProductQuery = async (queryWithImages, queryWithoutImages) => {
   }
 };
 
+const userMemoryMap = new Map();
+const syncUserToMemory = (user) => {
+  if (user && user.email) {
+    userMemoryMap.set(String(user.email).toLowerCase().trim(), user);
+  }
+};
+
 // Unified export
 export const db = {
   // Check connection status
