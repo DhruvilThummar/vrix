@@ -542,15 +542,6 @@
       }
     ]
   },
-  "otps": [
-    {
-      "id": "4xnv5bnhrz2",
-      "createdAt": "2026-07-24T11:39:51.448Z",
-      "email": "register:dhruvilthummar37@gmail.com",
-      "otp": "941605",
-      "expiresAt": "2026-07-24T11:49:51.444Z"
-    }
-  ],
   "users": [
     {
       "email": "admin@xyz.com",
