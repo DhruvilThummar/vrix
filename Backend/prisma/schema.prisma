@@ -120,6 +120,7 @@ model User {
   name               String?
   phone              String?
   password           String?
+  role               String?  @default("customer")
   isVrixPlusMember   Boolean  @default(false) @map("is_vrix_plus_member")
   vrixPlusJoinedDate String?  @map("vrix_plus_joined_date")
   createdAt          DateTime @default(now()) @map("created_at")

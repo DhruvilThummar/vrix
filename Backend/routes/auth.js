@@ -566,4 +566,48 @@ router.put("/profile", async (req, res) => {
   }
 });
 
+// POST /api/auth/admin-login — Admin-only login, checks role=admin
+router.post("/admin-login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required." });
+  }
+
+  try {
+    const cleanEmail = String(email).trim().toLowerCase();
+    const cleanPass = String(password).trim();
+    const user = await db.users.findUnique({ where: { email: cleanEmail } });
+
+    if (!user) {
+      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => {});
+      return res.status(401).json({ error: "Incorrect email or password." });
+    }
+
+    const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
+    const isPasswordValid = user.password === hashedPassword || user.password === cleanPass;
+    if (!isPasswordValid) {
+      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => {});
+      return res.status(401).json({ error: "Incorrect email or password." });
+    }
+
+    const userRole = user.role || "customer";
+    if (userRole !== "admin") {
+      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "DENIED" } }).catch(() => {});
+      return res.status(403).json({ error: "Access denied. You do not have admin privileges." });
+    }
+
+    db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => {});
+    res.json({
+      success: true,
+      admin: {
+        email: user.email,
+        name: user.name || "Admin",
+        role: userRole,
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

@@ -310,6 +310,14 @@ export async function loginUserDirect(payload: any) {
   });
 }
 
+export async function adminLogin(payload: { email: string; password: string }) {
+  return apiFetch<{ success: boolean; admin: { email: string; name: string; role: string } }>("/auth/admin-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function fetchUserOrders(email: string) {
   return apiFetch<Array<{
     id: string;
