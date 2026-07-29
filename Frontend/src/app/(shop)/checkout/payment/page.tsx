@@ -419,14 +419,61 @@ export default function PaymentPage() {
             </div>
 
             {/* Price breakdown */}
-            <div className="space-y-2 text-sm font-body-md text-ink-black border-t border-slate-grey/20 pt-4">
+            <div className="space-y-2 text-xs font-body-md text-ink-black border-t border-slate-grey/20 pt-4">
               <div className="flex justify-between">
-                <span className="text-slate-grey">Checkout Subtotal</span>
-                <span>{shipping?.currency || "INR"} {grandTotal.toLocaleString()}</span>
+                <span className="text-slate-grey font-medium">Checkout Subtotal</span>
+                <span>{shipping?.currency || "INR"} {(subtotal - (isGiftWrapped ? 0 : 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
+              
+              {isGiftWrapped && (
+                <div className="flex justify-between text-emerald-700 bg-emerald-50/50 px-2 py-1 rounded">
+                  <span className="flex items-center gap-1 font-semibold">
+                    <span className="material-symbols-outlined text-xs">featured_seasonal</span>
+                    Signature Packaging
+                  </span>
+                  <span className="font-bold">+{shipping?.currency || "INR"} {(giftWrapPrice || 250).toLocaleString()}</span>
+                </div>
+              )}
+
+              {/* Tax Breakdowns */}
+              {(() => {
+                const currency = shipping?.currency || "INR";
+                const isIndia = currency === "INR";
+                const totalWithWrap = grandTotal;
+                const taxRate = isIndia ? 0.18 : 0.05;
+                const taxAmount = totalWithWrap * (taxRate / (1 + taxRate));
+                const baseAmount = totalWithWrap - taxAmount;
+
+                return (
+                  <div className="space-y-2 pt-2 border-t border-dashed border-slate-grey/15">
+                    <div className="flex justify-between text-[11px] text-slate-grey">
+                      <span>Base Amount (excl. tax)</span>
+                      <span>{currency} {baseAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    {isIndia ? (
+                      <>
+                        <div className="flex justify-between text-[11px] text-slate-grey">
+                          <span>CGST (9%)</span>
+                          <span>{currency} {(taxAmount / 2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] text-slate-grey">
+                          <span>SGST (9%)</span>
+                          <span>{currency} {(taxAmount / 2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between text-[11px] text-slate-grey">
+                        <span>Regional Tax / VAT ({Math.round(taxRate * 100)}%)</span>
+                        <span>{currency} {taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="flex justify-between font-headline-md text-lg border-t border-slate-grey/20 pt-3 mt-2">
-                <span>Total Due</span>
-                <span>{shipping?.currency || "INR"} {grandTotal.toFixed(2)}</span>
+                <span className="font-bold text-deep-navy">Total Due</span>
+                <span className="font-bold text-deep-navy">{shipping?.currency || "INR"} {grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
