@@ -104,13 +104,10 @@ export default function Header() {
     backgroundColor: "#000000",
     textColor: "#ffffff",
     fontSize: "11px",
-    lines: [
-      "Complimentary shipping on all orders",
-      "Complimentary gift packaging",
-      "30-day returns"
-    ]
+    lines: []
   });
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
+
 
   useEffect(() => {
     if (!announcementBar || !announcementBar.isEnabled || !announcementBar.lines || announcementBar.lines.length <= 1) {
@@ -271,24 +268,26 @@ export default function Header() {
 
   return (
     <>
-      {/* ─── ANNOUNCEMENT BAR ─── */}
-      {announcementBar && announcementBar.isEnabled && announcementBar.lines && announcementBar.lines.length > 0 && (
+      {/* ─── ANNOUNCEMENT BAR — controlled by admin CMS ─── */}
+      {announcementBar?.isEnabled && (
         <div
           style={{
-            backgroundColor: announcementBar.backgroundColor || "#000000",
-            color: announcementBar.textColor || "#ffffff",
-            fontSize: announcementBar.fontSize || "11px"
+            backgroundColor: announcementBar?.backgroundColor || "#000000",
+            color: announcementBar?.textColor || "#ffffff",
+            fontSize: announcementBar?.fontSize || "11px"
           }}
-          className="w-full py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 z-50 relative transition-all duration-500 min-h-[32px] flex items-center justify-center overflow-hidden"
+          className="w-full fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 transition-all duration-500 min-h-[32px] flex items-center justify-center overflow-hidden"
         >
-          <div key={currentLineIndex} className="animate-fade-in-slide whitespace-nowrap">
-            {announcementBar.lines[currentLineIndex]}
-          </div>
+          {announcementBar?.lines && announcementBar.lines.length > 0 && (
+            <div key={currentLineIndex} className="animate-fade-in-slide whitespace-nowrap">
+              {announcementBar.lines[currentLineIndex]}
+            </div>
+          )}
         </div>
       )}
 
       {/* ─── DESKTOP NAVIGATION ─── */}
-      <header className={`hidden md:block fixed top-0 left-0 right-0 z-40 border-b transition-all duration-500 ease-out ${headerBg}`}>
+      <header className={`hidden md:block fixed ${announcementBar?.isEnabled ? "top-8" : "top-0"} left-0 right-0 z-40 border-b transition-all duration-500 ease-out ${headerBg}`}>
         {/* Brand Banner Row */}
         <div className="w-full max-w-container-max mx-auto px-margin-desktop py-4 grid grid-cols-3 items-center">
           {/* Left space */}
@@ -478,7 +477,7 @@ export default function Header() {
       </header>
 
       {/* ─── MOBILE NAVIGATION ─── */}
-      <header className="md:hidden sticky top-0 z-40 bg-pure-white text-ink-black border-b border-soft-linen px-margin-mobile py-4 flex justify-between items-center shadow-sm">
+      <header className={`md:hidden sticky ${announcementBar?.isEnabled ? "top-8" : "top-0"} z-40 bg-pure-white text-ink-black border-b border-soft-linen px-margin-mobile py-4 flex justify-between items-center shadow-sm`}>
         <button
           onClick={() => setIsMobileMenuOpen(true)}
           className="cursor-pointer flex items-center justify-center w-8 h-8"
