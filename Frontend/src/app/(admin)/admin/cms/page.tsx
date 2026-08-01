@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections, uploadMedia } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "nav-brand" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings";
+type TabType = "hero-philosophy" | "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings";
+
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
@@ -169,7 +170,10 @@ export default function AdminCMSPage() {
     sustainability: { title: "Sustainability", heroTitle: "Sustainability", bannerImage: "", content: "" },
     careers: { title: "Careers", heroTitle: "Careers", bannerImage: "", content: "" },
     "style-guide": { title: "Style Guide", heroTitle: "Style Guide", bannerImage: "", content: "" },
-    "behind-the-design": { title: "Behind The Design", heroTitle: "Behind The Design", bannerImage: "", content: "" }
+    "behind-the-design": { title: "Behind The Design", heroTitle: "Behind The Design", bannerImage: "", content: "" },
+    "modular-builder": { title: "Modular Builder", heroTitle: "Build Your Piece", bannerImage: "", content: "" },
+    contact: { title: "Contact Us", heroTitle: "Get In Touch", bannerImage: "", content: "" },
+    delivery: { title: "Delivery Information", heroTitle: "Delivery & Shipping", bannerImage: "", content: "" },
   });
 
   const showToast = (msg: string) => {
@@ -579,7 +583,6 @@ export default function AdminCMSPage() {
   const CMS_TABS: { id: TabType; label: string; icon: string; category: "Storefront" | "Experience" | "System"; description: string }[] = [
     { id: "hero-philosophy", label: "Hero & Showcase", icon: "view_carousel", category: "Storefront", description: "Banners & layout featured products" },
     { id: "story", label: "Brand Story", icon: "auto_stories", category: "Storefront", description: "Brand narrative & ethos" },
-    { id: "nav-brand", label: "Navbar & Brand", icon: "navigation", category: "Storefront", description: "Links & identity" },
     { id: "announcement-bar", label: "Announcement Bar", icon: "campaign", category: "Storefront", description: "Top ticker & alerts" },
     { id: "journal", label: "Journal", icon: "newspaper", category: "Storefront", description: "Articles & editorial" },
     { id: "custom-pages", label: "Custom Pages", icon: "description", category: "Storefront", description: "CMS pages content" },
@@ -801,88 +804,6 @@ export default function AdminCMSPage() {
                       onChange={(e) => setStoryContent(e.target.value)}
                       className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
                       rows={4}
-                      required
-                    />
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {/* 3. NAVBAR & BRAND TAB */}
-            {activeTab === "nav-brand" && (
-              <div className="space-y-6 animate-fade-in">
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
-                    Bespoke waitlist toggle
-                  </h3>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="bespoke-enabled"
-                      checked={bespokeEnabled}
-                      onChange={(e) => setBespokeEnabled(e.target.checked)}
-                      className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
-                    />
-                    <label htmlFor="bespoke-enabled" className="font-body-md text-sm text-ink-black cursor-pointer font-semibold">
-                      Enable Bespoke Solitaire Configurator Page (Toggle ON/OFF)
-                    </label>
-                  </div>
-                </section>
-
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
-                    Brand Identity details
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Brand Name</label>
-                      <input
-                        type="text"
-                        value={brandName}
-                        onChange={(e) => setBrandName(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                        required
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Contact Phone</label>
-                      <input
-                        type="text"
-                        value={brandPhone}
-                        onChange={(e) => setBrandPhone(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                        required
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Contact Email</label>
-                      <input
-                        type="email"
-                        value={brandEmail}
-                        onChange={(e) => setBrandEmail(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                        required
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Store Logo URL</label>
-                      <input
-                        type="text"
-                        value={brandLogo}
-                        onChange={(e) => setBrandLogo(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
-                        required
-                      />
-                      <VisualImagePreview src={brandLogo} alt="Logo preview" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Headquarters Address</label>
-                    <input
-                      type="text"
-                      value={brandAddress}
-                      onChange={(e) => setBrandAddress(e.target.value)}
-                      className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
                       required
                     />
                   </div>

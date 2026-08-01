@@ -405,22 +405,20 @@ export default function AdminNavigationPage() {
               <button
                 type="button"
                 onClick={() => setPreviewTheme("solid")}
-                className={`px-3 py-1.5 text-[9px] font-label-caps uppercase tracking-wider border rounded cursor-pointer transition-all ${
-                  previewTheme === "solid"
+                className={`px-3 py-1.5 text-[9px] font-label-caps uppercase tracking-wider border rounded cursor-pointer transition-all ${previewTheme === "solid"
                     ? "bg-deep-navy text-pure-white border-deep-navy"
                     : "border-slate-grey/20 text-slate-grey hover:border-deep-navy/45 bg-pure-white"
-                }`}
+                  }`}
               >
                 Solid Header Mode
               </button>
               <button
                 type="button"
                 onClick={() => setPreviewTheme("transparent")}
-                className={`px-3 py-1.5 text-[9px] font-label-caps uppercase tracking-wider border rounded cursor-pointer transition-all ${
-                  previewTheme === "transparent"
+                className={`px-3 py-1.5 text-[9px] font-label-caps uppercase tracking-wider border rounded cursor-pointer transition-all ${previewTheme === "transparent"
                     ? "bg-deep-navy text-pure-white border-deep-navy"
                     : "border-slate-grey/20 text-slate-grey hover:border-deep-navy/45 bg-pure-white"
-                }`}
+                  }`}
               >
                 Transparent Header Mode
               </button>
@@ -428,12 +426,11 @@ export default function AdminNavigationPage() {
           </div>
 
           {/* Mini-Navbar Mock Shell */}
-          <div 
-            className={`border rounded shadow-inner overflow-visible relative z-40 min-h-[140px] flex flex-col justify-between transition-all duration-500 ${
-              previewTheme === "transparent"
+          <div
+            className={`border rounded shadow-inner overflow-visible relative z-40 min-h-[140px] flex flex-col justify-between transition-all duration-500 ${previewTheme === "transparent"
                 ? "bg-[url('https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1000')] bg-cover bg-center border-transparent"
                 : "border-slate-grey/15 bg-pure-white"
-            }`}
+              }`}
           >
             {/* Overlay background dim filter for transparent view */}
             {previewTheme === "transparent" && (
@@ -441,34 +438,29 @@ export default function AdminNavigationPage() {
             )}
 
             {/* Top row - Brand Logo, Icons */}
-            <div className={`grid grid-cols-3 items-center px-6 py-3 z-10 border-b ${
-              previewTheme === "transparent" ? "border-pure-white/15 text-pure-white" : "border-slate-grey/10 text-ink-black"
-            }`}>
-              {/* Left Column (Spacer) */}
-              <div className={`text-[10px] font-label-caps uppercase tracking-widest ${
-                previewTheme === "transparent" ? "text-pure-white/80" : "text-slate-grey"
+            <div className={`grid grid-cols-3 items-center px-6 py-3 z-10 border-b ${previewTheme === "transparent" ? "border-pure-white/15 text-pure-white" : "border-slate-grey/10 text-ink-black"
               }`}>
+              {/* Left Column (Spacer) */}
+              <div className={`text-[10px] font-label-caps uppercase tracking-widest ${previewTheme === "transparent" ? "text-pure-white/80" : "text-slate-grey"
+                }`}>
                 VRIX Luxury Fine Jewelry
               </div>
 
               {/* Center Column (Brand Logo) */}
               <div className="flex justify-center">
-                <span className={`font-display-lg text-2xl font-light tracking-[0.25em] uppercase select-none ${
-                  previewTheme === "transparent" ? "text-pure-white" : "text-ink-black"
-                }`}>
+                <span className={`font-display-lg text-2xl font-light tracking-[0.25em] uppercase select-none ${previewTheme === "transparent" ? "text-pure-white" : "text-ink-black"
+                  }`}>
                   VRIX
                 </span>
               </div>
 
               {/* Right Column (Mock Action Icons) */}
-              <div className={`flex justify-end items-center gap-5 text-sm ${
-                previewTheme === "transparent" ? "text-pure-white" : "text-slate-grey"
-              }`}>
+              <div className={`flex justify-end items-center gap-5 text-sm ${previewTheme === "transparent" ? "text-pure-white" : "text-slate-grey"
+                }`}>
                 <select
                   disabled
-                  className={`bg-transparent text-xs font-semibold uppercase tracking-wider border-none outline-none mr-2 opacity-70 cursor-not-allowed ${
-                    previewTheme === "transparent" ? "text-pure-white" : "text-ink-black"
-                  }`}
+                  className={`bg-transparent text-xs font-semibold uppercase tracking-wider border-none outline-none mr-2 opacity-70 cursor-not-allowed ${previewTheme === "transparent" ? "text-pure-white" : "text-ink-black"
+                    }`}
                 >
                   <option style={{ color: "#000" }}>INR (₹) </option>
                 </select>
@@ -479,9 +471,8 @@ export default function AdminNavigationPage() {
             </div>
 
             {/* Bottom Row - Centered Navigation links */}
-            <div className={`flex justify-center gap-8 py-3 select-none z-10 ${
-              previewTheme === "transparent" ? "bg-transparent text-pure-white/95" : "bg-pure-white text-ink-black"
-            }`}>
+            <div className={`flex justify-center gap-8 py-3 select-none z-10 ${previewTheme === "transparent" ? "bg-transparent text-pure-white/95" : "bg-pure-white text-ink-black"
+              }`}>
               {navLinks.map((link, idx) => (
                 <button
                   key={idx}
@@ -489,11 +480,10 @@ export default function AdminNavigationPage() {
                   onMouseEnter={() => setHoveredPreviewIndex(idx)}
                   onMouseLeave={() => setHoveredPreviewIndex(null)}
                   onClick={() => setSelectedLinkIndex(idx)}
-                  className={`font-label-caps text-[11px] tracking-[0.15em] uppercase pb-1 border-b-2 transition-all cursor-pointer ${
-                    selectedLinkIndex === idx
+                  className={`font-label-caps text-[11px] tracking-[0.15em] uppercase pb-1 border-b-2 transition-all cursor-pointer ${selectedLinkIndex === idx
                       ? `${previewTheme === "transparent" ? "border-pure-white text-pure-white font-bold" : "border-deep-navy text-deep-navy font-bold"}`
                       : `${previewTheme === "transparent" ? "border-transparent text-pure-white/75 hover:text-pure-white hover:border-pure-white/30" : "border-transparent text-slate-grey hover:text-deep-navy hover:border-slate-grey/30"}`
-                  }`}
+                    }`}
                 >
                   {link.label || "Unnamed Link"}
                 </button>
@@ -581,7 +571,7 @@ export default function AdminNavigationPage() {
 
         {/* Builder Work Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Header Links Management Panel (Left) */}
           <section className="bg-pure-white border border-slate-grey/25 p-6 shadow-sm space-y-6 lg:col-span-1 rounded">
             <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
@@ -605,11 +595,10 @@ export default function AdminNavigationPage() {
                 <div
                   key={idx}
                   onClick={() => setSelectedLinkIndex(idx)}
-                  className={`p-4 border transition-all cursor-pointer flex flex-col gap-3 relative rounded ${
-                    selectedLinkIndex === idx
+                  className={`p-4 border transition-all cursor-pointer flex flex-col gap-3 relative rounded ${selectedLinkIndex === idx
                       ? "border-deep-navy bg-soft-linen/10 shadow-sm ring-1 ring-deep-navy/30"
                       : "border-slate-grey/15 bg-surface/30 hover:border-slate-grey/30"
-                  }`}
+                    }`}
                 >
                   <div className="absolute top-3 right-3 flex items-center gap-2">
                     <button
@@ -769,7 +758,7 @@ export default function AdminNavigationPage() {
                                     ✕
                                   </button>
                                 </div>
-                                
+
                                 <PathSelector
                                   value={lnk.path}
                                   onChange={(val) => updateMegaLink(selectedLinkIndex, catIdx, lnkIdx, "path", val)}

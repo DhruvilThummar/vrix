@@ -37,11 +37,10 @@ export default function AdminSidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-DEFAULT transition-colors duration-300 ${
-                isActive
+              className={`flex items-center gap-3 px-4 py-3 rounded-DEFAULT transition-colors duration-300 ${isActive
                   ? "bg-pure-white/10 text-pure-white"
                   : "text-pure-white/70 hover:bg-pure-white/5 hover:text-pure-white"
-              }`}
+                }`}
             >
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 300" }}>
                 {item.icon}
