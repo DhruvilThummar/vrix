@@ -18,6 +18,12 @@ function VisualImagePreview({ src, alt }: { src?: string; alt?: string }) {
   );
 }
 
+interface CategoryItem {
+  title: string;
+  image: string;
+  link: string;
+}
+
 export default function AdminHomepageLayoutPage() {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -39,6 +45,13 @@ export default function AdminHomepageLayoutPage() {
   const [homepageTagline, setHomepageTagline] = useState("");
   const [philosophyTitle, setPhilosophyTitle] = useState("");
   const [philosophyCards, setPhilosophyCards] = useState<any[]>([]);
+
+  // --- Categories State ---
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [editCategoryIdx, setEditCategoryIdx] = useState<number | null>(null);
+  const [catTitle, setCatTitle] = useState("");
+  const [catImage, setCatImage] = useState("");
+  const [catLink, setCatLink] = useState("");
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -63,6 +76,7 @@ export default function AdminHomepageLayoutPage() {
           setHomepageTagline(res.homepage.tagline || "");
           setPhilosophyTitle(res.homepage.philosophyTitle || "");
           setPhilosophyCards(res.homepage.philosophy || []);
+          setCategories(res.homepage.categories || []);
         }
         setLoading(false);
       })
@@ -93,6 +107,7 @@ export default function AdminHomepageLayoutPage() {
           featuredCollections,
           newArrivals,
           featuredProducts,
+          categories,
         },
       });
       showToast("Homepage layout and settings updated successfully.");
@@ -102,6 +117,43 @@ export default function AdminHomepageLayoutPage() {
       showToast("Error saving homepage settings.");
     } finally {
       setSaveLoading(false);
+    }
+  };
+
+  const addCategory = () => {
+    if (!catTitle || !catImage || !catLink) {
+      showToast("Please fill all category fields.");
+      return;
+    }
+    const newCat: CategoryItem = { title: catTitle, image: catImage, link: catLink };
+    if (editCategoryIdx !== null) {
+      const updated = [...categories];
+      updated[editCategoryIdx] = newCat;
+      setCategories(updated);
+      setEditCategoryIdx(null);
+    } else {
+      setCategories([...categories, newCat]);
+    }
+    setCatTitle("");
+    setCatImage("");
+    setCatLink("");
+  };
+
+  const editCategory = (idx: number) => {
+    const cat = categories[idx];
+    setCatTitle(cat.title);
+    setCatImage(cat.image);
+    setCatLink(cat.link);
+    setEditCategoryIdx(idx);
+  };
+
+  const removeCategory = (idx: number) => {
+    setCategories(categories.filter((_, i) => i !== idx));
+    if (editCategoryIdx === idx) {
+      setEditCategoryIdx(null);
+      setCatTitle("");
+      setCatImage("");
+      setCatLink("");
     }
   };
 
@@ -287,6 +339,88 @@ export default function AdminHomepageLayoutPage() {
                 </p>
               )}
             </div>
+          </div>
+        </section>
+
+        {/* ─── Shop By Category Manager ─── */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+          <div className="border-b border-slate-grey/10 pb-4">
+            <h3 className="font-headline-md text-base text-deep-navy uppercase tracking-wider font-semibold">
+              Category Showcase Manager
+            </h3>
+            <p className="text-xs text-slate-grey">Configure and add custom category blocks that point customers to specific searches or collections.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-soft-linen/20 p-6 border border-slate-grey/15 rounded">
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Category Title</label>
+              <input
+                type="text"
+                placeholder="e.g. Rings"
+                value={catTitle}
+                onChange={(e) => setCatTitle(e.target.value)}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black bg-transparent"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Image URL</label>
+              <input
+                type="url"
+                placeholder="https://..."
+                value={catImage}
+                onChange={(e) => setCatImage(e.target.value)}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Destination Link</label>
+              <input
+                type="text"
+                placeholder="e.g. /collections/silent-center?type=rings"
+                value={catLink}
+                onChange={(e) => setCatLink(e.target.value)}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black bg-transparent"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={addCategory}
+              className="md:col-span-3 mt-4 py-2 px-6 border border-deep-navy text-deep-navy hover:bg-deep-navy hover:text-pure-white font-label-caps text-xs tracking-widest uppercase transition-colors rounded self-start"
+            >
+              {editCategoryIdx !== null ? "Update Category Slot" : "+ Add Category Slot"}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {categories.map((cat, idx) => (
+              <div key={idx} className="border border-slate-grey/25 bg-pure-white p-4 relative group flex flex-col justify-between gap-4">
+                <div className="absolute top-2 right-2 flex gap-2 z-10">
+                  <button
+                    type="button"
+                    onClick={() => editCategory(idx)}
+                    className="bg-pure-white/80 p-1 rounded border hover:text-deep-navy"
+                  >
+                    <span className="material-symbols-outlined text-xs">edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeCategory(idx)}
+                    className="bg-pure-white/80 p-1 rounded border hover:text-red-600"
+                  >
+                    <span className="material-symbols-outlined text-xs">close</span>
+                  </button>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="aspect-square relative bg-soft-linen overflow-hidden border border-slate-grey/10">
+                    <img src={cat.image} alt={cat.title} className="object-cover w-full h-full" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-deep-navy uppercase tracking-wider">{cat.title}</p>
+                    <p className="text-[9px] text-slate-grey truncate">{cat.link}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
