@@ -33,6 +33,9 @@ model Product {
   vrixPlusPrice       Float?   @map("vrix_plus_price")
   engravingOptions    Json?    @map("engraving_options")
   giftNoteOptions     Json?    @map("gift_note_options")
+  weight              String?
+  dimensions          String?
+  availableSizes      Json?    @map("available_sizes")
   createdAt           DateTime @default(now()) @map("created_at")
 
   @@map("products")

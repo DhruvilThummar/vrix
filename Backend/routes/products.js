@@ -30,6 +30,11 @@ const normalizeProductData = (body = {}) => {
     vrixPlusPrice: body.vrixPlusPrice !== undefined && body.vrixPlusPrice !== null
       ? Number(body.vrixPlusPrice) || null
       : null,
+    weight: typeof body.weight === "string" ? body.weight.trim() : "",
+    dimensions: typeof body.dimensions === "string" ? body.dimensions.trim() : "",
+    availableSizes: Array.isArray(body.availableSizes) ? body.availableSizes : [],
+    engravingOptions: body.engravingOptions || { enabled: false, limit: 25, price: 0 },
+    giftNoteOptions: body.giftNoteOptions || { enabled: false, limit: 150, price: 0 },
   };
 };
 
