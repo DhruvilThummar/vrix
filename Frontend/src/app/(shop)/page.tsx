@@ -116,12 +116,13 @@ export default function Home() {
             <SkeletonImage
               alt="Hero Background"
               fill
-              className="object-cover object-center opacity-65 mix-blend-overlay"
+              className="object-cover object-center"
               src={store.homepage.heroImage}
               priority
               sizes="100vw"
             />
           </div>
+
         )}
         
         <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full">
