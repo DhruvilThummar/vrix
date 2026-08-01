@@ -11,42 +11,9 @@ import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
 import { useCurrency } from "@/utils/useCurrency";
 
-const NAV_DATA = [
-  {
-    label: "Gifts",
-    path: "/search?filter=gifts",
-    megaMenu: {
-      categories: [
-        { title: "Shop by Recipient", links: [{ label: "For Her", path: "/search?q=her" }, { label: "For Him", path: "/search?q=him" }] },
-        { title: "Shop by Price", links: [{ label: "Gifts of Value", path: "/search?price_max=150" }, { label: "Luxury Gifts", path: "/search?price_min=500" }] }
-      ],
-      featured: { title: "The Gift Guide", image: "/images/gift-guide.jpg", link: "/search?filter=gifts" }
-    }
-  },
-  {
-    label: "Jewelry",
-    path: "/collections",
-    megaMenu: {
-      categories: [
-        { title: "Shop by Type", links: [{ label: "Necklaces", path: "/collections/silent-center?type=necklace" }, { label: "Earrings", path: "/collections/silent-center?type=earrings" }, { label: "Bracelets", path: "/collections/silent-center?type=bracelet" }, { label: "Rings", path: "/collections/silent-center?type=rings" }, { label: "Charms", path: "/collections/silent-center?type=charms" }] },
-        { title: "Shop by Material", links: [{ label: "18K Gold Vermeil", path: "/search?material=gold" }, { label: "Sterling Silver", path: "/search?material=silver" }] }
-      ],
-      featured: { title: "New Arrivals", image: "/images/new-arrivals.jpg", link: "/collections/silent-center?filter=trending" }
-    }
-  },
-  { label: "Trending", path: "/collections/silent-center?filter=trending" },
-  { label: "VRIX+", path: "/vrix-plus" }
-];
 
-const DEFAULT_LINKS = [
-  { label: "Collections", path: "/collections" },
-  { label: "The World of VRIX", path: "/story" },
-  { label: "Journal", path: "/journal" },
-  { label: "Gifts", path: "/search" },
-  { label: "Bespoke", path: "/bespoke" },
-  { label: "New Arrivals", path: "/collections/silent-center" },
-  { label: "VRIX+", path: "/vrix-plus" }
-];
+const DEFAULT_LINKS: any[] = [];
+
 
 export default function Header() {
   const pathname = usePathname();
@@ -383,8 +350,7 @@ export default function Header() {
         >
           <nav className="flex justify-center gap-8 items-center max-w-container-max mx-auto px-margin-desktop">
             {navLinks.map((link, idx) => {
-              const matchedItem = NAV_DATA.find((item) => item.label.toLowerCase() === link.label.toLowerCase());
-              const megaMenuData = link.megaMenu || matchedItem?.megaMenu;
+              const megaMenuData = link.megaMenu;
               return (
                 <div
                   key={idx}
