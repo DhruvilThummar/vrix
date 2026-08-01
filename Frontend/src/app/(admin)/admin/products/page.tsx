@@ -263,7 +263,7 @@ export default function AdminProductsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const productImages = normalizeImages(fImage, fImages);
-    if (!fTitle.trim() || fPrice === undefined || isNaN(fPrice) || fPrice < 0 || productImages.length === 0) {
+    if (!fTitle.trim() || fPrice === undefined || fPrice === null || isNaN(Number(fPrice)) || Number(fPrice) < 0 || productImages.length === 0) {
       showToast("Title, price, and at least one image are required.", "err");
       setActiveFormTab("Core");
       return;
