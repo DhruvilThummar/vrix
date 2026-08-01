@@ -17,6 +17,7 @@ const navItems = [
   { name: "Media Library", href: "/admin/media", icon: "perm_media" },
   { name: "Delivery Staff", href: "/admin/delivery", icon: "local_shipping" },
   { name: "Security & Logs", href: "/admin/security", icon: "security" },
+  { name: "Help & Guides", href: "/admin/help", icon: "help" },
 ];
 
 export default function AdminSidebar() {

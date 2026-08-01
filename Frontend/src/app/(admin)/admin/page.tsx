@@ -62,6 +62,7 @@ export default function AdminDashboard() {
     { label: "CMS Settings", href: "/admin/cms", icon: "tune", desc: "Features & brand config" },
     { label: "View Orders", href: "/admin/orders", icon: "receipt_long", desc: "All payment orders" },
     { label: "Delivery Panel", href: "/delivery", icon: "local_shipping", desc: "OTP delivery portal" },
+    { label: "Help & Guides", href: "/admin/help", icon: "help_center", desc: "Non-tech admin manual" },
   ];
 
   return (
