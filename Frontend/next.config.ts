@@ -28,14 +28,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cfs3.monicavinader.com",
       },
-      // Generic CDN / product image sources
+      // Allow all external image URLs for dynamic CMS configurations
       {
         protocol: "https",
-        hostname: "**.githubusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.shopify.com",
+        hostname: "**",
       },
     ],
   },
