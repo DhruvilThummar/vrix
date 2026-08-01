@@ -6,6 +6,7 @@ import Image from "next/image";
 import { fetchProducts } from "@/utils/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useCurrency } from "@/utils/useCurrency";
 
 interface Product {
   id: string;
@@ -20,6 +21,7 @@ export default function SearchPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     fetchProducts()
@@ -32,7 +34,7 @@ export default function SearchPage() {
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) {
-      return products.slice(0, 4); // Show first 4 as default suggested results
+      return []; // Do not show dummy/default products when search is empty
     }
     const query = searchQuery.toLowerCase();
     return products.filter(
@@ -96,7 +98,7 @@ export default function SearchPage() {
         {/* Results */}
         <div className="w-full animate-fade-in-up" style={{ animationDelay: "200ms" }}>
           <h2 className="font-label-caps text-label-caps text-slate-grey mb-stack-lg uppercase tracking-widest border-b border-slate-grey/20 pb-4">
-            {searchQuery ? `Search Results (${filteredProducts.length})` : "Suggested Results"}
+            {searchQuery ? `Search Results (${filteredProducts.length})` : "Start Typing to Search"}
           </h2>
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
@@ -117,6 +119,10 @@ export default function SearchPage() {
                 </div>
               ))}
             </div>
+          ) : !searchQuery.trim() ? (
+            <div className="text-center py-16 text-slate-grey font-body-md italic">
+              Search by typing collections, jewelry categories, or materials above.
+            </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-16 text-slate-grey font-body-md">
               No products found matching "{searchQuery}".
@@ -127,15 +133,13 @@ export default function SearchPage() {
                 <Link
                   key={p.id}
                   className="group block relative cursor-pointer"
-                  href={`/product/silent-center-ring?id=${p.id}`}
+                  href={`/product/${p.id}`}
                 >
                   <div className="aspect-[4/5] bg-soft-linen mb-stack-sm overflow-hidden relative">
-                    <Image
+                    <img
                       alt={p.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-103 mix-blend-multiply"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-103 mix-blend-multiply"
                       src={p.image}
-                      sizes="(max-width: 768px) 50vw, 25vw"
                     />
                   </div>
                   <div className="flex justify-between items-start pt-2">
@@ -148,7 +152,7 @@ export default function SearchPage() {
                       </p>
                     </div>
                     <span className="font-body-md text-body-md text-ink-black font-semibold">
-                      ${p.price}
+                      {formatPrice(p.price)}
                     </span>
                   </div>
                 </Link>
