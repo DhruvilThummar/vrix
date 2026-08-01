@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections, uploadMedia } from "@/utils/api";
 
-type TabType = "hero-philosophy" | "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings";
+type TabType = "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings";
 
 
 export default function AdminCMSPage() {
-  const [activeTab, setActiveTab] = useState<TabType>("hero-philosophy");
+  const [activeTab, setActiveTab] = useState<TabType>("story");
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -581,7 +581,6 @@ export default function AdminCMSPage() {
   };
 
   const CMS_TABS: { id: TabType; label: string; icon: string; category: "Storefront" | "Experience" | "System"; description: string }[] = [
-    { id: "hero-philosophy", label: "Hero & Showcase", icon: "view_carousel", category: "Storefront", description: "Banners & layout featured products" },
     { id: "story", label: "Brand Story", icon: "auto_stories", category: "Storefront", description: "Brand narrative & ethos" },
     { id: "announcement-bar", label: "Announcement Bar", icon: "campaign", category: "Storefront", description: "Top ticker & alerts" },
     { id: "journal", label: "Journal", icon: "newspaper", category: "Storefront", description: "Articles & editorial" },
@@ -680,82 +679,6 @@ export default function AdminCMSPage() {
         {/* Builder Work Area Form */}
         {activeTab !== "journal" ? (
           <form onSubmit={handleSaveCMS} className="space-y-8">
-            
-            {/* 1. HERO & PHILOSOPHY / HOMEPAGE LAYOUT TAB */}
-            {activeTab === "hero-philosophy" && (
-              <div className="space-y-6 animate-fade-in">
-                
-                {/* Hero Settings */}
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
-                    Homepage Hero Banner Settings
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Subtitle</label>
-                      <input
-                        type="text"
-                        value={heroSubtitle}
-                        onChange={(e) => setHeroSubtitle(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Title</label>
-                      <input
-                        type="text"
-                        value={heroTitle}
-                        onChange={(e) => setHeroTitle(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 pt-2">
-                    <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Image URL</label>
-                    <input
-                      type="url"
-                      value={heroImage}
-                      onChange={(e) => setHeroImage(e.target.value)}
-                      className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
-                      required
-                    />
-                    <VisualImagePreview src={heroImage} alt="Hero image preview" />
-                  </div>
-                </section>
-
-                {/* Brand Philosophy */}
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
-                    Collections Slogan & Brand Philosophy
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Collections Section Slogan</label>
-                      <input
-                        type="text"
-                        value={homepageTagline}
-                        onChange={(e) => setHomepageTagline(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                        required
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Philosophy Section Title</label>
-                      <textarea
-                        value={philosophyTitle}
-                        onChange={(e) => setPhilosophyTitle(e.target.value)}
-                        className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
-                        rows={2}
-                        required
-                      />
-                    </div>
-                  </div>
-                </section>
-
-
-              </div>
-            )}
 
             {/* 2. BRAND STORY TAB */}
             {activeTab === "story" && (

@@ -3,6 +3,21 @@
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, fetchProducts, fetchCollections } from "@/utils/api";
 
+function VisualImagePreview({ src, alt }: { src?: string; alt?: string }) {
+  if (!src) {
+    return (
+      <div className="mt-2 w-28 h-20 relative bg-soft-linen/50 border border-slate-grey/20 rounded overflow-hidden flex items-center justify-center text-[10px] text-slate-grey italic">
+        No Image
+      </div>
+    );
+  }
+  return (
+    <div className="mt-2 w-48 h-32 relative bg-soft-linen/50 border border-slate-grey/20 rounded overflow-hidden flex items-center justify-center">
+      <img src={src} alt={alt || "Preview"} className="object-cover w-full h-full" />
+    </div>
+  );
+}
+
 export default function AdminHomepageLayoutPage() {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -17,7 +32,7 @@ export default function AdminHomepageLayoutPage() {
   const [newArrivals, setNewArrivals] = useState<string[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<string[]>([]);
 
-  // --- Temporary Local Fallbacks ---
+  // --- Hero & Philosophy Settings ---
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroImage, setHeroImage] = useState("");
@@ -42,7 +57,6 @@ export default function AdminHomepageLayoutPage() {
           setNewArrivals(res.homepage.newArrivals || []);
           setFeaturedProducts(res.homepage.featuredProducts || []);
 
-          // Keep copy fields to prevent overwriting
           setHeroTitle(res.homepage.heroTitle || "");
           setHeroSubtitle(res.homepage.heroSubtitle || "");
           setHeroImage(res.homepage.heroImage || "");
@@ -55,7 +69,7 @@ export default function AdminHomepageLayoutPage() {
       .catch((err) => {
         console.error(err);
         setLoading(false);
-        showToast("Error loading homepage layout settings.");
+        showToast("Error loading homepage settings.");
       });
   };
 
@@ -81,11 +95,11 @@ export default function AdminHomepageLayoutPage() {
           featuredProducts,
         },
       });
-      showToast("Homepage layout updated successfully.");
+      showToast("Homepage layout and settings updated successfully.");
       loadData();
     } catch (error) {
       console.error(error);
-      showToast("Error saving homepage layout settings.");
+      showToast("Error saving homepage settings.");
     } finally {
       setSaveLoading(false);
     }
@@ -116,10 +130,10 @@ export default function AdminHomepageLayoutPage() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-grey/15 pb-6">
             <div className="space-y-1.5">
               <h1 className="font-display-lg text-headline-md text-deep-navy uppercase tracking-wide">
-                Homepage Layout Builder
+                Homepage Manager
               </h1>
               <p className="text-slate-grey font-body-md text-sm">
-                Control exactly what collections and products are showcased on your store's landing page.
+                Control the Hero banner, Collections tagline, Brand Philosophy, and curated product showcases on the storefront landing page.
               </p>
             </div>
             <button
@@ -127,20 +141,80 @@ export default function AdminHomepageLayoutPage() {
               disabled={saveLoading}
               className="px-6 py-3 bg-deep-navy text-pure-white hover:bg-ink-black font-label-caps text-xs tracking-widest uppercase cursor-pointer disabled:opacity-50 shadow transition-all duration-200"
             >
-              {saveLoading ? "Saving Changes..." : "Save Layout Grid"}
+              {saveLoading ? "Saving Changes..." : "Save Homepage Settings"}
             </button>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-200/60 p-4 rounded text-xs text-amber-900 leading-relaxed flex gap-2">
-            <span className="material-symbols-outlined text-amber-600 text-sm">info</span>
-            <div>
-              <p className="font-semibold">Zero-Coding Interface Guide</p>
-              <p className="mt-0.5">Use the dropdowns to add items to the homepage showcase slots. Drag-and-drop ordering or removal is done by clicking the "✕" button on any card.</p>
-            </div>
           </div>
         </div>
 
-        {/* 1. Featured Collections Showcase */}
+        {/* Hero Settings Section */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+          <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+            Homepage Hero Banner Settings
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Subtitle</label>
+              <input
+                type="text"
+                value={heroSubtitle}
+                onChange={(e) => setHeroSubtitle(e.target.value)}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black bg-transparent"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Title</label>
+              <input
+                type="text"
+                value={heroTitle}
+                onChange={(e) => setHeroTitle(e.target.value)}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black bg-transparent"
+                required
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 pt-2">
+            <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Image URL</label>
+            <input
+              type="url"
+              value={heroImage}
+              onChange={(e) => setHeroImage(e.target.value)}
+              className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+              required
+            />
+            <VisualImagePreview src={heroImage} alt="Hero banner preview" />
+          </div>
+        </section>
+
+        {/* Collections Slogan & Philosophy */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+          <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+            Collections Slogan & Brand Philosophy
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Collections Section Slogan</label>
+              <input
+                type="text"
+                value={homepageTagline}
+                onChange={(e) => setHomepageTagline(e.target.value)}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black bg-transparent"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Philosophy Section Title</label>
+              <textarea
+                value={philosophyTitle}
+                onChange={(e) => setPhilosophyTitle(e.target.value)}
+                className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                rows={2}
+                required
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Curated Featured Collections */}
         <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
           <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-slate-grey/10 pb-4 gap-4">
             <div>
@@ -150,35 +224,22 @@ export default function AdminHomepageLayoutPage() {
               <p className="text-xs text-slate-grey">Featured collections appearing directly below the Hero banner.</p>
             </div>
             
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-bold">Section Tagline Slogan</label>
-                <input
-                  type="text"
-                  value={homepageTagline}
-                  onChange={(e) => setHomepageTagline(e.target.value)}
-                  className="border-b border-slate-grey/30 px-2 py-1 text-xs outline-none focus:border-deep-navy text-deep-navy font-bold w-48"
-                  placeholder="e.g. FEEL THE LUXURY"
-                />
-              </div>
-
-              <select
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val && !featuredCollections.includes(val)) {
-                    setFeaturedCollections([...featuredCollections, val]);
-                  }
-                  e.target.value = "";
-                }}
-                value=""
-                className="border border-slate-grey/30 bg-pure-white text-xs px-3 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer rounded self-end"
-              >
-                <option value="">+ Add Collection</option>
-                {allCollections.map((c: any) => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val && !featuredCollections.includes(val)) {
+                  setFeaturedCollections([...featuredCollections, val]);
+                }
+                e.target.value = "";
+              }}
+              value=""
+              className="border border-slate-grey/30 bg-pure-white text-xs px-3 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer rounded"
+            >
+              <option value="">+ Add Collection</option>
+              {allCollections.map((c: any) => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
           </div>
 
           {/* Live Storefront Preview container */}
@@ -226,16 +287,10 @@ export default function AdminHomepageLayoutPage() {
                 </p>
               )}
             </div>
-
-            <div className="text-center border-t border-slate-grey/10 pt-4">
-              <span className="inline-block font-button text-[10px] text-deep-navy uppercase tracking-widest border-b border-deep-navy pb-1 cursor-default opacity-85">
-                Explore All Collections
-              </span>
-            </div>
           </div>
         </section>
 
-        {/* 2. New Arrivals Showcase */}
+        {/* New Arrivals Showcase */}
         <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
           <div className="flex justify-between items-center border-b border-slate-grey/10 pb-4">
             <div>
@@ -298,7 +353,7 @@ export default function AdminHomepageLayoutPage() {
           </div>
         </section>
 
-        {/* 3. Featured Showcase */}
+        {/* Curated Featured Products */}
         <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
           <div className="flex justify-between items-center border-b border-slate-grey/10 pb-4">
             <div>
