@@ -286,40 +286,41 @@ function ProductContent() {
               <div className="flex flex-col gap-6">
                 
                 {/* Size Selection */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center">
-                    <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="size">
-                      Size
-                    </label>
-                    <button className="font-label-caps uppercase text-slate-grey hover:text-ink-black underline decoration-1 underline-offset-4 text-[10px] transition-colors cursor-pointer">
-                      Size Guide
-                    </button>
+                {product.availableSizes && product.availableSizes.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="size">
+                        Size
+                      </label>
+                      <button className="font-label-caps uppercase text-slate-grey hover:text-ink-black underline decoration-1 underline-offset-4 text-[10px] transition-colors cursor-pointer">
+                        Size Guide
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <select
+                        className="w-full appearance-none bg-transparent border-0 border-b border-slate-grey/30 py-3 pl-0 pr-8 font-body-md text-ink-black cursor-pointer rounded-none transition-colors hover:border-slate-grey focus:ring-0"
+                        id="size"
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
+                      >
+                        <option value="" disabled>Select size</option>
+                        {product.availableSizes.map((sz: string) => (
+                          <option key={sz} value={sz}>{sz}</option>
+                        ))}
+                      </select>
+                      <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-slate-grey">
+                        expand_more
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <select
-                      className="w-full appearance-none bg-transparent border-0 border-b border-slate-grey/30 py-3 pl-0 pr-8 font-body-md text-ink-black cursor-pointer rounded-none transition-colors hover:border-slate-grey focus:ring-0"
-                      id="size"
-                      value={size}
-                      onChange={(e) => setSize(e.target.value)}
-                    >
-                      <option value="" disabled>Select size</option>
-                      <option value="48">EU 48</option>
-                      <option value="50">EU 50</option>
-                      <option value="52">EU 52</option>
-                      <option value="54">EU 54</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-slate-grey">
-                      expand_more
-                    </span>
-                  </div>
-                </div>
- 
+                )}
+
                 {/* Engraving (Optional) */}
                 {product.engravingOptions?.enabled && (
                   <div className="flex flex-col gap-2 mt-2">
                     <div className="flex justify-between items-center">
                       <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="engraving">
-                        Engraving (Optional) {product.engravingOptions.price > 0 && `(+$${product.engravingOptions.price})`}
+                        Engraving (Optional) {product.engravingOptions.price > 0 && `(+${formatPrice(product.engravingOptions.price)})`}
                       </label>
                       <span className="font-label-caps text-slate-grey text-[10px]">{engraving.length}/{product.engravingOptions.limit || 25}</span>
                     </div>
@@ -334,12 +335,12 @@ function ProductContent() {
                     />
                   </div>
                 )}
- 
+
                 {/* Gift Note (Optional) */}
                 {product.giftNoteOptions?.enabled && (
                   <div className="flex flex-col gap-2 mt-2">
                     <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="giftNote">
-                      Gift Message (Optional) {product.giftNoteOptions.price > 0 && `(+$${product.giftNoteOptions.price})`}
+                      Gift Message (Optional) {product.giftNoteOptions.price > 0 && `(+${formatPrice(product.giftNoteOptions.price)})`}
                     </label>
                     <input
                       className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
@@ -352,7 +353,7 @@ function ProductContent() {
                   </div>
                 )}
               </div>
- 
+
               {/* Add to Bag and Wishlist Actions */}
               <div className="flex flex-col gap-4 mt-4">
                 <button
@@ -379,7 +380,7 @@ function ProductContent() {
                   {wishlistActive ? "In Wishlist" : "Add to Wishlist"}
                 </button>
               </div>
- 
+
               {/* Product Info Accordions */}
               <div className="flex flex-col border-t border-slate-grey/20 mt-8">
                 {/* Details Accordion */}
@@ -402,12 +403,15 @@ function ProductContent() {
                       activeAccordion === "details" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
-                      {product.description}
-                    </p>
+                    <div className="font-body-md text-on-surface-variant text-sm leading-relaxed space-y-2">
+                      <p>{product.description || "Minimalist architecture translated into an intimate everyday companion."}</p>
+                      {product.sku && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">SKU:</span> {product.sku}</p>}
+                      {product.weight && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">Weight:</span> {product.weight}</p>}
+                      {product.dimensions && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">Dimensions:</span> {product.dimensions}</p>}
+                    </div>
                   </div>
                 </div>
- 
+
                 {/* Returns Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
@@ -433,7 +437,7 @@ function ProductContent() {
                     </p>
                   </div>
                 </div>
- 
+
                 {/* Care Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
@@ -460,6 +464,7 @@ function ProductContent() {
                   </div>
                 </div>
               </div>
+
  
             </div>
           </div>
