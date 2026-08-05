@@ -72,15 +72,20 @@ export default function Home() {
 
   const slides = useMemo(() => {
     const customSlides = (store.homepage as any).heroSlides || [];
-    if (customSlides.length > 0) return customSlides;
-    return [
+    if (customSlides.length > 1) return customSlides;
+
+    const base = customSlides.length === 1 ? customSlides : [
       {
         title: store.homepage.heroTitle || "the moments that belong only to you.",
         subtitle: store.homepage.heroSubtitle || "Luxury for",
         image: store.homepage.heroImage || DEFAULT_DATA.homepage.heroImage,
         link: "/collections/silent-center",
         linkText: "Discover Collections"
-      },
+      }
+    ];
+
+    return [
+      ...base,
       {
         title: "Architectural Fine Jewelry",
         subtitle: "Signature Atelier",

@@ -3,14 +3,16 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
-import { fetchDb } from "@/utils/api";
+import { fetchDbPublic as fetchDb } from "@/utils/api";
+import { useCurrency } from "@/utils/useCurrency";
 
 export default function GiftWrappingSection() {
-  const { isGiftWrapped, toggleGiftWrap, giftMessage, setGiftMessage, giftWrapPrice } = useCart();
+  const { isGiftWrapped, toggleGiftWrap, giftMessage, setGiftMessage } = useCart();
+  const { formatPrice } = useCurrency();
 
   const [config, setConfig] = useState({
     isEnabled: true,
-    title: "Monica Vinader Style Signature Gift Packaging",
+    title: "Signature Gift Packaging & Handwritten Ribbon Card",
     price: 250,
     image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
     description: "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card."
@@ -22,7 +24,7 @@ export default function GiftWrappingSection() {
         if (res.gift_wrapping) {
           setConfig({
             isEnabled: res.gift_wrapping.isEnabled !== false,
-            title: res.gift_wrapping.title || "Monica Vinader Style Signature Gift Packaging",
+            title: res.gift_wrapping.title || "Signature Gift Packaging & Handwritten Ribbon Card",
             price: res.gift_wrapping.price || 250,
             image: res.gift_wrapping.image || "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
             description: res.gift_wrapping.description || "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card."
@@ -35,47 +37,49 @@ export default function GiftWrappingSection() {
   if (!config.isEnabled) return null;
 
   return (
-    <div className="border border-soft-linen bg-surface/30 p-5 space-y-4">
-      <div className="flex items-start gap-4">
-        {/* Gift Box Thumbnail Preview */}
-        <div className="relative w-16 h-20 shrink-0 bg-soft-linen overflow-hidden border border-soft-linen">
-          <Image
-            src={config.image}
-            alt={config.title}
-            fill
-            className="object-cover"
-            sizes="64px"
-          />
-        </div>
+    <div className="border border-soft-linen bg-surface/30 p-5 space-y-4 rounded">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative w-16 h-16 shrink-0 bg-soft-linen overflow-hidden border border-soft-linen rounded">
+            <Image
+              src={config.image}
+              alt={config.title}
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
+          </div>
 
-        <div className="flex-grow space-y-1">
-          <div className="flex justify-between items-start">
+          <div>
             <h4 className="font-label-caps text-xs text-deep-navy font-bold uppercase tracking-wider">
               {config.title}
             </h4>
-            <span className="font-body-md text-xs font-semibold text-ink-black ml-2 shrink-0">
-              +₹{config.price}
-            </span>
-          </div>
-
-          <p className="font-body-md text-xs text-slate-grey leading-relaxed">
-            {config.description}
-          </p>
-
-          <div className="pt-2">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isGiftWrapped}
-                onChange={(e) => toggleGiftWrap(e.target.checked, config.price)}
-                className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-black cursor-pointer"
-              />
-              <span className="font-label-caps text-[11px] uppercase tracking-wider text-ink-black font-semibold">
-                Add Signature Gift Packaging (+₹{config.price})
-              </span>
-            </label>
+            <p className="font-body-md text-xs text-slate-grey mt-0.5 leading-relaxed">
+              {config.description}
+            </p>
           </div>
         </div>
+
+        {/* User requested Gift Wrapping Button */}
+        <button
+          type="button"
+          onClick={() => toggleGiftWrap(!isGiftWrapped, config.price)}
+          className={`group relative flex flex-col p-3 border cursor-pointer text-left transition-all duration-200 shrink-0 min-w-[150px] rounded ${
+            isGiftWrapped
+              ? "bg-deep-navy text-pure-white border-deep-navy shadow-md translate-y-[-1px]"
+              : "bg-pure-white text-ink-black border-slate-grey/30 hover:border-deep-navy"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-1 mb-1.5">
+            <span className={`material-symbols-outlined text-lg ${isGiftWrapped ? "text-amber-300" : "text-amber-600"}`}>
+              card_giftcard
+            </span>
+            <span className={`w-1.5 h-1.5 rounded-full ${isGiftWrapped ? "bg-amber-400" : "bg-slate-300"}`}></span>
+          </div>
+          <span className={`font-label-caps text-[10px] tracking-wider line-clamp-1 font-medium ${isGiftWrapped ? "text-pure-white" : "text-deep-navy"}`}>
+            Gift Wrapping ({isGiftWrapped ? "Added" : `+${formatPrice(config.price)}`})
+          </span>
+        </button>
       </div>
 
       {/* Gift Note Box when checked */}
@@ -91,7 +95,7 @@ export default function GiftWrappingSection() {
             maxLength={150}
             rows={2}
             placeholder="Write a personalized gift note to be printed on card..."
-            className="w-full border border-slate-grey/25 p-2 text-xs font-body-md text-ink-black focus:border-black outline-none bg-pure-white"
+            className="w-full border border-slate-grey/25 p-2.5 text-xs font-body-md text-ink-black focus:border-black outline-none bg-pure-white rounded"
           />
         </div>
       )}

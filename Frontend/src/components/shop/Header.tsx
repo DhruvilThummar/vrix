@@ -18,9 +18,9 @@ const DEFAULT_LINKS: any[] = [];
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem } = useCart();
+  const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem, isGiftWrapped, toggleGiftWrap, giftWrapPrice } = useCart();
   const { user, isLoggedIn } = useAuth();
-  const { currency, changeCurrency } = useCurrency();
+  const { currency, changeCurrency, formatPrice } = useCurrency();
 
   const isHomePage = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
@@ -669,19 +669,56 @@ export default function Header() {
         {/* Footer */}
         {cartItems.length > 0 && (
           <div className="p-6 border-t border-soft-linen bg-surface/30 space-y-4">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-grey font-label-caps">Subtotal</span>
-              <span className="font-semibold font-body-md">${subtotal}</span>
+            
+            {/* Gift Wrapping Quick Option */}
+            <button
+              type="button"
+              onClick={() => toggleGiftWrap(!isGiftWrapped, 250)}
+              className={`group relative flex flex-col p-3 border cursor-pointer text-left transition-all duration-200 w-full rounded ${
+                isGiftWrapped
+                  ? "bg-deep-navy text-pure-white border-deep-navy shadow-md translate-y-[-1px]"
+                  : "bg-pure-white text-ink-black border-slate-grey/30 hover:border-deep-navy"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1 mb-1.5">
+                <span className={`material-symbols-outlined text-lg ${isGiftWrapped ? "text-amber-300" : "text-amber-600"}`}>
+                  card_giftcard
+                </span>
+                <span className={`w-1.5 h-1.5 rounded-full ${isGiftWrapped ? "bg-amber-400" : "bg-slate-300"}`}></span>
+              </div>
+              <div className="flex items-center justify-between w-full">
+                <span className={`font-label-caps text-[10px] tracking-wider line-clamp-1 font-medium ${isGiftWrapped ? "text-pure-white" : "text-deep-navy"}`}>
+                  Gift Wrapping
+                </span>
+                <span className={`text-[10px] font-semibold ${isGiftWrapped ? "text-amber-300" : "text-emerald-700"}`}>
+                  {isGiftWrapped ? "Added" : `+${formatPrice(giftWrapPrice)}`}
+                </span>
+              </div>
+            </button>
+
+            <div className="space-y-1 text-xs">
+              {isGiftWrapped && (
+                <div className="flex justify-between items-center text-slate-grey font-label-caps text-[11px]">
+                  <span>Signature Gift Packaging</span>
+                  <span className="font-semibold text-deep-navy">+{formatPrice(giftWrapPrice)}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-sm font-semibold text-deep-navy">
+                <span className="font-label-caps">Total</span>
+                <span className="font-body-md text-base">{formatPrice(subtotal)}</span>
+              </div>
             </div>
+
             <p className="text-[10px] text-slate-grey leading-relaxed">
-              Shipping & taxes calculated at checkout. Enjoy complimentary premium packaging on all orders.
+              Shipping & taxes calculated at checkout. Enjoy complimentary signature packaging options on all orders.
             </p>
+
             <button
               onClick={() => {
                 setIsCartOpen(false);
                 router.push("/checkout/shipping");
               }}
-              className="w-full py-4 bg-black text-white text-center uppercase tracking-widest text-xs font-button hover:bg-black/90 transition-colors shadow-md"
+              className="w-full py-4 bg-black text-white text-center uppercase tracking-widest text-xs font-button hover:bg-black/90 transition-colors shadow-md cursor-pointer rounded"
             >
               Secure Checkout
             </button>
