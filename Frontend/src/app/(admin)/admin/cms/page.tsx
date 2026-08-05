@@ -3,8 +3,28 @@
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections, uploadMedia } from "@/utils/api";
 
-type TabType = "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings";
+type TabType = "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings" | "offers-showcase";
 
+
+// --- Visual Image Preview Helper Component ---
+const VisualImagePreview = ({ src, alt = "Preview" }: { src: string; alt?: string }) => {
+  return (
+    <div className="mt-2 w-28 h-20 relative bg-soft-linen/50 border border-slate-grey/20 rounded overflow-hidden flex items-center justify-center text-[10px] text-slate-grey italic">
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
+        />
+      ) : (
+        "No Image"
+      )}
+    </div>
+  );
+};
 
 export default function AdminCMSPage() {
   const [activeTab, setActiveTab] = useState<TabType>("story");
@@ -163,7 +183,26 @@ export default function AdminCMSPage() {
   const [euTaxRate, setEuTaxRate] = useState(20);
   const [alwaysCeilingPrice, setAlwaysCeilingPrice] = useState(true);
 
-  // --- Custom Pages States ---
+  // --- Offers & Project Showcase States ---
+  const [offersTitle, setOffersTitle] = useState("Exclusive Sale & Offers");
+  const [offersSubtitle, setOffersSubtitle] = useState("Discover architectural jewelry pieces at special member prices for a limited time.");
+  const [offersBadge, setOffersBadge] = useState("★ Limited Time Privileges");
+  const [offersBannerImage, setOffersBannerImage] = useState("https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1600&auto=format&fit=crop");
+  const [offersFilterMode, setOffersFilterMode] = useState<"sku" | "discount" | "all">("sku");
+  const [offersSkuInput, setOffersSkuInput] = useState("");
+  const [offersShowcases, setOffersShowcases] = useState<any[]>([
+    {
+      id: "showcase-1",
+      title: "Royal Solitaire Showcase",
+      subtitle: "Handcrafted 18K gold solitaire rings at special promotional pricing.",
+      badge: "Signature Collection",
+      bannerImage: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1000&auto=format&fit=crop",
+      link: "/collections",
+      linkText: "Explore Solitaires",
+      featuredSkus: [],
+      layout: "banner_left"
+    }
+  ]);
   const [customPages, setCustomPages] = useState<Record<string, any>>({
     craftsmanship: { title: "Craftsmanship", heroTitle: "Craftsmanship", bannerImage: "", content: "" },
     materials: { title: "Materials", heroTitle: "Materials", bannerImage: "", content: "" },
@@ -201,6 +240,19 @@ export default function AdminCMSPage() {
           setFeaturedCollections(res.homepage.featuredCollections || []);
           setNewArrivals(res.homepage.newArrivals || []);
           setFeaturedProducts(res.homepage.featuredProducts || []);
+        }
+        // Offers & Showcases
+        if (res.offers_page) {
+          setOffersTitle(res.offers_page.title || "Exclusive Sale & Offers");
+          setOffersSubtitle(res.offers_page.subtitle || "Discover architectural jewelry pieces at special member prices for a limited time.");
+          setOffersBadge(res.offers_page.badge || "★ Limited Time Privileges");
+          setOffersBannerImage(res.offers_page.bannerImage || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1600&auto=format&fit=crop");
+          setOffersFilterMode(res.offers_page.filterMode || "sku");
+          const skus = Array.isArray(res.offers_page.allowedSkus) ? res.offers_page.allowedSkus : [];
+          setOffersSkuInput(skus.join(", "));
+          if (Array.isArray(res.offers_page.showcaseProjects) && res.offers_page.showcaseProjects.length > 0) {
+            setOffersShowcases(res.offers_page.showcaseProjects);
+          }
         }
         // Story
         if (res.story) {
@@ -498,6 +550,15 @@ export default function AdminCMSPage() {
           usTaxRate: Number(usTaxRate),
           euTaxRate: Number(euTaxRate),
           alwaysCeilingPrice: !!alwaysCeilingPrice
+        },
+        offers_page: {
+          title: offersTitle,
+          subtitle: offersSubtitle,
+          badge: offersBadge,
+          bannerImage: offersBannerImage,
+          filterMode: offersFilterMode,
+          allowedSkus: offersSkuInput.split(",").map(s => s.trim()).filter(Boolean),
+          showcaseProjects: offersShowcases
         }
       });
       showToast("CMS updated successfully.");
@@ -564,28 +625,11 @@ export default function AdminCMSPage() {
     }
   };
 
-  // --- Visual Image Preview Helper Component ---
-  const VisualImagePreview = ({ src, alt = "Preview" }: { src: string; alt?: string }) => {
-    return (
-      <div className="mt-2 w-28 h-20 relative bg-soft-linen/50 border border-slate-grey/20 rounded overflow-hidden flex items-center justify-center text-[10px] text-slate-grey italic">
-        {src ? (
-          <img
-            src={src}
-            alt={alt}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-        ) : (
-          "No Image"
-        )}
-      </div>
-    );
-  };
+
 
   const CMS_TABS: { id: TabType; label: string; icon: string; category: "Storefront" | "Experience" | "System"; description: string }[] = [
     { id: "story", label: "Brand Story", icon: "auto_stories", category: "Storefront", description: "Brand narrative & ethos" },
+    { id: "offers-showcase", label: "Offers & Showcases", icon: "local_offer", category: "Storefront", description: "Offers page, SKU filters & showcase projects" },
     { id: "announcement-bar", label: "Announcement Bar", icon: "campaign", category: "Storefront", description: "Top ticker & alerts" },
     { id: "journal", label: "Journal", icon: "newspaper", category: "Storefront", description: "Articles & editorial" },
     { id: "custom-pages", label: "Custom Pages", icon: "description", category: "Storefront", description: "CMS pages content" },
@@ -2064,6 +2108,355 @@ export default function AdminCMSPage() {
                   <p className="text-[10px] text-slate-grey italic">
                     Note: Round Up logic ensures that converting minor values like ₹95 does not yield fractional decimals (e.g. $1.23 becomes $2.00, protecting international margins).
                   </p>
+                </section>
+              </div>
+            )}
+
+            {/* OFFERS & SHOWCASES TAB */}
+            {activeTab === "offers-showcase" && (
+              <div className="space-y-8">
+                {/* Hero Header Config */}
+                <section className="space-y-4">
+                  <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest border-b border-slate-grey/15 pb-2 font-bold">
+                    Offers Page Hero Banner
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase">Badge Tag Text</label>
+                      <input
+                        type="text"
+                        value={offersBadge}
+                        onChange={(e) => setOffersBadge(e.target.value)}
+                        placeholder="★ Limited Time Privileges"
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Title</label>
+                      <input
+                        type="text"
+                        value={offersTitle}
+                        onChange={(e) => setOffersTitle(e.target.value)}
+                        placeholder="Exclusive Sale & Offers"
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Subtitle</label>
+                    <textarea
+                      rows={2}
+                      value={offersSubtitle}
+                      onChange={(e) => setOffersSubtitle(e.target.value)}
+                      className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md rounded"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Banner Image URL</label>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={offersBannerImage}
+                        onChange={(e) => setOffersBannerImage(e.target.value)}
+                        className="flex-1 border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {/* SKU Product Filter Section */}
+                <section className="space-y-4 pt-4 border-t border-slate-grey/15">
+                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                    <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest font-bold">
+                      Products Selection & SKU Filtering
+                    </h3>
+                    <span className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 uppercase font-semibold">
+                      Control products displayed on /offers
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase">Selection Mode</label>
+                      <select
+                        value={offersFilterMode}
+                        onChange={(e: any) => setOffersFilterMode(e.target.value)}
+                        className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md rounded cursor-pointer"
+                      >
+                        <option value="sku">Selected SKUs / Product IDs</option>
+                        <option value="discount">Automatic (Discounted / VRIX+ Exclusive)</option>
+                        <option value="all">Show All Products</option>
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-label-caps text-slate-grey uppercase">
+                          Allowed SKUs / Product IDs (Comma-Separated)
+                        </label>
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              const val = e.target.value;
+                              const currentList = offersSkuInput.split(",").map(s => s.trim()).filter(Boolean);
+                              if (!currentList.includes(val)) {
+                                const next = [...currentList, val].join(", ");
+                                setOffersSkuInput(next);
+                              }
+                            }
+                          }}
+                          defaultValue=""
+                          className="text-[10px] border border-amber-300 bg-amber-50 px-2 py-0.5 rounded outline-none cursor-pointer"
+                        >
+                          <option value="" disabled>+ Pick Product from Catalog...</option>
+                          {allProducts.map((p) => (
+                            <option key={p.id} value={p.sku || p.id}>
+                              {p.title} ({p.sku || p.id}) - ${p.price}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <input
+                        type="text"
+                        value={offersSkuInput}
+                        onChange={(e) => setOffersSkuInput(e.target.value)}
+                        placeholder="e.g. VRX-101, bespoke-tennis-bracelet-preset, VRX-1212"
+                        className="w-full border-b border-slate-grey/30 py-2 text-xs outline-none bg-transparent font-body-md text-deep-navy font-semibold"
+                      />
+                      <p className="text-[9px] text-slate-grey mt-1">
+                        Tip: Enter exact product IDs or SKUs separated by commas. Click "+ Pick Product" above to append products directly!
+                      </p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Multiple Project Showcase Manager */}
+                <section className="space-y-4 pt-4 border-t border-slate-grey/15">
+                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                    <div>
+                      <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest font-bold">
+                        Project & Offer Showcase Blocks ({offersShowcases.length})
+                      </h3>
+                      <p className="text-[10px] text-slate-grey">Add luxury promotional showcase banners and featured collections to the offers page.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newShowcase = {
+                          id: `showcase-${Date.now()}`,
+                          title: "New Project Showcase",
+                          subtitle: "Discover high precision architectural craftsmanship.",
+                          badge: "Featured Collection",
+                          bannerImage: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1000&auto=format&fit=crop",
+                          link: "/collections",
+                          linkText: "Explore Collection",
+                          featuredSkus: [],
+                          layout: "banner_left"
+                        };
+                        setOffersShowcases([...offersShowcases, newShowcase]);
+                      }}
+                      className="px-3 py-1.5 bg-deep-navy text-white text-[10px] font-label-caps uppercase tracking-wider rounded flex items-center gap-1 cursor-pointer hover:bg-black"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">add</span>
+                      Add Showcase Block
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {offersShowcases.map((sc, idx) => (
+                      <div key={sc.id || idx} className="p-4 border border-slate-grey/20 rounded bg-soft-linen/20 space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-grey/15 pb-2">
+                          <span className="font-label-caps text-xs font-bold text-deep-navy uppercase flex items-center gap-1.5">
+                            <span className="material-symbols-outlined text-[16px] text-amber-600">view_carousel</span>
+                            Showcase #{idx + 1}: {sc.title || "Untitled Showcase"}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {idx > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const arr = [...offersShowcases];
+                                  const temp = arr[idx - 1];
+                                  arr[idx - 1] = arr[idx];
+                                  arr[idx] = temp;
+                                  setOffersShowcases(arr);
+                                }}
+                                className="text-[10px] text-slate-grey hover:text-black font-semibold"
+                              >
+                                ↑ Move Up
+                              </button>
+                            )}
+                            {idx < offersShowcases.length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const arr = [...offersShowcases];
+                                  const temp = arr[idx + 1];
+                                  arr[idx + 1] = arr[idx];
+                                  arr[idx] = temp;
+                                  setOffersShowcases(arr);
+                                }}
+                                className="text-[10px] text-slate-grey hover:text-black font-semibold"
+                              >
+                                ↓ Move Down
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOffersShowcases(offersShowcases.filter((_, i) => i !== idx));
+                              }}
+                              className="text-[10px] text-red-600 hover:text-red-800 font-semibold"
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Showcase Title</label>
+                            <input
+                              type="text"
+                              value={sc.title || ""}
+                              onChange={(e) => {
+                                const arr = [...offersShowcases];
+                                arr[idx].title = e.target.value;
+                                setOffersShowcases(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Badge Label</label>
+                            <input
+                              type="text"
+                              value={sc.badge || ""}
+                              onChange={(e) => {
+                                const arr = [...offersShowcases];
+                                arr[idx].badge = e.target.value;
+                                setOffersShowcases(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Layout Style</label>
+                            <select
+                              value={sc.layout || "banner_left"}
+                              onChange={(e) => {
+                                const arr = [...offersShowcases];
+                                arr[idx].layout = e.target.value;
+                                setOffersShowcases(arr);
+                              }}
+                              className="w-full border border-slate-grey/30 py-1 px-2 text-xs outline-none bg-transparent rounded cursor-pointer"
+                            >
+                              <option value="banner_left">Banner Left / Grid Right</option>
+                              <option value="banner_right">Grid Left / Banner Right</option>
+                              <option value="hero_grid">Hero Banner + Featured Cards</option>
+                              <option value="full_width">Full Width Panoramic Banner</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="sm:col-span-2">
+                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Subtitle / Description</label>
+                            <input
+                              type="text"
+                              value={sc.subtitle || ""}
+                              onChange={(e) => {
+                                const arr = [...offersShowcases];
+                                arr[idx].subtitle = e.target.value;
+                                setOffersShowcases(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Banner Image URL</label>
+                            <input
+                              type="text"
+                              value={sc.bannerImage || ""}
+                              onChange={(e) => {
+                                const arr = [...offersShowcases];
+                                arr[idx].bannerImage = e.target.value;
+                                setOffersShowcases(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Button Text</label>
+                            <input
+                              type="text"
+                              value={sc.linkText || "Explore Collection"}
+                              onChange={(e) => {
+                                const arr = [...offersShowcases];
+                                arr[idx].linkText = e.target.value;
+                                setOffersShowcases(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Button Link URL</label>
+                            <input
+                              type="text"
+                              value={sc.link || "/collections"}
+                              onChange={(e) => {
+                                const arr = [...offersShowcases];
+                                arr[idx].link = e.target.value;
+                                setOffersShowcases(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                            />
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <label className="text-[9px] font-label-caps text-slate-grey uppercase">Featured SKUs/IDs</label>
+                              <select
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    const val = e.target.value;
+                                    const arr = [...offersShowcases];
+                                    const current = Array.isArray(arr[idx].featuredSkus) ? arr[idx].featuredSkus : [];
+                                    if (!current.includes(val)) {
+                                      arr[idx].featuredSkus = [...current, val];
+                                      setOffersShowcases(arr);
+                                    }
+                                  }
+                                }}
+                                defaultValue=""
+                                className="text-[9px] border border-amber-300 bg-amber-50 px-1.5 py-0.5 rounded outline-none cursor-pointer"
+                              >
+                                <option value="" disabled>+ Add SKU...</option>
+                                {allProducts.map((p) => (
+                                  <option key={p.id} value={p.sku || p.id}>
+                                    {p.title} ({p.sku || p.id})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <input
+                              type="text"
+                              value={Array.isArray(sc.featuredSkus) ? sc.featuredSkus.join(", ") : ""}
+                              onChange={(e) => {
+                                const arr = [...offersShowcases];
+                                arr[idx].featuredSkus = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
+                                setOffersShowcases(arr);
+                              }}
+                              placeholder="e.g. VRX-101, bespoke-tennis-bracelet-preset"
+                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </section>
               </div>
             )}

@@ -2,17 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { fetchDbPublic as fetchDb, fetchProducts } from "@/utils/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import SkeletonImage from "@/components/shop/SkeletonImage";
 
 const DEFAULT_CATEGORIES = [
-  { title: "Rings", image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop", link: "/collections/silent-center?type=rings" },
-  { title: "Necklaces", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=600&auto=format&fit=crop", link: "/collections/silent-center?type=necklace" },
-  { title: "Earrings", image: "https://images.unsplash.com/photo-1635767798638-3e25273a8236?q=80&w=600&auto=format&fit=crop", link: "/collections/silent-center?type=earrings" },
-  { title: "Bracelets", image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=600&auto=format&fit=crop", link: "/collections/silent-center?type=bracelet" },
+  { title: "Necklace", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/z7ekw55bkfo527ivhzme.png", link: "/collections/silent-center?type=necklace" },
+  { title: "Earrings", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/apetikskyjypxmrcvdwe.png", link: "/collections/silent-center?type=earrings" },
+  { title: "Bracelets", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/cksu4mgtvw5iowjpe2h8.png", link: "/collections/silent-center?type=bracelet" },
+  { title: "Rings", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734523/vrix/i3fkvzr4zlvqbnhzjixd.png", link: "/collections/silent-center?type=rings" },
+  { title: "Charms", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734523/vrix/i0mfwsxjrxpdkdti4sp7.png", link: "/collections/silent-center?type=charms" },
 ];
 
 const DEFAULT_DATA = {
@@ -57,6 +58,17 @@ export default function Home() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSlide, setActiveSlide] = useState(0);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollCategories = (direction: "left" | "right") => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = categoryScrollRef.current.clientWidth;
+      categoryScrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth"
+      });
+    }
+  };
 
   const slides = useMemo(() => {
     return (store.homepage as any).heroSlides || [];
@@ -279,15 +291,34 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── Shop by Category Section ─── */}
+      {/* ─── Shop by Category Section (Single Line Carousel) ─── */}
       <section className="py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
-        <div className="text-center mb-section-gap">
-          <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
-            Atelier Selections
-          </p>
-          <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
-            Shop by Category
-          </h2>
+        <div className="flex items-end justify-between mb-section-gap">
+          <div>
+            <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
+              Atelier Selections
+            </p>
+            <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
+              Shop by Category
+            </h2>
+          </div>
+          {/* Carousel Arrows */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => scrollCategories("left")}
+              className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs"
+              aria-label="Previous categories"
+            >
+              <span className="material-symbols-outlined text-lg">chevron_left</span>
+            </button>
+            <button
+              onClick={() => scrollCategories("right")}
+              className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs"
+              aria-label="Next categories"
+            >
+              <span className="material-symbols-outlined text-lg">chevron_right</span>
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -299,23 +330,29 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
+          <div
+            ref={categoryScrollRef}
+            className="flex overflow-x-auto scroll-smooth scrollbar-none gap-product-gap py-1 snap-x snap-mandatory"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
             {(store.homepage.categories && store.homepage.categories.length > 0 ? store.homepage.categories : DEFAULT_CATEGORIES).map((cat: any, idx: number) => (
-              <Link key={idx} href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block">
-                <SkeletonImage
-                  alt={cat.title}
-                  fill
-                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                  src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
-                  sizes="(max-width: 640px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-5 transition-opacity duration-300 group-hover:opacity-95">
-                  <div className="w-full flex justify-between items-center text-pure-white">
-                    <span className="font-label-caps text-sm tracking-widest uppercase font-semibold">{cat.title}</span>
-                    <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+              <div key={idx} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start">
+                <Link href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block rounded shadow-xs">
+                  <SkeletonImage
+                    alt={cat.title}
+                    fill
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-5 transition-opacity duration-300 group-hover:opacity-95">
+                    <div className="w-full flex justify-between items-center text-pure-white">
+                      <span className="font-label-caps text-sm tracking-widest uppercase font-semibold">{cat.title}</span>
+                      <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </div>
         )}

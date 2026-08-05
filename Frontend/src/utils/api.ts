@@ -88,8 +88,9 @@ export async function updateCMS(data: {
   announcement_bar?: any;
   invoice_settings?: any;
   currency_settings?: any;
+  offers_page?: any;
 }) {
-  return apiFetch<any>("/cms", {
+  return adminFetch<any>("/cms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -153,7 +154,7 @@ export async function fetchJournal() {
 }
 
 export async function createJournalPost(postData: any) {
-  return apiFetch<any>("/journal", {
+  return adminFetch<any>("/journal", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postData),
@@ -161,7 +162,7 @@ export async function createJournalPost(postData: any) {
 }
 
 export async function updateJournalPost(id: string, postData: any) {
-  return apiFetch<any>(`/journal/${id}`, {
+  return adminFetch<any>(`/journal/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postData),
@@ -169,7 +170,7 @@ export async function updateJournalPost(id: string, postData: any) {
 }
 
 export async function deleteJournalPost(id: string) {
-  return apiFetch<any>(`/journal/${id}`, { method: "DELETE" });
+  return adminFetch<any>(`/journal/${id}`, { method: "DELETE" });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

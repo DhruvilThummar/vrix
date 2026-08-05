@@ -25,6 +25,132 @@ const DEFAULT_NAV_LINKS = [
   { label: "VRIX+", path: "/vrix-plus" }
 ];
 
+const PathSelector = ({
+  value,
+  onChange,
+  allProducts = [],
+  allCollections = []
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  allProducts?: any[];
+  allCollections?: any[];
+}) => {
+  let type = "custom";
+  let selectedIdOrSlug = "";
+
+  const valStr = value || "/";
+
+  if (valStr === "/" || STANDARD_PAGES.some(p => p.path === valStr)) {
+    type = "page";
+    selectedIdOrSlug = valStr;
+  } else if (valStr.startsWith("/product/")) {
+    type = "product";
+    selectedIdOrSlug = valStr.replace("/product/", "");
+  } else if (valStr.startsWith("/collections/") && valStr !== "/collections") {
+    type = "collection";
+    selectedIdOrSlug = valStr.replace("/collections/", "");
+  } else {
+    type = "custom";
+    selectedIdOrSlug = valStr;
+  }
+
+  const handleTypeChange = (newType: string) => {
+    if (newType === "page") {
+      onChange("/");
+    } else if (newType === "product") {
+      const firstProd = allProducts[0]?.id || "";
+      onChange(firstProd ? `/product/${firstProd}` : "/");
+    } else if (newType === "collection") {
+      const firstColl = allCollections[0]?.id || allCollections[0]?.slug || "all";
+      onChange(`/collections/${firstColl}`);
+    } else {
+      onChange("/");
+    }
+  };
+
+  const handleSelectionChange = (newVal: string) => {
+    if (type === "product") {
+      onChange(`/product/${newVal}`);
+    } else if (type === "collection") {
+      onChange(`/collections/${newVal}`);
+    } else {
+      onChange(newVal);
+    }
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row gap-2 mt-1 w-full">
+      <select
+        value={type}
+        onChange={(e) => handleTypeChange(e.target.value)}
+        className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer flex-shrink-0"
+      >
+        <option value="page">Standard Page</option>
+        <option value="collection">Collection Page</option>
+        <option value="product">Individual Product</option>
+        <option value="custom">Custom Web Link</option>
+      </select>
+
+      {type === "page" && (
+        <select
+          value={selectedIdOrSlug}
+          onChange={(e) => handleSelectionChange(e.target.value)}
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
+        >
+          {STANDARD_PAGES.map((p) => (
+            <option key={p.path} value={p.path}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {type === "collection" && (
+        <select
+          value={selectedIdOrSlug}
+          onChange={(e) => handleSelectionChange(e.target.value)}
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
+        >
+          {allCollections.length > 0 ? (
+            allCollections.map((c: any) => (
+              <option key={c.id || c.slug} value={c.id || c.slug}>
+                {c.name || c.title || c.slug}
+              </option>
+            ))
+          ) : (
+            <option value="all">All Jewelry</option>
+          )}
+        </select>
+      )}
+
+      {type === "product" && (
+        <select
+          value={selectedIdOrSlug}
+          onChange={(e) => handleSelectionChange(e.target.value)}
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
+        >
+          {allProducts.map((p: any) => (
+            <option key={p.id} value={p.id}>
+              {p.title}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {type === "custom" && (
+        <input
+          type="text"
+          value={selectedIdOrSlug}
+          onChange={(e) => onChange(e.target.value)}
+          className="border border-slate-grey/30 px-3 py-1 text-xs outline-none text-ink-black flex-1"
+          placeholder="e.g. /custom-url"
+        />
+      )}
+    </div>
+  );
+};
+
 export default function AdminNavigationPage() {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -220,122 +346,7 @@ export default function AdminNavigationPage() {
     setHomepageCategories(homepageCategories.filter((_, i) => i !== idx));
   };
 
-  // Zero-Coding Path Selector component rendered inline for simplicity
-  const PathSelector = ({ value, onChange }: { value: string; onChange: (val: string) => void }) => {
-    let type = "custom";
-    let selectedIdOrSlug = "";
 
-    const valStr = value || "/";
-
-    if (valStr === "/" || STANDARD_PAGES.some(p => p.path === valStr)) {
-      type = "page";
-      selectedIdOrSlug = valStr;
-    } else if (valStr.startsWith("/product/")) {
-      type = "product";
-      selectedIdOrSlug = valStr.replace("/product/", "");
-    } else if (valStr.startsWith("/collections/") && valStr !== "/collections") {
-      type = "collection";
-      selectedIdOrSlug = valStr.replace("/collections/", "");
-    } else {
-      type = "custom";
-      selectedIdOrSlug = valStr;
-    }
-
-    const handleTypeChange = (newType: string) => {
-      if (newType === "page") {
-        onChange("/");
-      } else if (newType === "product") {
-        const firstProd = allProducts[0]?.id || "";
-        onChange(firstProd ? `/product/${firstProd}` : "/");
-      } else if (newType === "collection") {
-        const firstColl = allCollections[0]?.id || allCollections[0]?.slug || "all";
-        onChange(`/collections/${firstColl}`);
-      } else {
-        onChange("/");
-      }
-    };
-
-    const handleSelectionChange = (newVal: string) => {
-      if (type === "product") {
-        onChange(`/product/${newVal}`);
-      } else if (type === "collection") {
-        onChange(`/collections/${newVal}`);
-      } else {
-        onChange(newVal);
-      }
-    };
-
-    return (
-      <div className="flex flex-col md:flex-row gap-2 mt-1 w-full">
-        <select
-          value={type}
-          onChange={(e) => handleTypeChange(e.target.value)}
-          className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer flex-shrink-0"
-        >
-          <option value="page">Standard Page</option>
-          <option value="collection">Collection Page</option>
-          <option value="product">Individual Product</option>
-          <option value="custom">Custom Web Link</option>
-        </select>
-
-        {type === "page" && (
-          <select
-            value={selectedIdOrSlug}
-            onChange={(e) => handleSelectionChange(e.target.value)}
-            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
-          >
-            {STANDARD_PAGES.map((p) => (
-              <option key={p.path} value={p.path}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        )}
-
-        {type === "collection" && (
-          <select
-            value={selectedIdOrSlug}
-            onChange={(e) => handleSelectionChange(e.target.value)}
-            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
-          >
-            {allCollections.length > 0 ? (
-              allCollections.map((c) => (
-                <option key={c.id || c.slug} value={c.id || c.slug}>
-                  {c.name || c.title || c.slug}
-                </option>
-              ))
-            ) : (
-              <option value="all">All Jewelry</option>
-            )}
-          </select>
-        )}
-
-        {type === "product" && (
-          <select
-            value={selectedIdOrSlug}
-            onChange={(e) => handleSelectionChange(e.target.value)}
-            className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
-          >
-            {allProducts.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
-        )}
-
-        {type === "custom" && (
-          <input
-            type="text"
-            value={selectedIdOrSlug}
-            onChange={(e) => onChange(e.target.value)}
-            className="border border-slate-grey/30 px-3 py-1 text-xs outline-none text-ink-black flex-1"
-            placeholder="e.g. /custom-url"
-          />
-        )}
-      </div>
-    );
-  };
 
   if (loading) {
     return (
@@ -643,7 +654,7 @@ export default function AdminNavigationPage() {
                   <div className="flex flex-col gap-1 w-full">
                     <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Points to Page</label>
                     <div onClick={(e) => e.stopPropagation()}>
-                      <PathSelector
+                      <PathSelector allProducts={allProducts} allCollections={allCollections}
                         value={link.path}
                         onChange={(val) => updateTopLevelLink(idx, "path", val)}
                       />
@@ -759,7 +770,7 @@ export default function AdminNavigationPage() {
                                   </button>
                                 </div>
 
-                                <PathSelector
+                                <PathSelector allProducts={allProducts} allCollections={allCollections}
                                   value={lnk.path}
                                   onChange={(val) => updateMegaLink(selectedLinkIndex, catIdx, lnkIdx, "path", val)}
                                 />
@@ -800,7 +811,7 @@ export default function AdminNavigationPage() {
                       </div>
                       <div className="flex flex-col gap-1">
                         <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Link Destination</label>
-                        <PathSelector
+                        <PathSelector allProducts={allProducts} allCollections={allCollections}
                           value={navLinks[selectedLinkIndex]?.megaMenu?.featured?.link || "/"}
                           onChange={(val) => updateFeaturedMega(selectedLinkIndex, "link", val)}
                         />
@@ -879,7 +890,7 @@ export default function AdminNavigationPage() {
 
                 <div className="flex flex-col gap-1">
                   <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Link Destination</label>
-                  <PathSelector
+                  <PathSelector allProducts={allProducts} allCollections={allCollections}
                     value={cat.link}
                     onChange={(val) => updateHomepageCategory(idx, "link", val)}
                   />

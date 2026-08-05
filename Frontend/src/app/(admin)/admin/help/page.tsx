@@ -191,7 +191,7 @@ export default function AdminHelpPage() {
   };
 
   const handleActionClick = (link: string) => {
-    window.location.href = link;
+    window.location.assign(link);
   };
 
   // Filter items based on search query
