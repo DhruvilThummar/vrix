@@ -208,9 +208,7 @@ const runProductQuery = async (queryWithImages, queryWithoutImages) => {
         return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
       } catch (e) { }
     }
-    const localData = readLocalDb();
-    const products = localData.products || [];
-    return products.map(withProductDefaults);
+    throw error;
   }
 };
 
@@ -420,6 +418,10 @@ export const db = {
           );
         } catch (err) {
           console.error("Prisma products.create failed:", err.message);
+          if (supabase) {
+            const { data: created, error } = await supabase.from("products").insert(data).select("*").single();
+            if (!error && created) return withProductDefaults(created);
+          }
           const localData = readLocalDb();
           localData.products = localData.products || [];
           localData.products.push(data);
@@ -427,6 +429,10 @@ export const db = {
           return data;
         }
       } else {
+        if (supabase) {
+          const { data: created, error } = await supabase.from("products").insert(data).select("*").single();
+          if (!error && created) return withProductDefaults(created);
+        }
         const localData = readLocalDb();
         localData.products = localData.products || [];
         localData.products.push(data);
@@ -443,6 +449,10 @@ export const db = {
           );
         } catch (err) {
           console.error(`Prisma products.update(${id}) failed:`, err.message);
+          if (supabase) {
+            const { data: updated, error } = await supabase.from("products").update(data).eq("id", id).select("*").single();
+            if (!error && updated) return withProductDefaults(updated);
+          }
           const localData = readLocalDb();
           localData.products = localData.products || [];
           const index = localData.products.findIndex(p => p.id === id);
@@ -454,6 +464,10 @@ export const db = {
           throw new Error(`Product with ID ${id} not found`);
         }
       } else {
+        if (supabase) {
+          const { data: updated, error } = await supabase.from("products").update(data).eq("id", id).select("*").single();
+          if (!error && updated) return withProductDefaults(updated);
+        }
         const localData = readLocalDb();
         localData.products = localData.products || [];
         const index = localData.products.findIndex(p => p.id === id);
@@ -471,6 +485,10 @@ export const db = {
           return await prisma.product.delete({ where: { id }, select: { id: true } });
         } catch (err) {
           console.error(`Prisma products.delete(${id}) failed:`, err.message);
+          if (supabase) {
+            const { error } = await supabase.from("products").delete().eq("id", id);
+            if (!error) return { id };
+          }
           const localData = readLocalDb();
           localData.products = localData.products || [];
           const initialLength = localData.products.length;
@@ -482,6 +500,10 @@ export const db = {
           throw new Error(`Product with ID ${id} not found`);
         }
       } else {
+        if (supabase) {
+          const { error } = await supabase.from("products").delete().eq("id", id);
+          if (!error) return { id };
+        }
         const localData = readLocalDb();
         localData.products = localData.products || [];
         const initialLength = localData.products.length;
@@ -492,7 +514,7 @@ export const db = {
         }
         throw new Error(`Product with ID ${id} not found`);
       }
-    }
+    },
   },
 
   // Journal
