@@ -7,9 +7,11 @@ const router = express.Router();
 // GET /api/db — DB snapshot (strips sensitive api_settings if not authenticated as admin)
 router.get("/db", async (req, res) => {
   try {
-    const cms = await db.cmsSettings.findMany();
-    const products = await db.products.findMany();
-    const journal = await db.journal.findMany();
+    const [cms, products, journal] = await Promise.all([
+      db.cmsSettings.findMany(),
+      db.products.findMany(),
+      db.journal.findMany()
+    ]);
 
     const secret = process.env.ADMIN_SECRET;
     const provided = req.headers["x-admin-secret"] || req.headers["admin-secret"] || req.query.adminSecret || req.query.admin_secret;
@@ -29,9 +31,11 @@ router.get("/db", async (req, res) => {
 // GET /api/db/public — Public DB snapshot (strips sensitive api_settings)
 router.get("/db/public", async (req, res) => {
   try {
-    const cms = await db.cmsSettings.findMany();
-    const products = await db.products.findMany();
-    const journal = await db.journal.findMany();
+    const [cms, products, journal] = await Promise.all([
+      db.cmsSettings.findMany(),
+      db.products.findMany(),
+      db.journal.findMany()
+    ]);
     // Strip api_settings to prevent secret key exposure to public shop pages
     const { api_settings, ...publicCms } = cms;
     res.json({ ...publicCms, products, journal });
