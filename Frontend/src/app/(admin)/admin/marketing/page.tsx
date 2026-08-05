@@ -46,6 +46,8 @@ interface AnnouncementBar {
   textColor: string;
   fontSize: string;
   lines: string[];
+  actionText?: string;
+  actionLink?: string;
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -1178,6 +1180,30 @@ export default function AdminMarketingPage() {
                           <option value="12px">12px — Medium</option>
                           <option value="13px">13px — Large</option>
                         </select>
+                      </div>
+                    </div>
+
+                    {/* Action Link Text & URL */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Action Link Text</label>
+                        <input
+                          type="text"
+                          value={announcementBar.actionText || ""}
+                          onChange={(e) => setAnnouncementBar(p => ({ ...p, actionText: e.target.value }))}
+                          placeholder="e.g. Shop Offers →"
+                          className="border border-slate-grey/25 px-3 py-2 text-xs font-body-md bg-transparent focus:border-deep-navy outline-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Action Link URL</label>
+                        <input
+                          type="text"
+                          value={announcementBar.actionLink || ""}
+                          onChange={(e) => setAnnouncementBar(p => ({ ...p, actionLink: e.target.value }))}
+                          placeholder="e.g. /offers"
+                          className="border border-slate-grey/25 px-3 py-2 text-xs font-body-md bg-transparent font-mono focus:border-deep-navy outline-none"
+                        />
                       </div>
                     </div>
 

@@ -163,6 +163,8 @@ export default function AdminCMSPage() {
   const [announcementTextColor, setAnnouncementTextColor] = useState("#ffffff");
   const [announcementFontSize, setAnnouncementFontSize] = useState("11px");
   const [announcementLines, setAnnouncementLines] = useState<string[]>([]);
+  const [announcementActionText, setAnnouncementActionText] = useState("Shop Offers →");
+  const [announcementActionLink, setAnnouncementActionLink] = useState("/offers");
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
 
   // --- Invoice PDF Customizer States ---
@@ -378,6 +380,8 @@ export default function AdminCMSPage() {
           setAnnouncementTextColor(res.announcement_bar.textColor || "#ffffff");
           setAnnouncementFontSize(res.announcement_bar.fontSize || "11px");
           setAnnouncementLines(Array.isArray(res.announcement_bar.lines) ? res.announcement_bar.lines : []);
+          setAnnouncementActionText(res.announcement_bar.actionText || "Shop Offers →");
+          setAnnouncementActionLink(res.announcement_bar.actionLink || "/offers");
         }
         // Custom Pages
         if (res.custom_pages) {
@@ -534,7 +538,9 @@ export default function AdminCMSPage() {
           backgroundColor: announcementBgColor,
           textColor: announcementTextColor,
           fontSize: announcementFontSize,
-          lines: announcementLines
+          lines: announcementLines,
+          actionText: announcementActionText,
+          actionLink: announcementActionLink
         },
         custom_pages: customPages,
         invoice_settings: {
