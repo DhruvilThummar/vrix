@@ -15,7 +15,6 @@ const navItems = [
   { name: "Homepage Layout", href: "/admin/homepage", icon: "view_quilt" },
   { name: "Navigation", href: "/admin/navigation", icon: "navigation" },
   { name: "Bespoke Configurator", href: "/admin/bespoke", icon: "diamond" },
-  { name: "Media Library", href: "/admin/media", icon: "perm_media" },
   { name: "Delivery Staff", href: "/admin/delivery", icon: "local_shipping" },
   { name: "Security & Logs", href: "/admin/security", icon: "security" },
   { name: "Help & Guides", href: "/admin/help", icon: "help" },

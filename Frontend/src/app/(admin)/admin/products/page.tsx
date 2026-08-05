@@ -229,20 +229,91 @@ function AdminProductsContent() {
     setActiveFormTab("Core"); setDeleteConfirm(false);
   };
 
+  const [customTemplates, setCustomTemplates] = useState<any[]>([]);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [newTmplName, setNewTmplName] = useState("");
+  const [newTmplType, setNewTmplType] = useState("Ring");
+  const [newTmplMaterial, setNewTmplMaterial] = useState("18K Yellow Gold");
+  const [newTmplPrice, setNewTmplPrice] = useState<number | "">(500);
+  const [newTmplDesc, setNewTmplDesc] = useState("");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("vrix_product_templates");
+      if (saved) setCustomTemplates(JSON.parse(saved));
+    } catch (e) {}
+  }, []);
+
+  const allTemplates = [...PRODUCT_TEMPLATES, ...customTemplates];
+
   const handleApplyTemplate = (templateId: string) => {
-    const tmpl = PRODUCT_TEMPLATES.find((t) => t.id === templateId);
+    const tmpl = allTemplates.find((t) => t.id === templateId);
     if (!tmpl) return;
     setFTitle((prev) => prev || tmpl.name);
-    setFType(tmpl.type);
-    setFMaterial(tmpl.material);
-    setFPrice(tmpl.price);
-    setFOriginalPrice(tmpl.originalPrice);
-    setFDescription(tmpl.description);
-    setFLayoutStyle(tmpl.layoutStyle);
-    setFAvailableSizes(tmpl.availableSizes);
-    setFEngravingEnabled(tmpl.engravingEnabled);
-    setFGiftNoteEnabled(tmpl.giftNoteEnabled);
+    setFType(tmpl.type || "Ring");
+    setFMaterial(tmpl.material || "");
+    setFPrice(tmpl.price || 0);
+    setFOriginalPrice(tmpl.originalPrice || 0);
+    setFDescription(tmpl.description || "");
+    setFLayoutStyle(tmpl.layoutStyle || "2x2");
+    setFAvailableSizes(tmpl.availableSizes || []);
+    setFEngravingEnabled(!!tmpl.engravingEnabled);
+    setFGiftNoteEnabled(!!tmpl.giftNoteEnabled);
     showToast(`Applied preset: "${tmpl.name}"`);
+  };
+
+  const handleSaveCurrentAsTemplate = () => {
+    const name = window.prompt("Enter a name for this product template:", fTitle || "Custom Product Template");
+    if (!name || !name.trim()) return;
+    const newTmpl = {
+      id: `custom-${Date.now()}`,
+      name: name.trim(),
+      type: fType || "Jewelry",
+      material: fMaterial || "18K Gold",
+      price: fPrice || 0,
+      originalPrice: fOriginalPrice || 0,
+      description: fDescription || "",
+      layoutStyle: fLayoutStyle || "2x2",
+      availableSizes: fAvailableSizes || [],
+      engravingEnabled: fEngravingEnabled,
+      giftNoteEnabled: fGiftNoteEnabled,
+      isCustom: true
+    };
+    const updated = [...customTemplates, newTmpl];
+    setCustomTemplates(updated);
+    try { localStorage.setItem("vrix_product_templates", JSON.stringify(updated)); } catch (e) {}
+    showToast(`Saved template "${name.trim()}"`);
+  };
+
+  const handleCreateManualTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTmplName.trim()) return;
+    const newTmpl = {
+      id: `custom-${Date.now()}`,
+      name: newTmplName.trim(),
+      type: newTmplType,
+      material: newTmplMaterial,
+      price: Number(newTmplPrice) || 0,
+      originalPrice: 0,
+      description: newTmplDesc.trim(),
+      layoutStyle: "2x2",
+      availableSizes: [],
+      engravingEnabled: true,
+      giftNoteEnabled: true,
+      isCustom: true
+    };
+    const updated = [...customTemplates, newTmpl];
+    setCustomTemplates(updated);
+    try { localStorage.setItem("vrix_product_templates", JSON.stringify(updated)); } catch (e) {}
+    setNewTmplName(""); setNewTmplDesc("");
+    showToast(`Created template "${newTmpl.name}"`);
+  };
+
+  const handleDeleteTemplate = (id: string) => {
+    const updated = customTemplates.filter(t => t.id !== id);
+    setCustomTemplates(updated);
+    try { localStorage.setItem("vrix_product_templates", JSON.stringify(updated)); } catch (e) {}
+    showToast("Template deleted");
   };
 
   const handleNewProduct = () => {
@@ -466,13 +537,22 @@ function AdminProductsContent() {
               )}
             </div>
           </div>
-          <button
-            onClick={handleNewProduct}
-            className="font-button text-button uppercase px-6 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer flex items-center gap-2 shrink-0"
-          >
-            <span className="material-symbols-outlined text-[16px]">add</span>
-            Add Product
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowTemplateModal(true)}
+              className="font-button text-button uppercase px-4 py-3 border border-deep-navy text-deep-navy hover:bg-deep-navy hover:text-white transition-colors cursor-pointer flex items-center gap-2 shrink-0 rounded"
+            >
+              <span className="material-symbols-outlined text-[16px]">dashboard_customize</span>
+              Manage Templates ({allTemplates.length})
+            </button>
+            <button
+              onClick={handleNewProduct}
+              className="font-button text-button uppercase px-6 py-3 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer flex items-center gap-2 shrink-0 rounded"
+            >
+              <span className="material-symbols-outlined text-[16px]">add</span>
+              Add Product
+            </button>
+          </div>
         </div>
 
         {/* ── MAIN GRID ────────────────────────────────────────────────────── */}
@@ -636,28 +716,47 @@ function AdminProductsContent() {
                     <div className="space-y-5">
 
                       {/* Quick Presets / Product Templates */}
-                      <div className="p-3 bg-amber-50/50 border border-amber-200/60 rounded flex flex-col gap-1.5">
-                        <label className="font-label-caps text-[9px] text-amber-900 uppercase tracking-widest font-semibold flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[13px]">dashboard_customize</span>
-                          Product Preset Templates (Fast Fill)
-                        </label>
+                      <div className="p-3 bg-amber-50/60 border border-amber-200/80 rounded flex flex-col gap-2.5">
+                        <div className="flex items-center justify-between">
+                          <label className="font-label-caps text-[9px] text-amber-900 uppercase tracking-widest font-semibold flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px]">dashboard_customize</span>
+                            Product Preset Templates
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setShowTemplateModal(true)}
+                            className="text-[10px] text-amber-900 font-semibold underline hover:text-black flex items-center gap-0.5"
+                          >
+                            Manage All ({allTemplates.length})
+                          </button>
+                        </div>
                         <select
                           onChange={(e) => {
                             if (e.target.value) handleApplyTemplate(e.target.value);
                           }}
                           defaultValue=""
-                          className="w-full bg-pure-white border border-amber-300/60 py-1.5 px-2 font-body-md text-xs text-ink-black rounded outline-none cursor-pointer"
+                          className="w-full bg-pure-white border border-amber-300/80 py-1.5 px-2 font-body-md text-xs text-ink-black rounded outline-none cursor-pointer"
                         >
                           <option value="" disabled>Choose a pre-made product preset template...</option>
-                          {PRODUCT_TEMPLATES.map((tmpl) => (
+                          {allTemplates.map((tmpl) => (
                             <option key={tmpl.id} value={tmpl.id}>
-                              {tmpl.name} ({tmpl.material} • ${tmpl.price})
+                              {tmpl.name} ({tmpl.material} • ${tmpl.price}) {tmpl.isCustom ? "⭐ Custom" : ""}
                             </option>
                           ))}
                         </select>
-                        <p className="text-[9px] text-amber-800/70">
-                          Selecting a preset pre-fills material, layout, description, sizes, and pricing options.
-                        </p>
+                        <div className="flex items-center justify-between pt-1 border-t border-amber-200/60">
+                          <p className="text-[9px] text-amber-800/70">
+                            Pre-fills type, material, sizes & pricing.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={handleSaveCurrentAsTemplate}
+                            className="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-[10px] font-medium flex items-center gap-1 shadow-sm transition-colors cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-[12px]">bookmark_add</span>
+                            Save Form as Template
+                          </button>
+                        </div>
                       </div>
 
                       {/* Title */}
@@ -1266,6 +1365,167 @@ function AdminProductsContent() {
           )}
         </div>
       </div>
+
+      {/* ── TEMPLATES MANAGER MODAL ────────────────────────────────────────── */}
+      {showTemplateModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-pure-white border border-slate-grey/20 max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded shadow-2xl p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-grey/20 pb-4">
+              <div>
+                <h2 className="font-display-lg text-lg text-deep-navy uppercase tracking-wider flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-500">dashboard_customize</span>
+                  Product Preset Templates Manager
+                </h2>
+                <p className="text-xs text-slate-grey mt-0.5">Create, manage, apply, or delete product templates to speed up product entry.</p>
+              </div>
+              <button
+                onClick={() => setShowTemplateModal(false)}
+                className="text-slate-grey hover:text-ink-black text-sm font-semibold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Create New Template Form */}
+            <form onSubmit={handleCreateManualTemplate} className="p-4 bg-soft-linen/30 border border-slate-grey/20 rounded space-y-3">
+              <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-wider font-semibold flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                Create New Custom Template
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Template Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Vintage Emerald Ring"
+                    value={newTmplName}
+                    onChange={(e) => setNewTmplName(e.target.value)}
+                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Category / Type</label>
+                  <select
+                    value={newTmplType}
+                    onChange={(e) => setNewTmplType(e.target.value)}
+                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                  >
+                    {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Default Material</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 18K Yellow Gold"
+                    value={newTmplMaterial}
+                    onChange={(e) => setNewTmplMaterial(e.target.value)}
+                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Default Price ($)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newTmplPrice}
+                    onChange={(e) => setNewTmplPrice(Number(e.target.value))}
+                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                  />
+                </div>
+                <div className="sm:col-span-2 flex flex-col gap-1">
+                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Default Description</label>
+                  <input
+                    type="text"
+                    placeholder="Optional short template description"
+                    value={newTmplDesc}
+                    onChange={(e) => setNewTmplDesc(e.target.value)}
+                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end pt-1">
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-deep-navy text-white hover:bg-ink-black rounded text-xs font-button uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[14px]">save</span>
+                  Save New Template
+                </button>
+              </div>
+            </form>
+
+            {/* List of Templates */}
+            <div className="space-y-3">
+              <h3 className="font-label-caps text-xs text-slate-grey uppercase tracking-wider font-semibold">
+                Available Templates ({allTemplates.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-1">
+                {allTemplates.map((t) => (
+                  <div key={t.id} className="p-3.5 border border-slate-grey/20 rounded bg-pure-white flex flex-col justify-between gap-3 hover:border-amber-400/60 transition-colors">
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-body-md text-xs text-ink-black font-semibold">{t.name}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-label-caps uppercase ${t.isCustom ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600"}`}>
+                          {t.isCustom ? "Custom" : "Standard"}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-grey mt-1">
+                        {t.type} • {t.material} • <span className="font-semibold text-deep-navy">${t.price}</span>
+                      </p>
+                      {t.description && (
+                        <p className="text-[10px] text-slate-grey/70 line-clamp-2 mt-1 italic">
+                          "{t.description}"
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-grey/10">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleApplyTemplate(t.id);
+                          setShowTemplateModal(false);
+                          if (!isEditing) handleNewProduct();
+                        }}
+                        className="px-2.5 py-1 bg-deep-navy text-white hover:bg-emerald-700 rounded text-[10px] font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">flash_on</span>
+                        Apply to Form
+                      </button>
+
+                      {t.isCustom && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTemplate(t.id)}
+                          className="text-[10px] text-red-600 hover:text-red-800 font-medium flex items-center gap-0.5 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[12px]">delete</span>
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end border-t border-slate-grey/20 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowTemplateModal(false)}
+                className="px-5 py-2 border border-slate-grey/30 text-slate-grey hover:text-ink-black rounded text-xs font-button uppercase tracking-wider"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
