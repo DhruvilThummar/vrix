@@ -19,29 +19,29 @@ const normalizeProductData = (body = {}) => {
     ? body.image.trim()
     : images[0] || "";
 
-  return {
-    ...body,
-    title: typeof body.title === "string" ? body.title.trim() : body.title,
+  const data = {
+    title: typeof body.title === "string" ? body.title.trim() : body.title || "",
+    material: typeof body.material === "string" ? body.material.trim() : body.material || "",
+    type: typeof body.type === "string" ? body.type.trim() : body.type || "Jewelry",
+    price: Number(body.price) || 0,
     image,
     images: images.length ? Array.from(new Set([image, ...images].filter(Boolean))) : image ? [image] : [],
-    price: Number(body.price),
-    originalPrice: body.originalPrice !== undefined && body.originalPrice !== null && !isNaN(Number(body.originalPrice)) && Number(body.originalPrice) > 0
-      ? Number(body.originalPrice)
-      : null,
+    description: typeof body.description === "string" ? body.description.trim() : body.description || "",
+    alt: typeof body.alt === "string" ? body.alt.trim() : body.alt || "",
     collection: typeof body.collection === "string" && body.collection.trim() ? body.collection.trim() : "uncategorized",
-    layoutStyle: body.layoutStyle === "asymmetric" ? "asymmetric" : "2x2",
     stock: body.stock === undefined ? 999 : Number(body.stock),
     isVisible: body.isVisible !== false,
     isVrixPlusExclusive: body.isVrixPlusExclusive === true,
-    vrixPlusPrice: body.vrixPlusPrice !== undefined && body.vrixPlusPrice !== null
-      ? Number(body.vrixPlusPrice) || null
-      : null,
+    vrixPlusPrice: body.vrixPlusPrice !== undefined && body.vrixPlusPrice !== null ? Number(body.vrixPlusPrice) || null : null,
     weight: typeof body.weight === "string" ? body.weight.trim() : "",
     dimensions: typeof body.dimensions === "string" ? body.dimensions.trim() : "",
     availableSizes: Array.isArray(body.availableSizes) ? body.availableSizes : [],
     engravingOptions: body.engravingOptions || { enabled: false, limit: 25, price: 0 },
     giftNoteOptions: body.giftNoteOptions || { enabled: false, limit: 150, price: 0 },
   };
+
+  if (body.id) data.id = body.id;
+  return data;
 };
 
 const createUniqueProductId = async (title) => {
