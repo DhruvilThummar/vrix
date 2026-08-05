@@ -9,6 +9,7 @@ const navItems = [
   { name: "Products", href: "/admin/products", icon: "inventory_2" },
   { name: "Collections", href: "/admin/collections", icon: "category" },
   { name: "Orders", href: "/admin/orders", icon: "receipt_long" },
+  { name: "Customers & Analytics", href: "/admin/users", icon: "group" },
   { name: "Marketing", href: "/admin/marketing", icon: "confirmation_number" },
   { name: "CMS", href: "/admin/cms", icon: "article" },
   { name: "Homepage Layout", href: "/admin/homepage", icon: "view_quilt" },

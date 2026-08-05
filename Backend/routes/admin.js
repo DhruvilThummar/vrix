@@ -9,7 +9,41 @@ const getAmount = (payment = {}) => Number(payment.amount || 0);
 // GET /api/admin/users
 router.get("/users", async (req, res) => {
   try {
-    res.json(await db.users.findMany());
+    const users = await db.users.findMany();
+    const payments = await db.payments.findMany().catch(() => []);
+    const carts = await db.carts?.findMany().catch(() => []) || [];
+    const wishlists = await db.wishlists?.findMany().catch(() => []) || [];
+
+    const enriched = users.map((u) => {
+      const cleanEmail = String(u.email || "").trim().toLowerCase();
+
+      // Total lifetime spending from successful payments
+      const userPayments = payments.filter(
+        (p) =>
+          String(p.userEmail || p.email || "").trim().toLowerCase() === cleanEmail &&
+          ["SUCCESS", "DELIVERED", "PAID"].includes(normalizeStatus(p.status))
+      );
+      const totalBuying = userPayments.reduce((sum, p) => sum + getAmount(p), 0);
+
+      // Active cart & wishlist counts
+      const userCart = carts.find((c) => String(c.userEmail || c.email || "").trim().toLowerCase() === cleanEmail);
+      const userWishlist = wishlists.find((w) => String(w.userEmail || w.email || "").trim().toLowerCase() === cleanEmail);
+
+      const cartItemsCount = Array.isArray(userCart?.items) ? userCart.items.reduce((sum, i) => sum + (i.quantity || 1), 0) : 0;
+      const wishlistItemsCount = Array.isArray(userWishlist?.items) ? userWishlist.items.length : 0;
+
+      return {
+        ...u,
+        totalBuying,
+        totalOrdersCount: userPayments.length,
+        cartItemsCount,
+        wishlistItemsCount,
+        cartItems: userCart?.items || [],
+        wishlistItems: userWishlist?.items || [],
+      };
+    });
+
+    res.json(enriched);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

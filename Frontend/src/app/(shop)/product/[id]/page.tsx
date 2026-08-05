@@ -82,6 +82,17 @@ function ProductContent() {
     }));
   }, [product]);
  
+  const relatedProducts = useMemo(() => {
+    if (!product || products.length <= 1) return [];
+    const filtered = products.filter((p) => {
+      if (String(p.id) === String(product.id)) return false;
+      const sameType = p.type && product.type && p.type.toLowerCase() === product.type.toLowerCase();
+      const sameCol = p.collection && product.collection && p.collection.toLowerCase() === product.collection.toLowerCase();
+      return sameType || sameCol;
+    });
+    return (filtered.length > 0 ? filtered : products.filter((p) => String(p.id) !== String(product.id))).slice(0, 4);
+  }, [products, product]);
+ 
   const toggleAccordion = (name: string) => {
     setActiveAccordion(activeAccordion === name ? null : name);
   };
@@ -234,12 +245,15 @@ function ProductContent() {
  
       <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-section-gap">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter md:gap-[80px]">
-          
-          {/* Left Column: 2x2 Image Grid (Monica Vinader PC Layout) */}
+                   {/* Left Column: Image Grid (PC Layout: 2x2 or Asymmetric) */}
           <div className="md:col-span-7 relative">
-            <ProductImageGrid2x2 images={galleryImages} title={product.title} />
+            <ProductImageGrid2x2
+              images={galleryImages}
+              title={product.title}
+              layoutStyle={product.layoutStyle || "2x2"}
+            />
           </div>
- 
+
           {/* Right Column: Sticky Product Information */}
           <div className="md:col-span-5 relative mt-8 md:mt-0">
             <div className="sticky top-[100px] flex flex-col gap-stack-lg">
@@ -249,8 +263,8 @@ function ProductContent() {
                 <h1 className="font-display-lg-mobile md:font-display-lg text-ink-black tracking-tight leading-tight uppercase">
                   {product.title}
                 </h1>
-                <p className="font-body-md text-slate-grey text-xs uppercase tracking-widest font-label-caps flex items-center gap-2">
-                  From the VRIX Collections
+                <p className="font-body-md text-slate-grey text-xs uppercase tracking-widest font-label-caps flex items-center gap-2 flex-wrap">
+                  <span>From VRIX {product.type || "Jewelry"} Collection</span>
                   {product.isVrixPlusExclusive && (
                     <span className="bg-amber-100 text-amber-900 border border-amber-300 font-label-caps text-[9px] uppercase tracking-widest px-2 py-0.5 font-bold flex items-center gap-1">
                       <span className="material-symbols-outlined text-[12px]">stars</span>
@@ -258,30 +272,42 @@ function ProductContent() {
                     </span>
                   )}
                 </p>
- 
-                <div className="flex items-baseline gap-3 mt-2">
+
+                {/* Price Display */}
+                <div className="flex items-baseline gap-3 mt-2 flex-wrap">
                   {product.isVrixPlusExclusive && product.vrixPlusPrice ? (
                     <>
                       <span className="font-headline-md text-deep-navy text-2xl font-semibold">{formatPrice(product.vrixPlusPrice)}</span>
                       <span className="font-label-caps text-[10px] text-amber-700 uppercase font-bold tracking-wider">Member Price</span>
                       <span className="font-body-md text-slate-grey/60 line-through text-sm">{formatPrice(product.price)}</span>
                     </>
+                  ) : product.originalPrice && product.originalPrice > product.price ? (
+                    <>
+                      <span className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(product.price)}</span>
+                      <span className="font-body-md text-slate-grey/60 line-through text-base">{formatPrice(product.originalPrice)}</span>
+                      <span className="bg-emerald-700 text-white font-label-caps text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
+                        {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                      </span>
+                    </>
                   ) : (
                     <p className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(product.price)}</p>
                   )}
                 </div>
- 
-                <p className="font-body-md text-on-surface-variant mt-2 leading-relaxed text-sm">
-                  {product.description || "A symbol of inner balance. Designed to remind you that you are your own center. Minimalist architecture translated into an intimate everyday companion."}
-                </p>
+
+                {/* Description (hide container spacing if empty) */}
+                {product.description && product.description.trim() ? (
+                  <p className="font-body-md text-on-surface-variant mt-2 leading-relaxed text-sm">
+                    {product.description}
+                  </p>
+                ) : null}
               </div>
- 
+
               {/* Metal / Material Finish Swatches */}
               <MetalSwatches
                 selectedMetal={selectedMetal}
                 onSelectMetal={(metal) => setSelectedMetal(metal.name)}
               />
- 
+
               {/* Configuration Form */}
               <div className="flex flex-col gap-6">
                 
@@ -404,7 +430,7 @@ function ProductContent() {
                     }`}
                   >
                     <div className="font-body-md text-on-surface-variant text-sm leading-relaxed space-y-2">
-                      <p>{product.description || "Minimalist architecture translated into an intimate everyday companion."}</p>
+                      {product.description && <p>{product.description}</p>}
                       {product.sku && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">SKU:</span> {product.sku}</p>}
                       {product.weight && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">Weight:</span> {product.weight}</p>}
                       {product.dimensions && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">Dimensions:</span> {product.dimensions}</p>}
@@ -465,11 +491,61 @@ function ProductContent() {
                 </div>
               </div>
 
- 
             </div>
           </div>
- 
+
         </div>
+
+        {/* RELATED / SUGGESTED PRODUCTS CAROUSEL SECTION */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16 pt-12 border-t border-slate-grey/20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+              <div>
+                <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">
+                  Curated Pairings
+                </span>
+                <h3 className="font-display-lg text-2xl text-deep-navy uppercase tracking-wider">
+                  You May Also Like
+                </h3>
+              </div>
+              <Link href="/collections" className="font-label-caps text-xs text-ink-black uppercase tracking-widest underline underline-offset-4 hover:text-slate-grey">
+                View All Jewelry →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {relatedProducts.map((rel) => (
+                <Link
+                  key={rel.id}
+                  href={`/product/${rel.id}`}
+                  className="group flex flex-col space-y-3 bg-soft-linen/20 border border-soft-linen p-3 hover:border-black/30 transition-all duration-300"
+                >
+                  <div className="relative aspect-[4/5] bg-soft-linen overflow-hidden">
+                    <Image
+                      src={rel.image}
+                      alt={rel.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-label-caps text-xs uppercase font-semibold text-deep-navy group-hover:text-black line-clamp-1">
+                      {rel.title}
+                    </h4>
+                    <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">
+                      {rel.material || rel.type}
+                    </p>
+                    <p className="font-body-md text-xs font-semibold mt-1">
+                      {formatPrice(rel.price)}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

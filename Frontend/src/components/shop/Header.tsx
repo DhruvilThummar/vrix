@@ -74,6 +74,7 @@ export default function Header() {
     lines: []
   });
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(true);
 
 
   useEffect(() => {
@@ -243,11 +244,26 @@ export default function Header() {
             color: announcementBar?.textColor || "#ffffff",
             fontSize: announcementBar?.fontSize || "11px"
           }}
-          className="w-full fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 transition-all duration-500 min-h-[32px] flex items-center justify-center overflow-hidden"
+          className="w-full fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 transition-all duration-500 min-h-[32px] flex items-center justify-center gap-3 overflow-hidden"
         >
           {announcementBar?.lines && announcementBar.lines.length > 0 && (
-            <div key={currentLineIndex} className="animate-fade-in-slide whitespace-nowrap">
-              {announcementBar.lines[currentLineIndex]}
+            <div key={currentLineIndex} className="animate-fade-in-slide whitespace-nowrap flex items-center gap-2">
+              <span>{announcementBar.lines[currentLineIndex]}</span>
+              {announcementBar.actionLink ? (
+                <Link
+                  href={announcementBar.actionLink}
+                  className="underline underline-offset-2 hover:opacity-80 font-bold ml-1"
+                >
+                  {announcementBar.actionText || "Shop Now →"}
+                </Link>
+              ) : (
+                <Link
+                  href="/offers"
+                  className="underline underline-offset-2 hover:opacity-80 font-bold ml-1"
+                >
+                  Shop Offers →
+                </Link>
+              )}
             </div>
           )}
         </div>
@@ -593,6 +609,61 @@ export default function Header() {
               ))}
             </div>
           )}
+
+          {/* Cart Promo Ads Carousel ("Frequently Paired With") */}
+          {allProducts.length > 0 && (
+            <div className="pt-4 border-t border-soft-linen space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                  Frequently Paired With
+                </span>
+                <span className="text-[9px] text-amber-700 font-label-caps uppercase font-bold bg-amber-50 px-2 py-0.5 border border-amber-200">
+                  ★ Special Offer
+                </span>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                {allProducts.slice(0, 5).map((p) => (
+                  <div
+                    key={p.id}
+                    className="w-36 shrink-0 p-2.5 border border-soft-linen bg-surface/30 flex flex-col justify-between space-y-2 hover:border-black/30 transition-colors"
+                  >
+                    <div className="relative aspect-square bg-soft-linen">
+                      <Image
+                        src={p.image}
+                        alt={p.title}
+                        fill
+                        className="object-cover mix-blend-multiply"
+                        sizes="120px"
+                      />
+                    </div>
+                    <div>
+                      <p className="font-label-caps text-[10px] uppercase font-semibold text-deep-navy truncate">
+                        {p.title}
+                      </p>
+                      <p className="font-body-md text-xs font-semibold mt-0.5">
+                        ${p.price}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        addItem({
+                          id: p.id,
+                          title: p.title,
+                          price: p.price,
+                          image: p.image,
+                          material: p.material || "18K Gold Vermeil",
+                        });
+                      }}
+                      className="w-full py-1.5 bg-black text-white text-[9px] font-button uppercase tracking-wider hover:bg-black/90 transition-colors cursor-pointer"
+                    >
+                      + Add to Bag
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -840,19 +911,57 @@ export default function Header() {
           </button>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-6 flex flex-col">
-          <nav className="flex flex-col gap-5 font-label-caps text-base uppercase tracking-widest">
+        <div className="flex-grow overflow-y-auto p-6 flex flex-col space-y-6">
+          <nav className="flex flex-col gap-4 font-label-caps text-sm uppercase tracking-widest">
             {navLinks.map((link, idx) => (
-              <Link
-                key={idx}
-                href={link.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`pb-2 border-b border-soft-linen ${
-                  isActive(link.path) ? "text-deep-navy font-semibold" : "text-ink-black/70 hover:text-ink-black"
-                }`}
-              >
-                {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
-              </Link>
+              <div key={idx} className="border-b border-soft-linen pb-3">
+                <div className="flex justify-between items-center">
+                  <Link
+                    href={link.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`${
+                      isActive(link.path) ? "text-deep-navy font-semibold" : "text-ink-black/80 hover:text-ink-black"
+                    }`}
+                  >
+                    {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
+                  </Link>
+
+                  {/* Expand button if link is Collections */}
+                  {(link.label.toLowerCase().includes("collection") || link.path.includes("collection")) && (
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileCategoriesOpen(!isMobileCategoriesOpen)}
+                      className="p-1 text-slate-grey hover:text-ink-black"
+                    >
+                      <span className={`material-symbols-outlined text-lg transition-transform ${isMobileCategoriesOpen ? "rotate-180" : ""}`}>
+                        expand_more
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Inline Expanded Categories Drilldown */}
+                {(link.label.toLowerCase().includes("collection") || link.path.includes("collection")) && isMobileCategoriesOpen && (
+                  <div className="mt-3 pl-4 space-y-2.5 font-label-caps text-xs text-slate-grey border-l border-slate-grey/20 animate-fade-in">
+                    {[
+                      { name: "All Rings", path: "/collections/silent-center?type=ring" },
+                      { name: "Necklaces & Pendants", path: "/collections/silent-center?type=necklace" },
+                      { name: "Earrings", path: "/collections/silent-center?type=earring" },
+                      { name: "Bracelets & Cuffs", path: "/collections/silent-center?type=bracelet" },
+                      { name: "Special Offers & Deals ★", path: "/offers" },
+                    ].map((cat) => (
+                      <Link
+                        key={cat.name}
+                        href={cat.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block py-1 hover:text-deep-navy uppercase tracking-wider text-[11px] font-semibold"
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
 

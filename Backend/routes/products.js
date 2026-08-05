@@ -24,6 +24,11 @@ const normalizeProductData = (body = {}) => {
     image,
     images: images.length ? Array.from(new Set([image, ...images].filter(Boolean))) : image ? [image] : [],
     price: Number(body.price),
+    originalPrice: body.originalPrice !== undefined && body.originalPrice !== null && !isNaN(Number(body.originalPrice)) && Number(body.originalPrice) > 0
+      ? Number(body.originalPrice)
+      : null,
+    collection: typeof body.collection === "string" && body.collection.trim() ? body.collection.trim() : "uncategorized",
+    layoutStyle: body.layoutStyle === "asymmetric" ? "asymmetric" : "2x2",
     stock: body.stock === undefined ? 999 : Number(body.stock),
     isVisible: body.isVisible !== false,
     isVrixPlusExclusive: body.isVrixPlusExclusive === true,

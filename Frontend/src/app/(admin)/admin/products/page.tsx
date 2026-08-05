@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   fetchProducts, createProduct, updateProduct, deleteProduct, uploadMediaMultiple,
   updateProductStock, updateProductVisibility, fetchAllCollections,
 } from "@/utils/api";
+import { useCurrency } from "@/utils/useCurrency";
 
 const DEFAULT_COLLECTIONS = ["silent-center", "solitude", "presence", "light"];
 const DEFAULT_COLLECTION_LABELS: Record<string, string> = {
@@ -30,6 +31,8 @@ type Product = {
   material: string;
   type: string;
   price: number;
+  originalPrice?: number;
+  layoutStyle?: "2x2" | "asymmetric";
   image: string;
   images?: string[];
   description?: string;
@@ -48,6 +51,49 @@ type Product = {
   tags?: string[];
 };
 
+// ── Preset Templates ────────────────────────────────────────────────────────
+const PRODUCT_TEMPLATES = [
+  {
+    id: "solitaire-ring",
+    name: "Solitaire Gold Ring Preset",
+    type: "Ring",
+    material: "18K Yellow Gold",
+    price: 450,
+    originalPrice: 600,
+    description: "Handcrafted architectural solitaire ring in 18K yellow gold with refined symmetry.",
+    layoutStyle: "2x2" as const,
+    availableSizes: ["5", "6", "7", "8"],
+    engravingEnabled: true,
+    giftNoteEnabled: true,
+  },
+  {
+    id: "diamond-necklace",
+    name: "Diamond Pendant Necklace Preset",
+    type: "Necklace",
+    material: "Natural Diamond & Platinum",
+    price: 890,
+    originalPrice: 1100,
+    description: "Luminous diamond pendant suspended on a fine platinum chain.",
+    layoutStyle: "asymmetric" as const,
+    availableSizes: [],
+    engravingEnabled: false,
+    giftNoteEnabled: true,
+  },
+  {
+    id: "tennis-bracelet",
+    name: "Bespoke Tennis Bracelet Preset",
+    type: "Bracelet",
+    material: "18K White Gold",
+    price: 1250,
+    originalPrice: 1500,
+    description: "Minimalist tennis bracelet engineered for fluid everyday elegance.",
+    layoutStyle: "2x2" as const,
+    availableSizes: ["6.5", "7", "7.5"],
+    engravingEnabled: true,
+    giftNoteEnabled: true,
+  }
+];
+
 // ── SKU generator ─────────────────────────────────────────────────────────────
 const generateSKU = (type: string, collection: string) => {
   const t = (type || "XX").slice(0, 2).toUpperCase();
@@ -56,10 +102,11 @@ const generateSKU = (type: string, collection: string) => {
   return `VRX-${t}${c}-${rand}`;
 };
 
-export default function AdminProductsPage() {
+function AdminProductsContent() {
   const searchParams = useSearchParams();
   const paramId = searchParams.get("id");
   const paramDrawer = searchParams.get("drawer");
+  const { formatPrice } = useCurrency();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -83,6 +130,8 @@ export default function AdminProductsPage() {
   const [fMaterial, setFMaterial] = useState("");
   const [fType, setFType] = useState("Ring");
   const [fPrice, setFPrice] = useState(0);
+  const [fOriginalPrice, setFOriginalPrice] = useState<number | "">(0);
+  const [fLayoutStyle, setFLayoutStyle] = useState<"2x2" | "asymmetric">("2x2");
   const [fImage, setFImage] = useState("");
   const [fImages, setFImages] = useState<string[]>([]);
   const [fDescription, setFDescription] = useState("");
@@ -145,7 +194,8 @@ export default function AdminProductsPage() {
 
   const resetForm = () => {
     setFTitle(""); setFSku(""); setFMaterial(""); setFType("Ring");
-    setFPrice(0); setFImage(""); setFImages([]); setFDescription("");
+    setFPrice(0); setFOriginalPrice(0); setFLayoutStyle("2x2");
+    setFImage(""); setFImages([]); setFDescription("");
     setFCollection(""); setFStock(999); setFVisible(true);
     setFVrixPlusExclusive(false); setFVrixPlusPrice(0);
     setFEngravingEnabled(false); setFEngravingLimit(25); setFEngravingPrice(0);
@@ -159,6 +209,8 @@ export default function AdminProductsPage() {
     setIsNew(false);
     setFTitle(p.title || ""); setFSku(p.sku || ""); setFMaterial(p.material || "");
     setFType(p.type || "Ring"); setFPrice(p.price || 0);
+    setFOriginalPrice(p.originalPrice || 0);
+    setFLayoutStyle(p.layoutStyle === "asymmetric" ? "asymmetric" : "2x2");
     setFImage(p.image || "");
     setFImages(normalizeImages(p.image || "", p.images));
     setFDescription(p.description || "");
@@ -175,6 +227,22 @@ export default function AdminProductsPage() {
     setFAlt(p.alt || ""); setFWeight(p.weight || ""); setFDimensions(p.dimensions || "");
     setFAvailableSizes(p.availableSizes || []); setFTags(p.tags || []);
     setActiveFormTab("Core"); setDeleteConfirm(false);
+  };
+
+  const handleApplyTemplate = (templateId: string) => {
+    const tmpl = PRODUCT_TEMPLATES.find((t) => t.id === templateId);
+    if (!tmpl) return;
+    setFTitle((prev) => prev || tmpl.name);
+    setFType(tmpl.type);
+    setFMaterial(tmpl.material);
+    setFPrice(tmpl.price);
+    setFOriginalPrice(tmpl.originalPrice);
+    setFDescription(tmpl.description);
+    setFLayoutStyle(tmpl.layoutStyle);
+    setFAvailableSizes(tmpl.availableSizes);
+    setFEngravingEnabled(tmpl.engravingEnabled);
+    setFGiftNoteEnabled(tmpl.giftNoteEnabled);
+    showToast(`Applied preset: "${tmpl.name}"`);
   };
 
   const handleNewProduct = () => {
@@ -272,7 +340,10 @@ export default function AdminProductsPage() {
     const prodData = {
       title: fTitle, sku: fSku || generateSKU(fType, fCollection),
       material: fMaterial, type: fType,
-      price: Number(fPrice), image: fImage || productImages[0], images: productImages,
+      price: Number(fPrice),
+      originalPrice: fOriginalPrice ? Number(fOriginalPrice) : undefined,
+      layoutStyle: fLayoutStyle,
+      image: fImage || productImages[0], images: productImages,
       description: fDescription, collection: fCollection || undefined,
       stock: Number(fStock), isVisible: fVisible,
       isVrixPlusExclusive: fVrixPlusExclusive,
@@ -564,6 +635,31 @@ export default function AdminProductsPage() {
                   {activeFormTab === "Core" && (
                     <div className="space-y-5">
 
+                      {/* Quick Presets / Product Templates */}
+                      <div className="p-3 bg-amber-50/50 border border-amber-200/60 rounded flex flex-col gap-1.5">
+                        <label className="font-label-caps text-[9px] text-amber-900 uppercase tracking-widest font-semibold flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">dashboard_customize</span>
+                          Product Preset Templates (Fast Fill)
+                        </label>
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) handleApplyTemplate(e.target.value);
+                          }}
+                          defaultValue=""
+                          className="w-full bg-pure-white border border-amber-300/60 py-1.5 px-2 font-body-md text-xs text-ink-black rounded outline-none cursor-pointer"
+                        >
+                          <option value="" disabled>Choose a pre-made product preset template...</option>
+                          {PRODUCT_TEMPLATES.map((tmpl) => (
+                            <option key={tmpl.id} value={tmpl.id}>
+                              {tmpl.name} ({tmpl.material} • ${tmpl.price})
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[9px] text-amber-800/70">
+                          Selecting a preset pre-fills material, layout, description, sizes, and pricing options.
+                        </p>
+                      </div>
+
                       {/* Title */}
                       <div className="flex flex-col gap-1.5">
                         <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
@@ -576,6 +672,47 @@ export default function AdminProductsPage() {
                           required placeholder="e.g. Cira Oval Solitaire Ring"
                           className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent placeholder:text-slate-grey/40"
                         />
+                      </div>
+
+                      {/* PC Image Layout Selector */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px]">grid_view</span>
+                          PC Desktop Image View Grid Style
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setFLayoutStyle("2x2")}
+                            className={`p-2.5 border text-left flex items-center gap-2 cursor-pointer transition-all ${
+                              fLayoutStyle === "2x2"
+                                ? "border-deep-navy bg-deep-navy/5 text-deep-navy font-semibold"
+                                : "border-slate-grey/25 text-slate-grey hover:border-slate-grey"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">grid_view</span>
+                            <div>
+                              <span className="font-label-caps text-[10px] uppercase block">2×2 Square Grid</span>
+                              <span className="text-[9px] font-normal text-slate-grey">4 equal image tiles</span>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setFLayoutStyle("asymmetric")}
+                            className={`p-2.5 border text-left flex items-center gap-2 cursor-pointer transition-all ${
+                              fLayoutStyle === "asymmetric"
+                                ? "border-deep-navy bg-deep-navy/5 text-deep-navy font-semibold"
+                                : "border-slate-grey/25 text-slate-grey hover:border-slate-grey"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">dashboard</span>
+                            <div>
+                              <span className="font-label-caps text-[10px] uppercase block">Asymmetric Grid</span>
+                              <span className="text-[9px] font-normal text-slate-grey">1 Tall Left + 2 Right + 3 Bottom</span>
+                            </div>
+                          </button>
+                        </div>
                       </div>
 
                       {/* SKU */}
@@ -825,23 +962,52 @@ export default function AdminProductsPage() {
                   {activeFormTab === "Pricing" && (
                     <div className="space-y-5">
 
-                      {/* Price */}
+                      {/* Price & Discount */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
                           <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[12px]">attach_money</span>
-                            Price (USD) <span className="text-red-500">*</span>
+                            <span className="material-symbols-outlined text-[12px]">local_offer</span>
+                            Selling Price (With Discount) <span className="text-red-500">*</span>
                           </label>
                           <input type="number" value={fPrice} onChange={(e) => setFPrice(Number(e.target.value))} min={0} required className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent" />
                         </div>
+
                         <div className="flex flex-col gap-1.5">
                           <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[12px]">inventory_2</span>
-                            Stock Units
+                            <span className="material-symbols-outlined text-[12px]">sell</span>
+                            Original Strikethrough Price (Without Discount)
                           </label>
-                          <input type="number" value={fStock} onChange={(e) => setFStock(Number(e.target.value))} min={0} className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent" />
-                          <p className="text-[9px] text-slate-grey/60">999 = unlimited</p>
+                          <input
+                            type="number"
+                            value={fOriginalPrice === "" ? "" : fOriginalPrice}
+                            onChange={(e) => setFOriginalPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                            placeholder="Optional original MRP price"
+                            min={0}
+                            className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent placeholder:text-slate-grey/40"
+                          />
                         </div>
+                      </div>
+
+                      {/* Discount Preview Badge */}
+                      {Number(fOriginalPrice) > Number(fPrice) && Number(fPrice) > 0 && (
+                        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between font-label-caps">
+                          <span>
+                            Discount Active: Save {formatPrice(Number(fOriginalPrice) - Number(fPrice))}
+                          </span>
+                          <span className="bg-emerald-600 text-white px-2 py-0.5 font-bold uppercase tracking-wider">
+                            {Math.round(((Number(fOriginalPrice) - Number(fPrice)) / Number(fOriginalPrice)) * 100)}% OFF
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Stock */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px]">inventory_2</span>
+                          Stock Units
+                        </label>
+                        <input type="number" value={fStock} onChange={(e) => setFStock(Number(e.target.value))} min={0} className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent" />
+                        <p className="text-[9px] text-slate-grey/60">999 = unlimited stock</p>
                       </div>
 
                       {/* Visibility */}
@@ -1101,5 +1267,13 @@ export default function AdminProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminProductsPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-slate-grey font-label-caps text-xs tracking-widest uppercase">Loading Product Manager...</div>}>
+      <AdminProductsContent />
+    </Suspense>
   );
 }

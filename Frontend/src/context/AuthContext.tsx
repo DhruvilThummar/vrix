@@ -1,6 +1,8 @@
 "use client";
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { getApiBaseUrl } from "@/utils/api";
+import { supabase } from "@/utils/supabase";
 
 interface User {
   email: string;
@@ -13,6 +15,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
+  loading: boolean;
   login: (email: string, details?: Partial<User>) => void;
   logout: () => void;
 }
@@ -22,41 +25,6 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("vrix-user");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setUser(parsed);
-
-        // Background sync with Supabase / DB backend
-        if (parsed?.email) {
-          const baseUrl = getApiBaseUrl();
-          fetch(`${baseUrl}/auth/me?email=${encodeURIComponent(parsed.email)}`)
-            .then((res) => (res.ok ? res.json() : null))
-            .then((data) => {
-              if (data && data.user) {
-                const freshUser = {
-                  email: data.user.email,
-                  name: data.user.name || parsed.name,
-                  phone: data.user.phone || parsed.phone,
-                  isVrixPlusMember: !!data.user.isVrixPlusMember,
-                  vrixPlusJoinedDate: data.user.vrixPlusJoinedDate || parsed.vrixPlusJoinedDate,
-                };
-                setUser(freshUser);
-                localStorage.setItem("vrix-user", JSON.stringify(freshUser));
-              }
-            })
-            .catch(() => {});
-        }
-      }
-    } catch (err) {
-      console.error("Failed to parse saved user:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   const login = useCallback((email: string, details?: Partial<User>) => {
     setUser((prev) => {
@@ -98,13 +66,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("vrix-user");
+    supabase.auth.signOut().catch(() => {});
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    // 1. Initial local state check from localStorage
+    try {
+      const saved = localStorage.getItem("vrix-user");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (mounted && parsed?.email) setUser(parsed);
+      }
+    } catch (err) {
+      console.error("Failed to parse saved user:", err);
+    }
+
+    // 2. Initial Supabase session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      if (session?.user?.email) {
+        const authUser: User = {
+          email: session.user.email,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email.split("@")[0],
+        };
+        login(authUser.email, authUser);
+      }
+      setLoading(false);
+    }).catch(() => {
+      if (mounted) setLoading(false);
+    });
+
+    // 3. Supabase Auth State Change Listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (session?.user?.email) {
+        const authUser: User = {
+          email: session.user.email,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email.split("@")[0],
+        };
+        login(authUser.email, authUser);
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+        localStorage.removeItem("vrix-user");
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [login]);
 
   const isLoggedIn = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn, login, logout }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, isLoggedIn, loading, login, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 }
