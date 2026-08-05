@@ -1019,9 +1019,9 @@ function AdminProductsContent() {
                         <button
                           type="button"
                           onClick={() => setFVisible(!fVisible)}
-                          className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${fVisible ? "bg-emerald-500" : "bg-slate-grey/30"}`}
+                          className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${fVisible ? "bg-emerald-500" : "bg-slate-grey/30"}`}
                         >
-                          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${fVisible ? "translate-x-5" : "translate-x-0.5"}`} />
+                          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${fVisible ? "translate-x-5" : "translate-x-0"}`} />
                         </button>
                       </div>
 
@@ -1038,9 +1038,9 @@ function AdminProductsContent() {
                           <button
                             type="button"
                             onClick={() => setFVrixPlusExclusive(!fVrixPlusExclusive)}
-                            className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${fVrixPlusExclusive ? "bg-amber-500" : "bg-slate-grey/30"}`}
+                            className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${fVrixPlusExclusive ? "bg-amber-500" : "bg-slate-grey/30"}`}
                           >
-                            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${fVrixPlusExclusive ? "translate-x-5" : "translate-x-0.5"}`} />
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${fVrixPlusExclusive ? "translate-x-5" : "translate-x-0"}`} />
                           </button>
                         </div>
                         {fVrixPlusExclusive && (
@@ -1076,9 +1076,9 @@ function AdminProductsContent() {
                           <button
                             type="button"
                             onClick={() => setFEngravingEnabled(!fEngravingEnabled)}
-                            className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${fEngravingEnabled ? "bg-deep-navy" : "bg-slate-grey/30"}`}
+                            className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${fEngravingEnabled ? "bg-deep-navy" : "bg-slate-grey/30"}`}
                           >
-                            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${fEngravingEnabled ? "translate-x-5" : "translate-x-0.5"}`} />
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${fEngravingEnabled ? "translate-x-5" : "translate-x-0"}`} />
                           </button>
                         </div>
                         {fEngravingEnabled && (
@@ -1108,9 +1108,9 @@ function AdminProductsContent() {
                           <button
                             type="button"
                             onClick={() => setFGiftNoteEnabled(!fGiftNoteEnabled)}
-                            className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${fGiftNoteEnabled ? "bg-deep-navy" : "bg-slate-grey/30"}`}
+                            className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${fGiftNoteEnabled ? "bg-deep-navy" : "bg-slate-grey/30"}`}
                           >
-                            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${fGiftNoteEnabled ? "translate-x-5" : "translate-x-0.5"}`} />
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${fGiftNoteEnabled ? "translate-x-5" : "translate-x-0"}`} />
                           </button>
                         </div>
                         {fGiftNoteEnabled && (

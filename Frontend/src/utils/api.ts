@@ -117,7 +117,7 @@ export async function validateStock(items: Array<{ id: string; title: string; qu
 }
 
 export async function createProduct(productData: any) {
-  return apiFetch<any>("/products", {
+  return adminFetch<any>("/products", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(productData),
@@ -125,7 +125,7 @@ export async function createProduct(productData: any) {
 }
 
 export async function updateProduct(id: string, productData: any) {
-  return apiFetch<any>(`/products/${id}`, {
+  return adminFetch<any>(`/products/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(productData),
@@ -133,7 +133,7 @@ export async function updateProduct(id: string, productData: any) {
 }
 
 export async function deleteProduct(id: string) {
-  return apiFetch<any>(`/products/${id}`, { method: "DELETE" });
+  return adminFetch<any>(`/products/${id}`, { method: "DELETE" });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -550,7 +550,7 @@ export async function fetchAdminStats() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function updateProductStock(id: string, stock: number) {
-  return apiFetch<any>(`/products/${id}/stock`, {
+  return adminFetch<any>(`/products/${id}/stock`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ stock }),
@@ -558,7 +558,7 @@ export async function updateProductStock(id: string, stock: number) {
 }
 
 export async function updateProductVisibility(id: string, isVisible: boolean) {
-  return apiFetch<any>(`/products/${id}/visibility`, {
+  return adminFetch<any>(`/products/${id}/visibility`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ isVisible }),
@@ -574,7 +574,7 @@ export async function fetchAllCollections() {
 }
 
 export async function saveCollections(collections: any[]) {
-  return apiFetch<any>("/collections", {
+  return adminFetch<any>("/collections", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ collections }),

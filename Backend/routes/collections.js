@@ -1,5 +1,6 @@
 import express from "express";
 import { db } from "../database.js";
+import { adminAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -25,7 +26,7 @@ router.get("/all", async (req, res) => {
 });
 
 // PUT /api/collections — Replace entire collections array
-router.put("/", async (req, res) => {
+router.put("/", adminAuth, async (req, res) => {
   const { collections } = req.body;
   if (!Array.isArray(collections)) return res.status(400).json({ error: "collections array required" });
   try {
