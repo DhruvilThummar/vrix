@@ -246,10 +246,18 @@ export const db = {
           return row ? row.value : null;
         } catch (err) {
           console.error(`Prisma cmsSettings.findUnique(${key}) failed:`, err.message);
+          if (supabase) {
+            const { data, error } = await supabase.from("cms_settings").select("value").eq("key", key).maybeSingle();
+            if (!error && data) return data.value;
+          }
           const localData = readLocalDb();
           return localData[key] || null;
         }
       } else {
+        if (supabase) {
+          const { data, error } = await supabase.from("cms_settings").select("value").eq("key", key).maybeSingle();
+          if (!error && data) return data.value;
+        }
         const localData = readLocalDb();
         return localData[key] || null;
       }
@@ -265,12 +273,20 @@ export const db = {
           return row.value;
         } catch (err) {
           console.error(`Prisma cmsSettings.upsert(${key}) failed:`, err.message);
+          if (supabase) {
+            const { data, error } = await supabase.from("cms_settings").upsert({ key, value: update.value }).select("value").single();
+            if (!error && data) return data.value;
+          }
           const localData = readLocalDb();
           localData[key] = update.value;
           writeLocalDb(localData);
           return localData[key];
         }
       } else {
+        if (supabase) {
+          const { data, error } = await supabase.from("cms_settings").upsert({ key, value: update.value }).select("value").single();
+          if (!error && data) return data.value;
+        }
         const localData = readLocalDb();
         localData[key] = update.value;
         writeLocalDb(localData);
@@ -287,11 +303,29 @@ export const db = {
           }, {});
         } catch (err) {
           console.error("Prisma cmsSettings.findMany failed:", err.message);
+          if (supabase) {
+            const { data, error } = await supabase.from("cms_settings").select("*");
+            if (!error && data) {
+              return data.reduce((acc, row) => {
+                acc[row.key] = row.value;
+                return acc;
+              }, {});
+            }
+          }
           const localData = readLocalDb();
           const { products, journal, securityLogs, payments, otps, redeemCodes, users, ...cms } = localData;
           return cms;
         }
       } else {
+        if (supabase) {
+          const { data, error } = await supabase.from("cms_settings").select("*");
+          if (!error && data) {
+            return data.reduce((acc, row) => {
+              acc[row.key] = row.value;
+              return acc;
+            }, {});
+          }
+        }
         const localData = readLocalDb();
         const { products, journal, securityLogs, payments, otps, redeemCodes, users, ...cms } = localData;
         return cms;
@@ -299,7 +333,6 @@ export const db = {
     }
   },
 
-  // Products
   products: {
     findMany: async () => {
       if (db.isConnected()) {
@@ -316,10 +349,18 @@ export const db = {
           );
         } catch (err) {
           console.error("Prisma products.findMany failed:", err.message);
+          if (supabase) {
+            const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+            if (!error && data) return data.map(withProductDefaults);
+          }
           const localData = readLocalDb();
           return localData.products || [];
         }
       } else {
+        if (supabase) {
+          const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+          if (!error && data) return data.map(withProductDefaults);
+        }
         const localData = readLocalDb();
         return localData.products || [];
       }
@@ -333,10 +374,18 @@ export const db = {
           );
         } catch (err) {
           console.error(`Prisma products.findUnique(${id}) failed:`, err.message);
+          if (supabase) {
+            const { data, error } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
+            if (!error && data) return withProductDefaults(data);
+          }
           const localData = readLocalDb();
           return (localData.products || []).find(p => p.id === id) || null;
         }
       } else {
+        if (supabase) {
+          const { data, error } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
+          if (!error && data) return withProductDefaults(data);
+        }
         const localData = readLocalDb();
         return (localData.products || []).find(p => p.id === id) || null;
       }
@@ -346,10 +395,18 @@ export const db = {
         try {
           return !!(await prisma.product.findUnique({ where: { id }, select: { id: true } }));
         } catch (err) {
+          if (supabase) {
+            const { data, error } = await supabase.from("products").select("id").eq("id", id).maybeSingle();
+            if (!error && data) return true;
+          }
           const localData = readLocalDb();
           return (localData.products || []).some(p => p.id === id);
         }
       } else {
+        if (supabase) {
+          const { data, error } = await supabase.from("products").select("id").eq("id", id).maybeSingle();
+          if (!error && data) return true;
+        }
         const localData = readLocalDb();
         return (localData.products || []).some(p => p.id === id);
       }
