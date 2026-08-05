@@ -32,8 +32,9 @@ router.get("/users", async (req, res) => {
       const cartItemsCount = Array.isArray(userCart?.items) ? userCart.items.reduce((sum, i) => sum + (i.quantity || 1), 0) : 0;
       const wishlistItemsCount = Array.isArray(userWishlist?.items) ? userWishlist.items.length : 0;
 
+      const { password: _, ...safeUser } = u;
       return {
-        ...u,
+        ...safeUser,
         totalBuying,
         totalOrdersCount: userPayments.length,
         cartItemsCount,

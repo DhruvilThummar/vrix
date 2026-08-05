@@ -1,5 +1,6 @@
 import express from "express";
 import { db } from "../database.js";
+import { adminAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -123,7 +124,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // POST /api/products
-router.post("/", async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
   try {
     const data = normalizeProductData(req.body);
     if (!data.title) return res.status(400).json({ error: "Product title is required" });
@@ -144,7 +145,7 @@ router.post("/", async (req, res) => {
 });
 
 // PUT /api/products/:id
-router.put("/:id", async (req, res) => {
+router.put("/:id", adminAuth, async (req, res) => {
   try {
     const data = normalizeProductData(req.body);
     if (!data.title) return res.status(400).json({ error: "Product title is required" });
@@ -160,7 +161,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // DELETE /api/products/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     await db.products.delete({ where: { id: req.params.id } });
     res.json({ success: true, message: `Product ${req.params.id} deleted` });
@@ -170,7 +171,7 @@ router.delete("/:id", async (req, res) => {
 });
 
 // PATCH /api/products/:id/stock
-router.patch("/:id/stock", async (req, res) => {
+router.patch("/:id/stock", adminAuth, async (req, res) => {
   const { stock } = req.body;
   if (stock === undefined || isNaN(Number(stock))) return res.status(400).json({ error: "stock (number) is required" });
   try {
@@ -182,7 +183,7 @@ router.patch("/:id/stock", async (req, res) => {
 });
 
 // PATCH /api/products/:id/visibility
-router.patch("/:id/visibility", async (req, res) => {
+router.patch("/:id/visibility", adminAuth, async (req, res) => {
   const { isVisible } = req.body;
   if (isVisible === undefined) return res.status(400).json({ error: "isVisible (boolean) is required" });
   try {

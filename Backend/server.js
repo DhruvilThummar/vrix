@@ -134,17 +134,7 @@ const healthHandler = async (req, res) => {
 app.get("/api/health", healthHandler);
 app.get("/health", healthHandler);
 
-// ─── Admin Auth Middleware ─────────────────────────────────────────────────────
-const adminAuth = (req, res, next) => {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) {
-    console.warn("⚠️  ADMIN_SECRET not set. Admin routes are unprotected.");
-    return next();
-  }
-  const provided = req.headers["x-admin-secret"] || req.query.adminSecret;
-  if (provided === secret) return next();
-  return res.status(401).json({ error: "Unauthorized: Invalid admin secret." });
-};
+import { adminAuth } from "./middleware/auth.js";
 
 // ─── API Routers (Mount under both /api and root / for full compatibility) ────
 const registerRoutes = (prefix = "") => {

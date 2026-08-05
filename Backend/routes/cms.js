@@ -1,10 +1,11 @@
 import express from "express";
 import { db } from "../database.js";
+import { adminAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // GET /api/db — Full DB snapshot (for admin CMS editor — includes api_settings)
-router.get("/db", async (req, res) => {
+router.get("/db", adminAuth, async (req, res) => {
   try {
     const cms = await db.cmsSettings.findMany();
     const products = await db.products.findMany();
@@ -30,7 +31,7 @@ router.get("/db/public", async (req, res) => {
 });
 
 // POST /api/cms — Upsert any CMS section
-router.post("/cms", async (req, res) => {
+router.post("/cms", adminAuth, async (req, res) => {
   try {
     const sections = [
       "homepage", "story", "legal", "navigation", "brand", "features",
@@ -55,7 +56,7 @@ router.post("/cms", async (req, res) => {
 });
 
 // GET /api/config — Fetch all CMS settings
-router.get("/config", async (req, res) => {
+router.get("/config", adminAuth, async (req, res) => {
   try {
     const all = await db.cmsSettings.findMany();
     res.json(all);
@@ -65,7 +66,7 @@ router.get("/config", async (req, res) => {
 });
 
 // POST /api/config/:key — Upsert a specific CMS key
-router.post("/config/:key", async (req, res) => {
+router.post("/config/:key", adminAuth, async (req, res) => {
   const { key } = req.params;
   const { value } = req.body;
   if (value === undefined) return res.status(400).json({ error: "value is required" });

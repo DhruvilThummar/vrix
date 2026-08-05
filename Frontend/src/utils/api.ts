@@ -586,11 +586,11 @@ export async function saveCollections(collections: any[]) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchSiteConfig() {
-  return apiFetch<Record<string, any>>("/config");
+  return adminFetch<Record<string, any>>("/config");
 }
 
 export async function saveSiteConfigKey(key: string, value: any) {
-  return apiFetch<any>(`/config/${key}`, {
+  return adminFetch<any>(`/config/${key}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ value }),
