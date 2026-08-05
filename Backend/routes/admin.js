@@ -9,10 +9,12 @@ const getAmount = (payment = {}) => Number(payment.amount || 0);
 // GET /api/admin/users
 router.get("/users", async (req, res) => {
   try {
-    const users = await db.users.findMany();
-    const payments = await db.payments.findMany().catch(() => []);
-    const carts = await db.carts?.findMany().catch(() => []) || [];
-    const wishlists = await db.wishlists?.findMany().catch(() => []) || [];
+    const [users, payments, carts, wishlists] = await Promise.all([
+      db.users.findMany(),
+      db.payments.findMany().catch(() => []),
+      (db.carts?.findMany().catch(() => []) || Promise.resolve([])),
+      (db.wishlists?.findMany().catch(() => []) || Promise.resolve([]))
+    ]);
 
     const enriched = users.map((u) => {
       const cleanEmail = String(u.email || "").trim().toLowerCase();
@@ -77,9 +79,11 @@ router.patch("/users/:email/vrix-plus", async (req, res) => {
 // GET /api/admin/stats
 router.get("/stats", async (req, res) => {
   try {
-    const products = await db.products.findMany();
-    const payments = await db.payments.findMany();
-    const promoCount = await db.redeemCodes.count();
+    const [products, payments, promoCount] = await Promise.all([
+      db.products.findMany(),
+      db.payments.findMany(),
+      db.redeemCodes.count()
+    ]);
 
     const totalRevenue = payments
       .filter((p) => ["SUCCESS", "DELIVERED", "PAID"].includes(normalizeStatus(p.status)))
