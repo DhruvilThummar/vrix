@@ -4,13 +4,23 @@ import { adminAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// GET /api/db — Full DB snapshot (for admin CMS editor — includes api_settings)
-router.get("/db", adminAuth, async (req, res) => {
+// GET /api/db — DB snapshot (strips sensitive api_settings if not authenticated as admin)
+router.get("/db", async (req, res) => {
   try {
     const cms = await db.cmsSettings.findMany();
     const products = await db.products.findMany();
     const journal = await db.journal.findMany();
-    res.json({ ...cms, products, journal });
+
+    const secret = process.env.ADMIN_SECRET;
+    const provided = req.headers["x-admin-secret"] || req.headers["admin-secret"] || req.query.adminSecret || req.query.admin_secret;
+    const isAdmin = !secret || provided === secret;
+
+    if (isAdmin) {
+      res.json({ ...cms, products, journal });
+    } else {
+      const { api_settings, ...publicCms } = cms;
+      res.json({ ...publicCms, products, journal });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -9,7 +9,7 @@ export function getApiBaseUrl(): string {
       return `${window.location.origin}/api`;
     }
   }
-  return "http://localhost:5000/api";
+  return "http://127.0.0.1:5000/api";
 }
 
 export function getWishlistKey(email?: string): string {
