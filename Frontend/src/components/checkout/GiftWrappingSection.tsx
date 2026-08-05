@@ -2,21 +2,22 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { useCart } from "@/context/CartContext";
+import { useCart, GiftOption } from "@/context/CartContext";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 import { useCurrency } from "@/utils/useCurrency";
 
 export default function GiftWrappingSection() {
-  const { isGiftWrapped, toggleGiftWrap, giftMessage, setGiftMessage } = useCart();
+  const { isGiftWrapped, toggleGiftWrap, giftMessage, setGiftMessage, selectedGiftOptions, toggleGiftOption } = useCart();
   const { formatPrice } = useCurrency();
 
   const [config, setConfig] = useState({
     isEnabled: true,
-    title: "Signature Gift Packaging & Handwritten Ribbon Card",
+    title: "Signature Gift Packaging & Ribbon Card",
     price: 250,
     image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
     description: "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card."
   });
+  const [dbGiftOptions, setDbGiftOptions] = useState<GiftOption[]>([]);
 
   useEffect(() => {
     fetchDb()
@@ -24,11 +25,14 @@ export default function GiftWrappingSection() {
         if (res.gift_wrapping) {
           setConfig({
             isEnabled: res.gift_wrapping.isEnabled !== false,
-            title: res.gift_wrapping.title || "Signature Gift Packaging & Handwritten Ribbon Card",
+            title: res.gift_wrapping.title || "Signature Gift Packaging & Ribbon Card",
             price: res.gift_wrapping.price || 250,
             image: res.gift_wrapping.image || "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
             description: res.gift_wrapping.description || "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card."
           });
+          if (Array.isArray(res.gift_wrapping.giftOptions)) {
+            setDbGiftOptions(res.gift_wrapping.giftOptions);
+          }
         }
       })
       .catch((err) => console.error("Failed to load gift_wrapping from db:", err));
@@ -37,16 +41,29 @@ export default function GiftWrappingSection() {
   if (!config.isEnabled) return null;
 
   return (
-    <div className="border border-soft-linen bg-surface/30 p-5 space-y-4 rounded">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="border border-soft-linen bg-surface/30 p-5 space-y-5 rounded shadow-xs">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-label-caps text-xs text-deep-navy font-bold uppercase tracking-wider flex items-center gap-2">
+            <span className="material-symbols-outlined text-amber-600 text-lg">card_giftcard</span>
+            Luxury Gift Packaging Options
+          </h3>
+          <p className="font-body-md text-xs text-slate-grey mt-0.5">
+            Enhance your luxury jewelry order with bespoke gift packaging and custom calligraphy notes.
+          </p>
+        </div>
+      </div>
+
+      {/* Primary Signature Gift Wrapping */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3.5 bg-pure-white border border-slate-grey/20 rounded">
         <div className="flex items-center gap-4">
-          <div className="relative w-16 h-16 shrink-0 bg-soft-linen overflow-hidden border border-soft-linen rounded">
+          <div className="relative w-14 h-14 shrink-0 bg-soft-linen overflow-hidden border border-soft-linen rounded">
             <Image
               src={config.image}
               alt={config.title}
               fill
               className="object-cover"
-              sizes="64px"
+              sizes="56px"
             />
           </div>
 
@@ -54,13 +71,12 @@ export default function GiftWrappingSection() {
             <h4 className="font-label-caps text-xs text-deep-navy font-bold uppercase tracking-wider">
               {config.title}
             </h4>
-            <p className="font-body-md text-xs text-slate-grey mt-0.5 leading-relaxed">
+            <p className="font-body-md text-[11px] text-slate-grey mt-0.5 leading-relaxed">
               {config.description}
             </p>
           </div>
         </div>
 
-        {/* User requested Gift Wrapping Button */}
         <button
           type="button"
           onClick={() => toggleGiftWrap(!isGiftWrapped, config.price)}
@@ -82,20 +98,68 @@ export default function GiftWrappingSection() {
         </button>
       </div>
 
-      {/* Gift Note Box when checked */}
-      {isGiftWrapped && (
+      {/* Multiple Gift Packaging Catalog from DB */}
+      {dbGiftOptions.length > 0 && (
+        <div className="space-y-2.5">
+          <h4 className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+            Select Custom Presentation Cases & Cards
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {dbGiftOptions.map((option: GiftOption) => {
+              const isSelected = selectedGiftOptions.some((g) => g.id === option.id);
+              return (
+                <div
+                  key={option.id}
+                  onClick={() => toggleGiftOption(option)}
+                  className={`p-3 border rounded cursor-pointer transition-all duration-200 flex items-center justify-between gap-3 ${
+                    isSelected
+                      ? "bg-deep-navy text-pure-white border-deep-navy shadow-sm"
+                      : "bg-pure-white text-ink-black border-slate-grey/20 hover:border-deep-navy/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative w-12 h-12 shrink-0 overflow-hidden rounded border border-slate-grey/10">
+                      <Image src={option.image} alt={option.title} fill className="object-cover" sizes="48px" />
+                    </div>
+                    <div className="min-w-0">
+                      <h5 className={`font-label-caps text-[11px] font-bold uppercase tracking-wider truncate ${isSelected ? "text-pure-white" : "text-deep-navy"}`}>
+                        {option.title}
+                      </h5>
+                      <p className={`font-body-md text-[10px] line-clamp-1 mt-0.5 ${isSelected ? "text-slate-200" : "text-slate-grey"}`}>
+                        {option.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className={`font-label-caps text-xs font-bold ${isSelected ? "text-amber-300" : "text-deep-navy"}`}>
+                      +{formatPrice(option.price)}
+                    </span>
+                    <div className="mt-0.5">
+                      <span className={`material-symbols-outlined text-base ${isSelected ? "text-amber-400" : "text-slate-300"}`}>
+                        {isSelected ? "check_circle" : "add_circle"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Gift Note Box when checked or gift options selected */}
+      {(isGiftWrapped || selectedGiftOptions.length > 0) && (
         <div className="pt-3 border-t border-soft-linen space-y-2 animate-fade-in">
           <div className="flex justify-between items-center text-[10px] font-label-caps text-slate-grey uppercase tracking-widest">
-            <span>Handwritten Gift Message</span>
+            <span>Handwritten Calligraphy Gift Message</span>
             <span>{giftMessage.length}/150</span>
           </div>
           <textarea
+            rows={2}
             value={giftMessage}
             onChange={(e) => setGiftMessage(e.target.value)}
-            maxLength={150}
-            rows={2}
-            placeholder="Write a personalized gift note to be printed on card..."
-            className="w-full border border-slate-grey/25 p-2.5 text-xs font-body-md text-ink-black focus:border-black outline-none bg-pure-white rounded"
+            placeholder="Write your custom gift message here (printed on luxury cardstock)..."
+            className="w-full bg-pure-white border border-slate-grey/30 p-2.5 text-xs text-ink-black outline-none focus:border-deep-navy rounded resize-none"
           />
         </div>
       )}

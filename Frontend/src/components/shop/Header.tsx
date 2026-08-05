@@ -18,7 +18,7 @@ const DEFAULT_LINKS: any[] = [];
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem, isGiftWrapped, toggleGiftWrap, giftWrapPrice } = useCart();
+  const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem, isGiftWrapped, toggleGiftWrap, giftWrapPrice, selectedGiftOptions, toggleGiftOption } = useCart();
   const { user, isLoggedIn } = useAuth();
   const { currency, changeCurrency, formatPrice } = useCurrency();
 
@@ -703,7 +703,13 @@ export default function Header() {
                   <span className="font-semibold text-deep-navy">+{formatPrice(giftWrapPrice)}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center text-sm font-semibold text-deep-navy">
+              {selectedGiftOptions.map((g) => (
+                <div key={g.id} className="flex justify-between items-center text-slate-grey font-label-caps text-[11px]">
+                  <span className="truncate pr-2">{g.title}</span>
+                  <span className="font-semibold text-deep-navy shrink-0">+{formatPrice(g.price)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between items-center text-sm font-semibold text-deep-navy pt-1 border-t border-slate-grey/10">
                 <span className="font-label-caps">Total</span>
                 <span className="font-body-md text-base">{formatPrice(subtotal)}</span>
               </div>

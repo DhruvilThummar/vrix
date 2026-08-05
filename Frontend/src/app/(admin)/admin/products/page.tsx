@@ -249,7 +249,10 @@ function AdminProductsContent() {
   const handleApplyTemplate = (templateId: string) => {
     const tmpl = allTemplates.find((t) => t.id === templateId);
     if (!tmpl) return;
-    setFTitle((prev) => prev || tmpl.name);
+    setIsEditing(true);
+    setIsNew(true);
+    setSelectedProduct(null);
+    setFTitle(tmpl.name);
     setFType(tmpl.type || "Ring");
     setFMaterial(tmpl.material || "");
     setFPrice(tmpl.price || 0);
@@ -1490,7 +1493,6 @@ function AdminProductsContent() {
                         onClick={() => {
                           handleApplyTemplate(t.id);
                           setShowTemplateModal(false);
-                          if (!isEditing) handleNewProduct();
                         }}
                         className="px-2.5 py-1 bg-deep-navy text-white hover:bg-emerald-700 rounded text-[10px] font-medium flex items-center gap-1 cursor-pointer transition-colors"
                       >

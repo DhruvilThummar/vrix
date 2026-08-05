@@ -136,6 +136,7 @@ export default function AdminCMSPage() {
   const [giftWrapPrice, setGiftWrapPrice] = useState(250);
   const [giftWrapImage, setGiftWrapImage] = useState("");
   const [giftWrapDesc, setGiftWrapDesc] = useState("");
+  const [giftOptionsList, setGiftOptionsList] = useState<any[]>([]);
 
   // --- Metal Types / Swatches States ---
   const [metalTypesList, setMetalTypesList] = useState<any[]>([]);
@@ -361,6 +362,9 @@ export default function AdminCMSPage() {
           setGiftWrapPrice(res.gift_wrapping.price || 250);
           setGiftWrapImage(res.gift_wrapping.image || "");
           setGiftWrapDesc(res.gift_wrapping.description || "");
+          if (Array.isArray(res.gift_wrapping.giftOptions)) {
+            setGiftOptionsList(res.gift_wrapping.giftOptions);
+          }
         }
         // Metal swatches
         if (Array.isArray(res.metal_types)) {
@@ -520,7 +524,8 @@ export default function AdminCMSPage() {
           title: giftWrapTitle,
           price: Number(giftWrapPrice),
           image: giftWrapImage,
-          description: giftWrapDesc
+          description: giftWrapDesc,
+          giftOptions: giftOptionsList
         },
         metal_types: metalTypesList,
         announcement_bar: {
@@ -1226,6 +1231,123 @@ export default function AdminCMSPage() {
                       className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
                       rows={3}
                     />
+                  </div>
+
+                  {/* Additional Manageable Gift Options Catalog */}
+                  <div className="border-t border-slate-grey/20 pt-6 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-label-caps text-xs text-deep-navy font-bold uppercase tracking-wider">
+                          Custom Presentation Cases & Cards Catalog ({giftOptionsList.length})
+                        </h4>
+                        <p className="font-body-md text-xs text-slate-grey mt-0.5">
+                          Add, edit, or remove luxury gift packaging options offered to customers.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setGiftOptionsList([
+                            ...giftOptionsList,
+                            {
+                              id: `gift-${Date.now()}`,
+                              title: "Royal Presentation Box",
+                              price: 300,
+                              image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
+                              description: "Custom handcrafted presentation case."
+                            }
+                          ])
+                        }
+                        className="px-3.5 py-1.5 bg-deep-navy text-white hover:bg-ink-black rounded text-[10px] font-label-caps uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">add</span>
+                        + Add Gift Option
+                      </button>
+                    </div>
+
+                    {giftOptionsList.length === 0 ? (
+                      <div className="p-6 text-center border border-dashed border-slate-grey/30 rounded text-xs text-slate-grey">
+                        No additional gift options added yet. Click "+ Add Gift Option" above to create custom gift packaging items.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {giftOptionsList.map((gOpt, gIdx) => (
+                          <div key={gOpt.id || gIdx} className="p-4 border border-slate-grey/20 bg-soft-linen/20 rounded space-y-3 relative group">
+                            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                              <span className="font-label-caps text-[10px] text-deep-navy uppercase font-bold">
+                                Option #{gIdx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setGiftOptionsList(giftOptionsList.filter((_, idx) => idx !== gIdx))}
+                                className="text-red-600 hover:text-red-800 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">delete</span>
+                                Delete
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase font-semibold">Title</label>
+                                <input
+                                  type="text"
+                                  value={gOpt.title || ""}
+                                  onChange={(e) => {
+                                    const updated = [...giftOptionsList];
+                                    updated[gIdx].title = e.target.value;
+                                    setGiftOptionsList(updated);
+                                  }}
+                                  className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent font-medium"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase font-semibold">Price (₹)</label>
+                                <input
+                                  type="number"
+                                  value={gOpt.price || 0}
+                                  onChange={(e) => {
+                                    const updated = [...giftOptionsList];
+                                    updated[gIdx].price = Number(e.target.value);
+                                    setGiftOptionsList(updated);
+                                  }}
+                                  className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent font-medium"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-label-caps text-slate-grey uppercase font-semibold">Image URL</label>
+                              <input
+                                type="text"
+                                value={gOpt.image || ""}
+                                onChange={(e) => {
+                                  const updated = [...giftOptionsList];
+                                  updated[gIdx].image = e.target.value;
+                                  setGiftOptionsList(updated);
+                                }}
+                                className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                              />
+                              <VisualImagePreview src={gOpt.image} alt={gOpt.title} />
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[9px] font-label-caps text-slate-grey uppercase font-semibold">Description</label>
+                              <input
+                                type="text"
+                                value={gOpt.description || ""}
+                                onChange={(e) => {
+                                  const updated = [...giftOptionsList];
+                                  updated[gIdx].description = e.target.value;
+                                  setGiftOptionsList(updated);
+                                }}
+                                className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </section>
               </div>

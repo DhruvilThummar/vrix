@@ -72,33 +72,14 @@ export default function Home() {
 
   const slides = useMemo(() => {
     const customSlides = (store.homepage as any).heroSlides || [];
-    if (customSlides.length > 1) return customSlides;
-
-    const base = customSlides.length === 1 ? customSlides : [
+    if (customSlides.length > 0) return customSlides;
+    return [
       {
         title: store.homepage.heroTitle || "the moments that belong only to you.",
         subtitle: store.homepage.heroSubtitle || "Luxury for",
         image: store.homepage.heroImage || DEFAULT_DATA.homepage.heroImage,
         link: "/collections/silent-center",
         linkText: "Discover Collections"
-      }
-    ];
-
-    return [
-      ...base,
-      {
-        title: "Architectural Fine Jewelry",
-        subtitle: "Signature Atelier",
-        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1600&auto=format&fit=crop",
-        link: "/collections",
-        linkText: "Explore Atelier"
-      },
-      {
-        title: "Solitaires & Bespoke Craft",
-        subtitle: "Handcrafted Elegance",
-        image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1600&auto=format&fit=crop",
-        link: "/bespoke",
-        linkText: "Design Bespoke Piece"
       }
     ];
   }, [store.homepage]);

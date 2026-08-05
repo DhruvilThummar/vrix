@@ -14,6 +14,14 @@ export interface CartItem {
   giftNote?: string;
 }
 
+export interface GiftOption {
+  id: string;
+  title: string;
+  price: number;
+  image: string;
+  description?: string;
+}
+
 interface CartContextType {
   items: CartItem[];
   totalItems: number;
@@ -24,6 +32,8 @@ interface CartContextType {
   isGiftWrapped: boolean;
   giftMessage: string;
   giftWrapPrice: number;
+  selectedGiftOptions: GiftOption[];
+  toggleGiftOption: (option: GiftOption) => void;
   toggleGiftWrap: (wrapped: boolean, price?: number) => void;
   setGiftMessage: (msg: string) => void;
   addItem: (item: Omit<CartItem, "quantity">) => void;
@@ -45,6 +55,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isGiftWrapped, setIsGiftWrapped] = useState(false);
   const [giftMessage, setGiftMessageState] = useState("");
   const [giftWrapPrice, setGiftWrapPrice] = useState(250);
+  const [selectedGiftOptions, setSelectedGiftOptions] = useState<GiftOption[]>([]);
 
   // Hydrate from localStorage per user email
   useEffect(() => {
@@ -69,6 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsGiftWrapped(!!parsed.isGiftWrapped);
         setGiftMessageState(parsed.giftMessage || "");
         if (parsed.giftWrapPrice) setGiftWrapPrice(parsed.giftWrapPrice);
+        if (Array.isArray(parsed.selectedGiftOptions)) setSelectedGiftOptions(parsed.selectedGiftOptions);
       }
     } catch {}
   }, [user?.email]);
@@ -85,13 +97,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem(
       "vrix-gift-wrap",
-      JSON.stringify({ isGiftWrapped, giftMessage, giftWrapPrice })
+      JSON.stringify({ isGiftWrapped, giftMessage, giftWrapPrice, selectedGiftOptions })
     );
-  }, [isGiftWrapped, giftMessage, giftWrapPrice]);
+  }, [isGiftWrapped, giftMessage, giftWrapPrice, selectedGiftOptions]);
 
   const toggleGiftWrap = useCallback((wrapped: boolean, price?: number) => {
     setIsGiftWrapped(wrapped);
     if (price !== undefined) setGiftWrapPrice(price);
+  }, []);
+
+  const toggleGiftOption = useCallback((option: GiftOption) => {
+    setSelectedGiftOptions((prev) => {
+      const exists = prev.some((g) => g.id === option.id);
+      if (exists) {
+        return prev.filter((g) => g.id !== option.id);
+      }
+      return [...prev, option];
+    });
   }, []);
 
   const setGiftMessage = useCallback((msg: string) => {
@@ -136,13 +158,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     clearPromo();
     setIsGiftWrapped(false);
     setGiftMessageState("");
+    setSelectedGiftOptions([]);
   }, [clearPromo]);
 
-  const subtotal = items.reduce((acc, i) => acc + i.price * i.quantity, 0) + (isGiftWrapped ? giftWrapPrice : 0);
+  const giftOptionsTotal = selectedGiftOptions.reduce((sum, g) => sum + g.price, 0);
+  const subtotal = items.reduce((acc, i) => acc + i.price * i.quantity, 0) + (isGiftWrapped ? giftWrapPrice : 0) + giftOptionsTotal;
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, totalItems, subtotal, discount, promoCode, promoType, isGiftWrapped, giftMessage, giftWrapPrice, toggleGiftWrap, setGiftMessage, addItem, removeItem, updateQty, applyPromo, clearPromo, clearCart }}>
+    <CartContext.Provider value={{ items, totalItems, subtotal, discount, promoCode, promoType, isGiftWrapped, giftMessage, giftWrapPrice, selectedGiftOptions, toggleGiftOption, toggleGiftWrap, setGiftMessage, addItem, removeItem, updateQty, applyPromo, clearPromo, clearCart }}>
       {children}
     </CartContext.Provider>
   );
