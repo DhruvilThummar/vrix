@@ -71,16 +71,56 @@ export default function Home() {
   };
 
   const slides = useMemo(() => {
-    return (store.homepage as any).heroSlides || [];
+    const customSlides = (store.homepage as any).heroSlides || [];
+    if (customSlides.length > 0) return customSlides;
+    return [
+      {
+        title: store.homepage.heroTitle || "the moments that belong only to you.",
+        subtitle: store.homepage.heroSubtitle || "Luxury for",
+        image: store.homepage.heroImage || DEFAULT_DATA.homepage.heroImage,
+        link: "/collections/silent-center",
+        linkText: "Discover Collections"
+      },
+      {
+        title: "Architectural Fine Jewelry",
+        subtitle: "Signature Atelier",
+        image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1600&auto=format&fit=crop",
+        link: "/collections",
+        linkText: "Explore Atelier"
+      },
+      {
+        title: "Solitaires & Bespoke Craft",
+        subtitle: "Handcrafted Elegance",
+        image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1600&auto=format&fit=crop",
+        link: "/bespoke",
+        linkText: "Design Bespoke Piece"
+      }
+    ];
   }, [store.homepage]);
 
+  // Always-on Hero Auto Slider (every 4 seconds)
   useEffect(() => {
     if (slides.length <= 1) return;
     const interval = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 4000);
     return () => clearInterval(interval);
   }, [slides]);
+
+  // Always-on Category Carousel Auto Scroll (every 3.5 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (categoryScrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = categoryScrollRef.current;
+        if (scrollLeft + clientWidth >= scrollWidth - 10) {
+          categoryScrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          categoryScrollRef.current.scrollBy({ left: clientWidth / 2, behavior: "smooth" });
+        }
+      }
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     Promise.all([fetchDb(), fetchProducts()])
