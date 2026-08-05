@@ -375,8 +375,12 @@ export default function AdminCMSPage() {
     setSaveLoading(true);
 
     try {
+      const currentDb = await fetchDb();
+      const existingHomepage = currentDb.homepage || {};
+
       await updateCMS({
         homepage: {
+          ...existingHomepage,
           heroTitle,
           heroSubtitle,
           heroImage,

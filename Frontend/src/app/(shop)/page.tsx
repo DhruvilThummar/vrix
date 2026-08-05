@@ -56,6 +56,19 @@ export default function Home() {
   const [store, setStore] = useState(DEFAULT_DATA);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const slides = useMemo(() => {
+    return (store.homepage as any).heroSlides || [];
+  }, [store.homepage]);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [slides]);
 
   useEffect(() => {
     Promise.all([fetchDb(), fetchProducts()])
@@ -111,47 +124,90 @@ export default function Home() {
           <div className="absolute inset-0 z-0">
             <Skeleton height="100%" borderRadius="0px" containerClassName="w-full h-full block" />
           </div>
+        ) : slides.length > 0 ? (
+          slides.map((slide: any, sIdx: number) => (
+            <div
+              key={sIdx}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                sIdx === activeSlide ? "opacity-100 z-10 animate-fade-in" : "opacity-0 z-0 pointer-events-none"
+              }`}
+            >
+              <div className="absolute inset-0">
+                <SkeletonImage
+                  alt={slide.title || "Hero Slide"}
+                  fill
+                  className="object-cover object-center"
+                  src={slide.image}
+                  priority={sIdx === 0}
+                  sizes="100vw"
+                />
+              </div>
+              <div className="absolute inset-0 bg-black/10 md:bg-transparent" />
+              
+              <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
+                <div className="max-w-xl text-ink-black md:text-pure-white">
+                  <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-80">
+                    {slide.subtitle}
+                  </p>
+                  <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
+                    {slide.title}
+                  </h1>
+                  <Link
+                    href={slide.link || "/collections/silent-center"}
+                    className="inline-block font-button text-button uppercase px-8 py-3 border border-ink-black md:border-pure-white text-ink-black md:text-pure-white hover:bg-ink-black hover:text-white md:hover:bg-pure-white md:hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
+                  >
+                    {slide.linkText || "Discover Collections"}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))
         ) : (
-          <div className="absolute inset-0 z-0">
-            <SkeletonImage
-              alt="Hero Background"
-              fill
-              className="object-cover object-center"
-              src={store.homepage.heroImage}
-              priority
-              sizes="100vw"
-            />
-          </div>
-
+          <>
+            <div className="absolute inset-0 z-0">
+              <SkeletonImage
+                alt="Hero Background"
+                fill
+                className="object-cover object-center"
+                src={store.homepage.heroImage}
+                priority
+                sizes="100vw"
+              />
+            </div>
+            <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full">
+              <div className="max-w-xl text-ink-black md:text-pure-white">
+                <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-80">
+                  {store.homepage.heroSubtitle}
+                </p>
+                <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
+                  {store.homepage.heroTitle}
+                </h1>
+                <Link
+                  href="/collections/silent-center"
+                  className="inline-block font-button text-button uppercase px-8 py-3 border border-ink-black md:border-pure-white text-ink-black md:text-pure-white hover:bg-ink-black hover:text-white md:hover:bg-pure-white md:hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
+                >
+                  Discover Collections
+                </Link>
+              </div>
+            </div>
+          </>
         )}
-        
-        <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full">
-          <div className="max-w-xl text-ink-black md:text-pure-white">
-            <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-80">
-              {loading ? <Skeleton width={120} /> : store.homepage.heroSubtitle}
-            </p>
-            <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
-              {loading ? (
-                <>
-                  <Skeleton width="90%" />
-                  <Skeleton width="60%" />
-                </>
-              ) : (
-                store.homepage.heroTitle
-              )}
-            </h1>
-            {loading ? (
-              <Skeleton width={160} height={40} />
-            ) : (
-              <Link
-                href="/collections/silent-center"
-                className="inline-block font-button text-button uppercase px-8 py-3 border border-ink-black md:border-pure-white text-ink-black md:text-pure-white hover:bg-ink-black hover:text-white md:hover:bg-pure-white md:hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
-              >
-                Discover Collections
-              </Link>
-            )}
+
+        {/* Carousel indicator dots */}
+        {!loading && slides.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2.5">
+            {slides.map((_, sIdx: number) => (
+              <button
+                key={sIdx}
+                onClick={() => setActiveSlide(sIdx)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  sIdx === activeSlide ? "bg-ink-black md:bg-pure-white scale-125" : "bg-ink-black/40 md:bg-pure-white/40 hover:bg-ink-black/70 md:hover:bg-pure-white/70"
+                }`}
+                aria-label={`Go to slide ${sIdx + 1}`}
+              />
+            ))}
           </div>
-        </div>
+        )}
       </section>
 
       {/* ─── Collections Grid ─── */}
@@ -166,7 +222,7 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex flex-col">
                 <div className="aspect-[4/5] mb-stack-md w-full">
@@ -180,7 +236,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
             {featuredCollectionsList.map((col: any) => (
               <Link
                 key={col.id}
@@ -235,7 +291,7 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="aspect-square w-full">
                 <Skeleton height="100%" borderRadius="0px" containerClassName="w-full h-full block" />
@@ -243,7 +299,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
             {(store.homepage.categories && store.homepage.categories.length > 0 ? store.homepage.categories : DEFAULT_CATEGORIES).map((cat: any, idx: number) => (
               <Link key={idx} href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block">
                 <SkeletonImage
@@ -277,7 +333,7 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex flex-col">
                 <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden mb-2">
@@ -291,7 +347,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
             {newArrivalsList.map((p: any) => (
               <Link key={p.id} href={`/product/${p.id}`} className="flex flex-col group cursor-pointer">
                 <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden border border-slate-grey/10">
@@ -328,7 +384,7 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex flex-col">
                 <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden mb-2">
@@ -342,7 +398,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-product-gap">
             {featuredProductsList.map((p: any) => (
               <Link key={p.id} href={`/product/${p.id}`} className="flex flex-col group cursor-pointer">
                 <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden border border-slate-grey/10">

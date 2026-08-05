@@ -44,35 +44,22 @@ const normalizePrismaDatabaseUrl = () => {
   }
 };
 
-// Local DB Helpers
-let memoryDbCache = null;
-
+// Local DB Helpers (Only used for initial data seeding if db.json exists on disk)
 const readLocalDb = () => {
   try {
-    const data = fsDirect.readFileSync(DB_PATH, "utf8");
-    const parsed = JSON.parse(data);
-    memoryDbCache = parsed;
-    return parsed;
+    if (fsDirect.existsSync(DB_PATH)) {
+      const data = fsDirect.readFileSync(DB_PATH, "utf8");
+      return JSON.parse(data);
+    }
   } catch (error) {
-    if (memoryDbCache) return memoryDbCache;
-    console.error("Error reading local db.json fallback:", error);
-    return {};
+    console.error("Error reading local db.json seeding file:", error);
   }
+  return {};
 };
 
 const writeLocalDb = (data) => {
-  memoryDbCache = data;
-  try {
-    if (process.env.VERCEL) {
-      console.warn("Database Access Layer: In-memory store updated (Vercel environment).");
-      return true;
-    }
-    fsDirect.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf8");
-    return true;
-  } catch (error) {
-    console.error("Error writing to local db.json fallback:", error);
-    return false;
-  }
+  // Disable writing to local files as Supabase DB is the source of truth
+  return true;
 };
 
 // Check if DATABASE_URL is configured and valid for PostgreSQL
@@ -94,10 +81,11 @@ if (isDbConnected) {
     if (process.env.NODE_ENV !== "production") globalThis.__prismaClient = prisma;
     console.log("Database Access Layer: Prisma client initialized.");
   } catch (err) {
-    console.error("Database Access Layer: Failed to load Prisma Client, falling back to db.json", err);
+    console.error("Database Access Layer: Failed to load Prisma Client:", err);
+    throw err;
   }
 } else {
-  console.log("Database Access Layer: DATABASE_URL not set or not PostgreSQL. Falling back to local db.json.");
+  throw new Error("Database Access Layer: DATABASE_URL is not set or not a valid PostgreSQL string. Complete Supabase database URL is required.");
 }
 
 let tablesCreated = false;

@@ -42,6 +42,14 @@ export default function AdminHomepageLayoutPage() {
   const [heroTitle, setHeroTitle] = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
   const [heroImage, setHeroImage] = useState("");
+  const [heroSlides, setHeroSlides] = useState<any[]>([]);
+  const [slideTitle, setSlideTitle] = useState("");
+  const [slideSubtitle, setSlideSubtitle] = useState("");
+  const [slideImage, setSlideImage] = useState("");
+  const [slideLink, setSlideLink] = useState("");
+  const [slideLinkText, setSlideLinkText] = useState("");
+  const [editSlideIdx, setEditSlideIdx] = useState<number | null>(null);
+
   const [homepageTagline, setHomepageTagline] = useState("");
   const [philosophyTitle, setPhilosophyTitle] = useState("");
   const [philosophyCards, setPhilosophyCards] = useState<any[]>([]);
@@ -73,6 +81,7 @@ export default function AdminHomepageLayoutPage() {
           setHeroTitle(res.homepage.heroTitle || "");
           setHeroSubtitle(res.homepage.heroSubtitle || "");
           setHeroImage(res.homepage.heroImage || "");
+          setHeroSlides(res.homepage.heroSlides || []);
           setHomepageTagline(res.homepage.tagline || "");
           setPhilosophyTitle(res.homepage.philosophyTitle || "");
           setPhilosophyCards(res.homepage.philosophy || []);
@@ -101,6 +110,7 @@ export default function AdminHomepageLayoutPage() {
           heroTitle,
           heroSubtitle,
           heroImage,
+          heroSlides,
           tagline: homepageTagline,
           philosophyTitle,
           philosophy: philosophyCards,
@@ -118,6 +128,65 @@ export default function AdminHomepageLayoutPage() {
     } finally {
       setSaveLoading(false);
     }
+  };
+
+  const addSlide = () => {
+    if (!slideImage) {
+      showToast("Slide Image URL is required.");
+      return;
+    }
+    const newSlide = {
+      title: slideTitle,
+      subtitle: slideSubtitle,
+      image: slideImage,
+      link: slideLink,
+      linkText: slideLinkText || "Discover Collections",
+    };
+    if (editSlideIdx !== null) {
+      const updated = [...heroSlides];
+      updated[editSlideIdx] = newSlide;
+      setHeroSlides(updated);
+      setEditSlideIdx(null);
+    } else {
+      setHeroSlides([...heroSlides, newSlide]);
+    }
+    setSlideTitle("");
+    setSlideSubtitle("");
+    setSlideImage("");
+    setSlideLink("");
+    setSlideLinkText("");
+  };
+
+  const editSlide = (idx: number) => {
+    const slide = heroSlides[idx];
+    setSlideTitle(slide.title || "");
+    setSlideSubtitle(slide.subtitle || "");
+    setSlideImage(slide.image || "");
+    setSlideLink(slide.link || "");
+    setSlideLinkText(slide.linkText || "");
+    setEditSlideIdx(idx);
+  };
+
+  const removeSlide = (idx: number) => {
+    setHeroSlides(heroSlides.filter((_, i) => i !== idx));
+    if (editSlideIdx === idx) {
+      setEditSlideIdx(null);
+      setSlideTitle("");
+      setSlideSubtitle("");
+      setSlideImage("");
+      setSlideLink("");
+      setSlideLinkText("");
+    }
+  };
+
+  const moveSlide = (idx: number, direction: "up" | "down") => {
+    const updated = [...heroSlides];
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= updated.length) return;
+    const temp = updated[idx];
+    updated[idx] = updated[targetIdx];
+    updated[targetIdx] = temp;
+    setHeroSlides(updated);
   };
 
   const addCategory = () => {
@@ -234,6 +303,165 @@ export default function AdminHomepageLayoutPage() {
               required
             />
             <VisualImagePreview src={heroImage} alt="Hero banner preview" />
+          </div>
+        </section>
+
+        {/* Hero Carousel Slides Manager */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+          <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+            <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+              Homepage Hero Carousel Slides
+            </h3>
+            <span className="text-[10px] font-label-caps bg-deep-navy/10 text-deep-navy px-2 py-0.5 rounded font-bold">New Carousel Mode</span>
+          </div>
+          <p className="text-xs text-slate-grey font-body-md leading-relaxed">
+            Configure multiple slides for the hero section. When slides are added, they will act as a sliding carousel. If no slides are configured, the single image settings above will be used as a fallback.
+          </p>
+
+          {/* Current Slides list */}
+          {heroSlides.length > 0 && (
+            <div className="space-y-3">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold block">Current Slides ({heroSlides.length})</label>
+              <div className="grid grid-cols-1 gap-3">
+                {heroSlides.map((slide, sIdx) => (
+                  <div key={sIdx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border border-soft-linen bg-surface/30 gap-4 rounded">
+                    <div className="flex items-center gap-4">
+                      {slide.image && (
+                        <div className="w-16 h-12 relative bg-soft-linen rounded overflow-hidden shrink-0 border border-slate-grey/10">
+                          <img src={slide.image} alt={slide.title} className="object-cover w-full h-full" />
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-label-caps text-xs font-semibold text-deep-navy uppercase">{slide.title || "No Title"}</h4>
+                        <p className="text-[10px] text-slate-grey uppercase tracking-wider">{slide.subtitle || "No Subtitle"}</p>
+                        <p className="text-[9px] font-mono text-slate-grey mt-0.5 truncate max-w-xs">{slide.link} ({slide.linkText})</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => moveSlide(sIdx, "up")}
+                        disabled={sIdx === 0}
+                        className="p-1 hover:text-deep-navy text-slate-grey disabled:opacity-30 cursor-pointer"
+                        title="Move Up"
+                      >
+                        <span className="material-symbols-outlined text-lg">arrow_upward</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveSlide(sIdx, "down")}
+                        disabled={sIdx === heroSlides.length - 1}
+                        className="p-1 hover:text-deep-navy text-slate-grey disabled:opacity-30 cursor-pointer"
+                        title="Move Down"
+                      >
+                        <span className="material-symbols-outlined text-lg">arrow_downward</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => editSlide(sIdx)}
+                        className="p-1 text-slate-grey hover:text-ink-black cursor-pointer"
+                        title="Edit Slide"
+                      >
+                        <span className="material-symbols-outlined text-lg">edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeSlide(sIdx)}
+                        className="p-1 text-slate-grey hover:text-red-600 cursor-pointer"
+                        title="Delete Slide"
+                      >
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add / Edit Slide Box */}
+          <div className="border border-soft-linen bg-surface/20 p-6 rounded space-y-4">
+            <h4 className="font-label-caps text-xs font-bold text-deep-navy uppercase border-b border-soft-linen pb-2">
+              {editSlideIdx !== null ? "Edit Carousel Slide" : "Add New Carousel Slide"}
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Slide Subtitle</label>
+                <input
+                  type="text"
+                  value={slideSubtitle}
+                  onChange={(e) => setSlideSubtitle(e.target.value)}
+                  placeholder="e.g. Luxury for Every Day"
+                  className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Slide Title</label>
+                <input
+                  type="text"
+                  value={slideTitle}
+                  onChange={(e) => setSlideTitle(e.target.value)}
+                  placeholder="e.g. PIECES THAT SPEAK IN SILENCE"
+                  className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                />
+              </div>
+              <div className="flex flex-col gap-2 col-span-2">
+                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Slide Image URL</label>
+                <input
+                  type="url"
+                  value={slideImage}
+                  onChange={(e) => setSlideImage(e.target.value)}
+                  placeholder="e.g. https://images.unsplash.com/..."
+                  className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                />
+                <VisualImagePreview src={slideImage} alt="Slide preview" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Slide Button Link</label>
+                <input
+                  type="text"
+                  value={slideLink}
+                  onChange={(e) => setSlideLink(e.target.value)}
+                  placeholder="e.g. /collections/rings"
+                  className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Slide Button Text</label>
+                <input
+                  type="text"
+                  value={slideLinkText}
+                  onChange={(e) => setSlideLinkText(e.target.value)}
+                  placeholder="e.g. Discover Collections"
+                  className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-2">
+              {editSlideIdx !== null && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditSlideIdx(null);
+                    setSlideTitle("");
+                    setSlideSubtitle("");
+                    setSlideImage("");
+                    setSlideLink("");
+                    setSlideLinkText("");
+                  }}
+                  className="px-4 py-2 border border-slate-grey/40 hover:bg-soft-linen/30 font-label-caps text-[10px] tracking-widest uppercase cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={addSlide}
+                className="px-5 py-2.5 bg-deep-navy text-pure-white hover:bg-ink-black font-label-caps text-[10px] tracking-widest uppercase cursor-pointer shadow transition-all duration-200"
+              >
+                {editSlideIdx !== null ? "Update Slide" : "Add Slide"}
+              </button>
+            </div>
           </div>
         </section>
 

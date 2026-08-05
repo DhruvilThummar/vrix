@@ -1,6 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap");
 @import "tailwindcss";
 
+:root {
+  --spacing-section-gap-val: 50px;
+  --spacing-product-gap-val: 20px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --spacing-section-gap-val: 90px;
+    --spacing-product-gap-val: 26px;
+  }
+}
+
 @theme {
   /* Colors */
   --color-primary-container: #050575;
@@ -62,7 +73,8 @@
   --spacing-margin-mobile: 20px;
   --spacing-stack-sm: 8px;
   --spacing-stack-lg: 32px;
-  --spacing-section-gap: 120px;
+  --spacing-section-gap: var(--spacing-section-gap-val);
+  --spacing-product-gap: var(--spacing-product-gap-val);
   --spacing-margin-desktop: 80px;
   --spacing-gutter: 24px;
 
@@ -195,4 +207,25 @@ input:focus, select:focus, textarea:focus {
 
 .animate-fade-in-slide {
   animation: fadeInSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Nav link hover indicator line similar to Monica Vinader */
+.header-nav-link {
+  position: relative;
+}
+.header-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.header-nav-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
 }

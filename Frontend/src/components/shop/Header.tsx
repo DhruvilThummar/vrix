@@ -377,10 +377,10 @@ export default function Header() {
                 >
                   <Link
                     href={link.path}
-                    className={`font-label-caps text-xs tracking-[0.15em] uppercase transition-colors py-1 border-b border-transparent ${
+                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link ${
                       isActive(link.path)
                         ? navLinkActiveColor
-                        : `${navLinkColor} ${isTransparent ? 'hover:border-pure-white/40' : 'hover:border-ink-black/40'}`
+                        : `${navLinkColor}`
                     }`}
                   >
                     {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
@@ -897,7 +897,7 @@ export default function Header() {
 
       {/* ─── MOBILE DRAWER (LEFT SLIDE-IN) ─── */}
       <div
-        className={`fixed top-0 left-0 h-screen w-full sm:w-[350px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+        className={`fixed top-0 left-0 h-screen w-[320px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
