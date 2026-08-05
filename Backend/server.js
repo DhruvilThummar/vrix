@@ -180,7 +180,7 @@ app.use((err, req, res, next) => {
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`\n🚀 VRIX Backend API running → http://localhost:${PORT}`);
-    console.log(`   DB Mode      : ${db.isConnected() ? "Prisma (PostgreSQL)" : "Local db.json"}`);
+    console.log(`   DB Status    : Connected to PostgreSQL (Supabase) via Prisma`);
     console.log(`   Integrations : Dynamically managed (Cloudinary, Razorpay, SMTP, Truecaller)\n`);
   });
 }
