@@ -163,6 +163,7 @@ export default function AdminCMSPage() {
   const [announcementTextColor, setAnnouncementTextColor] = useState("#ffffff");
   const [announcementFontSize, setAnnouncementFontSize] = useState("11px");
   const [announcementLines, setAnnouncementLines] = useState<string[]>([]);
+  const [announcementShowLink, setAnnouncementShowLink] = useState(true);
   const [announcementActionText, setAnnouncementActionText] = useState("Shop Offers →");
   const [announcementActionLink, setAnnouncementActionLink] = useState("/offers");
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
@@ -380,6 +381,7 @@ export default function AdminCMSPage() {
           setAnnouncementTextColor(res.announcement_bar.textColor || "#ffffff");
           setAnnouncementFontSize(res.announcement_bar.fontSize || "11px");
           setAnnouncementLines(Array.isArray(res.announcement_bar.lines) ? res.announcement_bar.lines : []);
+          setAnnouncementShowLink(res.announcement_bar.showLink !== false);
           setAnnouncementActionText(res.announcement_bar.actionText || "Shop Offers →");
           setAnnouncementActionLink(res.announcement_bar.actionLink || "/offers");
         }
@@ -539,6 +541,7 @@ export default function AdminCMSPage() {
           textColor: announcementTextColor,
           fontSize: announcementFontSize,
           lines: announcementLines,
+          showLink: announcementShowLink,
           actionText: announcementActionText,
           actionLink: announcementActionLink
         },
@@ -888,7 +891,62 @@ export default function AdminCMSPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 pt-2">
+                  {/* Action Link Control directly in Ticker Config */}
+                  <div className="border-t border-slate-grey/15 pt-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-label-caps text-xs text-deep-navy font-bold uppercase tracking-wider">
+                          Action Link & Button Settings
+                        </h4>
+                        <p className="text-[11px] text-slate-grey mt-0.5">
+                          Configure optional clickable action link shown next to announcement text (e.g. "Shop Offers →").
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="announcement-show-link"
+                          checked={announcementShowLink}
+                          onChange={(e) => setAnnouncementShowLink(e.target.checked)}
+                          className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                        />
+                        <label htmlFor="announcement-show-link" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer font-bold">
+                          Show Action Link
+                        </label>
+                      </div>
+                    </div>
+
+                    {announcementShowLink && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-soft-linen/20 border border-slate-grey/20 rounded">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                            Action Link Text (e.g. Shop Offers →)
+                          </label>
+                          <input
+                            type="text"
+                            value={announcementActionText}
+                            onChange={(e) => setAnnouncementActionText(e.target.value)}
+                            placeholder="Shop Offers →"
+                            className="border-b border-slate-grey/30 py-1.5 text-xs outline-none focus:border-deep-navy font-medium"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                            Target Link Path / URL (e.g. /offers)
+                          </label>
+                          <input
+                            type="text"
+                            value={announcementActionLink}
+                            onChange={(e) => setAnnouncementActionLink(e.target.value)}
+                            placeholder="/offers"
+                            className="border-b border-slate-grey/30 py-1.5 text-xs outline-none focus:border-deep-navy font-mono"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2 pt-2 border-t border-slate-grey/15">
                     <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Announcement lines list</label>
                     {announcementLines.map((line, idx) => (
                       <div key={idx} className="flex gap-2 items-center bg-soft-linen/5 p-2 border border-slate-grey/15 rounded">

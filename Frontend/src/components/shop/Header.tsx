@@ -249,12 +249,14 @@ export default function Header() {
           {announcementBar?.lines && announcementBar.lines.length > 0 && (
             <div key={currentLineIndex} className="animate-fade-in-slide whitespace-nowrap flex items-center gap-2">
               <span>{announcementBar.lines[currentLineIndex]}</span>
-              <Link
-                href={announcementBar.actionLink || "/offers"}
-                className="underline underline-offset-2 hover:opacity-80 font-bold ml-1 cursor-pointer"
-              >
-                {announcementBar.actionText || "Shop Offers →"}
-              </Link>
+              {announcementBar.showLink !== false && (
+                <Link
+                  href={announcementBar.actionLink || "/offers"}
+                  className="underline underline-offset-2 hover:opacity-80 font-bold ml-1 cursor-pointer"
+                >
+                  {announcementBar.actionText || "Shop Offers →"}
+                </Link>
+              )}
             </div>
           )}
         </div>
