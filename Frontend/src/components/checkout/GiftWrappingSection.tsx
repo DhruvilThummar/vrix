@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useCart, GiftOption } from "@/context/CartContext";
-import { fetchDbPublic as fetchDb } from "@/utils/api";
+import { fetchGiftWrappingAPI } from "@/utils/api";
 import { useCurrency } from "@/utils/useCurrency";
 
 export default function GiftWrappingSection() {
@@ -20,22 +20,22 @@ export default function GiftWrappingSection() {
   const [dbGiftOptions, setDbGiftOptions] = useState<GiftOption[]>([]);
 
   useEffect(() => {
-    fetchDb()
+    fetchGiftWrappingAPI()
       .then((res) => {
-        if (res.gift_wrapping) {
+        if (res) {
           setConfig({
-            isEnabled: res.gift_wrapping.isEnabled !== false,
-            title: res.gift_wrapping.title || "Signature Gift Packaging & Ribbon Card",
-            price: res.gift_wrapping.price || 250,
-            image: res.gift_wrapping.image || "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
-            description: res.gift_wrapping.description || "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card."
+            isEnabled: res.isEnabled !== false,
+            title: res.title || "Signature Gift Packaging & Ribbon Card",
+            price: res.price || 250,
+            image: res.image || "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
+            description: res.description || "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card."
           });
-          if (Array.isArray(res.gift_wrapping.giftOptions)) {
-            setDbGiftOptions(res.gift_wrapping.giftOptions);
+          if (Array.isArray(res.giftOptions)) {
+            setDbGiftOptions(res.giftOptions);
           }
         }
       })
-      .catch((err) => console.error("Failed to load gift_wrapping from db:", err));
+      .catch((err) => console.error("Failed to load gift_wrapping from API:", err));
   }, []);
 
   if (!config.isEnabled) return null;

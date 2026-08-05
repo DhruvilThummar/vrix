@@ -97,6 +97,18 @@ export async function updateCMS(data: {
   });
 }
 
+export async function fetchGiftWrappingAPI() {
+  return apiFetch<any>("/cms/gift-wrapping");
+}
+
+export async function fetchAnnouncementBarAPI() {
+  return apiFetch<any>("/cms/announcement-bar");
+}
+
+export async function fetchHomepageCMSAPI() {
+  return apiFetch<any>("/cms/homepage");
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  PRODUCTS
 // ══════════════════════════════════════════════════════════════════════════════
