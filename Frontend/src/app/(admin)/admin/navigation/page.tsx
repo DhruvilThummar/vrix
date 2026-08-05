@@ -80,11 +80,11 @@ const PathSelector = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-2 mt-1 w-full">
+    <div className="flex flex-col md:flex-row gap-2 mt-1 w-full max-w-full overflow-hidden">
       <select
         value={type}
         onChange={(e) => handleTypeChange(e.target.value)}
-        className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer flex-shrink-0"
+        className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer shrink-0 max-w-full truncate rounded"
       >
         <option value="page">Standard Page</option>
         <option value="collection">Collection Page</option>
@@ -96,7 +96,7 @@ const PathSelector = ({
         <select
           value={selectedIdOrSlug}
           onChange={(e) => handleSelectionChange(e.target.value)}
-          className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none text-slate-grey flex-1 min-w-0 max-w-full truncate cursor-pointer font-medium rounded"
         >
           {STANDARD_PAGES.map((p) => (
             <option key={p.path} value={p.path}>
@@ -110,7 +110,7 @@ const PathSelector = ({
         <select
           value={selectedIdOrSlug}
           onChange={(e) => handleSelectionChange(e.target.value)}
-          className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none text-slate-grey flex-1 min-w-0 max-w-full truncate cursor-pointer font-medium rounded"
         >
           {allCollections.length > 0 ? (
             allCollections.map((c: any) => (
@@ -128,7 +128,7 @@ const PathSelector = ({
         <select
           value={selectedIdOrSlug}
           onChange={(e) => handleSelectionChange(e.target.value)}
-          className="border border-slate-grey/30 bg-pure-white text-xs px-2 py-1.5 outline-none text-slate-grey flex-1 cursor-pointer font-medium"
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none text-slate-grey flex-1 min-w-0 max-w-full truncate cursor-pointer font-medium rounded"
         >
           {allProducts.map((p: any) => (
             <option key={p.id} value={p.id}>
@@ -143,7 +143,7 @@ const PathSelector = ({
           type="text"
           value={selectedIdOrSlug}
           onChange={(e) => onChange(e.target.value)}
-          className="border border-slate-grey/30 px-3 py-1 text-xs outline-none text-ink-black flex-1"
+          className="border border-slate-grey/30 px-3 py-1.5 text-xs outline-none text-ink-black flex-1 min-w-0 max-w-full rounded"
           placeholder="e.g. /custom-url"
         />
       )}
