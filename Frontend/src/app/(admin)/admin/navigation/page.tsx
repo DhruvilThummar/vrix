@@ -6,6 +6,7 @@ import { fetchDb, updateCMS, fetchProducts, fetchCollections } from "@/utils/api
 // Preset standard pages
 const STANDARD_PAGES = [
   { label: "Home Page", path: "/" },
+  { label: "All Products", path: "/products" },
   { label: "Collections Catalog", path: "/collections" },
   { label: "Bespoke Configurator", path: "/bespoke" },
   { label: "Our Story", path: "/story" },
@@ -17,6 +18,7 @@ const STANDARD_PAGES = [
 
 const DEFAULT_NAV_LINKS = [
   { label: "Collections", path: "/collections" },
+  { label: "All Products", path: "/products" },
   { label: "The World of VRIX", path: "/story" },
   { label: "Journal", path: "/journal" },
   { label: "Gifts", path: "/search" },

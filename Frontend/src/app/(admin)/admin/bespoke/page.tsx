@@ -22,6 +22,11 @@ export default function AdminBespokePage() {
   const [bespokeCaratDefault, setBespokeCaratDefault] = useState(1.5);
   const [bespokeEngravingMax, setBespokeEngravingMax] = useState(15);
 
+  // New Features: Clarity, Color, Stone Types
+  const [bespokeClarityOptions, setBespokeClarityOptions] = useState<any[]>([]);
+  const [bespokeColorOptions, setBespokeColorOptions] = useState<any[]>([]);
+  const [bespokeStoneTypes, setBespokeStoneTypes] = useState<any[]>([]);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -48,6 +53,22 @@ export default function AdminBespokePage() {
           setBespokeCaratMax(res.bespoke_config.caratMax || 3.0);
           setBespokeCaratDefault(res.bespoke_config.caratDefault || 1.5);
           setBespokeEngravingMax(res.bespoke_config.engravingMax || 15);
+          
+          setBespokeClarityOptions(res.bespoke_config.clarityOptions || [
+            { grade: "VVS1", multiplier: 1.3 },
+            { grade: "VS1", multiplier: 1.1 },
+            { grade: "SI1", multiplier: 0.9 },
+          ]);
+          setBespokeColorOptions(res.bespoke_config.colorOptions || [
+            { color: "D", multiplier: 1.4 },
+            { color: "F", multiplier: 1.2 },
+            { color: "H", multiplier: 1.0 },
+          ]);
+          setBespokeStoneTypes(res.bespoke_config.stoneTypes || [
+            { name: "Natural Diamond", multiplier: 1.5 },
+            { name: "Lab-Grown Diamond", multiplier: 1.0 },
+            { name: "Moissanite", multiplier: 0.6 },
+          ]);
         }
         setLoading(false);
       })
@@ -77,12 +98,28 @@ export default function AdminBespokePage() {
           subtitle: bespokeSubtitle,
           previewImage: bespokeImage,
           basePrice: Number(bespokeBasePrice),
-          metals: bespokeMetals,
+          metals: bespokeMetals.map(m => ({
+            name: m.name,
+            color: m.color,
+            priceMultiplier: Number(m.priceMultiplier) || 1.0
+          })),
           shapes: bespokeShapes,
           caratMin: Number(bespokeCaratMin),
           caratMax: Number(bespokeCaratMax),
           caratDefault: Number(bespokeCaratDefault),
           engravingMax: Number(bespokeEngravingMax),
+          clarityOptions: bespokeClarityOptions.map(c => ({
+            grade: c.grade,
+            multiplier: Number(c.multiplier) || 1.0
+          })),
+          colorOptions: bespokeColorOptions.map(c => ({
+            color: c.color,
+            multiplier: Number(c.multiplier) || 1.0
+          })),
+          stoneTypes: bespokeStoneTypes.map(s => ({
+            name: s.name,
+            multiplier: Number(s.multiplier) || 1.0
+          }))
         },
       });
       showToast("Bespoke Configurator updated successfully.");
@@ -112,7 +149,7 @@ export default function AdminBespokePage() {
         </div>
       )}
 
-      <form onSubmit={handleSave} className="max-w-4xl mx-auto flex flex-col gap-8">
+      <form onSubmit={handleSave} className="max-w-4xl mx-auto flex flex-col gap-8 pb-12">
         <div className="bg-pure-white border border-slate-grey/20 p-6 md:p-8 shadow-sm flex flex-col gap-6 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-deep-navy via-amber-600/40 to-deep-navy" />
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-grey/15 pb-6">
@@ -229,7 +266,7 @@ export default function AdminBespokePage() {
             </h3>
             <button
               type="button"
-              onClick={() => setBespokeMetals([...bespokeMetals, { name: "NEW METAL", color: "#CCCCCC" }])}
+              onClick={() => setBespokeMetals([...bespokeMetals, { name: "NEW METAL", color: "#CCCCCC", priceMultiplier: 1.0 }])}
               className="px-3 py-1 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase cursor-pointer"
             >
               + Add Metal
@@ -246,18 +283,34 @@ export default function AdminBespokePage() {
                 >
                   Remove
                 </button>
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Metal Name</label>
-                  <input
-                    type="text"
-                    value={m.name}
-                    onChange={(e) => {
-                      const next = [...bespokeMetals];
-                      next[idx].name = e.target.value;
-                      setBespokeMetals(next);
-                    }}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none font-body-md"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase">Metal Name</label>
+                    <input
+                      type="text"
+                      value={m.name}
+                      onChange={(e) => {
+                        const next = [...bespokeMetals];
+                        next[idx].name = e.target.value;
+                        setBespokeMetals(next);
+                      }}
+                      className="border-b border-slate-grey/30 py-1 text-xs outline-none font-body-md"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase">Price Multiplier</label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      value={m.priceMultiplier !== undefined ? m.priceMultiplier : 1.0}
+                      onChange={(e) => {
+                        const next = [...bespokeMetals];
+                        next[idx].priceMultiplier = Number(e.target.value) || 1.0;
+                        setBespokeMetals(next);
+                      }}
+                      className="border-b border-slate-grey/30 py-1 text-xs outline-none font-body-md"
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex flex-col gap-1 flex-1">
@@ -347,6 +400,90 @@ export default function AdminBespokePage() {
                 onChange={(e) => setBespokeEngravingMax(Number(e.target.value))}
                 className="border-b border-slate-grey/30 py-1 text-sm outline-none font-body-md"
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Adjusters: Stone Types, Color & Clarity Multipliers */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6">
+          <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+            Atelier Diamond Multipliers &amp; Grades
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Stone Types */}
+            <div className="space-y-4 border-r border-slate-grey/15 pr-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-label-caps text-[10px] text-deep-navy uppercase tracking-wider font-bold">Stone Types</h4>
+                <button type="button" onClick={() => setBespokeStoneTypes([...bespokeStoneTypes, { name: "New Stone", multiplier: 1.0 }])} className="text-[9px] text-deep-navy uppercase underline cursor-pointer">+ Add</button>
+              </div>
+              <div className="space-y-2">
+                {bespokeStoneTypes.map((st, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input type="text" value={st.name} onChange={(e) => {
+                      const next = [...bespokeStoneTypes];
+                      next[i].name = e.target.value;
+                      setBespokeStoneTypes(next);
+                    }} className="w-1/2 border-b border-slate-grey/20 text-xs py-1 outline-none" />
+                    <input type="number" step="0.05" value={st.multiplier} onChange={(e) => {
+                      const next = [...bespokeStoneTypes];
+                      next[i].multiplier = Number(e.target.value) || 1.0;
+                      setBespokeStoneTypes(next);
+                    }} className="w-1/4 border-b border-slate-grey/20 text-xs py-1 outline-none" />
+                    <button type="button" onClick={() => setBespokeStoneTypes(bespokeStoneTypes.filter((_, idx) => idx !== i))} className="text-red-500 text-xs">✕</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Clarity Grades */}
+            <div className="space-y-4 border-r border-slate-grey/15 px-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-label-caps text-[10px] text-deep-navy uppercase tracking-wider font-bold">Clarity Options</h4>
+                <button type="button" onClick={() => setBespokeClarityOptions([...bespokeClarityOptions, { grade: "GRADE", multiplier: 1.0 }])} className="text-[9px] text-deep-navy uppercase underline cursor-pointer">+ Add</button>
+              </div>
+              <div className="space-y-2">
+                {bespokeClarityOptions.map((co, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input type="text" value={co.grade} onChange={(e) => {
+                      const next = [...bespokeClarityOptions];
+                      next[i].grade = e.target.value;
+                      setBespokeClarityOptions(next);
+                    }} className="w-1/2 border-b border-slate-grey/20 text-xs py-1 outline-none" />
+                    <input type="number" step="0.05" value={co.multiplier} onChange={(e) => {
+                      const next = [...bespokeClarityOptions];
+                      next[i].multiplier = Number(e.target.value) || 1.0;
+                      setBespokeClarityOptions(next);
+                    }} className="w-1/4 border-b border-slate-grey/20 text-xs py-1 outline-none" />
+                    <button type="button" onClick={() => setBespokeClarityOptions(bespokeClarityOptions.filter((_, idx) => idx !== i))} className="text-red-500 text-xs">✕</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Color Options */}
+            <div className="space-y-4 pl-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-label-caps text-[10px] text-deep-navy uppercase tracking-wider font-bold">Color Grades</h4>
+                <button type="button" onClick={() => setBespokeColorOptions([...bespokeColorOptions, { color: "COLOR", multiplier: 1.0 }])} className="text-[9px] text-deep-navy uppercase underline cursor-pointer">+ Add</button>
+              </div>
+              <div className="space-y-2">
+                {bespokeColorOptions.map((col, i) => (
+                  <div key={i} className="flex gap-2 items-center">
+                    <input type="text" value={col.color} onChange={(e) => {
+                      const next = [...bespokeColorOptions];
+                      next[i].color = e.target.value;
+                      setBespokeColorOptions(next);
+                    }} className="w-1/2 border-b border-slate-grey/20 text-xs py-1 outline-none" />
+                    <input type="number" step="0.05" value={col.multiplier} onChange={(e) => {
+                      const next = [...bespokeColorOptions];
+                      next[i].multiplier = Number(e.target.value) || 1.0;
+                      setBespokeColorOptions(next);
+                    }} className="w-1/4 border-b border-slate-grey/20 text-xs py-1 outline-none" />
+                    <button type="button" onClick={() => setBespokeColorOptions(bespokeColorOptions.filter((_, idx) => idx !== i))} className="text-red-500 text-xs">✕</button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>

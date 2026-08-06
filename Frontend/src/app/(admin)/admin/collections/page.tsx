@@ -12,13 +12,20 @@ interface Collection {
   image: string;
   link: string;
   isVisible?: boolean;
+  bannerImage?: string;
+  customHeadline?: string;
+  customParagraph?: string;
+  showProductCarousel?: boolean;
+  carouselAutoplay?: boolean;
+  carouselSpeed?: number;
+  layoutStyle?: "classic" | "split" | "editorial";
 }
 
 const DEFAULT_LINK_BASES = [
   "/collections/silent-center",
-  "/collections/silent-center?collection=solitude",
-  "/collections/silent-center?collection=presence",
-  "/collections/silent-center?collection=light",
+  "/collections/solitude",
+  "/collections/presence",
+  "/collections/light",
 ];
 
 export default function AdminCollectionsPage() {
@@ -39,6 +46,15 @@ export default function AdminCollectionsPage() {
   const [fImage, setFImage] = useState("");
   const [fLink, setFLink] = useState("/collections/silent-center");
   const [fVisible, setFVisible] = useState(true);
+  const [fBannerImage, setFBannerImage] = useState("");
+  const [fCustomHeadline, setFCustomHeadline] = useState("");
+  const [fCustomParagraph, setFCustomParagraph] = useState("");
+  const [fShowProductCarousel, setFShowProductCarousel] = useState(false);
+  const [fCarouselAutoplay, setFCarouselAutoplay] = useState(false);
+  const [fCarouselSpeed, setFCarouselSpeed] = useState(3000);
+  const [fLayoutStyle, setFLayoutStyle] = useState<"classic" | "split" | "editorial">("classic");
+  const [uploadBannerLoading, setUploadBannerLoading] = useState(false);
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string, type: "ok" | "err" = "ok") => {
     setToast({ msg, type }); setTimeout(() => setToast(null), 3500);
@@ -63,6 +79,13 @@ export default function AdminCollectionsPage() {
     setFId(c.id); setFTitle(c.title); setFTagline(c.tagline);
     setFDescription(c.description); setFImage(c.image);
     setFLink(c.link); setFVisible(c.isVisible !== false);
+    setFBannerImage(c.bannerImage || "");
+    setFCustomHeadline(c.customHeadline || "");
+    setFCustomParagraph(c.customParagraph || "");
+    setFShowProductCarousel(!!c.showProductCarousel);
+    setFCarouselAutoplay(!!c.carouselAutoplay);
+    setFCarouselSpeed(c.carouselSpeed || 3000);
+    setFLayoutStyle(c.layoutStyle || "classic");
   };
 
   const handleNew = () => {
@@ -70,6 +93,42 @@ export default function AdminCollectionsPage() {
     setFId(""); setFTitle(""); setFTagline("");
     setFDescription(""); setFImage(""); setFLink("/collections/silent-center");
     setFVisible(true);
+    setFBannerImage("");
+    setFCustomHeadline("");
+    setFCustomParagraph("");
+    setFShowProductCarousel(false);
+    setFCarouselAutoplay(false);
+    setFCarouselSpeed(3000);
+    setFLayoutStyle("classic");
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadBannerLoading(true);
+    try {
+      const result = await uploadMedia(file);
+      setFBannerImage(result.url);
+      showToast("Banner image uploaded.");
+    } catch (err: any) {
+      showToast("Banner upload failed: " + err.message, "err");
+    } finally {
+      setUploadBannerLoading(false);
+      if (bannerFileInputRef.current) bannerFileInputRef.current.value = "";
+    }
+  };
+
+  const saveAll = async (updatedList: Collection[]) => {
+    setSaving(true);
+    try {
+      await saveCollections(updatedList);
+      showToast("Collections saved.");
+      setCollections(updatedList);
+    } catch (err: any) {
+      showToast("Save failed: " + err.message, "err");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,27 +147,29 @@ export default function AdminCollectionsPage() {
     }
   };
 
-  const saveAll = async (updatedList: Collection[]) => {
-    setSaving(true);
-    try {
-      await saveCollections(updatedList);
-      showToast("Collections saved.");
-      setCollections(updatedList);
-    } catch (err: any) {
-      showToast("Save failed: " + err.message, "err");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fTitle.trim() || !fImage.trim()) { showToast("Title and image are required.", "err"); return; }
     const id = fId || fTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const link = fLink && fLink !== "/collections/silent-center"
+    const link = fLink && !fLink.startsWith("/collections/silent-center?collection=")
       ? fLink
-      : `/collections/silent-center?collection=${id}`;
-    const updated: Collection = { id, title: fTitle, tagline: fTagline, description: fDescription, image: fImage, link, isVisible: fVisible };
+      : `/collections/${id}`;
+    const updated: Collection = {
+      id,
+      title: fTitle,
+      tagline: fTagline,
+      description: fDescription,
+      image: fImage,
+      link,
+      isVisible: fVisible,
+      bannerImage: fBannerImage,
+      customHeadline: fCustomHeadline,
+      customParagraph: fCustomParagraph,
+      showProductCarousel: fShowProductCarousel,
+      carouselAutoplay: fCarouselAutoplay,
+      carouselSpeed: Number(fCarouselSpeed) || 3000,
+      layoutStyle: fLayoutStyle,
+    };
     let newList: Collection[];
     if (isNew) {
       newList = [...collections, updated];
@@ -288,6 +349,69 @@ export default function AdminCollectionsPage() {
                           <Image src={fImage} alt="Preview" fill className="object-cover" sizes="80px" />
                         </div>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Layout & Styling Options */}
+                  <div className="border-t border-slate-grey/15 pt-5 space-y-4">
+                    <h4 className="font-label-caps text-[10px] uppercase tracking-widest text-deep-navy font-bold">Layout &amp; Styling Options</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Page Layout Style</label>
+                        <select value={fLayoutStyle} onChange={(e) => setFLayoutStyle(e.target.value as any)} className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent">
+                          <option value="classic">Classic Minimal Text</option>
+                          <option value="split">Split Hero Banner</option>
+                          <option value="editorial">Editorial Hero Banner</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Custom Headline</label>
+                        <input type="text" value={fCustomHeadline} onChange={(e) => setFCustomHeadline(e.target.value)} placeholder="e.g. Architectural Solitude" className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent" />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Custom Description Paragraph</label>
+                      <textarea rows={2} value={fCustomParagraph} onChange={(e) => setFCustomParagraph(e.target.value)} placeholder="Optional customized narrative copy for the hero banner..." className="border border-slate-grey/25 p-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black resize-y" />
+                    </div>
+
+                    {/* Banner Image */}
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Hero Banner Image</label>
+                      <div className="flex gap-3 items-start">
+                        <div className="flex-1 space-y-2">
+                          <input type="url" value={fBannerImage} onChange={(e) => setFBannerImage(e.target.value)} placeholder="Banner Image URL" className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent" />
+                          <div className="flex items-center gap-2">
+                            <input ref={bannerFileInputRef} type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" id="col-banner-upload" />
+                            <label htmlFor="col-banner-upload" className={`inline-flex items-center gap-1.5 font-button text-[9px] uppercase px-3 py-1.5 border border-slate-grey/30 text-slate-grey hover:border-deep-navy hover:text-deep-navy transition-colors cursor-pointer ${uploadBannerLoading ? "opacity-50 pointer-events-none" : ""}`}>
+                              {uploadBannerLoading ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" /> : <span className="material-symbols-outlined text-[12px]">upload</span>}
+                              {uploadBannerLoading ? "Uploading..." : "Upload Banner"}
+                            </label>
+                          </div>
+                        </div>
+                        {fBannerImage && (
+                          <div className="w-24 h-16 relative bg-soft-linen overflow-hidden border border-slate-grey/15 shrink-0">
+                            <Image src={fBannerImage} alt="Banner Preview" fill className="object-cover" sizes="96px" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Product Carousel Config */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-soft-linen/25 border border-slate-grey/15">
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="show-carousel" checked={fShowProductCarousel} onChange={(e) => setFShowProductCarousel(e.target.checked)} className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer" />
+                        <label htmlFor="show-carousel" className="font-body-md text-xs text-ink-black cursor-pointer font-semibold">Enable Carousel</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id="carousel-autoplay" checked={fCarouselAutoplay} disabled={!fShowProductCarousel} onChange={(e) => setFCarouselAutoplay(e.target.checked)} className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-50" />
+                        <label htmlFor="carousel-autoplay" className={`font-body-md text-xs text-ink-black cursor-pointer font-semibold ${!fShowProductCarousel ? "opacity-50" : ""}`}>Autoplay Slider</label>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="font-label-caps text-[8px] text-slate-grey uppercase tracking-widest">Interval (ms)</label>
+                        <input type="number" step={500} min={1000} value={fCarouselSpeed} disabled={!fShowProductCarousel || !fCarouselAutoplay} onChange={(e) => setFCarouselSpeed(Number(e.target.value))} className="border-b border-slate-grey/30 py-0.5 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent disabled:opacity-50" />
+                      </div>
                     </div>
                   </div>
 

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, Suspense, useEffect } from "react";
-import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { fetchCollections, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
@@ -11,23 +11,22 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { useCurrency } from "@/utils/useCurrency";
 
 const DEFAULT_PRODUCTS: any[] = [];
+const MATERIAL_OPTIONS = ["All", "Gold", "Silver", "Platinum"];
+const TYPE_OPTIONS = ["All", "Ring", "Necklace", "Earring", "Bracelet", "Pendant", "Cuff", "Brooch", "Anklet"];
 
-function CollectionContent() {
-  const params = useParams();
+function ProductsCatalogContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isLoggedIn } = useAuth();
   const { formatPrice } = useCurrency();
-  
-  // Use slug from URL if available, otherwise fall back to 'collection' search param, or default to 'silent-center'
-  const collectionSlug = (params.slug as string) || searchParams.get("collection") || "silent-center";
-  const collectionQuery = collectionSlug;
 
-  // Sync with searchParams
+  // Sync state with search params
   const getParam = (key: string, fallback: string) => searchParams.get(key) || fallback;
 
   const [products, setProducts] = useState(DEFAULT_PRODUCTS);
   const [collections, setCollections] = useState<any[]>([]);
+  
+  const [selectedCollection, setSelectedCollection] = useState(() => getParam("collection", "All"));
   const [selectedMaterial, setSelectedMaterial] = useState(() => getParam("material", "All"));
   const [selectedType, setSelectedType] = useState(() => getParam("type", "All"));
   const [sortBy, setSortBy] = useState(() => getParam("sort", "Curated"));
@@ -35,8 +34,13 @@ function CollectionContent() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Filter panels open/close
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
+
   // Sync state when URL params change
   useEffect(() => {
+    setSelectedCollection(getParam("collection", "All"));
     setSelectedMaterial(getParam("material", "All"));
     setSelectedType(getParam("type", "All"));
     setSortBy(getParam("sort", "Curated"));
@@ -50,6 +54,11 @@ function CollectionContent() {
       nextParams.set(key, value);
     }
     router.push(`?${nextParams.toString()}`, { scroll: false });
+  };
+
+  const handleCollectionChange = (colId: string) => {
+    setSelectedCollection(colId);
+    updateQueryParam("collection", colId);
   };
 
   const handleMaterialChange = (mat: string) => {
@@ -67,7 +76,7 @@ function CollectionContent() {
     updateQueryParam("sort", sort);
   };
 
-  // Sync wishlist from localStorage on mount or user change
+  // Sync wishlist from localStorage
   useEffect(() => {
     try {
       const key = getWishlistKey(user?.email);
@@ -78,85 +87,25 @@ function CollectionContent() {
     } catch {}
   }, [user?.email]);
 
-  // Filter & Sort menus open states
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [sortOpen, setSortOpen] = useState(false);
-
-  // Fetch products from Express backend
+  // Fetch products and collections
   useEffect(() => {
     setLoading(true);
     const pFetch = fetchProducts()
       .then((res) => {
-        if (Array.isArray(res)) {
-          setProducts(res);
-        }
+        if (Array.isArray(res)) setProducts(res);
       })
-      .catch((err) => console.error("Error fetching products from backend:", err));
+      .catch((err) => console.error("Error fetching products:", err));
 
     const cFetch = fetchCollections()
       .then((res) => {
-        if (Array.isArray(res)) {
-          setCollections(res);
-        }
+        if (Array.isArray(res)) setCollections(res);
       })
-      .catch((err) => console.error("Error fetching collections from backend:", err));
+      .catch((err) => console.error("Error fetching collections:", err));
 
     Promise.allSettled([pFetch, cFetch]).finally(() => {
       setLoading(false);
     });
   }, []);
-
-  const collectionInfo = useMemo(() => {
-    const selectedCollection = collections.find((collection) => collection.id === (collectionQuery || "silent-center"));
-    if (selectedCollection) {
-      return {
-        title: selectedCollection.title,
-        description: selectedCollection.description || selectedCollection.tagline || "",
-        tagline: selectedCollection.tagline || "",
-        image: selectedCollection.image || "",
-        bannerImage: selectedCollection.bannerImage || "",
-        customHeadline: selectedCollection.customHeadline || "",
-        customParagraph: selectedCollection.customParagraph || "",
-        showProductCarousel: !!selectedCollection.showProductCarousel,
-        carouselAutoplay: !!selectedCollection.carouselAutoplay,
-        carouselSpeed: selectedCollection.carouselSpeed || 3000,
-        layoutStyle: selectedCollection.layoutStyle || "classic",
-      };
-    }
-
-    switch (collectionQuery) {
-      case "solitude":
-        return {
-          title: "The Solitude Collection",
-          description: "Meticulous, ultra-minimalist designs that focus on purity and quiet comfort. Linear bands and empty spaces crafted for peaceful daily wear.",
-          tagline: "Ultra-Minimalist",
-          layoutStyle: "classic" as const,
-        };
-      case "presence":
-        return {
-          title: "The Presence Collection",
-          description: "Bold geometric shapes and architectural volume that make a quiet statement of confidence, stability, and character.",
-          tagline: "Bold & Geometric",
-          layoutStyle: "classic" as const,
-        };
-      case "light":
-        return {
-          title: "The Light Collection",
-          description: "Highly polished, reflecting surfaces designed to catch and project light. A celebration of transformation, hope, and inner growth.",
-          tagline: "Polished & Reflective",
-          layoutStyle: "classic" as const,
-        };
-      default:
-        return {
-          title: "The Silent Center Collection",
-          description: "A meditation on form and negative space. Pieces designed to ground you in the present moment, crafted with uncompromising architectural precision and conscious materials.",
-          tagline: "Negative Space",
-          layoutStyle: "classic" as const,
-        };
-    }
-  }, [collectionQuery, collections]);
-
-
 
   const toggleWishlist = (id: string, title: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -194,35 +143,42 @@ function CollectionContent() {
   };
 
   const handleResetFilters = () => {
+    setSelectedCollection("All");
     setSelectedMaterial("All");
     setSelectedType("All");
-    updateQueryParam("material", "All");
-    updateQueryParam("type", "All");
+    const nextParams = new URLSearchParams();
+    router.push(`?${nextParams.toString()}`, { scroll: false });
     showToast("Filters reset successfully.");
   };
 
   // Filtered and Sorted Products
   const processedProducts = useMemo(() => {
-    const activeCollection = collectionQuery || "silent-center";
-    let result = products.filter((p) => (
-      p.isVisible !== false &&
-      (p.stock ?? 999) > 0 &&
-      (p.collection || "silent-center") === activeCollection
-    ));
+    let result = products.filter((p) => p.isVisible !== false && (p.stock ?? 999) > 0);
+
+    // Filter by Collection
+    if (selectedCollection !== "All") {
+      if (selectedCollection === "none") {
+        // "none" means no collection / uncategorized
+        result = result.filter((p) => !p.collection || p.collection.trim() === "" || p.collection === "none");
+      } else {
+        result = result.filter((p) => p.collection === selectedCollection);
+      }
+    }
 
     // Filter by Material
     if (selectedMaterial !== "All") {
       result = result.filter((p) => {
-        const mat = p.material.toLowerCase();
+        const mat = (p.material || "").toLowerCase();
         if (selectedMaterial === "Gold") return mat.includes("gold");
         if (selectedMaterial === "Silver") return mat.includes("silver");
+        if (selectedMaterial === "Platinum") return mat.includes("platinum");
         return true;
       });
     }
 
     // Filter by Type
     if (selectedType !== "All") {
-      result = result.filter((p) => p.type.toLowerCase() === selectedType.toLowerCase());
+      result = result.filter((p) => (p.type || "").toLowerCase() === selectedType.toLowerCase());
     }
 
     // Sort by selection
@@ -233,43 +189,7 @@ function CollectionContent() {
     }
 
     return result;
-  }, [products, collectionQuery, selectedMaterial, selectedType, sortBy]);
-
-  const [carouselIndex, setCarouselIndex] = useState(0);
-
-  useEffect(() => {
-    if (!collectionInfo.showProductCarousel || !collectionInfo.carouselAutoplay) return;
-    if (processedProducts.length <= 1) return;
-    const interval = setInterval(() => {
-      setCarouselIndex((prev) => (prev + 1) % processedProducts.length);
-    }, collectionInfo.carouselSpeed || 3000);
-    return () => clearInterval(interval);
-  }, [collectionInfo, processedProducts.length]);
-
-  useEffect(() => {
-    setCarouselIndex(0);
-  }, [processedProducts]);
-
-  const handlePrevSlide = () => {
-    setCarouselIndex((prev) => (prev - 1 + processedProducts.length) % processedProducts.length);
-  };
-  const handleNextSlide = () => {
-    setCarouselIndex((prev) => (prev + 1) % processedProducts.length);
-  };
-
-  const visibleProducts = useMemo(() => {
-    if (!collectionInfo.showProductCarousel) return processedProducts;
-    const subset = [];
-    const len = processedProducts.length;
-    if (len === 0) return [];
-    for (let i = 0; i < Math.min(3, len); i++) {
-      const idx = (carouselIndex + i) % len;
-      subset.push(processedProducts[idx]);
-    }
-    return subset;
-  }, [processedProducts, collectionInfo.showProductCarousel, carouselIndex]);
-
-
+  }, [products, selectedCollection, selectedMaterial, selectedType, sortBy]);
 
   return (
     <div className="w-full bg-pure-white relative min-h-screen">
@@ -279,74 +199,21 @@ function CollectionContent() {
         <div className="fixed bottom-8 right-8 z-50 bg-deep-navy text-pure-white px-6 py-4 border border-slate-grey/30 shadow-2xl flex items-center gap-3 animate-fade-in duration-300">
           <span className="material-symbols-outlined text-sm">info</span>
           <p className="font-body-md text-sm tracking-wide">{toastMessage}</p>
-          <button
-            onClick={() => setToastMessage(null)}
-            className="ml-4 hover:text-slate-grey cursor-pointer text-xs"
-          >
-            ✕
-          </button>
+          <button onClick={() => setToastMessage(null)} className="ml-4 hover:text-slate-grey cursor-pointer text-xs">✕</button>
         </div>
       )}
 
       <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pb-section-gap">
         
-        {/* Editorial Banner Header */}
-        {collectionInfo.layoutStyle === "editorial" && (
-          <header className="relative w-full aspect-[21/9] bg-ink-black overflow-hidden flex items-center justify-center text-center p-8 mb-12 rounded border border-slate-grey/15 shadow-sm">
-            <Image
-              src={collectionInfo.bannerImage || collectionInfo.image || "/logos/black.png"}
-              alt={collectionInfo.title}
-              fill
-              className="object-cover opacity-60 mix-blend-multiply"
-              priority
-            />
-            <div className="relative z-10 max-w-3xl space-y-3 text-pure-white p-4">
-              <span className="font-label-caps text-xs uppercase tracking-widest block text-amber-400 font-bold">{collectionInfo.tagline || "Curated Edition"}</span>
-              <h1 className="font-display-lg text-2xl md:text-5xl uppercase tracking-wider drop-shadow-md">
-                {collectionInfo.customHeadline || collectionInfo.title}
-              </h1>
-              <p className="font-body-md text-xs md:text-sm max-w-2xl mx-auto opacity-90 leading-relaxed">
-                {collectionInfo.customParagraph || collectionInfo.description}
-              </p>
-            </div>
-          </header>
-        )}
-
-        {/* Split Hero Banner Header */}
-        {collectionInfo.layoutStyle === "split" && (
-          <header className="py-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center border-b border-slate-grey/15 mb-12">
-            <div className="relative aspect-[16/9] w-full overflow-hidden bg-soft-linen rounded border border-slate-grey/10">
-              <Image
-                src={collectionInfo.bannerImage || collectionInfo.image || "/logos/black.png"}
-                alt={collectionInfo.title}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-            <div className="space-y-4 pr-4">
-              <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block font-bold">{collectionInfo.tagline || "Exclusive Collection"}</span>
-              <h1 className="font-display-lg text-xl md:text-3xl text-deep-navy uppercase leading-tight">
-                {collectionInfo.customHeadline || collectionInfo.title}
-              </h1>
-              <p className="font-body-md text-xs md:text-sm text-secondary leading-relaxed">
-                {collectionInfo.customParagraph || collectionInfo.description}
-              </p>
-            </div>
-          </header>
-        )}
-
-        {/* Classic Minimal Header */}
-        {(collectionInfo.layoutStyle === "classic" || !collectionInfo.layoutStyle) && (
-          <header className="py-12 flex flex-col items-center text-center max-w-3xl mx-auto space-y-stack-md">
-            <h1 className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-deep-navy uppercase tracking-tight">
-              {collectionInfo.customHeadline || collectionInfo.title}
-            </h1>
-            <p className="font-body-lg text-body-lg text-secondary">
-              {collectionInfo.customParagraph || collectionInfo.description}
-            </p>
-          </header>
-        )}
+        {/* Header Section */}
+        <header className="py-section-gap flex flex-col items-center text-center max-w-3xl mx-auto space-y-stack-md">
+          <h1 className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-deep-navy uppercase tracking-tight">
+            All Jewelry
+          </h1>
+          <p className="font-body-lg text-body-lg text-secondary">
+            Explore our complete catalogue of architectural fine jewelry, designed with uncompromising precision and conscious materials.
+          </p>
+        </header>
 
         {/* Filter & Sort Bar */}
         <div className="border-t border-b border-slate-grey/30 py-4 mb-stack-lg flex justify-between items-center relative z-20">
@@ -366,11 +233,11 @@ function CollectionContent() {
             </button>
 
             <span className="hidden md:inline font-label-caps text-xs text-slate-grey uppercase tracking-widest">
-              Faceted Search / {processedProducts.length} Items
+              Catalog / {processedProducts.length} Items
             </span>
 
             {/* Quick Status indicators */}
-            {(selectedMaterial !== "All" || selectedType !== "All") && (
+            {(selectedCollection !== "All" || selectedMaterial !== "All" || selectedType !== "All") && (
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-body-md text-slate-grey bg-soft-linen px-2 py-0.5 uppercase tracking-wider">
                   Active Filters
@@ -426,37 +293,30 @@ function CollectionContent() {
 
         {/* Mobile Filters Dropdown panel */}
         {filtersOpen && (
-          <div className="md:hidden bg-soft-linen/30 border border-slate-grey/10 p-6 mb-stack-lg grid grid-cols-2 gap-6 z-10 relative">
+          <div className="md:hidden bg-soft-linen/30 border border-slate-grey/10 p-6 mb-stack-lg space-y-6 z-10 relative">
             <div>
-              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-4">Material</h4>
+              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-3">Collections</h4>
               <div className="flex flex-wrap gap-2">
-                {["All", "Gold", "Silver"].map((mat) => (
-                  <button
-                    key={mat}
-                    onClick={() => handleMaterialChange(mat)}
-                    className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${
-                      selectedMaterial === mat ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"
-                    }`}
-                  >
-                    {mat}
-                  </button>
+                <button onClick={() => handleCollectionChange("All")} className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border cursor-pointer ${selectedCollection === "All" ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"}`}>All</button>
+                <button onClick={() => handleCollectionChange("none")} className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border cursor-pointer ${selectedCollection === "none" ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"}`}>Uncategorized</button>
+                {collections.map(col => (
+                  <button key={col.id} onClick={() => handleCollectionChange(col.id)} className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border cursor-pointer ${selectedCollection === col.id ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"}`}>{col.title}</button>
                 ))}
               </div>
             </div>
-
             <div>
-              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-4">Product Type</h4>
+              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-3">Material</h4>
               <div className="flex flex-wrap gap-2">
-                {["All", "Ring", "Necklace", "Earring", "Bracelet"].map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => handleTypeChange(type)}
-                    className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${
-                      selectedType === type ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"
-                    }`}
-                  >
-                    {type}
-                  </button>
+                {MATERIAL_OPTIONS.map((mat) => (
+                  <button key={mat} onClick={() => handleMaterialChange(mat)} className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border cursor-pointer ${selectedMaterial === mat ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"}`}>{mat}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-3">Product Type</h4>
+              <div className="flex flex-wrap gap-2">
+                {TYPE_OPTIONS.map((type) => (
+                  <button key={type} onClick={() => handleTypeChange(type)} className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border cursor-pointer ${selectedType === type ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"}`}>{type}</button>
                 ))}
               </div>
             </div>
@@ -470,20 +330,28 @@ function CollectionContent() {
               <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
                 Collections
               </h4>
-              <ul className="space-y-2">
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                  <input type="radio" name="collection" checked={selectedCollection === "All"} onChange={() => handleCollectionChange("All")} className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy" />
+                  <span className={selectedCollection === "All" ? "text-deep-navy font-semibold" : ""}>All Collections</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                  <input type="radio" name="collection" checked={selectedCollection === "none"} onChange={() => handleCollectionChange("none")} className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy" />
+                  <span className={selectedCollection === "none" ? "text-deep-navy font-semibold" : ""}>Uncategorized (No Collection)</span>
+                </label>
                 {collections.map((col) => (
-                  <li key={col.id}>
-                    <Link
-                      href={`/collections/${col.id}`}
-                      className={`font-body-md text-xs transition-colors block py-1 ${
-                        collectionQuery === col.id ? "text-deep-navy font-semibold" : "text-slate-grey hover:text-ink-black"
-                      }`}
-                    >
-                      {col.title}
-                    </Link>
-                  </li>
+                  <label key={col.id} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                    <input
+                      type="radio"
+                      name="collection"
+                      checked={selectedCollection === col.id}
+                      onChange={() => handleCollectionChange(col.id)}
+                      className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy"
+                    />
+                    <span className={selectedCollection === col.id ? "text-deep-navy font-semibold" : ""}>{col.title}</span>
+                  </label>
                 ))}
-              </ul>
+              </div>
             </div>
 
             <div>
@@ -491,7 +359,7 @@ function CollectionContent() {
                 Materials
               </h4>
               <div className="flex flex-col gap-2">
-                {["All", "Gold", "Silver"].map((mat) => (
+                {MATERIAL_OPTIONS.map((mat) => (
                   <label key={mat} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
                     <input
                       type="radio"
@@ -511,7 +379,7 @@ function CollectionContent() {
                 Product Type
               </h4>
               <div className="flex flex-col gap-2">
-                {["All", "Ring", "Necklace", "Earring", "Bracelet"].map((type) => (
+                {TYPE_OPTIONS.map((type) => (
                   <label key={type} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
                     <input
                       type="radio"
@@ -526,10 +394,10 @@ function CollectionContent() {
               </div>
             </div>
 
-            {(selectedMaterial !== "All" || selectedType !== "All") && (
+            {(selectedCollection !== "All" || selectedMaterial !== "All" || selectedType !== "All") && (
               <button
                 onClick={handleResetFilters}
-                className="w-full py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black transition-colors"
+                className="w-full py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black transition-colors cursor-pointer"
               >
                 Reset Filters
               </button>
@@ -568,86 +436,6 @@ function CollectionContent() {
                   Reset Filters
                 </button>
               </div>
-            ) : collectionInfo.showProductCarousel ? (
-              /* Product Carousel */
-              <div className="relative w-full py-4 px-8 border border-slate-grey/10 bg-soft-linen/5 rounded shadow-sm">
-                {processedProducts.length > 3 && (
-                  <>
-                    <button onClick={handlePrevSlide} className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full border border-slate-grey/30 bg-pure-white flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-colors cursor-pointer z-10 shadow-sm">
-                      <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-                    </button>
-                    <button onClick={handleNextSlide} className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full border border-slate-grey/30 bg-pure-white flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-colors cursor-pointer z-10 shadow-sm">
-                      <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                    </button>
-                  </>
-                )}
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500">
-                  {visibleProducts.map((p) => {
-                    const isWishlisted = wishlist.includes(p.id);
-                    return (
-                      <Link
-                        key={p.id}
-                        href={`/product/${p.id}`}
-                        className="flex flex-col group cursor-pointer animate-fade-in"
-                      >
-                        <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden rounded border border-slate-grey/10">
-                          <Image
-                            alt={p.title}
-                            fill
-                            className="object-cover object-center mix-blend-multiply opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
-                            src={p.image}
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          />
-                          <button
-                            onClick={(e) => toggleWishlist(p.id, p.title, e)}
-                            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                            className="absolute top-2 right-2 md:top-4 md:right-4 text-slate-grey hover:text-deep-navy transition-colors z-10 cursor-pointer p-1"
-                          >
-                            <span
-                              className="material-symbols-outlined text-lg md:text-xl"
-                              style={{
-                                fontVariationSettings: `'FILL' ${isWishlisted ? 1 : 0}, 'wght' 200`,
-                                color: isWishlisted ? "#ba1a1a" : "inherit",
-                              }}
-                            >
-                              favorite
-                            </span>
-                          </button>
-                        </div>
-                        <div className="mt-1.5 md:mt-stack-sm flex flex-col md:flex-row md:justify-between md:items-start pt-1 md:pt-2 gap-0.5">
-                          <div className="flex flex-col space-y-0.5 md:space-y-1 min-w-0">
-                            <h2 className="font-body-md text-[11px] md:text-body-md text-on-surface font-medium truncate">
-                              {p.title}
-                            </h2>
-                            <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
-                              {p.material}
-                            </span>
-                          </div>
-                          <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">
-                            {formatPrice(p.price)}
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-                
-                {/* Dots */}
-                {processedProducts.length > 3 && (
-                  <div className="flex justify-center gap-1.5 mt-6">
-                    {processedProducts.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCarouselIndex(i)}
-                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                          carouselIndex === i ? "bg-deep-navy" : "bg-slate-grey/30"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
             ) : (
               /* Product Grid */
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-gutter">
@@ -657,7 +445,7 @@ function CollectionContent() {
                     <Link
                       key={p.id}
                       href={`/product/${p.id}`}
-                      className="flex flex-col group cursor-pointer"
+                      className="group flex flex-col cursor-pointer"
                     >
                       {/* Image Container */}
                       <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden">
@@ -692,7 +480,7 @@ function CollectionContent() {
                             {p.title}
                           </h2>
                           <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
-                            {p.material}
+                            {p.material || p.type}
                           </span>
                         </div>
                         <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">
@@ -711,10 +499,10 @@ function CollectionContent() {
   );
 }
 
-export default function CollectionPage() {
+export default function ProductsCatalogPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-pure-white flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest">Loading Collection...</div>}>
-      <CollectionContent />
+    <Suspense fallback={<div className="min-h-screen bg-pure-white flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest">Loading Catalog...</div>}>
+      <ProductsCatalogContent />
     </Suspense>
   );
 }
