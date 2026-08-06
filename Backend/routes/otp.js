@@ -79,7 +79,7 @@ router.post("/verify", async (req, res) => {
 // POST /api/otp/test-email — Test SMTP email sending configuration
 router.post("/test-email", async (req, res) => {
   const { recipientEmail } = req.body;
-  const target = recipientEmail || "dhruvilthummar2007@gmail.com";
+  const target = recipientEmail || "info@vrixjewels.com";
 
   try {
     const activeTransporter = await getTransporter();
@@ -88,7 +88,7 @@ router.post("/test-email", async (req, res) => {
         success: false,
         error: "SMTP Transporter is not configured. Please enable SMTP and enter host/user/pass in Admin Settings."
       });
-    }
+    } 
 
     const apiSettings = await getApiSettings();
     const senderEmail = apiSettings?.nodemailerUser || process.env.SMTP_USER || "info@vrixjewels.com";

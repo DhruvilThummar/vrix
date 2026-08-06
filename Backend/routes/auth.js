@@ -1,7 +1,7 @@
 import express from "express";
 import crypto from "crypto";
 import { db } from "../database.js";
-import { getTransporter, sendEmailWithTimeout, getApiSettings, getTruecallerConfig, getGoogleConfig } from "../config/apiResolvers.js";
+import { getTransporter, sendEmailWithTimeout, getApiSettings, getTruecallerConfig } from "../config/apiResolvers.js";
 
 const router = express.Router();
 
@@ -37,6 +37,8 @@ router.post("/register", async (req, res) => {
       })
     ]);
 
+    console.log(`[OTP DISPATCH] Registration OTP for ${cleanEmail}: ${otp}`);
+
     // Dispatch transactional email asynchronously in the background (Non-blocking)
     (async () => {
       try {
@@ -44,9 +46,9 @@ router.post("/register", async (req, res) => {
         if (activeTransporter) {
           const apiSettings = await getApiSettings();
           const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-          await sendEmailWithTimeout(activeTransporter, {
+          const emailResult = await sendEmailWithTimeout(activeTransporter, {
             from: `"VRIX" <${senderEmail}>`,
-            to: email,
+            to: cleanEmail,
             subject: "Verify Your VRIX Account Registration",
             html: `
               <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
@@ -56,7 +58,12 @@ router.post("/register", async (req, res) => {
                 <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
               </div>
             `,
-          }, 3000);
+          }, 5000);
+          if (!emailResult) {
+            console.warn(`[SMTP WARN] Email delivery failed or timed out for ${cleanEmail}. Fallback OTP code is: ${otp}`);
+          }
+        } else {
+          console.warn(`[SMTP WARN] No active transporter. Fallback OTP code for ${cleanEmail}: ${otp}`);
         }
       } catch (mailErr) {
         console.warn("Background registration email error:", mailErr.message);
@@ -158,6 +165,8 @@ router.post("/login", async (req, res) => {
       })
     ]);
 
+    console.log(`[OTP DISPATCH] Login OTP for ${cleanEmail}: ${otp}`);
+
     // Dispatch email asynchronously in background
     (async () => {
       try {
@@ -165,7 +174,7 @@ router.post("/login", async (req, res) => {
         if (activeTransporter) {
           const apiSettings = await getApiSettings();
           const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-          await sendEmailWithTimeout(activeTransporter, {
+          const emailResult = await sendEmailWithTimeout(activeTransporter, {
             from: `"VRIX" <${senderEmail}>`,
             to: cleanEmail,
             subject: "VRIX Login Verification Code",
@@ -177,7 +186,12 @@ router.post("/login", async (req, res) => {
                 <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
               </div>
             `,
-          }, 3000);
+          }, 5000);
+          if (!emailResult) {
+            console.warn(`[SMTP WARN] Email delivery failed or timed out for ${cleanEmail}. Fallback OTP code is: ${otp}`);
+          }
+        } else {
+          console.warn(`[SMTP WARN] No active transporter. Fallback OTP code for ${cleanEmail}: ${otp}`);
         }
       } catch (mailErr) {
         console.warn("Background login email error:", mailErr.message);
@@ -410,76 +424,7 @@ router.post("/join-vrix-plus", async (req, res) => {
   }
 });
 
-// POST /api/auth/google — Google OAuth authentication
-router.post("/google", async (req, res) => {
-  const { credential, email: bodyEmail, name: bodyName, picture } = req.body;
 
-  try {
-    const config = await getGoogleConfig();
-    if (!config.enabled) {
-      return res.status(400).json({ error: "Google authentication is currently disabled in system settings." });
-    }
-
-    let userEmail = bodyEmail;
-    let userName = bodyName || "Google User";
-
-    // If Google JWT Credential string is passed, decode payload safely
-    if (credential) {
-      try {
-        const parts = credential.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
-          if (payload.email) userEmail = payload.email;
-          if (payload.name) userName = payload.name;
-        }
-      } catch (e) {
-        console.warn("Could not parse Google JWT credential payload:", e.message);
-      }
-    }
-
-    if (!userEmail) {
-      return res.status(400).json({ error: "Email is required for Google Sign-In." });
-    }
-
-    const emailLower = userEmail.toLowerCase();
-    let existingUser = await db.users.findUnique({ where: { email: emailLower } });
-
-    if (!existingUser) {
-      existingUser = await db.users.create({
-        data: {
-          email: emailLower,
-          name: userName,
-          phone: "",
-          password: "google_oauth_account",
-          isVrixPlusMember: false,
-          vrixPlusJoinedDate: null,
-        },
-      });
-      await db.securityLogs.create({
-        data: { event: "ACCOUNT_REGISTER_GOOGLE", user: emailLower, status: "SUCCESS" },
-      });
-    } else {
-      await db.securityLogs.create({
-        data: { event: "ACCOUNT_LOGIN_GOOGLE", user: emailLower, status: "SUCCESS" },
-      });
-    }
-
-    return res.json({
-      success: true,
-      user: {
-        email: existingUser.email,
-        name: existingUser.name,
-        phone: existingUser.phone || "",
-        isVrixPlusMember: !!existingUser.isVrixPlusMember,
-        vrixPlusJoinedDate: existingUser.vrixPlusJoinedDate || null,
-        authMethod: "google",
-      },
-    });
-  } catch (err) {
-    console.error("Google Auth error:", err);
-    res.status(500).json({ error: err.message || "Failed to authenticate with Google." });
-  }
-});
 
 // GET /api/auth/me — Fetch authenticated user profile directly from Supabase / DB
 router.get("/me", async (req, res) => {

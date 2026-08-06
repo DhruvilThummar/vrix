@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin, getApiBaseUrl, loginWithGoogle } from "@/utils/api";
+import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin, getApiBaseUrl } from "@/utils/api";
 import SkeletonImage from "@/components/shop/SkeletonImage";
 
 interface AuthDrawerProps {
@@ -172,91 +172,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     }
   };
 
-  const handleDirectGoogleLogin = async () => {
-    const targetEmail = email.trim() || "user@gmail.com";
-    const targetName = name.trim() || (email ? email.split("@")[0] : "Google User");
 
-    const res = await loginWithGoogle({
-      email: targetEmail,
-      name: targetName
-    });
-
-    if (res && res.user) {
-      login(res.user.email, {
-        name: res.user.name,
-        phone: res.user.phone || "",
-        isVrixPlusMember: !!res.user.isVrixPlusMember
-      });
-      triggerToast("Signed in with Google!");
-      onClose();
-    } else {
-      throw new Error("Failed to authenticate with Google.");
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://snvifoikeixkgrdkgyme.supabase.co";
-      const redirectUrl = `${window.location.origin}/auth/callback`;
-      const supabaseOAuthUrl = `${supabaseUrl.replace(/\/$/, "")}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
-
-      let googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      if (!googleClientId) {
-        const dbData = await fetchDb().catch(() => null);
-        if (dbData?.api_settings?.googleClientId) {
-          googleClientId = dbData.api_settings.googleClientId;
-        }
-      }
-
-      if (typeof window !== "undefined" && (window as any).google?.accounts?.id && googleClientId) {
-        await new Promise<void>((resolve, reject) => {
-          (window as any).google.accounts.id.initialize({
-            client_id: googleClientId,
-            callback: async (response: any) => {
-              try {
-                if (response.credential) {
-                  const res = await loginWithGoogle({ credential: response.credential });
-                  if (res && res.user) {
-                    login(res.user.email, {
-                      name: res.user.name,
-                      phone: res.user.phone || "",
-                      isVrixPlusMember: !!res.user.isVrixPlusMember
-                    });
-                    triggerToast("Signed in with Google!");
-                    onClose();
-                    resolve();
-                  } else {
-                    reject(new Error("Failed to process Google authentication."));
-                  }
-                } else {
-                  reject(new Error("Google credential not received."));
-                }
-              } catch (err) {
-                reject(err);
-              }
-            }
-          });
-          (window as any).google.accounts.id.prompt((notification: any) => {
-            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-              window.location.href = supabaseOAuthUrl;
-              resolve();
-            }
-          });
-        });
-        return;
-      }
-
-      // Initiate Supabase Google OAuth Redirect
-      window.location.href = supabaseOAuthUrl;
-    } catch (err: any) {
-      console.error("Google authentication error:", err);
-      setErrorMsg(err.message || "Google authentication failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <>
@@ -381,29 +297,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
                 </button>
               </div>
 
-              {/* Social Logins */}
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  className="w-full py-3 border border-slate-grey/30 text-ink-black font-button text-xs uppercase tracking-wider hover:bg-soft-linen transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.32 7.33 24 12 24z"/>
-                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.18 0 10.02 0 12s.46 3.82 1.26 5.42l4.02-3.15z"/>
-                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.68 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-                  </svg>
-                  Continue with Google
-                </button>
-              </div>
 
-              {/* Separator */}
-              <div className="flex items-center gap-3 text-slate-grey/40 my-2">
-                <div className="h-[1px] bg-slate-grey/20 flex-grow"></div>
-                <span className="text-[10px] font-label-caps uppercase tracking-widest text-slate-grey">OR</span>
-                <div className="h-[1px] bg-slate-grey/20 flex-grow"></div>
-              </div>
 
               {/* Form Input */}
               {authStep === "email" ? (

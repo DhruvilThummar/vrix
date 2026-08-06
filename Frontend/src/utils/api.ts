@@ -361,16 +361,7 @@ export async function verifyTruecaller(payload?: string, signature?: string, sig
   });
 }
 
-export async function loginWithGoogle(payload: { credential?: string; email?: string; name?: string; picture?: string }) {
-  return apiFetch<{
-    success: boolean;
-    user: { email: string; name: string; phone: string; isVrixPlusMember?: boolean; vrixPlusJoinedDate?: string | null };
-  }>("/auth/google", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-}
+
 
 
 // ══════════════════════════════════════════════════════════════════════════════

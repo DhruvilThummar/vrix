@@ -80,16 +80,18 @@ export async function getTransporter() {
       try {
         const nodemailer = await import("nodemailer");
         const port = parseInt(apiSettings.nodemailerPort || "465");
-        const defaultHost = apiSettings.nodemailerUser.toLowerCase().includes("gmail.com") ? "smtp.gmail.com" : "smtp.hostinger.com";
+        const passClean = apiSettings.nodemailerPass.replace(/\s+/g, "").replace(/-/g, "");
+        const isGoogleAppPass = passClean.length === 16;
+        const defaultHost = (apiSettings.nodemailerUser.toLowerCase().includes("gmail.com") || isGoogleAppPass) ? "smtp.gmail.com" : "smtp.hostinger.com";
         const host = apiSettings.nodemailerHost || defaultHost;
         return nodemailer.default.createTransport({
           host: host,
           port: port,
           secure: port === 465,
           auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
-          connectionTimeout: 3000,
-          greetingTimeout: 3000,
-          socketTimeout: 3000,
+          connectionTimeout: 5000,
+          greetingTimeout: 5000,
+          socketTimeout: 5000,
         });
       } catch (err) {
         console.warn("Nodemailer: Dynamic configuration failed, using fallback.", err.message);
@@ -104,16 +106,18 @@ export async function getTransporter() {
     try {
       const nodemailer = await import("nodemailer");
       const port = parseInt(process.env.SMTP_PORT || "465");
-      const defaultHost = user.toLowerCase().includes("gmail.com") ? "smtp.gmail.com" : "smtp.hostinger.com";
+      const passClean = pass.replace(/\s+/g, "").replace(/-/g, "");
+      const isGoogleAppPass = passClean.length === 16;
+      const defaultHost = (user.toLowerCase().includes("gmail.com") || isGoogleAppPass) ? "smtp.gmail.com" : "smtp.hostinger.com";
       const host = process.env.SMTP_HOST || defaultHost;
       return nodemailer.default.createTransport({
         host: host,
         port: port,
         secure: port === 465,
         auth: { user, pass },
-        connectionTimeout: 3000,
-        greetingTimeout: 3000,
-        socketTimeout: 3000,
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
       });
     } catch (err) {
       console.warn("Nodemailer: fallback env config failed.", err.message);
@@ -122,7 +126,7 @@ export async function getTransporter() {
   return null;
 }
 
-export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeoutMs = 3000) {
+export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeoutMs = 5000) {
   if (!activeTransporter) return false;
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
@@ -164,25 +168,6 @@ export async function getTruecallerConfig() {
     sandbox,
     partnerKey,
     appId,
-  };
-}
-
-export async function getGoogleConfig() {
-  const apiSettings = await getApiSettings();
-  if (apiSettings) {
-    return {
-      enabled: apiSettings.googleEnabled !== false,
-      clientId: apiSettings.googleClientId || process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: apiSettings.googleClientSecret || process.env.GOOGLE_CLIENT_SECRET || "",
-      callbackUrl: apiSettings.googleCallbackUrl || process.env.GOOGLE_CALLBACK_URL || defaultCallback,
-    };
-  }
-
-  return {
-    enabled: true,
-    clientId: process.env.GOOGLE_CLIENT_ID || "",
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    callbackUrl: process.env.GOOGLE_CALLBACK_URL || defaultCallback,
   };
 }
 
