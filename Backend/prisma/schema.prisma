@@ -22,20 +22,24 @@ model Product {
   material            String?
   type                String
   price               Float
+  originalPrice       Float?   @map("original_price")
   image               String
   images              Json?
   description         String?
   alt                 String?
+  sku                 String?
   collection          String?
   stock               Int      @default(999)
   isVisible           Boolean  @default(true)  @map("is_visible")
   isVrixPlusExclusive Boolean  @default(false) @map("is_vrix_plus_exclusive")
   vrixPlusPrice       Float?   @map("vrix_plus_price")
+  layoutStyle         String?  @default("2x2") @map("layout_style")
   engravingOptions    Json?    @map("engraving_options")
   giftNoteOptions     Json?    @map("gift_note_options")
   weight              String?
   dimensions          String?
   availableSizes      Json?    @map("available_sizes")
+  tags                Json?
   createdAt           DateTime @default(now()) @map("created_at")
 
   @@map("products")

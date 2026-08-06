@@ -98,7 +98,7 @@ export async function ensureTablesExist() {
   try {
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "users" ("email" TEXT PRIMARY KEY, "name" TEXT, "phone" TEXT, "password" TEXT, "is_vrix_plus_member" BOOLEAN DEFAULT false, "vrix_plus_joined_date" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(e => console.warn("Notice: users table creation issue:", e.message));
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "cms_settings" ("key" TEXT PRIMARY KEY, "value" JSONB NOT NULL, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "engraving_options" JSONB, "gift_note_options" JSONB, "weight" TEXT, "dimensions" TEXT, "available_sizes" JSONB, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "original_price" DOUBLE PRECISION, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "sku" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "layout_style" TEXT DEFAULT '2x2', "engraving_options" JSONB, "gift_note_options" JSONB, "weight" TEXT, "dimensions" TEXT, "available_sizes" JSONB, "tags" JSONB, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "journal" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "excerpt" TEXT, "content" TEXT NOT NULL, "image" TEXT NOT NULL, "date" TEXT, "read_time" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "delivery_staff" ("email" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "role" TEXT NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "redeem_codes" ("code" TEXT PRIMARY KEY, "discount" DOUBLE PRECISION NOT NULL, "type" TEXT DEFAULT 'percentage', "is_active" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "description" TEXT, "min_subtotal" DOUBLE PRECISION, "usage_limit" INTEGER, "used_count" INTEGER DEFAULT 0, "expiry_date" TEXT);`).catch(() => { });
@@ -116,6 +116,10 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "weight" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "dimensions" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "available_sizes" JSONB;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "original_price" DOUBLE PRECISION;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sku" TEXT;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "layout_style" TEXT DEFAULT \'2x2\';').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "tags" JSONB;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "role" TEXT DEFAULT \'customer\';').catch(() => { });
@@ -141,20 +145,24 @@ const productSelect = {
   material: true,
   type: true,
   price: true,
+  originalPrice: true,
   image: true,
   images: true,
   description: true,
   alt: true,
+  sku: true,
   collection: true,
   stock: true,
   isVisible: true,
   isVrixPlusExclusive: true,
   vrixPlusPrice: true,
+  layoutStyle: true,
   engravingOptions: true,
   giftNoteOptions: true,
   weight: true,
   dimensions: true,
   availableSizes: true,
+  tags: true,
   createdAt: true,
 };
 
@@ -180,11 +188,15 @@ const withProductDefaults = (product) => {
     isVisible: product.isVisible !== undefined ? product.isVisible : true,
     isVrixPlusExclusive: !!product.isVrixPlusExclusive,
     vrixPlusPrice: product.vrixPlusPrice ?? null,
+    originalPrice: product.originalPrice ?? null,
+    layoutStyle: product.layoutStyle || "2x2",
+    sku: product.sku || "",
     engravingOptions: product.engravingOptions || { enabled: false, limit: 25, price: 0 },
     giftNoteOptions: product.giftNoteOptions || { enabled: false, limit: 150, price: 0 },
     weight: product.weight || "",
     dimensions: product.dimensions || "",
     availableSizes: Array.isArray(product.availableSizes) ? product.availableSizes : [],
+    tags: Array.isArray(product.tags) ? product.tags : [],
   };
 };
 
@@ -1316,6 +1328,10 @@ export async function migrateIfNeeded() {
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_visible" BOOLEAN DEFAULT true;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_vrix_plus_exclusive" BOOLEAN DEFAULT false;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "vrix_plus_price" DOUBLE PRECISION;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "original_price" DOUBLE PRECISION;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sku" TEXT;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "layout_style" TEXT DEFAULT \'2x2\';').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "tags" JSONB;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "description" TEXT;').catch(() => { });
@@ -1357,11 +1373,24 @@ export async function migrateIfNeeded() {
               material: p.material,
               type: p.type,
               price: Number(p.price),
+              originalPrice: p.originalPrice !== undefined ? Number(p.originalPrice) || null : null,
               image: p.image,
               images: Array.isArray(p.images) ? p.images : (p.image ? [p.image] : []),
               description: p.description || "",
               alt: p.alt || "",
-              collection: p.collection || ""
+              sku: p.sku || "",
+              collection: p.collection || "",
+              stock: p.stock !== undefined ? Number(p.stock) : 999,
+              isVisible: p.isVisible !== false,
+              isVrixPlusExclusive: !!p.isVrixPlusExclusive,
+              vrixPlusPrice: p.vrixPlusPrice !== undefined ? Number(p.vrixPlusPrice) || null : null,
+              layoutStyle: p.layoutStyle || "2x2",
+              engravingOptions: p.engravingOptions || { enabled: false, limit: 25, price: 0 },
+              giftNoteOptions: p.giftNoteOptions || { enabled: false, limit: 150, price: 0 },
+              weight: p.weight || "",
+              dimensions: p.dimensions || "",
+              availableSizes: Array.isArray(p.availableSizes) ? p.availableSizes : [],
+              tags: Array.isArray(p.tags) ? p.tags : [],
             }
           }).catch(() => { });
         }

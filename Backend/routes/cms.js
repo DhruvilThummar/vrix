@@ -160,7 +160,7 @@ router.get("/cms/announcement-bar", async (req, res) => {
 // POST /api/cms/announcement-bar — Admin endpoint to update announcement bar
 router.post("/cms/announcement-bar", adminAuth, async (req, res) => {
   try {
-    const { isEnabled, interval, backgroundColor, textColor, fontSize, lines, actionText, actionLink } = req.body;
+    const { isEnabled, interval, backgroundColor, textColor, fontSize, lines, showLink, actionText, actionLink } = req.body;
     const value = {
       isEnabled: isEnabled !== false,
       interval: Number(interval || 3000),
@@ -168,6 +168,7 @@ router.post("/cms/announcement-bar", adminAuth, async (req, res) => {
       textColor: textColor || "#ffffff",
       fontSize: fontSize || "11px",
       lines: Array.isArray(lines) ? lines : [],
+      showLink: showLink !== false,
       actionText: actionText || "Shop Offers →",
       actionLink: actionLink || "/offers"
     };
