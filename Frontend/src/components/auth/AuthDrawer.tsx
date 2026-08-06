@@ -105,8 +105,9 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
           setLoading(false);
           return;
         }
-        const res = await registerUser({ email: cleanEmail, password, name: cleanName, phone: cleanPhone });
-        triggerToast("Verification code sent to your email!");
+        await registerUser({ email: cleanEmail, password, name: cleanName, phone: cleanPhone });
+        setOtpInput(["", "", "", "", "", ""]);
+        triggerToast("Verification code sent to your email! Please enter it below.");
         setAuthStep("otp");
       } else {
         const res = await loginUserDirect({ email: cleanEmail, password });
@@ -128,7 +129,8 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      const res = await registerUser({ email: cleanEmail, password, name: cleanName, phone: cleanPhone });
+      await registerUser({ email: cleanEmail, password, name: cleanName, phone: cleanPhone });
+      setOtpInput(["", "", "", "", "", ""]);
       triggerToast("A new verification code has been sent to your email.");
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to resend code.");
@@ -424,15 +426,32 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
                         maxLength={1}
                         value={digit}
                         onPaste={(e) => {
-                          const paste = e.clipboardData.getData("text").trim();
-                          if (/^\d{6}$/.test(paste)) {
+                          const pasteData = e.clipboardData.getData("text");
+                          const digits = pasteData.replace(/\D/g, "").slice(0, 6);
+                          if (digits.length > 0) {
                             e.preventDefault();
-                            setOtpInput(paste.split(""));
-                            otpRefs.current[5]?.focus();
+                            const next = [...otpInput];
+                            digits.split("").forEach((d, idx) => {
+                              if (i + idx < 6) next[i + idx] = d;
+                            });
+                            setOtpInput(next);
+                            const focusIndex = Math.min(i + digits.length - 1, 5);
+                            otpRefs.current[focusIndex]?.focus();
                           }
                         }}
                         onChange={(e) => {
                           const val = e.target.value;
+                          const digits = val.replace(/\D/g, "");
+                          if (digits.length > 1) {
+                            const next = [...otpInput];
+                            digits.slice(0, 6).split("").forEach((d, idx) => {
+                              if (i + idx < 6) next[i + idx] = d;
+                            });
+                            setOtpInput(next);
+                            const focusIndex = Math.min(i + digits.length - 1, 5);
+                            otpRefs.current[focusIndex]?.focus();
+                            return;
+                          }
                           if (!/^\d?$/.test(val)) return;
                           const next = [...otpInput];
                           next[i] = val;

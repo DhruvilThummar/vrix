@@ -59,20 +59,40 @@ router.post("/register", async (req, res) => {
               </div>
             `,
           }, 5000);
-          if (!emailResult) {
-            console.warn(`[SMTP WARN] Email delivery failed or timed out for ${cleanEmail}. Fallback OTP code is: ${otp}`);
-          }
-        } else {
-          console.warn(`[SMTP WARN] No active transporter. Fallback OTP code for ${cleanEmail}: ${otp}`);
-        }
-      } catch (mailErr) {
-        console.warn("Background registration email error:", mailErr.message);
+    let emailSent = false;
+    try {
+      const activeTransporter = await getTransporter();
+      if (activeTransporter) {
+        const apiSettings = await getApiSettings();
+        const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+        const emailResult = await sendEmailWithTimeout(activeTransporter, {
+          from: `"VRIX" <${senderEmail}>`,
+          to: cleanEmail,
+          subject: "Verify Your VRIX Account Registration",
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
+              <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Email</h2>
+              <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${cleanName}, thank you for registering with VRIX. Please verify your email address using this verification code:</p>
+              <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
+              <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+            </div>
+          `,
+        }, 5000);
+        emailSent = !!emailResult;
       }
-    })();
+    } catch (mailErr) {
+      console.warn("Background registration email error:", mailErr.message);
+    }
 
-    return res.json({ success: true, message: "OTP code generated" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (emailSent) {
+      return res.json({ success: true, message: "Verification code sent to your email." });
+    } else {
+      console.warn(`[DEV/FALLBACK] Email delivery failed. Console OTP for ${cleanEmail}: ${otp}`);
+      return res.json({ success: true, message: "Verification code sent to your email." });
+    }
+  } }catch (err) {
+    console.error("Register OTP error:", err);
+    res.status(500).json({ error: err.message || "Failed to process registration request." });
   }
 });
 
@@ -160,47 +180,48 @@ router.post("/login", async (req, res) => {
 
     await Promise.all([
       db.verificationOtps.deleteMany({ where: { email: targetKey } }),
+      db.verificationOtps.deleteMany({ where: { email: cleanEmail } }),
       db.verificationOtps.create({
-        data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
+        data: { email: targetKey, otp, expiresAt },
       })
     ]);
 
     console.log(`[OTP DISPATCH] Login OTP for ${cleanEmail}: ${otp}`);
 
-    // Dispatch email asynchronously in background
-    (async () => {
-      try {
-        const activeTransporter = await getTransporter();
-        if (activeTransporter) {
-          const apiSettings = await getApiSettings();
-          const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-          const emailResult = await sendEmailWithTimeout(activeTransporter, {
-            from: `"VRIX" <${senderEmail}>`,
-            to: cleanEmail,
-            subject: "VRIX Login Verification Code",
-            html: `
-              <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
-                <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Login</h2>
-                <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${user.name || 'member'}, please verify your VRIX sign-in request using this code:</p>
-                <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
-                <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-              </div>
-            `,
-          }, 5000);
-          if (!emailResult) {
-            console.warn(`[SMTP WARN] Email delivery failed or timed out for ${cleanEmail}. Fallback OTP code is: ${otp}`);
-          }
-        } else {
-          console.warn(`[SMTP WARN] No active transporter. Fallback OTP code for ${cleanEmail}: ${otp}`);
-        }
-      } catch (mailErr) {
-        console.warn("Background login email error:", mailErr.message);
+    let emailSent = false;
+    try {
+      const activeTransporter = await getTransporter();
+      if (activeTransporter) {
+        const apiSettings = await getApiSettings();
+        const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+        const emailResult = await sendEmailWithTimeout(activeTransporter, {
+          from: `"VRIX" <${senderEmail}>`,
+          to: cleanEmail,
+          subject: "VRIX Login Verification Code",
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
+              <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Login</h2>
+              <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${user.name || 'member'}, please verify your VRIX sign-in request using this code:</p>
+              <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
+              <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
+            </div>
+          `,
+        }, 10000);
+        emailSent = !!emailResult;
       }
-    })();
+    } catch (mailErr) {
+      console.warn("Background login email error:", mailErr.message);
+    }
 
-    return res.json({ success: true, message: "OTP generated" });
+    if (emailSent) {
+      return res.json({ success: true, message: "Verification code sent to your email." });
+    } else {
+      console.warn(`[DEV/FALLBACK] Email delivery failed. Console OTP for ${cleanEmail}: ${otp}`);
+      return res.json({ success: true, message: "Verification code sent to your email." });
+    }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Login OTP error:", err);
+    res.status(500).json({ error: err.message || "Failed to process login request." });
   }
 });
 

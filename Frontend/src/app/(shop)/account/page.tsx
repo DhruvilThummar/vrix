@@ -266,13 +266,8 @@ export default function UserAccountPage() {
       if (authMode === "signup") {
         if (!cleanName) { setAuthError("Full name is required for registration."); setAuthLoading(false); return; }
         const res = await registerUser({ email: cleanEmail, password: authPassword, name: cleanName, phone: cleanPhone });
-        if (res.otp) {
-          const digits = String(res.otp).split("").slice(0, 6);
-          if (digits.length === 6) setOtpInput(digits);
-          triggerFeedback(`Verification code generated! (Dev code: ${res.otp})`);
-        } else {
-          triggerFeedback("Verification code sent to your email!");
-        }
+        setOtpInput(["", "", "", "", "", ""]);
+        triggerFeedback("Verification code sent to your email! Please enter it below.");
         setAuthStep("otp");
       } else {
         const res = await loginUserDirect({ email: cleanEmail, password: authPassword });
@@ -294,14 +289,9 @@ export default function UserAccountPage() {
     setAuthLoading(true);
     setAuthError(null);
     try {
-      const res = await registerUser({ email: cleanEmail, password: authPassword, name: cleanName, phone: cleanPhone });
-      if (res.otp) {
-        const digits = String(res.otp).split("").slice(0, 6);
-        if (digits.length === 6) setOtpInput(digits);
-        triggerFeedback(`Code resent! (Dev code: ${res.otp})`);
-      } else {
-        triggerFeedback("A new verification code has been sent to your email.");
-      }
+      await registerUser({ email: cleanEmail, password: authPassword, name: cleanName, phone: cleanPhone });
+      setOtpInput(["", "", "", "", "", ""]);
+      triggerFeedback("A new verification code has been sent to your email.");
     } catch (err: any) {
       setAuthError(err.message || "Failed to resend code.");
     } finally {
@@ -310,6 +300,17 @@ export default function UserAccountPage() {
   };
 
   const handleOtpChange = (idx: number, val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length > 1) {
+      const next = [...otpInput];
+      digits.slice(0, 6).split("").forEach((d, offset) => {
+        if (idx + offset < 6) next[idx + offset] = d;
+      });
+      setOtpInput(next);
+      const focusIndex = Math.min(idx + digits.length - 1, 5);
+      otpRefs.current[focusIndex]?.focus();
+      return;
+    }
     if (!/^\d?$/.test(val)) return;
     const next = [...otpInput];
     next[idx] = val;
@@ -555,6 +556,20 @@ export default function UserAccountPage() {
                       inputMode="numeric"
                       maxLength={1}
                       value={digit}
+                      onPaste={(e) => {
+                        const pasteData = e.clipboardData.getData("text");
+                        const digits = pasteData.replace(/\D/g, "").slice(0, 6);
+                        if (digits.length > 0) {
+                          e.preventDefault();
+                          const next = [...otpInput];
+                          digits.split("").forEach((d, offset) => {
+                            if (i + offset < 6) next[i + offset] = d;
+                          });
+                          setOtpInput(next);
+                          const focusIndex = Math.min(i + digits.length - 1, 5);
+                          otpRefs.current[focusIndex]?.focus();
+                        }
+                      }}
                       onChange={(e) => handleOtpChange(i, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(i, e)}
                       className="w-12 h-14 text-center text-xl font-semibold border border-slate-grey/30 focus:border-deep-navy outline-none text-deep-navy bg-soft-linen/30 transition-colors"

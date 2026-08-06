@@ -75,23 +75,36 @@ export async function getRazorpay() {
 
 export async function getTransporter() {
   const apiSettings = await getApiSettings();
+  
+  // 1. Dynamic Admin DB Settings (if enabled)
   if (apiSettings && apiSettings.nodemailerEnabled) {
     if (apiSettings.nodemailerUser && apiSettings.nodemailerPass) {
       try {
         const nodemailer = await import("nodemailer");
-        const port = parseInt(apiSettings.nodemailerPort || "465");
-        const passClean = apiSettings.nodemailerPass.replace(/\s+/g, "").replace(/-/g, "");
-        const isGoogleAppPass = passClean.length === 16;
-        const defaultHost = (apiSettings.nodemailerUser.toLowerCase().includes("gmail.com") || isGoogleAppPass) ? "smtp.gmail.com" : "smtp.hostinger.com";
-        const host = apiSettings.nodemailerHost || defaultHost;
+        const host = apiSettings.nodemailerHost || process.env.SMTP_HOST || "smtp.hostinger.com";
+        const port = parseInt(apiSettings.nodemailerPort || process.env.SMTP_PORT || "465");
+        const service = apiSettings.nodemailerService || process.env.SMTP_SERVICE;
+
+        if (service) {
+          return nodemailer.default.createTransport({
+            service,
+            auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
+            tls: { rejectUnauthorized: false },
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 10000,
+          });
+        }
+
         return nodemailer.default.createTransport({
           host: host,
           port: port,
           secure: port === 465,
           auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
-          connectionTimeout: 5000,
-          greetingTimeout: 5000,
-          socketTimeout: 5000,
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 10000,
         });
       } catch (err) {
         console.warn("Nodemailer: Dynamic configuration failed, using fallback.", err.message);
@@ -99,25 +112,37 @@ export async function getTransporter() {
     }
   }
 
-  // Fallback to process.env
+  // 2. Pure .env Settings Fallback (Hostinger / Custom SMTP / Gmail)
+  const host = process.env.SMTP_HOST || "smtp.hostinger.com";
+  const port = parseInt(process.env.SMTP_PORT || "465");
   const user = process.env.SMTP_USER || "info@vrixjewels.com";
-  const pass = process.env.SMTP_PASS || "wy0l-usan-vdb8-jruv";
+  const pass = process.env.SMTP_PASS || "";
+  const service = process.env.SMTP_SERVICE;
+
   if (user && pass && pass !== "YourAppPasswordHere") {
     try {
       const nodemailer = await import("nodemailer");
-      const port = parseInt(process.env.SMTP_PORT || "465");
-      const passClean = pass.replace(/\s+/g, "").replace(/-/g, "");
-      const isGoogleAppPass = passClean.length === 16;
-      const defaultHost = (user.toLowerCase().includes("gmail.com") || isGoogleAppPass) ? "smtp.gmail.com" : "smtp.hostinger.com";
-      const host = process.env.SMTP_HOST || defaultHost;
+      
+      if (service) {
+        return nodemailer.default.createTransport({
+          service,
+          auth: { user, pass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 10000,
+        });
+      }
+
       return nodemailer.default.createTransport({
         host: host,
         port: port,
         secure: port === 465,
         auth: { user, pass },
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 5000,
+        tls: { rejectUnauthorized: false },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
       });
     } catch (err) {
       console.warn("Nodemailer: fallback env config failed.", err.message);
@@ -126,7 +151,7 @@ export async function getTransporter() {
   return null;
 }
 
-export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeoutMs = 5000) {
+export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeoutMs = 10000) {
   if (!activeTransporter) return false;
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
@@ -137,6 +162,7 @@ export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeo
     activeTransporter.sendMail(mailOptions)
       .then((info) => {
         clearTimeout(timer);
+        console.log(`[SMTP SUCCESS] Email sent to ${mailOptions.to}`);
         resolve(info || true);
       })
       .catch((err) => {
