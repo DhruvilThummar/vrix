@@ -148,9 +148,8 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         />
-        <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-
       </head>
+
       <body className="min-h-full flex flex-col bg-surface text-on-surface font-body-md antialiased overflow-x-hidden">
         <AuthProvider>
           <CurrencyProvider>
