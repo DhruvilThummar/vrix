@@ -348,6 +348,7 @@ router.get("/me", async (req, res) => {
         email: user.email,
         name: user.name || "",
         phone: user.phone || "",
+        dateOfBirth: user.dateOfBirth || null,
         isVrixPlusMember: !!user.isVrixPlusMember,
         vrixPlusJoinedDate: user.vrixPlusJoinedDate || null,
         createdAt: user.createdAt || null
@@ -360,7 +361,7 @@ router.get("/me", async (req, res) => {
 
 // PUT /api/auth/profile — Update user profile details in DB
 router.put("/profile", async (req, res) => {
-  const { email, name, phone } = req.body;
+  const { email, name, phone, dateOfBirth } = req.body;
   if (!email) {
     return res.status(400).json({ error: "Email is required to update profile." });
   }
@@ -372,6 +373,7 @@ router.put("/profile", async (req, res) => {
     const updateData = {};
     if (name !== undefined) updateData.name = String(name).trim();
     if (phone !== undefined) updateData.phone = String(phone).trim();
+    if (dateOfBirth !== undefined) updateData.dateOfBirth = String(dateOfBirth).trim();
 
     if (!user) {
       user = await db.users.create({
@@ -379,6 +381,7 @@ router.put("/profile", async (req, res) => {
           email: cleanEmail,
           name: updateData.name || "VRIX Member",
           phone: updateData.phone || "",
+          dateOfBirth: updateData.dateOfBirth || null,
           password: "auto_created_profile",
           isVrixPlusMember: false,
           vrixPlusJoinedDate: null,
@@ -401,10 +404,12 @@ router.put("/profile", async (req, res) => {
         email: user.email,
         name: user.name || "",
         phone: user.phone || "",
+        dateOfBirth: user.dateOfBirth || null,
         isVrixPlusMember: !!user.isVrixPlusMember,
         vrixPlusJoinedDate: user.vrixPlusJoinedDate || null,
       },
     });
+
   } catch (err) {
     console.error("Profile update error:", err.message);
     res.status(500).json({ error: err.message });

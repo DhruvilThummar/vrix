@@ -7,6 +7,7 @@ interface User {
   email: string;
   name?: string;
   phone?: string;
+  dateOfBirth?: string;
   isVrixPlusMember?: boolean;
   vrixPlusJoinedDate?: string;
 }
@@ -31,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email.toLowerCase(),
         name: details?.name !== undefined ? details.name : (prev?.email?.toLowerCase() === email.toLowerCase() ? prev.name : ""),
         phone: details?.phone !== undefined ? details.phone : (prev?.email?.toLowerCase() === email.toLowerCase() ? prev.phone : ""),
+        dateOfBirth: details?.dateOfBirth !== undefined ? details.dateOfBirth : (prev?.email?.toLowerCase() === email.toLowerCase() ? prev.dateOfBirth : undefined),
         isVrixPlusMember: details?.isVrixPlusMember !== undefined ? !!details.isVrixPlusMember : (prev?.email?.toLowerCase() === email.toLowerCase() ? !!prev.isVrixPlusMember : false),
         vrixPlusJoinedDate: details?.vrixPlusJoinedDate !== undefined ? details.vrixPlusJoinedDate : (prev?.email?.toLowerCase() === email.toLowerCase() ? prev.vrixPlusJoinedDate : undefined),
       };
@@ -50,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: data.user.email,
                 name: data.user.name || current?.name || details?.name || "",
                 phone: data.user.phone || current?.phone || details?.phone || "",
+                dateOfBirth: data.user.dateOfBirth || current?.dateOfBirth || details?.dateOfBirth || undefined,
                 isVrixPlusMember: data.user.isVrixPlusMember !== undefined ? !!data.user.isVrixPlusMember : (current?.isVrixPlusMember ?? !!details?.isVrixPlusMember),
                 vrixPlusJoinedDate: data.user.vrixPlusJoinedDate || current?.vrixPlusJoinedDate || details?.vrixPlusJoinedDate,
               };
@@ -61,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .catch(() => {});
     } catch {}
   }, []);
+
 
   const logout = useCallback(() => {
     setUser(null);

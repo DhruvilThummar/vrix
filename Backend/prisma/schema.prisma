@@ -130,7 +130,9 @@ model User {
   role               String?  @default("customer")
   isVrixPlusMember   Boolean  @default(false) @map("is_vrix_plus_member")
   vrixPlusJoinedDate String?  @map("vrix_plus_joined_date")
+  dateOfBirth        String?  @map("date_of_birth")
   createdAt          DateTime @default(now()) @map("created_at")
+
 
   @@map("users")
 }

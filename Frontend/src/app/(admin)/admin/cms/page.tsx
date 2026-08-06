@@ -108,6 +108,14 @@ export default function AdminCMSPage() {
   const [vrixPlusBenefit3Title, setVrixPlusBenefit3Title] = useState("Birthday Privilege");
   const [vrixPlusBenefit3Desc, setVrixPlusBenefit3Desc] = useState("Receive a special birthday surprise from VRIX.");
 
+  // VRIX+ Birthday Discount Perk Configuration
+  const [vrixPlusBirthdayPerkEnabled, setVrixPlusBirthdayPerkEnabled] = useState(true);
+  const [vrixPlusBirthdayDiscountType, setVrixPlusBirthdayDiscountType] = useState<"percentage" | "fixed">("percentage");
+  const [vrixPlusBirthdayDiscountValue, setVrixPlusBirthdayDiscountValue] = useState(15);
+  const [vrixPlusBirthdayCouponCode, setVrixPlusBirthdayCouponCode] = useState("BIRTHDAY15");
+  const [vrixPlusBirthdayPerkDesc, setVrixPlusBirthdayPerkDesc] = useState("Exclusive 15% birthday discount during your birthday month!");
+
+
   // --- Bespoke Atelier Configurator States ---
   const [bespokeSlogan, setBespokeSlogan] = useState("THE SIGNATURE COLLECTION");
   const [bespokeTitle, setBespokeTitle] = useState("Bespoke Solitaire");
@@ -321,7 +329,13 @@ export default function AdminCMSPage() {
           setVrixPlusSubheading(res.vrix_plus.subheading || "Become a VRIX+ Member and enjoy exclusive access.");
           setVrixPlusWelcomeGift(res.vrix_plus.welcomeGift || "Your first VRIX+ privilege awaits.");
           setVrixPlusBannerImage(res.vrix_plus.bannerImage || "");
+          setVrixPlusBirthdayPerkEnabled(res.vrix_plus.birthdayPerkEnabled !== false);
+          setVrixPlusBirthdayDiscountType(res.vrix_plus.birthdayDiscountType || "percentage");
+          setVrixPlusBirthdayDiscountValue(res.vrix_plus.birthdayDiscountValue !== undefined ? Number(res.vrix_plus.birthdayDiscountValue) : 15);
+          setVrixPlusBirthdayCouponCode(res.vrix_plus.birthdayCouponCode || "BIRTHDAY15");
+          setVrixPlusBirthdayPerkDesc(res.vrix_plus.birthdayPerkDesc || "Exclusive 15% birthday discount during your birthday month!");
           if (Array.isArray(res.vrix_plus.benefits)) {
+
             if (res.vrix_plus.benefits[0]) {
               setVrixPlusBenefit1Title(res.vrix_plus.benefits[0].title || "Early Access");
               setVrixPlusBenefit1Desc(res.vrix_plus.benefits[0].description || "");
@@ -494,7 +508,13 @@ export default function AdminCMSPage() {
           subheading: vrixPlusSubheading,
           welcomeGift: vrixPlusWelcomeGift,
           bannerImage: vrixPlusBannerImage,
+          birthdayPerkEnabled: vrixPlusBirthdayPerkEnabled,
+          birthdayDiscountType: vrixPlusBirthdayDiscountType,
+          birthdayDiscountValue: Number(vrixPlusBirthdayDiscountValue),
+          birthdayCouponCode: vrixPlusBirthdayCouponCode,
+          birthdayPerkDesc: vrixPlusBirthdayPerkDesc,
           benefits: [
+
             { title: vrixPlusBenefit1Title, description: vrixPlusBenefit1Desc },
             { title: vrixPlusBenefit2Title, description: vrixPlusBenefit2Desc },
             { title: vrixPlusBenefit3Title, description: vrixPlusBenefit3Desc }
@@ -1094,8 +1114,104 @@ export default function AdminCMSPage() {
                     />
                   </div>
                 </section>
+
+                {/* Birthday Privilege Perk Configuration */}
+                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                    <div>
+                      <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                        Birthday Privilege Perk
+                      </h3>
+                      <p className="font-body-md text-[11px] text-slate-grey mt-0.5">
+                        Configure the automatic birthday discount for VRIX+ Members. Discount is validated during the member&apos;s birth month.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="birthday-perk-enabled"
+                        checked={vrixPlusBirthdayPerkEnabled}
+                        onChange={(e) => setVrixPlusBirthdayPerkEnabled(e.target.checked)}
+                        className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                      />
+                      <label htmlFor="birthday-perk-enabled" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer">
+                        {vrixPlusBirthdayPerkEnabled ? "Enabled" : "Disabled"}
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${!vrixPlusBirthdayPerkEnabled ? "opacity-40 pointer-events-none" : ""}`}>
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Discount Type</label>
+                      <select
+                        value={vrixPlusBirthdayDiscountType}
+                        onChange={(e) => setVrixPlusBirthdayDiscountType(e.target.value as "percentage" | "fixed")}
+                        className="bg-pure-white border border-slate-grey/30 py-2 px-3 font-label-caps text-xs text-deep-navy rounded focus:outline-none cursor-pointer"
+                      >
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount (₹)</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                        Discount Value {vrixPlusBirthdayDiscountType === "percentage" ? "(%)" : "(₹)"}
+                      </label>
+                      <input
+                        type="number"
+                        value={vrixPlusBirthdayDiscountValue}
+                        onChange={(e) => setVrixPlusBirthdayDiscountValue(Number(e.target.value))}
+                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                        min={0}
+                        max={vrixPlusBirthdayDiscountType === "percentage" ? 100 : 999999}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Birthday Coupon Code</label>
+                      <input
+                        type="text"
+                        value={vrixPlusBirthdayCouponCode}
+                        onChange={(e) => setVrixPlusBirthdayCouponCode(e.target.value.toUpperCase())}
+                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black uppercase tracking-wider"
+                        placeholder="e.g. BIRTHDAY15"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Perk Description</label>
+                      <input
+                        type="text"
+                        value={vrixPlusBirthdayPerkDesc}
+                        onChange={(e) => setVrixPlusBirthdayPerkDesc(e.target.value)}
+                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                        placeholder="e.g. Exclusive 15% birthday discount during your birthday month!"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Live Preview */}
+                  <div className="border-t border-slate-grey/15 pt-4">
+                    <p className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest mb-2 font-semibold">Live Preview</p>
+                    <div className="border border-dashed border-amber-300 bg-amber-50/50 px-5 py-4 rounded flex items-center gap-4">
+                      <span className="text-2xl">🎂</span>
+                      <div>
+                        <p className="font-label-caps text-xs text-deep-navy font-bold uppercase">
+                          {vrixPlusBirthdayPerkEnabled ? "Active" : "Inactive"} — {vrixPlusBirthdayCouponCode || "BIRTHDAY15"}
+                        </p>
+                        <p className="font-body-md text-xs text-slate-grey mt-0.5">
+                          {vrixPlusBirthdayPerkDesc || "No description set"}
+                          {" · "}
+                          <strong className="text-deep-navy">
+                            {vrixPlusBirthdayDiscountType === "percentage"
+                              ? `${vrixPlusBirthdayDiscountValue}% off`
+                              : `₹${vrixPlusBirthdayDiscountValue} off`}
+                          </strong>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
               </div>
             )}
+
 
             {/* 8. GIFT WRAPPING CONFIGURATION TAB */}
             {activeTab === "gift-wrapping" && (

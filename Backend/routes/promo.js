@@ -5,11 +5,54 @@ const router = express.Router();
 
 // POST /api/promo/verify — Validate a promo code at checkout
 router.post("/verify", async (req, res) => {
-  const { code, subtotal } = req.body;
+  const { code, subtotal, userEmail } = req.body;
   if (!code) return res.status(400).json({ error: "Code is required" });
 
   try {
-    const promo = await db.redeemCodes.findUnique({ where: { code: code.toUpperCase() } });
+    const cleanCode = String(code).trim().toUpperCase();
+
+    // 1. Check VRIX+ Birthday Perk CMS Config
+    const vrixPlusConfig = await db.cmsSettings.findUnique({ where: { key: "vrix_plus" } }).catch(() => null);
+    const birthdayCoupon = (vrixPlusConfig && vrixPlusConfig.birthdayCouponCode)
+      ? String(vrixPlusConfig.birthdayCouponCode).trim().toUpperCase()
+      : "BIRTHDAY15";
+
+    if (cleanCode === birthdayCoupon) {
+      if (vrixPlusConfig && vrixPlusConfig.birthdayPerkEnabled === false) {
+        return res.status(400).json({ error: "Birthday perk discounts are currently disabled in store settings." });
+      }
+
+      if (userEmail) {
+        const cleanUserEmail = String(userEmail).trim().toLowerCase();
+        const user = await db.users.findUnique({ where: { email: cleanUserEmail } });
+        if (!user || !user.isVrixPlusMember) {
+          return res.status(400).json({ error: "The birthday privilege code is exclusive to registered VRIX+ Members." });
+        }
+        if (user.dateOfBirth) {
+          const birthDateObj = new Date(user.dateOfBirth);
+          const currentMonth = new Date().getMonth();
+          if (!isNaN(birthDateObj.getTime()) && birthDateObj.getMonth() !== currentMonth) {
+            return res.status(400).json({ error: "Your birthday perk is valid only during your birthday month." });
+          }
+        }
+      }
+
+      const perkType = vrixPlusConfig?.birthdayDiscountType || "percentage";
+      const perkValue = vrixPlusConfig?.birthdayDiscountValue !== undefined ? Number(vrixPlusConfig.birthdayDiscountValue) : 15;
+      const perkDesc = vrixPlusConfig?.birthdayPerkDesc || "Exclusive VRIX+ Member Birthday Perk";
+
+      return res.json({
+        success: true,
+        code: birthdayCoupon,
+        discount: perkValue,
+        type: perkType,
+        description: perkDesc,
+        isBirthdayPerk: true,
+      });
+    }
+
+    // 2. Standard Redeem Codes Check
+    const promo = await db.redeemCodes.findUnique({ where: { code: cleanCode } });
     if (!promo) return res.status(404).json({ error: "Invalid promo code" });
     if (!promo.isActive) return res.status(400).json({ error: "Promo code is no longer active" });
 
@@ -48,6 +91,7 @@ router.post("/verify", async (req, res) => {
       expiryDate: promo.expiryDate
     });
   } catch (err) {
+
     res.status(500).json({ error: err.message });
   }
 });

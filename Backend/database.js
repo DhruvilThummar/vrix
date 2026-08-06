@@ -1334,6 +1334,8 @@ export async function migrateIfNeeded() {
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "tags" JSONB;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "date_of_birth" TEXT;').catch(() => { });
+
     await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "description" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "min_subtotal" DOUBLE PRECISION;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "redeem_codes" ADD COLUMN IF NOT EXISTS "usage_limit" INTEGER').catch(() => { });

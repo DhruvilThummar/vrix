@@ -87,8 +87,10 @@ export default function UserAccountPage() {
     firstName: getFirstName(user?.name, user?.email),
     lastName: getLastName(user?.name),
     email: user?.email || "",
-    phone: user?.phone || ""
+    phone: user?.phone || "",
+    dateOfBirth: user?.dateOfBirth || ""
   });
+
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     street: "",
     city: "",
@@ -111,7 +113,8 @@ export default function UserAccountPage() {
         firstName: getFirstName(user.name, user.email),
         lastName: getLastName(user.name),
         email: user.email,
-        phone: user.phone || ""
+        phone: user.phone || "",
+        dateOfBirth: user.dateOfBirth || ""
       });
     } else {
       setAuthStep("email");
@@ -884,12 +887,12 @@ export default function UserAccountPage() {
                   await fetch(`${apiBaseUrl}/auth/profile`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: authEmail, name: fullName, phone: profile.phone })
+                    body: JSON.stringify({ email: authEmail, name: fullName, phone: profile.phone, dateOfBirth: profile.dateOfBirth })
                   });
                 } catch (err) {
                   console.error("Failed to persist user profile to DB:", err);
                 }
-                login(authEmail, { name: fullName, phone: profile.phone, isVrixPlusMember: user?.isVrixPlusMember });
+                login(authEmail, { name: fullName, phone: profile.phone, dateOfBirth: profile.dateOfBirth, isVrixPlusMember: user?.isVrixPlusMember });
                 triggerFeedback("Account details updated successfully.");
               }} className="space-y-8">
                 <div className="grid grid-cols-2 gap-4">
@@ -913,6 +916,36 @@ export default function UserAccountPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
+                  <label className="font-label-caps text-[9px] text-slate-grey uppercase">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={profile.dateOfBirth || ""}
+                    onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
+                    className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black max-w-xs"
+                  />
+                  <p className="font-body-md text-[10px] text-slate-grey">
+                    Required for VRIX+ Birthday Privilege. We&apos;ll surprise you during your birthday month.
+                  </p>
+                </div>
+
+                {/* Birthday Perk Banner */}
+                {user?.isVrixPlusMember && profile.dateOfBirth && (() => {
+                  const birthDate = new Date(profile.dateOfBirth);
+                  const isBirthdayMonth = !isNaN(birthDate.getTime()) && birthDate.getMonth() === new Date().getMonth();
+                  return isBirthdayMonth ? (
+                    <div className="border border-amber-300 bg-amber-50/60 px-5 py-4 rounded flex items-center gap-4">
+                      <span className="text-2xl">🎂</span>
+                      <div>
+                        <p className="font-label-caps text-xs text-deep-navy font-bold uppercase">Happy Birthday, {profile.firstName || "Member"}!</p>
+                        <p className="font-body-md text-xs text-slate-grey mt-0.5">
+                          Your VRIX+ Birthday Privilege is active this month. Look for the birthday coupon code at checkout!
+                        </p>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+
+                <div className="flex flex-col gap-2">
                   <label className="font-label-caps text-[9px] text-slate-grey uppercase">Verified Email</label>
                   <div className="flex items-center gap-2 border-b border-slate-grey/20 py-1.5">
                     <span className="material-symbols-outlined text-green-600 text-[16px]">verified</span>
@@ -924,6 +957,7 @@ export default function UserAccountPage() {
               </form>
             </div>
           )}
+
 
           {/* VRIX+ CLUB */}
           {activeTab === "vrix_plus" && (
