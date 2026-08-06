@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections, uploadMedia } from "@/utils/api";
 
-type TabType = "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "bespoke-atelier" | "custom-pages" | "invoice-customizer" | "currency-settings" | "offers-showcase";
+type TabType = "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "custom-pages" | "invoice-customizer" | "currency-settings" | "offers-showcase";
 
 
 // --- Visual Image Preview Helper Component ---
@@ -647,7 +647,6 @@ export default function AdminCMSPage() {
     { id: "announcement-bar", label: "Announcement Bar", icon: "campaign", category: "Storefront", description: "Top ticker & alerts" },
     { id: "journal", label: "Journal", icon: "newspaper", category: "Storefront", description: "Articles & editorial" },
     { id: "custom-pages", label: "Custom Pages", icon: "description", category: "Storefront", description: "CMS pages content" },
-    { id: "bespoke-atelier", label: "Bespoke Atelier", icon: "diamond", category: "Experience", description: "3D Solitaire Configurator" },
     { id: "vrix-plus", label: "VRIX+ Club", icon: "stars", category: "Experience", description: "Membership privileges" },
     { id: "gift-wrapping", label: "Gift Wrapping", icon: "card_giftcard", category: "Experience", description: "Signature packaging" },
     { id: "metal-types", label: "Metal Swatches", icon: "palette", category: "Experience", description: "Gold & platinum types" },
@@ -1034,128 +1033,6 @@ export default function AdminCMSPage() {
                     </div>
                   </section>
                 ))}
-              </div>
-            )}
-
-            {/* 6. BESPOKE ATELIER CONFIGURATION TAB */}
-            {activeTab === "bespoke-atelier" && (
-              <div className="space-y-6 animate-fade-in">
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
-                    Configurator details & base price
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Slogan Header</label>
-                      <input
-                        type="text"
-                        value={bespokeSlogan}
-                        onChange={(e) => setBespokeSlogan(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                        required
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Page Header Title</label>
-                      <input
-                        type="text"
-                        value={bespokeTitle}
-                        onChange={(e) => setBespokeTitle(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Description subtitle</label>
-                    <textarea
-                      value={bespokeSubtitle}
-                      onChange={(e) => setBespokeSubtitle(e.target.value)}
-                      className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
-                      rows={2}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Ring image preview URL</label>
-                      <input
-                        type="url"
-                        value={bespokeImage}
-                        onChange={(e) => setBespokeImage(e.target.value)}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
-                        required
-                      />
-                      <VisualImagePreview src={bespokeImage} alt="Ring preview" />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Estimate Base Price (₹)</label>
-                      <input
-                        type="number"
-                        value={bespokeBasePrice}
-                        onChange={(e) => setBespokeBasePrice(Number(e.target.value))}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
-                        required
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                {/* Metals configuration */}
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-                    <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                      Atelier Swatches & metals
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setBespokeMetals([...bespokeMetals, { name: "NEW METAL", color: "#CCCCCC" }])}
-                      className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase cursor-pointer rounded shadow-xs hover:bg-ink-black"
-                    >
-                      + Add Swatch
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {bespokeMetals.map((metal, idx) => (
-                      <div key={idx} className="border border-slate-grey/15 p-4 bg-soft-linen/5 rounded flex gap-4 items-center">
-                        <div className="flex flex-col gap-2 flex-1">
-                          <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Metal Name</label>
-                          <input
-                            type="text"
-                            value={metal.name}
-                            onChange={(e) => {
-                              const next = [...bespokeMetals];
-                              next[idx].name = e.target.value;
-                              setBespokeMetals(next);
-                            }}
-                            className="border-b border-slate-grey/20 py-1 text-xs outline-none text-deep-navy font-bold focus:border-deep-navy"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1.5 items-center">
-                          <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Swatch</label>
-                          <input
-                            type="color"
-                            value={metal.color}
-                            onChange={(e) => {
-                              const next = [...bespokeMetals];
-                              next[idx].color = e.target.value;
-                              setBespokeMetals(next);
-                            }}
-                            className="w-8 h-8 rounded cursor-pointer border border-slate-grey/30"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setBespokeMetals(bespokeMetals.filter((_, i) => i !== idx))}
-                          className="text-red-500 hover:text-red-700 text-xs p-1 self-end mb-1"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </section>
               </div>
             )}
 

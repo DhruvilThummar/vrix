@@ -118,9 +118,9 @@ export default function AdminHelpPage() {
       steps: [
         {
           question: "How do I turn the Bespoke Solitaire ring builder on or off?",
-          answer: "Go to CMS Settings and select the 'Bespoke Atelier' tab. Toggle the 'Bespoke Builder Enabled' switch. If toggled off, the solitaire configurator page (/bespoke) will be disabled, and link options will hide.",
+          answer: "Go to the Bespoke Configurator page. Toggle the 'Enable Bespoke Commission Services' switch. If toggled off, the solitaire configurator page (/bespoke) will be disabled, and link options will hide.",
           actionLabel: "Toggle Bespoke Configurator",
-          actionLink: "/admin/cms?tab=bespoke-atelier"
+          actionLink: "/admin/bespoke"
         },
         {
           question: "How do I manage the Gift Packaging service?",

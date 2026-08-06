@@ -249,7 +249,6 @@ function AdminProductsContent() {
   const handleApplyTemplate = (templateId: string) => {
     const tmpl = allTemplates.find((t) => t.id === templateId);
     if (!tmpl) return;
-    setIsEditing(true);
     setIsNew(true);
     setSelectedProduct(null);
     setFTitle(tmpl.name);
