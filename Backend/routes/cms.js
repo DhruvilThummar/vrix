@@ -51,7 +51,8 @@ router.post("/cms", adminAuth, async (req, res) => {
       "homepage", "story", "legal", "navigation", "brand", "features",
       "collections", "api_settings", "vrix_plus", "announcement_bar",
       "currency_settings", "shipping_settings", "gift_wrapping", "metal_types",
-      "custom_pages", "invoice_settings"
+      "custom_pages", "invoice_settings", "bespoke_config", "offers_page",
+      "product_templates"
     ];
     for (const section of sections) {
       if (req.body[section] !== undefined) {
@@ -79,8 +80,8 @@ router.get("/config", adminAuth, async (req, res) => {
   }
 });
 
-// POST /api/config/:key — Upsert a specific CMS key
-router.post("/config/:key", adminAuth, async (req, res) => {
+// POST or PUT /api/config/:key — Upsert a specific CMS key
+const handleConfigUpsert = async (req, res) => {
   const { key } = req.params;
   const { value } = req.body;
   if (value === undefined) return res.status(400).json({ error: "value is required" });
@@ -94,7 +95,9 @@ router.post("/config/:key", adminAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+};
+router.post("/config/:key", adminAuth, handleConfigUpsert);
+router.put("/config/:key", adminAuth, handleConfigUpsert);
 
 // GET /api/cms/gift-wrapping — Public endpoint for gift wrapping options
 router.get("/cms/gift-wrapping", async (req, res) => {
