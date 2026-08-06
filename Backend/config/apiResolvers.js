@@ -7,7 +7,8 @@ const defaultCallback = process.env.GOOGLE_CALLBACK_URL || "https://snvifoikeixk
 export async function getApiSettings() {
   try {
     const settings = await db.cmsSettings.findUnique({ where: { key: "api_settings" } });
-    return settings || null;
+    if (!settings) return null;
+    return settings.value && typeof settings.value === "object" ? settings.value : settings;
   } catch (err) {
     return null;
   }

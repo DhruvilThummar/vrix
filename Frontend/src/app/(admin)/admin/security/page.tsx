@@ -74,7 +74,7 @@ export default function Page() {
         } else {
           setLogs([
             { timestamp: new Date().toISOString().substring(0, 19).replace("T", " ") + " UTC", event: "System Security Initialized", user: "admin@vrix.com", status: "SUCCESS" },
-            { timestamp: new Date().toISOString().substring(0, 19).replace("T", " ") + " UTC", event: "Google OAuth Config Loaded", user: "System", status: "SUCCESS" },
+            { timestamp: new Date().toISOString().substring(0, 19).replace("T", " ") + " UTC", event: "API Security Credentials Synchronized", user: "System", status: "SUCCESS" },
           ]);
         }
       } catch (err) {
@@ -128,7 +128,7 @@ export default function Page() {
             Security &amp; Integration Credentials
           </h1>
           <p className="font-body-lg text-body-lg text-slate-grey mt-2">
-            Manage authentication APIs (Google, Truecaller), payment gateways, media storage, and system security controls.
+            Manage authentication APIs (Truecaller), payment gateways, SMTP mailers, media storage, and system security controls.
           </p>
         </div>
 
@@ -253,6 +253,67 @@ export default function Page() {
                       placeholder="Key secret token"
                       value={apiSettings.razorpayKeySecret}
                       onChange={(e) => handleInputChange("razorpayKeySecret", e.target.value)}
+                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+            {/* 3. Cloudinary Media Storage */}
+            <div className="border border-slate-grey/15 p-6 rounded bg-surface-container-low/30">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <i className="fa-solid fa-cloud text-sky-600 text-xl"></i>
+                  <div>
+                    <h4 className="font-body-md font-semibold text-ink-black">Cloudinary Image &amp; Media CDN</h4>
+                    <p className="text-xs text-slate-grey">Dynamic image uploads, transformations, and media CDN delivery.</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={apiSettings.cloudinaryEnabled}
+                    onChange={(e) => handleInputChange("cloudinaryEnabled", e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-deep-navy"></div>
+                </label>
+              </div>
+
+              {apiSettings.cloudinaryEnabled && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-grey/10">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                      Cloud Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. vrix-jewels"
+                      value={apiSettings.cloudinaryCloudName}
+                      onChange={(e) => handleInputChange("cloudinaryCloudName", e.target.value)}
+                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                      API Key
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 1234567890"
+                      value={apiSettings.cloudinaryApiKey}
+                      onChange={(e) => handleInputChange("cloudinaryApiKey", e.target.value)}
+                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
+                      API Secret
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Cloudinary API secret"
+                      value={apiSettings.cloudinaryApiSecret}
+                      onChange={(e) => handleInputChange("cloudinaryApiSecret", e.target.value)}
                       className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
                     />
                   </div>
