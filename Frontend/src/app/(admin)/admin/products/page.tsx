@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import {
   fetchProducts, createProduct, updateProduct, deleteProduct, uploadMediaMultiple,
   updateProductStock, updateProductVisibility, fetchAllCollections,
+  fetchSiteConfig, saveSiteConfigKey
 } from "@/utils/api";
 import { useCurrency } from "@/utils/useCurrency";
 
@@ -231,20 +232,79 @@ function AdminProductsContent() {
 
   const [customTemplates, setCustomTemplates] = useState<any[]>([]);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [newTmplName, setNewTmplName] = useState("");
-  const [newTmplType, setNewTmplType] = useState("Ring");
-  const [newTmplMaterial, setNewTmplMaterial] = useState("18K Yellow Gold");
-  const [newTmplPrice, setNewTmplPrice] = useState<number | "">(500);
-  const [newTmplDesc, setNewTmplDesc] = useState("");
+  
+  // Selected template for editing/viewing
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [tmplName, setTmplName] = useState("");
+  const [tmplType, setTmplType] = useState("Ring");
+  const [tmplMaterial, setTmplMaterial] = useState("18K Yellow Gold");
+  const [tmplPrice, setTmplPrice] = useState<number | "">(500);
+  const [tmplOriginalPrice, setTmplOriginalPrice] = useState<number | "">(600);
+  const [tmplDesc, setTmplDesc] = useState("");
+  const [tmplLayoutStyle, setTmplLayoutStyle] = useState("2x2");
+  const [tmplEngravingEnabled, setTmplEngravingEnabled] = useState(true);
+  const [tmplGiftNoteEnabled, setTmplGiftNoteEnabled] = useState(true);
+  const [tmplSizes, setTmplSizes] = useState("");
 
   useEffect(() => {
+    // 1. Initial local load
     try {
       const saved = localStorage.getItem("vrix_product_templates");
       if (saved) setCustomTemplates(JSON.parse(saved));
     } catch (e) {}
+
+    // 2. Load from DB
+    fetchSiteConfig()
+      .then((config) => {
+        if (config && config.product_templates) {
+          setCustomTemplates(config.product_templates);
+          try { localStorage.setItem("vrix_product_templates", JSON.stringify(config.product_templates)); } catch (e) {}
+        }
+      })
+      .catch((err) => console.error("Error loading templates from database:", err));
   }, []);
 
+  const syncCustomTemplates = async (updatedList: any[]) => {
+    setCustomTemplates(updatedList);
+    try { localStorage.setItem("vrix_product_templates", JSON.stringify(updatedList)); } catch (e) {}
+    try {
+      await saveSiteConfigKey("product_templates", updatedList);
+    } catch (err) {
+      console.error("Error syncing templates with database:", err);
+    }
+  };
+
   const allTemplates = [...PRODUCT_TEMPLATES, ...customTemplates];
+
+  const handleSelectTemplate = (id: string | null) => {
+    setSelectedTemplateId(id);
+    if (!id) {
+      setTmplName("");
+      setTmplType("Ring");
+      setTmplMaterial("18K Yellow Gold");
+      setTmplPrice(500);
+      setTmplOriginalPrice("");
+      setTmplDesc("");
+      setTmplLayoutStyle("2x2");
+      setTmplEngravingEnabled(true);
+      setTmplGiftNoteEnabled(true);
+      setTmplSizes("");
+      return;
+    }
+    const t = allTemplates.find(x => x.id === id);
+    if (t) {
+      setTmplName(t.name);
+      setTmplType(t.type || "Ring");
+      setTmplMaterial(t.material || "");
+      setTmplPrice(t.price || 0);
+      setTmplOriginalPrice(t.originalPrice || "");
+      setTmplDesc(t.description || "");
+      setTmplLayoutStyle(t.layoutStyle || "2x2");
+      setTmplEngravingEnabled(!!t.engravingEnabled);
+      setTmplGiftNoteEnabled(!!t.giftNoteEnabled);
+      setTmplSizes((t.availableSizes || []).join(", "));
+    }
+  };
 
   const handleApplyTemplate = (templateId: string) => {
     const tmpl = allTemplates.find((t) => t.id === templateId);
@@ -282,39 +342,81 @@ function AdminProductsContent() {
       isCustom: true
     };
     const updated = [...customTemplates, newTmpl];
-    setCustomTemplates(updated);
-    try { localStorage.setItem("vrix_product_templates", JSON.stringify(updated)); } catch (e) {}
+    syncCustomTemplates(updated);
     showToast(`Saved template "${name.trim()}"`);
   };
 
-  const handleCreateManualTemplate = (e: React.FormEvent) => {
+  const handleSaveTemplate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTmplName.trim()) return;
-    const newTmpl = {
-      id: `custom-${Date.now()}`,
-      name: newTmplName.trim(),
-      type: newTmplType,
-      material: newTmplMaterial,
-      price: Number(newTmplPrice) || 0,
-      originalPrice: 0,
-      description: newTmplDesc.trim(),
-      layoutStyle: "2x2",
-      availableSizes: [],
-      engravingEnabled: true,
-      giftNoteEnabled: true,
-      isCustom: true
-    };
-    const updated = [...customTemplates, newTmpl];
-    setCustomTemplates(updated);
-    try { localStorage.setItem("vrix_product_templates", JSON.stringify(updated)); } catch (e) {}
-    setNewTmplName(""); setNewTmplDesc("");
-    showToast(`Created template "${newTmpl.name}"`);
+    if (!tmplName.trim()) return;
+
+    if (selectedTemplateId && selectedTemplateId.startsWith("custom-")) {
+      const updated = customTemplates.map(t => {
+        if (t.id === selectedTemplateId) {
+          return {
+            ...t,
+            name: tmplName.trim(),
+            type: tmplType,
+            material: tmplMaterial,
+            price: Number(tmplPrice) || 0,
+            originalPrice: Number(tmplOriginalPrice) || 0,
+            description: tmplDesc.trim(),
+            layoutStyle: tmplLayoutStyle,
+            engravingEnabled: tmplEngravingEnabled,
+            giftNoteEnabled: tmplGiftNoteEnabled,
+            availableSizes: tmplSizes.split(",").map(s => s.trim()).filter(Boolean),
+          };
+        }
+        return t;
+      });
+      syncCustomTemplates(updated);
+      showToast(`Updated template "${tmplName.trim()}"`);
+    } else if (selectedTemplateId && !selectedTemplateId.startsWith("custom-")) {
+      const newId = `custom-${Date.now()}`;
+      const newTmpl = {
+        id: newId,
+        name: `${tmplName.trim()} (Copy)`,
+        type: tmplType,
+        material: tmplMaterial,
+        price: Number(tmplPrice) || 0,
+        originalPrice: Number(tmplOriginalPrice) || 0,
+        description: tmplDesc.trim(),
+        layoutStyle: tmplLayoutStyle,
+        engravingEnabled: tmplEngravingEnabled,
+        giftNoteEnabled: tmplGiftNoteEnabled,
+        availableSizes: tmplSizes.split(",").map(s => s.trim()).filter(Boolean),
+        isCustom: true
+      };
+      const updated = [...customTemplates, newTmpl];
+      syncCustomTemplates(updated);
+      setSelectedTemplateId(newId);
+      showToast(`Cloned to custom template "${newTmpl.name}"`);
+    } else {
+      const newTmpl = {
+        id: `custom-${Date.now()}`,
+        name: tmplName.trim(),
+        type: tmplType,
+        material: tmplMaterial,
+        price: Number(tmplPrice) || 0,
+        originalPrice: Number(tmplOriginalPrice) || 0,
+        description: tmplDesc.trim(),
+        layoutStyle: tmplLayoutStyle,
+        engravingEnabled: tmplEngravingEnabled,
+        giftNoteEnabled: tmplGiftNoteEnabled,
+        availableSizes: tmplSizes.split(",").map(s => s.trim()).filter(Boolean),
+        isCustom: true
+      };
+      const updated = [...customTemplates, newTmpl];
+      syncCustomTemplates(updated);
+      setSelectedTemplateId(newTmpl.id);
+      showToast(`Created template "${tmplName.trim()}"`);
+    }
   };
 
   const handleDeleteTemplate = (id: string) => {
     const updated = customTemplates.filter(t => t.id !== id);
-    setCustomTemplates(updated);
-    try { localStorage.setItem("vrix_product_templates", JSON.stringify(updated)); } catch (e) {}
+    syncCustomTemplates(updated);
+    if (selectedTemplateId === id) setSelectedTemplateId(null);
     showToast("Template deleted");
   };
 
@@ -541,7 +643,10 @@ function AdminProductsContent() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setShowTemplateModal(true)}
+              onClick={() => {
+                setShowTemplateModal(true);
+                handleSelectTemplate(allTemplates[0]?.id || null);
+              }}
               className="font-button text-button uppercase px-4 py-3 border border-deep-navy text-deep-navy hover:bg-deep-navy hover:text-white transition-colors cursor-pointer flex items-center gap-2 shrink-0 rounded"
             >
               <span className="material-symbols-outlined text-[16px]">dashboard_customize</span>
@@ -726,7 +831,10 @@ function AdminProductsContent() {
                           </label>
                           <button
                             type="button"
-                            onClick={() => setShowTemplateModal(true)}
+                            onClick={() => {
+                              setShowTemplateModal(true);
+                              handleSelectTemplate(allTemplates[0]?.id || null);
+                            }}
                             className="text-[10px] text-amber-900 font-semibold underline hover:text-black flex items-center gap-0.5"
                           >
                             Manage All ({allTemplates.length})
@@ -1371,10 +1479,12 @@ function AdminProductsContent() {
       {/* ── TEMPLATES MANAGER MODAL ────────────────────────────────────────── */}
       {showTemplateModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-pure-white border border-slate-grey/20 max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded shadow-2xl p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-grey/20 pb-4">
+          <div className="bg-pure-white border border-slate-grey/20 max-w-5xl w-full max-h-[90vh] overflow-hidden rounded shadow-2xl flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-grey/25 p-5 bg-soft-linen/25">
               <div>
-                <h2 className="font-display-lg text-lg text-deep-navy uppercase tracking-wider flex items-center gap-2">
+                <h2 className="font-display-lg text-base md:text-lg text-deep-navy uppercase tracking-wider flex items-center gap-2 font-bold">
                   <span className="material-symbols-outlined text-amber-500">dashboard_customize</span>
                   Product Preset Templates Manager
                 </h2>
@@ -1382,147 +1492,262 @@ function AdminProductsContent() {
               </div>
               <button
                 onClick={() => setShowTemplateModal(false)}
-                className="text-slate-grey hover:text-ink-black text-sm font-semibold p-1"
+                className="text-slate-grey hover:text-ink-black text-sm font-semibold p-1.5 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            {/* Create New Template Form */}
-            <form onSubmit={handleCreateManualTemplate} className="p-4 bg-soft-linen/30 border border-slate-grey/20 rounded space-y-3">
-              <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-wider font-semibold flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px]">add_circle</span>
-                Create New Custom Template
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Template Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Vintage Emerald Ring"
-                    value={newTmplName}
-                    onChange={(e) => setNewTmplName(e.target.value)}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Category / Type</label>
-                  <select
-                    value={newTmplType}
-                    onChange={(e) => setNewTmplType(e.target.value)}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                  >
-                    {PRODUCT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Default Material</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. 18K Yellow Gold"
-                    value={newTmplMaterial}
-                    onChange={(e) => setNewTmplMaterial(e.target.value)}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Default Price ($)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newTmplPrice}
-                    onChange={(e) => setNewTmplPrice(Number(e.target.value))}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                  />
-                </div>
-                <div className="sm:col-span-2 flex flex-col gap-1">
-                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Default Description</label>
-                  <input
-                    type="text"
-                    placeholder="Optional short template description"
-                    value={newTmplDesc}
-                    onChange={(e) => setNewTmplDesc(e.target.value)}
-                    className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end pt-1">
+            {/* Modal Body: Two-Pane Layout */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-[400px]">
+              
+              {/* Left Pane: Preset List */}
+              <div className="w-full md:w-80 border-r border-slate-grey/20 bg-soft-linen/15 flex flex-col overflow-y-auto p-4 space-y-4">
                 <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-deep-navy text-white hover:bg-ink-black rounded text-xs font-button uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-colors"
+                  type="button"
+                  onClick={() => handleSelectTemplate(null)}
+                  className="w-full py-2.5 bg-deep-navy hover:bg-ink-black text-pure-white text-xs font-label-caps uppercase tracking-wider rounded cursor-pointer transition-colors flex items-center justify-center gap-1.5 font-semibold shadow-sm"
                 >
-                  <span className="material-symbols-outlined text-[14px]">save</span>
-                  Save New Template
+                  <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                  Create New Preset
                 </button>
-              </div>
-            </form>
 
-            {/* List of Templates */}
-            <div className="space-y-3">
-              <h3 className="font-label-caps text-xs text-slate-grey uppercase tracking-wider font-semibold">
-                Available Templates ({allTemplates.length})
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[350px] overflow-y-auto pr-1">
-                {allTemplates.map((t) => (
-                  <div key={t.id} className="p-3.5 border border-slate-grey/20 rounded bg-pure-white flex flex-col justify-between gap-3 hover:border-amber-400/60 transition-colors">
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-body-md text-xs text-ink-black font-semibold">{t.name}</span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-label-caps uppercase ${t.isCustom ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600"}`}>
-                          {t.isCustom ? "Custom" : "Standard"}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-grey mt-1">
-                        {t.type} • {t.material} • <span className="font-semibold text-deep-navy">${t.price}</span>
-                      </p>
-                      {t.description && (
-                        <p className="text-[10px] text-slate-grey/70 line-clamp-2 mt-1 italic">
-                          "{t.description}"
-                        </p>
+                <div className="space-y-2">
+                  <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block font-bold">Available Presets ({allTemplates.length})</span>
+                  <div className="space-y-1.5">
+                    {allTemplates.map((t) => {
+                      const isSelected = selectedTemplateId === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => handleSelectTemplate(t.id)}
+                          className={`w-full text-left p-3 border rounded transition-all flex flex-col gap-1 cursor-pointer ${
+                            isSelected
+                              ? "border-deep-navy bg-deep-navy/5 shadow-sm"
+                              : "border-slate-grey/15 bg-pure-white hover:border-slate-grey/30"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-body-md text-xs font-semibold text-ink-black truncate">{t.name}</span>
+                            <span className={`text-[8px] px-1 py-0.5 rounded font-label-caps uppercase font-bold shrink-0 ${
+                              t.isCustom ? "bg-amber-100 text-amber-800 border border-amber-200" : "bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}>
+                              {t.isCustom ? "Custom" : "Std"}
+                            </span>
+                          </div>
+                          <span className="text-[9px] text-slate-grey uppercase tracking-wider">
+                            {t.type} • {t.material} • <span className="text-deep-navy font-bold">${t.price}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Pane: Selected Template Editor Form */}
+              <div className="flex-grow p-6 overflow-y-auto bg-pure-white flex flex-col justify-between">
+                <form onSubmit={handleSaveTemplate} className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-grey/15 pb-3">
+                    <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-wider font-bold flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-amber-500">edit_note</span>
+                      {selectedTemplateId
+                        ? (selectedTemplateId.startsWith("custom-") ? "Edit Custom Preset" : "View Standard Preset")
+                        : "New Custom Preset Form"}
+                    </h3>
+                    {selectedTemplateId && !selectedTemplateId.startsWith("custom-") && (
+                      <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded font-semibold uppercase">
+                        Read Only Preset
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Preset / Template Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={tmplName}
+                        onChange={(e) => setTmplName(e.target.value)}
+                        placeholder="e.g. Elegant Diamond Band"
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Category / Product Type</label>
+                      <select
+                        value={tmplType}
+                        onChange={(e) => setTmplType(e.target.value)}
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 cursor-pointer"
+                      >
+                        {PRODUCT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Default Material</label>
+                      <input
+                        type="text"
+                        required
+                        value={tmplMaterial}
+                        onChange={(e) => setTmplMaterial(e.target.value)}
+                        placeholder="e.g. 18K Yellow Gold"
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Price ($)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        required
+                        value={tmplPrice}
+                        onChange={(e) => setTmplPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Original Price ($)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={tmplOriginalPrice}
+                        onChange={(e) => setTmplOriginalPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        placeholder="Optional retail price"
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Layout Style Preset</label>
+                      <select
+                        value={tmplLayoutStyle}
+                        onChange={(e) => setTmplLayoutStyle(e.target.value)}
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 cursor-pointer"
+                      >
+                        <option value="2x2">2x2 Grid View</option>
+                        <option value="asymmetric">Asymmetric Focus Banner</option>
+                        <option value="editorial">Full Editorial Showcase</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Available Sizes (Comma-separated)</label>
+                      <input
+                        type="text"
+                        value={tmplSizes}
+                        onChange={(e) => setTmplSizes(e.target.value)}
+                        placeholder="e.g. 5, 6, 7, 8, 9"
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Default Description</label>
+                    <textarea
+                      rows={2}
+                      value={tmplDesc}
+                      onChange={(e) => setTmplDesc(e.target.value)}
+                      placeholder="Enter a default short descriptive marketing copy for products of this template..."
+                      disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                      className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 rounded"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-6 p-3 bg-soft-linen/25 border border-slate-grey/15">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-ink-black">
+                      <input
+                        type="checkbox"
+                        checked={tmplEngravingEnabled}
+                        onChange={(e) => setTmplEngravingEnabled(e.target.checked)}
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-60"
+                      />
+                      <span>Allow Engravings by Default</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-ink-black">
+                      <input
+                        type="checkbox"
+                        checked={tmplGiftNoteEnabled}
+                        onChange={(e) => setTmplGiftNoteEnabled(e.target.checked)}
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-60"
+                      />
+                      <span>Allow Gift Note Message by Default</span>
+                    </label>
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-grey/15">
+                    <div className="flex gap-2">
+                      {selectedTemplateId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleApplyTemplate(selectedTemplateId);
+                            setShowTemplateModal(false);
+                          }}
+                          className="px-4 py-2 bg-deep-navy text-pure-white hover:bg-emerald-700 font-label-caps text-xs tracking-wider uppercase rounded flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">flash_on</span>
+                          Apply Preset to Form
+                        </button>
+                      )}
+                      
+                      {selectedTemplateId && !selectedTemplateId.startsWith("custom-") && (
+                        <button
+                          type="button"
+                          onClick={() => handleSaveTemplate({ preventDefault: () => {} } as any)}
+                          className="px-4 py-2 border border-amber-600 text-amber-700 hover:bg-amber-50 font-label-caps text-xs tracking-wider uppercase rounded cursor-pointer transition-colors"
+                        >
+                          Duplicate to Custom
+                        </button>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-grey/10">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleApplyTemplate(t.id);
-                          setShowTemplateModal(false);
-                        }}
-                        className="px-2.5 py-1 bg-deep-navy text-white hover:bg-emerald-700 rounded text-[10px] font-medium flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[12px]">flash_on</span>
-                        Apply to Form
-                      </button>
-
-                      {t.isCustom && (
+                    <div className="flex gap-2">
+                      {selectedTemplateId && selectedTemplateId.startsWith("custom-") && (
                         <button
                           type="button"
-                          onClick={() => handleDeleteTemplate(t.id)}
-                          className="text-[10px] text-red-600 hover:text-red-800 font-medium flex items-center gap-0.5 cursor-pointer"
+                          onClick={() => handleDeleteTemplate(selectedTemplateId)}
+                          className="px-4 py-2 border border-red-200 text-error hover:bg-red-50 font-label-caps text-xs tracking-wider uppercase rounded cursor-pointer transition-colors flex items-center gap-1"
                         >
-                          <span className="material-symbols-outlined text-[12px]">delete</span>
-                          Delete
+                          <span className="material-symbols-outlined text-[14px]">delete</span>
+                          Delete Preset
+                        </button>
+                      )}
+
+                      {(!selectedTemplateId || selectedTemplateId.startsWith("custom-")) && (
+                        <button
+                          type="submit"
+                          className="px-5 py-2 bg-deep-navy text-pure-white hover:bg-black font-label-caps text-xs tracking-wider uppercase rounded cursor-pointer transition-all shadow-sm"
+                        >
+                          {selectedTemplateId ? "Save Preset Changes" : "Save Custom Preset"}
                         </button>
                       )}
                     </div>
                   </div>
-                ))}
+                </form>
               </div>
-            </div>
 
-            <div className="flex justify-end border-t border-slate-grey/20 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowTemplateModal(false)}
-                className="px-5 py-2 border border-slate-grey/30 text-slate-grey hover:text-ink-black rounded text-xs font-button uppercase tracking-wider"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>
