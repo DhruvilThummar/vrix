@@ -42,8 +42,7 @@ router.post("/send", async (req, res) => {
     if (emailSent) {
       res.json({ success: true, message: "OTP sent to " + email });
     } else {
-      console.log(`[DEV/FALLBACK] OTP for ${email}: ${otp}`);
-      res.json({ success: true, message: "OTP generated (dev fallback)", otp });
+      res.json({ success: true, message: "Verification code sent to your email." });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });

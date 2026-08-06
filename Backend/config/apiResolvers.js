@@ -77,75 +77,59 @@ export async function getRazorpay() {
 export async function getTransporter() {
   const apiSettings = await getApiSettings();
   
-  // 1. Dynamic Admin DB Settings (if enabled)
-  if (apiSettings && apiSettings.nodemailerEnabled) {
-    if (apiSettings.nodemailerUser && apiSettings.nodemailerPass) {
-      try {
-        const nodemailer = await import("nodemailer");
-        const user = String(apiSettings.nodemailerUser).trim();
-        const pass = String(apiSettings.nodemailerPass).trim();
-        const host = String(apiSettings.nodemailerHost || "smtp.hostinger.com").trim();
-        const port = parseInt(apiSettings.nodemailerPort || "465");
+  let user = "";
+  let pass = "";
+  let host = "";
+  let port = 465;
 
-        if (host === "smtp.gmail.com" || user.toLowerCase().endsWith("@gmail.com")) {
-          return nodemailer.default.createTransport({
-            service: "gmail",
-            auth: { user, pass },
-            tls: { rejectUnauthorized: false },
-            connectionTimeout: 50000,
-          });
-        }
-
-        return nodemailer.default.createTransport({
-          host: host,
-          port: port,
-          secure: port === 465,
-          auth: { user, pass },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 50000,
-          greetingTimeout: 50000,
-          socketTimeout: 50000,
-        });
-      } catch (err) {
-        console.warn("Nodemailer: Dynamic configuration failed, using fallback.", err.message);
-      }
-    }
+  if (apiSettings && apiSettings.nodemailerEnabled && apiSettings.nodemailerUser && apiSettings.nodemailerPass) {
+    user = String(apiSettings.nodemailerUser).trim();
+    pass = String(apiSettings.nodemailerPass).trim();
+    host = String(apiSettings.nodemailerHost).trim();
+    port = parseInt(apiSettings.nodemailerPort);
+  } else {
+    user = String(process.env.SMTP_USER).trim();
+    pass = String(process.env.SMTP_PASS).trim();
+    host = String(process.env.SMTP_HOST).trim();
+    port = parseInt(process.env.SMTP_PORT);
   }
 
-  // 2. Pure .env Settings Fallback (Hostinger / Custom SMTP / Gmail)
-  const user = String(process.env.SMTP_USER || "info@vrixjewels.com").trim();
-  const pass = String(process.env.SMTP_PASS || "wy0l-usan-vdb8-jruv").trim();
-  const host = String(process.env.SMTP_HOST || "smtp.hostinger.com").trim();
-  const port = parseInt(process.env.SMTP_PORT || "465");
+  if (!user || !pass || pass === "YourAppPasswordHere") {
+    return null;
+  }
 
-  if (user && pass && pass !== "YourAppPasswordHere") {
-    try {
-      const nodemailer = await import("nodemailer");
-      
-      if (host === "smtp.gmail.com" || user.toLowerCase().endsWith("@gmail.com")) {
-        return nodemailer.default.createTransport({
-          service: "gmail",
-          auth: { user, pass },
-          tls: { rejectUnauthorized: false },
-          connectionTimeout: 10000,
-        });
-      }
+  const passClean = pass.replace(/\s+/g, "").replace(/-/g, "");
+  const isGoogleAppPass = passClean.length === 16;
+  const isGmailUser = user.toLowerCase().endsWith("@gmail.com");
 
+  try {
+    const nodemailer = await import("nodemailer");
+
+    if (host === "smtp.gmail.com" || isGmailUser) {
+      console.log(`[SMTP CONFIG] Transport: Gmail Service for ${user}`);
       return nodemailer.default.createTransport({
-        host: host,
-        port: port,
-        secure: port === 465,
+        service: "gmail",
         auth: { user, pass },
         tls: { rejectUnauthorized: false },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
+        connectionTimeout: 15000,
       });
-    } catch (err) {
-      console.warn("Nodemailer: fallback env config failed.", err.message);
     }
+
+    console.log(`[SMTP CONFIG] Transport: ${host}:${port} for ${user}`);
+    return nodemailer.default.createTransport({
+      host: host,
+      port: port,
+      secure: port === 465,
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 15000,
+    });
+  } catch (err) {
+    console.warn("Nodemailer: Transporter creation failed.", err.message);
+    return null;
   }
-  return null;
 }
 
 export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeoutMs = 10000) {
@@ -162,9 +146,38 @@ export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeo
         console.log(`[SMTP SUCCESS] Email sent to ${mailOptions.to}`);
         resolve(info || true);
       })
-      .catch((err) => {
+      .catch(async (err) => {
         clearTimeout(timer);
-        console.warn("[SMTP] Email send failed:", err.message);
+        console.warn("[SMTP Primary Warning]:", err.message);
+
+        // Auto-fallback: If primary authentication failed and password is a 16-char Google App Pass, retry via Gmail Service
+        if (err.message.includes("535") || err.message.includes("authentication failed")) {
+          try {
+            const apiSettings = await getApiSettings();
+            const pass = apiSettings?.nodemailerPass || process.env.SMTP_PASS || "";
+            const passClean = pass.replace(/\s+/g, "").replace(/-/g, "");
+            
+            if (passClean.length === 16) {
+              console.log("[SMTP FALLBACK] Retrying email via Gmail Service (App Password detected)...");
+              const nodemailer = await import("nodemailer");
+              const fallbackUser = process.env.ADMIN_EMAIL || "";
+              const fallbackTransporter = nodemailer.default.createTransport({
+                service: "gmail",
+                auth: { user: fallbackUser, pass },
+                tls: { rejectUnauthorized: false },
+                connectionTimeout: 100000,
+              });
+
+              const fallbackOptions = { ...mailOptions, from: `"VRIX" <${fallbackUser}>` };
+              const fallbackInfo = await fallbackTransporter.sendMail(fallbackOptions);
+              console.log(`[SMTP FALLBACK SUCCESS] Email sent via Gmail fallback to ${mailOptions.to}`);
+              return resolve(fallbackInfo || true);
+            }
+          } catch (fallbackErr) {
+            console.warn("[SMTP FALLBACK ERROR]:", fallbackErr.message);
+          }
+        }
+
         resolve(false);
       });
   });

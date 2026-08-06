@@ -36,9 +36,6 @@ router.post("/register", async (req, res) => {
         data: { email: targetKey, otp, expiresAt: expiresAt.toISOString() },
       })
     ]);
-
-    console.log(`[OTP DISPATCH] Registration OTP for ${cleanEmail}: ${otp}`);
-
     let emailSent = false;
     try {
       const activeTransporter = await getTransporter();
@@ -64,12 +61,7 @@ router.post("/register", async (req, res) => {
       console.warn("Background registration email error:", mailErr.message);
     }
 
-    if (emailSent) {
-      return res.json({ success: true, message: "Verification code sent to your email." });
-    } else {
-      console.warn(`[DEV/FALLBACK] Email delivery failed. Console OTP for ${cleanEmail}: ${otp}`);
-      return res.json({ success: true, message: "Verification code sent to your email." });
-    }
+    return res.json({ success: true, message: "Verification code sent to your email." });
   } catch (err) {
     console.error("Register OTP error:", err);
     res.status(500).json({ error: err.message || "Failed to process registration request." });
@@ -104,11 +96,11 @@ router.post("/register/confirm", async (req, res) => {
 
     const expiry = new Date(record.expiresAt);
     if (expiry < new Date()) {
-      db.verificationOtps.delete({ where: { id: record.id } }).catch(() => {});
+      db.verificationOtps.delete({ where: { id: record.id } }).catch(() => { });
       return res.status(401).json({ error: "Verification code has expired." });
     }
 
-    db.verificationOtps.delete({ where: { id: record.id } }).catch(() => {});
+    db.verificationOtps.delete({ where: { id: record.id } }).catch(() => { });
     const cleanPass = password.trim();
     const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
 
@@ -127,7 +119,7 @@ router.post("/register/confirm", async (req, res) => {
 
     db.securityLogs.create({
       data: { event: "ACCOUNT_REGISTER", user: cleanEmail, status: "SUCCESS" },
-    }).catch(() => {});
+    }).catch(() => { });
 
     res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone, isVrixPlusMember: !!newUser.isVrixPlusMember, vrixPlusJoinedDate: newUser.vrixPlusJoinedDate || null } });
   } catch (err) {
@@ -166,8 +158,6 @@ router.post("/login", async (req, res) => {
       })
     ]);
 
-    console.log(`[OTP DISPATCH] Login OTP for ${cleanEmail}: ${otp}`);
-
     let emailSent = false;
     try {
       const activeTransporter = await getTransporter();
@@ -186,19 +176,14 @@ router.post("/login", async (req, res) => {
               <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
             </div>
           `,
-        }, 10000);
+        }, 100000);
         emailSent = !!emailResult;
       }
     } catch (mailErr) {
       console.warn("Background login email error:", mailErr.message);
     }
 
-    if (emailSent) {
-      return res.json({ success: true, message: "Verification code sent to your email." });
-    } else {
-      console.warn(`[DEV/FALLBACK] Email delivery failed. Console OTP for ${cleanEmail}: ${otp}`);
-      return res.json({ success: true, message: "Verification code sent to your email." });
-    }
+    return res.json({ success: true, message: "Verification code sent to your email." });
   } catch (err) {
     console.error("Login OTP error:", err);
     res.status(500).json({ error: err.message || "Failed to process login request." });
@@ -218,18 +203,18 @@ router.post("/login/direct", async (req, res) => {
     const user = await db.users.findUnique({ where: { email: cleanEmail } });
 
     if (!user) {
-      db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => {});
+      db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => { });
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
     const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
     const isPasswordValid = user.password === hashedPassword || user.password === cleanPass || user.password === "truecaller_oauth_account";
     if (!isPasswordValid) {
-      db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => {});
+      db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => { });
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
-    db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => {});
+    db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => { });
     res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, role: user.role || "customer", isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -525,24 +510,24 @@ router.post("/admin-login", async (req, res) => {
     const user = await db.users.findUnique({ where: { email: cleanEmail } });
 
     if (!user) {
-      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => {});
+      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => { });
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
     const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
     const isPasswordValid = user.password === hashedPassword || user.password === cleanPass;
     if (!isPasswordValid) {
-      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => {});
+      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => { });
       return res.status(401).json({ error: "Incorrect email or password." });
     }
 
     const userRole = user.role || "customer";
     if (userRole !== "admin") {
-      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "DENIED" } }).catch(() => {});
+      db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "DENIED" } }).catch(() => { });
       return res.status(403).json({ error: "Access denied. You do not have admin privileges." });
     }
 
-    db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => {});
+    db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => { });
     res.json({
       success: true,
       admin: {
