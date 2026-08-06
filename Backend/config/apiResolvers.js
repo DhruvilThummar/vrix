@@ -81,26 +81,27 @@ export async function getTransporter() {
     if (apiSettings.nodemailerUser && apiSettings.nodemailerPass) {
       try {
         const nodemailer = await import("nodemailer");
-        const host = apiSettings.nodemailerHost || process.env.SMTP_HOST || "smtp.hostinger.com";
-        const port = parseInt(apiSettings.nodemailerPort || process.env.SMTP_PORT || "465");
-        const service = apiSettings.nodemailerService || process.env.SMTP_SERVICE;
+        const user = apiSettings.nodemailerUser;
+        const pass = apiSettings.nodemailerPass;
+        const passClean = (pass || "").replace(/\s+/g, "").replace(/-/g, "");
+        const isGoogleAppPass = passClean.length === 16;
+        const host = apiSettings.nodemailerHost || (isGoogleAppPass || user.toLowerCase().includes("gmail.com") ? "smtp.gmail.com" : "smtp.hostinger.com");
 
-        if (service) {
+        if (isGoogleAppPass || user.toLowerCase().includes("gmail.com") || host === "smtp.gmail.com") {
           return nodemailer.default.createTransport({
-            service,
-            auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
+            service: "gmail",
+            auth: { user, pass },
             tls: { rejectUnauthorized: false },
             connectionTimeout: 10000,
-            greetingTimeout: 10000,
-            socketTimeout: 10000,
           });
         }
 
+        const port = parseInt(apiSettings.nodemailerPort || "465");
         return nodemailer.default.createTransport({
           host: host,
           port: port,
           secure: port === 465,
-          auth: { user: apiSettings.nodemailerUser, pass: apiSettings.nodemailerPass },
+          auth: { user, pass },
           tls: { rejectUnauthorized: false },
           connectionTimeout: 10000,
           greetingTimeout: 10000,
@@ -113,27 +114,27 @@ export async function getTransporter() {
   }
 
   // 2. Pure .env Settings Fallback (Hostinger / Custom SMTP / Gmail)
-  const host = process.env.SMTP_HOST || "smtp.hostinger.com";
-  const port = parseInt(process.env.SMTP_PORT || "465");
   const user = process.env.SMTP_USER || "info@vrixjewels.com";
-  const pass = process.env.SMTP_PASS || "";
-  const service = process.env.SMTP_SERVICE;
+  const pass = process.env.SMTP_PASS || "wy0l-usan-vdb8-jruv";
+  const passClean = (pass || "").replace(/\s+/g, "").replace(/-/g, "");
+  const isGoogleAppPass = passClean.length === 16;
+  const envHost = process.env.SMTP_HOST;
+  const host = envHost || (isGoogleAppPass || user.toLowerCase().includes("gmail.com") ? "smtp.gmail.com" : "smtp.hostinger.com");
 
   if (user && pass && pass !== "YourAppPasswordHere") {
     try {
       const nodemailer = await import("nodemailer");
       
-      if (service) {
+      if (isGoogleAppPass || user.toLowerCase().includes("gmail.com") || host === "smtp.gmail.com") {
         return nodemailer.default.createTransport({
-          service,
+          service: "gmail",
           auth: { user, pass },
           tls: { rejectUnauthorized: false },
           connectionTimeout: 10000,
-          greetingTimeout: 10000,
-          socketTimeout: 10000,
         });
       }
 
+      const port = parseInt(process.env.SMTP_PORT || "465");
       return nodemailer.default.createTransport({
         host: host,
         port: port,
