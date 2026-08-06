@@ -325,6 +325,18 @@ export async function loginUserDirect(payload: any) {
   });
 }
 
+export async function loginWithGoogle(payload: { credential?: string; email?: string; name?: string; phone?: string; joinVrixPlus?: boolean }) {
+  return apiFetch<{
+    success: boolean;
+    user: { email: string; name: string; phone: string; isVrixPlusMember?: boolean; vrixPlusJoinedDate?: string; picture?: string };
+  }>("/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+
 export async function adminLogin(payload: { email: string; password: string }) {
   return apiFetch<{ success: boolean; admin: { email: string; name: string; role: string } }>("/auth/admin-login", {
     method: "POST",

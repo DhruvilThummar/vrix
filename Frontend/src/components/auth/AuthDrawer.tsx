@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin, getApiBaseUrl } from "@/utils/api";
 import SkeletonImage from "@/components/shop/SkeletonImage";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
+
 
 interface AuthDrawerProps {
   isOpen: boolean;
@@ -298,6 +300,27 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
                   SIGN UP
                 </button>
               </div>
+
+              {/* 1-Click Google Auth Button */}
+              {authStep === "email" && (
+                <div className="pt-2 space-y-3">
+                  <GoogleAuthButton
+                    joinVrixPlus={joinVrixPlus}
+                    onSuccess={(usr) => {
+                      triggerToast(usr?.isVrixPlusMember ? "Welcome to VRIX+ Circle!" : "Welcome back to VRIX!");
+                      onClose();
+                    }}
+                    onError={(err) => setErrorMsg(err)}
+                    buttonText={authMode === "signup" ? "Sign Up with Google" : "Sign In with Google"}
+                  />
+
+                  <div className="flex items-center gap-3 my-2">
+                    <div className="flex-1 h-[1px] bg-slate-grey/20" />
+                    <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Or Continue With Email</span>
+                    <div className="flex-1 h-[1px] bg-slate-grey/20" />
+                  </div>
+                </div>
+              )}
 
 
 

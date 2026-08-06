@@ -19,6 +19,8 @@ import {
   fetchUserOrders,
   getWishlistKey
 } from "@/utils/api";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
+
 
 interface Order {
   id: string;
@@ -444,7 +446,26 @@ export default function UserAccountPage() {
                 </button>
               </div>
 
+              {/* 1-Click Google Sign-In */}
+              <div className="space-y-3">
+                <GoogleAuthButton
+                  onSuccess={(usr) => {
+                    setAuthStep("verified");
+                    triggerFeedback(usr?.isVrixPlusMember ? "Welcome to VRIX+ Circle!" : "Welcome back!");
+                  }}
+                  onError={(err) => setAuthError(err)}
+                  buttonText={authMode === "signup" ? "Sign Up with Google" : "Sign In with Google"}
+                />
+
+                <div className="flex items-center gap-3 my-1">
+                  <div className="flex-1 h-[1px] bg-slate-grey/20" />
+                  <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Or Continue With Email</span>
+                  <div className="flex-1 h-[1px] bg-slate-grey/20" />
+                </div>
+              </div>
+
               <form onSubmit={handleAuthSubmit} className="space-y-5">
+
                 {authMode === "signup" && (
                   <div className="space-y-1">
                     <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Full Name</label>

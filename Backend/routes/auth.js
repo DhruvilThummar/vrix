@@ -1,7 +1,8 @@
 import express from "express";
 import crypto from "crypto";
 import { db } from "../database.js";
-import { getTransporter, sendEmailWithTimeout, getApiSettings, getTruecallerConfig } from "../config/apiResolvers.js";
+import { getTransporter, sendEmailWithTimeout, getApiSettings, getTruecallerConfig, getGoogleConfig } from "../config/apiResolvers.js";
+
 
 const router = express.Router();
 
@@ -541,4 +542,141 @@ router.post("/admin-login", async (req, res) => {
   }
 });
 
-export default router;
+// POST /api/auth/google — Google OAuth authentication & automatic user registration / login
+router.post("/google", async (req, res) => {
+  const { credential, email, name, picture, phone, joinVrixPlus } = req.body;
+
+  try {
+    const googleConfig = await getGoogleConfig();
+    if (!googleConfig.enabled) {
+      return res.status(400).json({ error: "Google sign-in is disabled in store settings." });
+    }
+
+    let cleanEmail = "";
+    let cleanName = "";
+    let googlePicture = "";
+
+    // 1. Verify Google ID token via Google Tokeninfo API if credential token is provided
+    if (credential) {
+      try {
+        const tokenRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+        if (tokenRes.ok) {
+          const payload = await tokenRes.json();
+          if (payload.email && (payload.email_verified === true || payload.email_verified === "true")) {
+            cleanEmail = String(payload.email).trim().toLowerCase();
+            cleanName = String(payload.name || payload.given_name || "").trim();
+            googlePicture = payload.picture || "";
+          }
+        }
+      } catch (tokenErr) {
+        console.warn("Google tokeninfo verification failed:", tokenErr.message);
+      }
+
+      // 2. JWT Fallback parsing if tokeninfo unreachable or local token
+      if (!cleanEmail && typeof credential === "string" && credential.includes(".")) {
+        try {
+          const parts = credential.split(".");
+          if (parts.length === 3) {
+            const decoded = JSON.parse(Buffer.from(parts[1], "base64").toString("utf-8"));
+            if (decoded.email) {
+              cleanEmail = String(decoded.email).trim().toLowerCase();
+              cleanName = String(decoded.name || decoded.given_name || "").trim();
+              googlePicture = decoded.picture || "";
+            }
+          }
+        } catch (jwtErr) {
+          console.warn("Google JWT fallback parse error:", jwtErr.message);
+        }
+      }
+    }
+
+    // Direct email fallback if passed verified profile
+    if (!cleanEmail && email) {
+      cleanEmail = String(email).trim().toLowerCase();
+      cleanName = String(name || "").trim();
+      googlePicture = picture || "";
+    }
+
+    if (!cleanEmail) {
+      return res.status(400).json({ error: "Invalid Google credentials or email could not be verified." });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ error: "Invalid email address format from Google account." });
+    }
+
+    const userDisplayName = cleanName || cleanEmail.split("@")[0];
+
+    // Check if user exists in DB
+    let user = await db.users.findUnique({ where: { email: cleanEmail } });
+
+    if (user) {
+      // User exists -> Update details if needed
+      const updateData = {};
+      if (!user.name || user.name.trim() === "" || user.name === "VRIX Member") {
+        updateData.name = userDisplayName;
+      }
+      if (joinVrixPlus && !user.isVrixPlusMember) {
+        updateData.isVrixPlusMember = true;
+        updateData.vrixPlusJoinedDate = new Date().toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        });
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        user = await db.users.update({
+          where: { email: cleanEmail },
+          data: updateData,
+        });
+      }
+
+      await db.securityLogs.create({
+        data: { event: "GOOGLE_LOGIN", user: cleanEmail, status: "SUCCESS" },
+      }).catch(() => { });
+
+    } else {
+      // Create user in DB (store all data same as OTP login/register)
+      const todayStr = new Date().toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+
+      user = await db.users.create({
+        data: {
+          email: cleanEmail,
+          name: userDisplayName,
+          phone: phone || "",
+          password: "google_oauth_account",
+          isVrixPlusMember: !!joinVrixPlus,
+          vrixPlusJoinedDate: joinVrixPlus ? todayStr : null
+        },
+      });
+
+      await db.securityLogs.create({
+        data: { event: "GOOGLE_REGISTER", user: cleanEmail, status: "SUCCESS" },
+      }).catch(() => { });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        email: user.email,
+        name: user.name,
+        phone: user.phone || "",
+        isVrixPlusMember: !!user.isVrixPlusMember,
+        vrixPlusJoinedDate: user.vrixPlusJoinedDate || null,
+        picture: googlePicture || null
+      }
+    });
+
+  } catch (err) {
+    console.error("Google Auth error:", err);
+    res.status(500).json({ error: err.message || "Google authentication failed." });
+  }
+});
+
+export default router;

@@ -258,7 +258,10 @@ export default function Page() {
                   </div>
                 </div>
               )}
+            </div>
+
             {/* 3. Cloudinary Media Storage */}
+
             <div className="border border-slate-grey/15 p-6 rounded bg-surface-container-low/30">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
