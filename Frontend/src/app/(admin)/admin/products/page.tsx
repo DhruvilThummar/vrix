@@ -309,9 +309,12 @@ function AdminProductsContent() {
   const handleApplyTemplate = (templateId: string) => {
     const tmpl = allTemplates.find((t) => t.id === templateId);
     if (!tmpl) return;
-    setIsNew(true);
-    setSelectedProduct(null);
-    setFTitle(tmpl.name);
+    
+    // If title is empty, fill it with the template name as default
+    if (!fTitle.trim()) {
+      setFTitle(tmpl.name);
+    }
+    
     setFType(tmpl.type || "Ring");
     setFMaterial(tmpl.material || "");
     setFPrice(tmpl.price || 0);
@@ -321,7 +324,7 @@ function AdminProductsContent() {
     setFAvailableSizes(tmpl.availableSizes || []);
     setFEngravingEnabled(!!tmpl.engravingEnabled);
     setFGiftNoteEnabled(!!tmpl.giftNoteEnabled);
-    showToast(`Applied preset: "${tmpl.name}"`);
+    showToast(`Applied preset settings: "${tmpl.name}"`);
   };
 
   const handleSaveCurrentAsTemplate = () => {
