@@ -80,17 +80,17 @@
 
   /* Font Families mapped to CSS variables set by layout.tsx */
   --font-inter: var(--font-inter);
-  --font-plus-jakarta-sans: var(--font-plus-jakarta-sans);
+  --font-jost: var(--font-jost);
+  --font-aquavit: var(--font-aquavit);
+  --font-chancery: var(--font-chancery);
 }
 
-/* Typography styles matching designTheme */
-.font-display-lg {
-  font-family: var(--font-inter), sans-serif;
-}
-.font-display-lg-mobile {
-  font-family: var(--font-inter), sans-serif;
-}
-.font-headline-md {
+/* Typography styles matching Brand Style Guide */
+/* Primary Font: Inter (Headings, Subheadings, Buttons, Labels) */
+.font-display-lg,
+.font-display-lg-mobile,
+.font-headline-md,
+.font-inter {
   font-family: var(--font-inter), sans-serif;
 }
 .font-label-caps {
@@ -103,11 +103,24 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.font-body-lg {
-  font-family: var(--font-plus-jakarta-sans), sans-serif;
+
+/* Secondary Font: Jost (Body text & Website UI) */
+.font-body-lg,
+.font-body-md,
+.font-jost {
+  font-family: var(--font-jost), sans-serif;
 }
-.font-body-md {
-  font-family: var(--font-plus-jakarta-sans), sans-serif;
+
+/* Logo Font: Aquavit (Refined contrast luxury display serif) */
+.font-logo,
+.font-aquavit {
+  font-family: var(--font-aquavit), Georgia, serif;
+}
+
+/* Accent Font: BlackChancery (Cursive luxury highlight accent) */
+.font-accent,
+.font-chancery {
+  font-family: var(--font-chancery), cursive;
 }
 
 .text-display-lg {

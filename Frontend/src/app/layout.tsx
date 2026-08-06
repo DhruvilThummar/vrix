@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-page-custom-font */
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Jost, Cormorant_Garamond, Alex_Brush } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -10,13 +10,25 @@ import CookieConsent from "@/components/CookieConsent";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["100", "300", "400", "500", "600", "700", "800", "900"],
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta-sans",
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["100", "300", "400", "500", "600", "700", "800", "900"],
+});
+
+const aquavit = Cormorant_Garamond({
+  variable: "--font-aquavit",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const chancery = Alex_Brush({
+  variable: "--font-chancery",
+  subsets: ["latin"],
+  weight: ["400"],
 });
 
 export const metadata: Metadata = {
@@ -122,7 +134,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${plusJakartaSans.variable} h-full antialiased`}
+      className={`${inter.variable} ${jost.variable} ${aquavit.variable} ${chancery.variable} h-full antialiased`}
     >
       <head>
         <link
