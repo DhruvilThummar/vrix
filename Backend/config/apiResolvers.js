@@ -75,38 +75,19 @@ export async function getRazorpay() {
 }
 
 export async function getTransporter() {
-  const apiSettings = await getApiSettings();
-  
-  let user = "";
-  let pass = "";
-  let host = "";
-  let port = 465;
-
-  if (apiSettings && apiSettings.nodemailerEnabled && apiSettings.nodemailerUser && apiSettings.nodemailerPass) {
-    user = String(apiSettings.nodemailerUser).trim();
-    pass = String(apiSettings.nodemailerPass).trim();
-    host = String(apiSettings.nodemailerHost).trim();
-    port = parseInt(apiSettings.nodemailerPort);
-  } else {
-    user = String(process.env.SMTP_USER).trim();
-    pass = String(process.env.SMTP_PASS).trim();
-    host = String(process.env.SMTP_HOST).trim();
-    port = parseInt(process.env.SMTP_PORT);
-  }
+  const user = String(process.env.SMTP_USER || "info@vrixjewels.com").trim();
+  const pass = String(process.env.SMTP_PASS || "").trim();
+  const host = String(process.env.SMTP_HOST || "smtp.hostinger.com").trim();
+  const port = parseInt(process.env.SMTP_PORT || "465");
 
   if (!user || !pass || pass === "YourAppPasswordHere") {
     return null;
   }
 
-  const passClean = pass.replace(/\s+/g, "").replace(/-/g, "");
-  const isGoogleAppPass = passClean.length === 16;
-  const isGmailUser = user.toLowerCase().endsWith("@gmail.com");
-
   try {
     const nodemailer = await import("nodemailer");
 
-    if (host === "smtp.gmail.com" || isGmailUser) {
-      console.log(`[SMTP CONFIG] Transport: Gmail Service for ${user}`);
+    if (host === "smtp.gmail.com" || user.toLowerCase().endsWith("@gmail.com")) {
       return nodemailer.default.createTransport({
         service: "gmail",
         auth: { user, pass },
@@ -115,7 +96,6 @@ export async function getTransporter() {
       });
     }
 
-    console.log(`[SMTP CONFIG] Transport: ${host}:${port} for ${user}`);
     return nodemailer.default.createTransport({
       host: host,
       port: port,
@@ -132,7 +112,7 @@ export async function getTransporter() {
   }
 }
 
-export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeoutMs = 10000) {
+export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeoutMs = 100000) {
   if (!activeTransporter) return false;
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
