@@ -245,6 +245,14 @@ function AdminProductsContent() {
   const [tmplEngravingEnabled, setTmplEngravingEnabled] = useState(true);
   const [tmplGiftNoteEnabled, setTmplGiftNoteEnabled] = useState(true);
   const [tmplSizes, setTmplSizes] = useState("");
+  
+  // Extra template properties
+  const [tmplCollection, setTmplCollection] = useState("silent-center");
+  const [tmplVrixPlusExclusive, setTmplVrixPlusExclusive] = useState(false);
+  const [tmplTags, setTmplTags] = useState("");
+  const [tmplDimensions, setTmplDimensions] = useState("");
+  const [tmplStock, setTmplStock] = useState(999);
+  const [tmplVisible, setTmplVisible] = useState(true);
 
   useEffect(() => {
     // 1. Initial local load
@@ -289,6 +297,12 @@ function AdminProductsContent() {
       setTmplEngravingEnabled(true);
       setTmplGiftNoteEnabled(true);
       setTmplSizes("");
+      setTmplCollection("silent-center");
+      setTmplVrixPlusExclusive(false);
+      setTmplTags("");
+      setTmplDimensions("");
+      setTmplStock(999);
+      setTmplVisible(true);
       return;
     }
     const t = allTemplates.find(x => x.id === id);
@@ -303,6 +317,12 @@ function AdminProductsContent() {
       setTmplEngravingEnabled(!!t.engravingEnabled);
       setTmplGiftNoteEnabled(!!t.giftNoteEnabled);
       setTmplSizes((t.availableSizes || []).join(", "));
+      setTmplCollection(t.collection || "silent-center");
+      setTmplVrixPlusExclusive(!!t.vrixPlusExclusive);
+      setTmplTags((t.tags || []).join(", "));
+      setTmplDimensions(t.dimensions || "");
+      setTmplStock(t.stock !== undefined ? t.stock : 999);
+      setTmplVisible(t.isVisible !== undefined ? t.isVisible : true);
     }
   };
 
@@ -324,6 +344,14 @@ function AdminProductsContent() {
     setFAvailableSizes(tmpl.availableSizes || []);
     setFEngravingEnabled(!!tmpl.engravingEnabled);
     setFGiftNoteEnabled(!!tmpl.giftNoteEnabled);
+    
+    setFCollection(tmpl.collection || "silent-center");
+    setFVrixPlusExclusive(!!tmpl.vrixPlusExclusive);
+    setFTags(tmpl.tags || []);
+    setFDimensions(tmpl.dimensions || "");
+    setFStock(tmpl.stock !== undefined ? tmpl.stock : 999);
+    setFVisible(tmpl.isVisible !== undefined ? tmpl.isVisible : true);
+    
     showToast(`Applied preset settings: "${tmpl.name}"`);
   };
 
@@ -342,6 +370,12 @@ function AdminProductsContent() {
       availableSizes: fAvailableSizes || [],
       engravingEnabled: fEngravingEnabled,
       giftNoteEnabled: fGiftNoteEnabled,
+      collection: fCollection,
+      vrixPlusExclusive: fVrixPlusExclusive,
+      tags: fTags,
+      dimensions: fDimensions,
+      stock: fStock,
+      isVisible: fVisible,
       isCustom: true
     };
     const updated = [...customTemplates, newTmpl];
@@ -368,6 +402,12 @@ function AdminProductsContent() {
             engravingEnabled: tmplEngravingEnabled,
             giftNoteEnabled: tmplGiftNoteEnabled,
             availableSizes: tmplSizes.split(",").map(s => s.trim()).filter(Boolean),
+            collection: tmplCollection,
+            vrixPlusExclusive: tmplVrixPlusExclusive,
+            tags: tmplTags.split(",").map(s => s.trim()).filter(Boolean),
+            dimensions: tmplDimensions.trim(),
+            stock: Number(tmplStock) || 999,
+            isVisible: tmplVisible,
           };
         }
         return t;
@@ -388,6 +428,12 @@ function AdminProductsContent() {
         engravingEnabled: tmplEngravingEnabled,
         giftNoteEnabled: tmplGiftNoteEnabled,
         availableSizes: tmplSizes.split(",").map(s => s.trim()).filter(Boolean),
+        collection: tmplCollection,
+        vrixPlusExclusive: tmplVrixPlusExclusive,
+        tags: tmplTags.split(",").map(s => s.trim()).filter(Boolean),
+        dimensions: tmplDimensions.trim(),
+        stock: Number(tmplStock) || 999,
+        isVisible: tmplVisible,
         isCustom: true
       };
       const updated = [...customTemplates, newTmpl];
@@ -407,6 +453,12 @@ function AdminProductsContent() {
         engravingEnabled: tmplEngravingEnabled,
         giftNoteEnabled: tmplGiftNoteEnabled,
         availableSizes: tmplSizes.split(",").map(s => s.trim()).filter(Boolean),
+        collection: tmplCollection,
+        vrixPlusExclusive: tmplVrixPlusExclusive,
+        tags: tmplTags.split(",").map(s => s.trim()).filter(Boolean),
+        dimensions: tmplDimensions.trim(),
+        stock: Number(tmplStock) || 999,
+        isVisible: tmplVisible,
         isCustom: true
       };
       const updated = [...customTemplates, newTmpl];
@@ -1672,6 +1724,84 @@ function AdminProductsContent() {
                       disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
                       className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 rounded"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Default Collection</label>
+                      <select
+                        value={tmplCollection}
+                        onChange={(e) => setTmplCollection(e.target.value)}
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 cursor-pointer"
+                      >
+                        {Object.keys(DEFAULT_COLLECTION_LABELS).map(key => (
+                          <option key={key} value={key}>{DEFAULT_COLLECTION_LABELS[key]}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Default Stock</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={tmplStock}
+                        onChange={(e) => setTmplStock(Number(e.target.value))}
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Dimensions</label>
+                      <input
+                        type="text"
+                        value={tmplDimensions}
+                        onChange={(e) => setTmplDimensions(e.target.value)}
+                        placeholder="e.g. 15mm x 15mm"
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Tags (Comma-separated)</label>
+                      <input
+                        type="text"
+                        value={tmplTags}
+                        onChange={(e) => setTmplTags(e.target.value)}
+                        placeholder="e.g. minimal, gift, best-seller"
+                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 pt-4">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-ink-black">
+                        <input
+                          type="checkbox"
+                          checked={tmplVrixPlusExclusive}
+                          onChange={(e) => setTmplVrixPlusExclusive(e.target.checked)}
+                          disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                          className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-60"
+                        />
+                        <span>VRIX+ Exclusive</span>
+                      </label>
+
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-ink-black">
+                        <input
+                          type="checkbox"
+                          checked={tmplVisible}
+                          onChange={(e) => setTmplVisible(e.target.checked)}
+                          disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                          className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-60"
+                        />
+                        <span>Visible on Storefront</span>
+                      </label>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-6 p-3 bg-soft-linen/25 border border-slate-grey/15">

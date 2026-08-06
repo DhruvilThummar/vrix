@@ -4,6 +4,23 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { fetchAllCollections, saveCollections, uploadMedia } from "@/utils/api";
 
+interface CollectionSection {
+  id: string;
+  type: "hero" | "text" | "image_grid" | "product_slider";
+  title?: string;
+  description?: string;
+  tagline?: string;
+  backgroundImage?: string;
+  overlayOpacity?: number;
+  align?: "left" | "center" | "right";
+  backgroundColor?: "transparent" | "linen" | "navy";
+  gridColumns?: number;
+  images?: { url: string; caption?: string; link?: string }[];
+  autoplay?: boolean;
+  speed?: number;
+  skus?: string[];
+}
+
 interface Collection {
   id: string;
   title: string;
@@ -19,6 +36,7 @@ interface Collection {
   carouselAutoplay?: boolean;
   carouselSpeed?: number;
   layoutStyle?: "classic" | "split" | "editorial";
+  sections?: CollectionSection[];
 }
 
 const DEFAULT_LINK_BASES = [
@@ -53,6 +71,7 @@ export default function AdminCollectionsPage() {
   const [fCarouselAutoplay, setFCarouselAutoplay] = useState(false);
   const [fCarouselSpeed, setFCarouselSpeed] = useState(3000);
   const [fLayoutStyle, setFLayoutStyle] = useState<"classic" | "split" | "editorial">("classic");
+  const [fSections, setFSections] = useState<CollectionSection[]>([]);
   const [uploadBannerLoading, setUploadBannerLoading] = useState(false);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,6 +105,7 @@ export default function AdminCollectionsPage() {
     setFCarouselAutoplay(!!c.carouselAutoplay);
     setFCarouselSpeed(c.carouselSpeed || 3000);
     setFLayoutStyle(c.layoutStyle || "classic");
+    setFSections(c.sections || []);
   };
 
   const handleNew = () => {
@@ -100,6 +120,7 @@ export default function AdminCollectionsPage() {
     setFCarouselAutoplay(false);
     setFCarouselSpeed(3000);
     setFLayoutStyle("classic");
+    setFSections([]);
   };
 
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,6 +190,7 @@ export default function AdminCollectionsPage() {
       carouselAutoplay: fCarouselAutoplay,
       carouselSpeed: Number(fCarouselSpeed) || 3000,
       layoutStyle: fLayoutStyle,
+      sections: fSections,
     };
     let newList: Collection[];
     if (isNew) {
@@ -195,6 +217,45 @@ export default function AdminCollectionsPage() {
     const newList = collections.map((col) => col.id === c.id ? { ...col, isVisible: !c.isVisible } : col);
     setCollections(newList);
     await saveAll(newList);
+  };
+
+  const handleAddSection = (type: "hero" | "text" | "image_grid" | "product_slider") => {
+    const newSec: CollectionSection = {
+      id: `sec-${Date.now()}`,
+      type,
+      title: type === "hero" ? "New Editorial Hero" : type === "text" ? "New Text Block" : type === "image_grid" ? "Image Grid" : "Product Slider",
+      description: "",
+      tagline: "",
+      align: "center",
+      backgroundColor: "transparent",
+      gridColumns: 2,
+      images: [],
+      skus: [],
+      autoplay: true,
+      speed: 3000,
+    };
+    setFSections([...fSections, newSec]);
+    showToast(`Added ${type} section.`);
+  };
+
+  const handleUpdateSection = (idx: number, fields: Partial<CollectionSection>) => {
+    const next = [...fSections];
+    next[idx] = { ...next[idx], ...fields };
+    setFSections(next);
+  };
+
+  const handleRemoveSection = (idx: number) => {
+    setFSections(fSections.filter((_, i) => i !== idx));
+    showToast("Section removed.");
+  };
+
+  const handleMoveSection = (idx: number, dir: -1 | 1) => {
+    if (idx + dir < 0 || idx + dir >= fSections.length) return;
+    const next = [...fSections];
+    const temp = next[idx];
+    next[idx] = next[idx + dir];
+    next[idx + dir] = temp;
+    setFSections(next);
   };
 
   const handleReorder = (idx: number, dir: -1 | 1) => {
@@ -412,6 +473,179 @@ export default function AdminCollectionsPage() {
                         <label className="font-label-caps text-[8px] text-slate-grey uppercase tracking-widest">Interval (ms)</label>
                         <input type="number" step={500} min={1000} value={fCarouselSpeed} disabled={!fShowProductCarousel || !fCarouselAutoplay} onChange={(e) => setFCarouselSpeed(Number(e.target.value))} className="border-b border-slate-grey/30 py-0.5 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent disabled:opacity-50" />
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Storefront Layout Blocks Builder */}
+                  <div className="border-t border-slate-grey/15 pt-5 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-label-caps text-[10px] uppercase tracking-widest text-deep-navy font-bold">Storefront Layout Blocks Builder</h4>
+                      <div className="flex gap-1.5">
+                        <button type="button" onClick={() => handleAddSection("hero")} className="px-2 py-1 bg-soft-linen text-deep-navy border border-slate-grey/20 text-[9px] font-label-caps uppercase tracking-wider font-semibold cursor-pointer">+ Hero</button>
+                        <button type="button" onClick={() => handleAddSection("text")} className="px-2 py-1 bg-soft-linen text-deep-navy border border-slate-grey/20 text-[9px] font-label-caps uppercase tracking-wider font-semibold cursor-pointer">+ Text</button>
+                        <button type="button" onClick={() => handleAddSection("image_grid")} className="px-2 py-1 bg-soft-linen text-deep-navy border border-slate-grey/20 text-[9px] font-label-caps uppercase tracking-wider font-semibold cursor-pointer">+ Grid</button>
+                        <button type="button" onClick={() => handleAddSection("product_slider")} className="px-2 py-1 bg-soft-linen text-deep-navy border border-slate-grey/20 text-[9px] font-label-caps uppercase tracking-wider font-semibold cursor-pointer">+ Slider</button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {fSections.length === 0 && (
+                        <p className="text-xs text-slate-grey italic py-2 text-center bg-soft-linen/20 border border-slate-grey/10 rounded">No custom blocks configured. Will display default products listing.</p>
+                      )}
+                      {fSections.map((sec, idx) => (
+                        <div key={sec.id} className="p-4 border border-slate-grey/20 rounded bg-soft-linen/20 space-y-3 relative">
+                          <div className="flex items-center justify-between border-b border-slate-grey/15 pb-2">
+                            <span className="font-label-caps text-[10px] font-bold text-deep-navy uppercase flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-[15px] text-amber-600">
+                                {sec.type === "hero" ? "view_carousel" : sec.type === "text" ? "segment" : sec.type === "image_grid" ? "grid_on" : "slideshow"}
+                              </span>
+                              Block #{idx + 1}: {sec.type.toUpperCase()} - {sec.title || "Untitled"}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => handleMoveSection(idx, -1)} disabled={idx === 0} className="w-5 h-5 flex items-center justify-center border border-slate-grey/20 text-slate-grey disabled:opacity-30 cursor-pointer">
+                                <span className="material-symbols-outlined text-[10px]">arrow_upward</span>
+                              </button>
+                              <button type="button" onClick={() => handleMoveSection(idx, 1)} disabled={idx === fSections.length - 1} className="w-5 h-5 flex items-center justify-center border border-slate-grey/20 text-slate-grey disabled:opacity-30 cursor-pointer">
+                                <span className="material-symbols-outlined text-[10px]">arrow_downward</span>
+                              </button>
+                              <button type="button" onClick={() => handleRemoveSection(idx)} className="text-[10px] text-red-600 hover:text-red-800 font-semibold ml-2 cursor-pointer">✕ Remove</button>
+                            </div>
+                          </div>
+
+                          {/* Hero configuration */}
+                          {sec.type === "hero" && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase">Headline</label>
+                                <input type="text" value={sec.title || ""} onChange={(e) => handleUpdateSection(idx, { title: e.target.value })} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase">Tagline</label>
+                                <input type="text" value={sec.tagline || ""} onChange={(e) => handleUpdateSection(idx, { tagline: e.target.value })} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                              </div>
+                              <div className="flex flex-col gap-1 sm:col-span-2">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase">Paragraph copy</label>
+                                <input type="text" value={sec.description || ""} onChange={(e) => handleUpdateSection(idx, { description: e.target.value })} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase">Banner URL</label>
+                                <input type="text" value={sec.backgroundImage || ""} onChange={(e) => handleUpdateSection(idx, { backgroundImage: e.target.value })} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase">Text Alignment</label>
+                                <select value={sec.align || "center"} onChange={(e) => handleUpdateSection(idx, { align: e.target.value as any })} className="border border-slate-grey/20 p-1 text-xs rounded bg-transparent">
+                                  <option value="left">Left</option>
+                                  <option value="center">Center</option>
+                                  <option value="right">Right</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Text configuration */}
+                          {sec.type === "text" && (
+                            <div className="space-y-2">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Headline</label>
+                                  <input type="text" value={sec.title || ""} onChange={(e) => handleUpdateSection(idx, { title: e.target.value })} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Background Color</label>
+                                  <select value={sec.backgroundColor || "transparent"} onChange={(e) => handleUpdateSection(idx, { backgroundColor: e.target.value as any })} className="border border-slate-grey/20 p-1 text-xs rounded bg-transparent">
+                                    <option value="transparent">Transparent / White</option>
+                                    <option value="linen">Soft Linen</option>
+                                    <option value="navy">Deep Navy Theme</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase">Paragraph Body</label>
+                                <textarea rows={2} value={sec.description || ""} onChange={(e) => handleUpdateSection(idx, { description: e.target.value })} className="border border-slate-grey/20 p-2 text-xs rounded bg-transparent" />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Image Grid configuration */}
+                          {sec.type === "image_grid" && (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Grid Columns (desktop)</label>
+                                  <select value={sec.gridColumns || 2} onChange={(e) => handleUpdateSection(idx, { gridColumns: Number(e.target.value) })} className="border border-slate-grey/20 p-1 text-xs rounded bg-transparent">
+                                    <option value={1}>1 Column (Stack)</option>
+                                    <option value={2}>2 Columns</option>
+                                    <option value={3}>3 Columns</option>
+                                    <option value={4}>4 Columns</option>
+                                  </select>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[9px] font-label-caps text-slate-grey uppercase">Image Items ({sec.images?.length || 0})</label>
+                                  <button type="button" onClick={() => {
+                                    const nextImgs = sec.images ? [...sec.images] : [];
+                                    nextImgs.push({ url: "", caption: "", link: "" });
+                                    handleUpdateSection(idx, { images: nextImgs });
+                                  }} className="py-1 bg-deep-navy text-white text-[9px] uppercase font-semibold">+ Add Image Grid Item</button>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                {(sec.images || []).map((img, imgIdx) => (
+                                  <div key={imgIdx} className="p-2 border border-slate-grey/15 bg-white/50 rounded flex flex-col gap-2 relative">
+                                    <button type="button" onClick={() => {
+                                      const nextImgs = (sec.images || []).filter((_, i) => i !== imgIdx);
+                                      handleUpdateSection(idx, { images: nextImgs });
+                                    }} className="absolute top-2 right-2 text-red-500 text-[9px] font-semibold">✕ Remove</button>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                      <div className="flex flex-col gap-0.5">
+                                        <label className="text-[8px] text-slate-grey uppercase">Image URL</label>
+                                        <input type="text" value={img.url} onChange={(e) => {
+                                          const nextImgs = [...(sec.images || [])];
+                                          nextImgs[imgIdx].url = e.target.value;
+                                          handleUpdateSection(idx, { images: nextImgs });
+                                        }} className="border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent" />
+                                      </div>
+                                      <div className="flex flex-col gap-0.5">
+                                        <label className="text-[8px] text-slate-grey uppercase">Caption / Headline</label>
+                                        <input type="text" value={img.caption || ""} onChange={(e) => {
+                                          const nextImgs = [...(sec.images || [])];
+                                          nextImgs[imgIdx].caption = e.target.value;
+                                          handleUpdateSection(idx, { images: nextImgs });
+                                        }} className="border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent" />
+                                      </div>
+                                      <div className="flex flex-col gap-0.5">
+                                        <label className="text-[8px] text-slate-grey uppercase">Button Link URL</label>
+                                        <input type="text" value={img.link || ""} onChange={(e) => {
+                                          const nextImgs = [...(sec.images || [])];
+                                          nextImgs[imgIdx].link = e.target.value;
+                                          handleUpdateSection(idx, { images: nextImgs });
+                                        }} className="border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent" />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Product Slider configuration */}
+                          {sec.type === "product_slider" && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <div className="flex items-center gap-2 pt-4">
+                                <input type="checkbox" id={`autoplay-${sec.id}`} checked={sec.autoplay !== false} onChange={(e) => handleUpdateSection(idx, { autoplay: e.target.checked })} className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer" />
+                                <label htmlFor={`autoplay-${sec.id}`} className="text-xs text-ink-black cursor-pointer">Autoplay Slider</label>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase">Autoplay Speed (ms)</label>
+                                <input type="number" step={500} min={1000} value={sec.speed || 3000} onChange={(e) => handleUpdateSection(idx, { speed: Number(e.target.value) })} className="border-b border-slate-grey/30 py-0.5 text-xs outline-none bg-transparent" />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-label-caps text-slate-grey uppercase">Showcase SKUs (Comma-separated)</label>
+                                <input type="text" value={(sec.skus || []).join(", ")} onChange={(e) => handleUpdateSection(idx, { skus: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })} placeholder="Optional filters: SKU-1, SKU-2" className="border-b border-slate-grey/30 py-0.5 text-xs outline-none bg-transparent" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
 
