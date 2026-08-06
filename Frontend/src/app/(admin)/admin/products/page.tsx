@@ -1414,7 +1414,7 @@ function AdminProductsContent() {
                     onChange={(e) => setNewTmplType(e.target.value)}
                     className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
                   >
-                    {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                    {PRODUCT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div className="flex flex-col gap-1">
