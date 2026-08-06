@@ -381,29 +381,31 @@ function ProductContent() {
               </div>
 
               {/* Add to Bag and Wishlist Actions */}
-              <div className="flex flex-col gap-4 mt-4">
+              <div className="flex flex-row gap-3 mt-4 w-full">
                 <button
                   onClick={handleAddToBag}
                   disabled={bagLoading}
-                  className="w-full bg-deep-navy text-pure-white py-5 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-3 text-sm"
+                  className="flex-1 bg-deep-navy text-pure-white py-4 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
                 >
                   {bagLoading ? (
                     <>
-                      <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
-                      Adding to Bag...
+                      <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin shrink-0" />
+                      <span className="truncate">Adding...</span>
                     </>
                   ) : (
-                    "Add to Bag"
+                    <span className="truncate">Add to Bag</span>
                   )}
                 </button>
                 <button
                   onClick={handleAddToWishlist}
-                  className="w-full border border-slate-grey/30 py-5 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-2 text-sm text-ink-black bg-transparent"
+                  className="flex-grow flex-1 border border-slate-grey/30 py-4 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm text-ink-black bg-transparent"
                 >
-                  <span className={`material-symbols-outlined text-[18px] ${wishlistActive ? "text-red-600 fill-red-600" : ""}`}>
+                  <span className={`material-symbols-outlined text-[18px] shrink-0 ${wishlistActive ? "text-red-600 fill-red-600" : ""}`}>
                     {wishlistActive ? "favorite" : "favorite_border"}
                   </span>
-                  {wishlistActive ? "In Wishlist" : "Add to Wishlist"}
+                  <span className="truncate">
+                    {wishlistActive ? "In Wishlist" : "Wishlist"}
+                  </span>
                 </button>
               </div>
 

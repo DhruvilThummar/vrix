@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SkeletonImage from "@/components/shop/SkeletonImage";
 
 interface ProductImageGrid2x2Props {
@@ -16,6 +16,11 @@ export default function ProductImageGrid2x2({
 }: ProductImageGrid2x2Props) {
   const [activeMobileIdx, setActiveMobileIdx] = useState(0);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+
+  // Reset active mobile image index when images change to avoid out of bounds errors
+  useEffect(() => {
+    setActiveMobileIdx(0);
+  }, [images]);
 
   // Ensure gallery array
   const rawList = images.filter((img) => img.src && img.src.trim());
