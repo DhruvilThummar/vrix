@@ -516,8 +516,6 @@ export default function UserAccountPage() {
                 <div className="pt-4 border-t border-slate-grey/15 space-y-3">
                   <p className="text-center text-[10px] font-label-caps text-slate-grey tracking-wider uppercase">Or verify instantly</p>
                   <div className="grid grid-cols-1 gap-2">
-
-                  {truecallerEnabled && (
                     <button
                       type="button"
                       onClick={handleTruecallerVerification}
@@ -526,9 +524,9 @@ export default function UserAccountPage() {
                       <span className="material-symbols-outlined text-[16px]">bolt</span>
                       {authMode === "signup" ? "Sign up with Truecaller" : "Sign in with Truecaller"}
                     </button>
-                  )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {authMode === "signup" ? (
                 <p className="text-center text-[11px] text-slate-grey font-body-md leading-relaxed">

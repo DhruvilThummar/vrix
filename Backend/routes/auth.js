@@ -39,26 +39,6 @@ router.post("/register", async (req, res) => {
 
     console.log(`[OTP DISPATCH] Registration OTP for ${cleanEmail}: ${otp}`);
 
-    // Dispatch transactional email asynchronously in the background (Non-blocking)
-    (async () => {
-      try {
-        const activeTransporter = await getTransporter();
-        if (activeTransporter) {
-          const apiSettings = await getApiSettings();
-          const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
-          const emailResult = await sendEmailWithTimeout(activeTransporter, {
-            from: `"VRIX" <${senderEmail}>`,
-            to: cleanEmail,
-            subject: "Verify Your VRIX Account Registration",
-            html: `
-              <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
-                <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">Verify Your Email</h2>
-                <p style="color:#666;font-size:14px;margin-bottom:16px;">Hello ${cleanName}, thank you for registering with VRIX. Please verify your email address using this verification code:</p>
-                <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin-bottom:24px;">${otp}</div>
-                <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
-              </div>
-            `,
-          }, 5000);
     let emailSent = false;
     try {
       const activeTransporter = await getTransporter();
@@ -77,7 +57,7 @@ router.post("/register", async (req, res) => {
               <p style="color:#999;font-size:12px;">This code expires in 10 minutes. Do not share it with anyone.</p>
             </div>
           `,
-        }, 5000);
+        }, 10000);
         emailSent = !!emailResult;
       }
     } catch (mailErr) {
@@ -90,7 +70,7 @@ router.post("/register", async (req, res) => {
       console.warn(`[DEV/FALLBACK] Email delivery failed. Console OTP for ${cleanEmail}: ${otp}`);
       return res.json({ success: true, message: "Verification code sent to your email." });
     }
-  } }catch (err) {
+  } catch (err) {
     console.error("Register OTP error:", err);
     res.status(500).json({ error: err.message || "Failed to process registration request." });
   }
