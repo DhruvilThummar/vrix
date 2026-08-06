@@ -161,29 +161,6 @@ export async function sendEmailWithTimeout(activeTransporter, mailOptions, timeo
   });
 }
 
-export async function getTruecallerConfig() {
-  const apiSettings = await getApiSettings();
-  if (apiSettings) {
-    return {
-      enabled: !!apiSettings.truecallerEnabled,
-      sandbox: !!apiSettings.truecallerSandboxMode,
-      partnerKey: apiSettings.truecallerPartnerKey || process.env.TRUECALLER_PARTNER_KEY || "",
-      appId: apiSettings.truecallerAppId || process.env.TRUECALLER_APP_ID || "",
-    };
-  }
-
-  // Fallback to process.env
-  const partnerKey = process.env.TRUECALLER_PARTNER_KEY || "";
-  const appId = process.env.TRUECALLER_APP_ID || "";
-  const enabled = !!(partnerKey && appId);
-  const sandbox = process.env.TRUECALLER_SANDBOX_MODE === "true" || !enabled;
-  return {
-    enabled: enabled || sandbox, // Allow sandbox even if real keys are empty
-    sandbox,
-    partnerKey,
-    appId,
-  };
-}
 
 export async function getGoogleConfig() {
   const apiSettings = await getApiSettings();

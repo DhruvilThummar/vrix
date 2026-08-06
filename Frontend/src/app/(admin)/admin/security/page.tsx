@@ -14,11 +14,6 @@ export default function Page() {
 
   // API Credentials State
   const [apiSettings, setApiSettings] = useState({
-    // Truecaller
-    truecallerEnabled: true,
-    truecallerSandboxMode: true,
-    truecallerAppId: "",
-    truecallerPartnerKey: "",
 
     // Razorpay
     razorpayEnabled: true,
@@ -147,67 +142,7 @@ export default function Page() {
           <div className="p-8 space-y-8">
 
 
-            {/* 2. Truecaller Auth */}
-            <div className="border border-slate-grey/15 p-6 rounded bg-surface-container-low/30">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <i className="fa-solid fa-phone-volume text-blue-500 text-xl"></i>
-                  <div>
-                    <h4 className="font-body-md font-semibold text-ink-black">Truecaller SDK Verification</h4>
-                    <p className="text-xs text-slate-grey">Instant mobile number verification for Indian customers.</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-xs text-slate-grey cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={apiSettings.truecallerSandboxMode}
-                      onChange={(e) => handleInputChange("truecallerSandboxMode", e.target.checked)}
-                      className="rounded text-deep-navy"
-                    />
-                    Sandbox Mode
-                  </label>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={apiSettings.truecallerEnabled}
-                      onChange={(e) => handleInputChange("truecallerEnabled", e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-deep-navy"></div>
-                  </label>
-                </div>
-              </div>
 
-              {apiSettings.truecallerEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-grey/10">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      Truecaller App ID
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. vrix-jewels-app"
-                      value={apiSettings.truecallerAppId}
-                      onChange={(e) => handleInputChange("truecallerAppId", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      Truecaller Partner Key
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="e.g. tc_partner_key_xxx"
-                      value={apiSettings.truecallerPartnerKey}
-                      onChange={(e) => handleInputChange("truecallerPartnerKey", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* 3. Razorpay Payment Gateway */}
             <div className="border border-slate-grey/15 p-6 rounded bg-surface-container-low/30">

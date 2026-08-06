@@ -57,10 +57,6 @@ export default function AdminCMSPage() {
   const [nodemailerUser, setNodemailerUser] = useState("");
   const [nodemailerPass, setNodemailerPass] = useState("");
 
-  const [truecallerEnabled, setTruecallerEnabled] = useState(false);
-  const [truecallerSandboxMode, setTruecallerSandboxMode] = useState(true);
-  const [truecallerPartnerKey, setTruecallerPartnerKey] = useState("");
-  const [truecallerAppId, setTruecallerAppId] = useState("");
 
   const [googleEnabled, setGoogleEnabled] = useState(false);
   const [googleClientId, setGoogleClientId] = useState("");
@@ -311,10 +307,6 @@ export default function AdminCMSPage() {
           setNodemailerUser(res.api_settings.nodemailerUser || "");
           setNodemailerPass(res.api_settings.nodemailerPass || "");
 
-          setTruecallerEnabled(!!res.api_settings.truecallerEnabled);
-          setTruecallerSandboxMode(res.api_settings.truecallerSandboxMode !== false);
-          setTruecallerPartnerKey(res.api_settings.truecallerPartnerKey || "");
-          setTruecallerAppId(res.api_settings.truecallerAppId || "");
 
           setGoogleEnabled(!!res.api_settings.googleEnabled);
           setGoogleClientId(res.api_settings.googleClientId || "");
@@ -490,10 +482,6 @@ export default function AdminCMSPage() {
           nodemailerPort,
           nodemailerUser,
           nodemailerPass,
-          truecallerEnabled,
-          truecallerSandboxMode,
-          truecallerPartnerKey,
-          truecallerAppId,
           googleEnabled,
           googleClientId,
           googleClientSecret
@@ -716,11 +704,10 @@ export default function AdminCMSPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`group relative flex flex-col p-3 border cursor-pointer text-left transition-all duration-200 ${
-                    isActive
+                  className={`group relative flex flex-col p-3 border cursor-pointer text-left transition-all duration-200 ${isActive
                       ? "bg-deep-navy text-pure-white border-deep-navy shadow-md translate-y-[-1px]"
                       : "bg-pure-white text-slate-grey border-slate-grey/20 hover:text-ink-black hover:border-slate-grey/50 hover:bg-slate-50/80"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between gap-1 mb-1.5">
                     <span className={`material-symbols-outlined text-lg ${isActive ? "text-amber-300" : "text-slate-600"}`}>
@@ -798,7 +785,7 @@ export default function AdminCMSPage() {
             {/* 4. ANNOUNCEMENT BAR TAB */}
             {activeTab === "announcement-bar" && (
               <div className="space-y-6 animate-fade-in">
-                
+
                 {/* Live simulation banner */}
                 <section className="border border-slate-grey/20 p-6 bg-pure-white rounded shadow-sm space-y-4">
                   <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider uppercase flex items-center gap-1">
@@ -1695,975 +1682,916 @@ export default function AdminCMSPage() {
                   </div>
                 </section>
 
-                {/* Truecaller */}
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-                    <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                      Truecaller Quick Verification
-                    </h3>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="truecaller-enabled"
-                          checked={truecallerEnabled}
-                          onChange={(e) => setTruecallerEnabled(e.target.checked)}
-                          className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
-                        />
-                        <label htmlFor="truecaller-enabled" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer">
-                          Enable
-                        </label>
-                      </div>
-                      <div className="flex items-center gap-2 border-l border-slate-grey/20 pl-4">
-                        <input
-                          type="checkbox"
-                          id="truecaller-sandbox"
-                          checked={truecallerSandboxMode}
-                          onChange={(e) => setTruecallerSandboxMode(e.target.checked)}
-                          disabled={!truecallerEnabled}
-                          className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-50"
-                        />
-                        <label htmlFor="truecaller-sandbox" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer disabled:opacity-50">
-                          Sandbox Simulator Mode
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-grey font-body-md -mt-4">
-                    Enables 1-click customer profile verification and checkout form autofill. Sandbox Simulator mode triggers a mock interface on frontend for development.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Truecaller App / Partner Key</label>
-                      <input
-                        type="text"
-                        value={truecallerPartnerKey}
-                        onChange={(e) => setTruecallerPartnerKey(e.target.value)}
-                        disabled={!truecallerEnabled || truecallerSandboxMode}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
-                        placeholder="Partner key from developer dashboard"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">App ID / Package Name (Domain)</label>
-                      <input
-                        type="text"
-                        value={truecallerAppId}
-                        onChange={(e) => setTruecallerAppId(e.target.value)}
-                        disabled={!truecallerEnabled || truecallerSandboxMode}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50 text-sm"
-                        placeholder="e.g. localhost or yourdomain.com"
-                      />
-                    </div>
 
-                    {/* Google OAuth Login */}
-                    <div className="border border-slate-grey/20 p-6 space-y-4 col-span-1 md:col-span-2 bg-soft-linen/20">
-                      <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-deep-navy text-xl">account_circle</span>
-                          <div>
-                            <h4 className="font-headline-md text-base text-deep-navy uppercase">Google OAuth Sign-In</h4>
-                            <p className="text-xs text-slate-grey font-body-md">Allows customers to log in using their Google account in 1 click.</p>
-                          </div>
-                        </div>
-                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={googleEnabled}
-                            onChange={(e) => setGoogleEnabled(e.target.checked)}
-                            className="w-4 h-4 accent-deep-navy cursor-pointer"
-                          />
-                          <span className="font-label-caps text-[10px] uppercase text-deep-navy font-semibold">Enable Google Login</span>
-                        </label>
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1">
-                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Google Client ID</label>
-                          <input
-                            type="text"
-                            value={googleClientId}
-                            onChange={(e) => setGoogleClientId(e.target.value)}
-                            placeholder="xxxxxx.apps.googleusercontent.com"
-                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Google Client Secret</label>
-                          <input
-                            type="password"
-                            value={googleClientSecret}
-                            onChange={(e) => setGoogleClientSecret(e.target.value)}
-                            placeholder="GOCSPX-xxxxxx"
-                            className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {/* 12. INVOICE PDF CUSTOMIZER TAB */}
-            {activeTab === "invoice-customizer" && (
-              <div className="space-y-6 animate-fade-in">
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <div className="border-b border-slate-grey/15 pb-2">
-                    <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                      Tax Invoice Customizer &amp; PDF Styling
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Theme Color Accent</label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={invoiceThemeColor}
-                          onChange={(e) => setInvoiceThemeColor(e.target.value)}
-                          className="w-10 h-10 border border-slate-grey/30 rounded cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={invoiceThemeColor}
-                          onChange={(e) => setInvoiceThemeColor(e.target.value)}
-                          className="border border-slate-grey/30 px-3 py-2 text-xs flex-1 uppercase font-mono"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Typography font</label>
-                      <select
-                        value={invoiceFontFamily}
-                        onChange={(e) => setInvoiceFontFamily(e.target.value)}
-                        className="bg-pure-white border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none cursor-pointer"
-                      >
-                        <option value="sans-serif">Sans-serif (Modern Clean)</option>
-                        <option value="serif">Serif (Traditional Luxury)</option>
-                        <option value="monospace">Monospace (Technical Detail)</option>
-                      </select>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Logo Font Size (px)</label>
-                      <input
-                        type="number"
-                        value={invoiceLogoWidth}
-                        onChange={(e) => setInvoiceLogoWidth(e.target.value)}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
-                        placeholder="e.g. 28"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Company Name</label>
-                      <input
-                        type="text"
-                        value={invoiceCompanyName}
-                        onChange={(e) => setInvoiceCompanyName(e.target.value)}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2 md:col-span-2">
-                      <div className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold flex justify-between items-center">
-                        <span>Company Image Logo URL (Optional)</span>
-                        <label className="text-[9px] text-deep-navy font-semibold cursor-pointer underline hover:text-slate-grey">
-                          Or Upload File
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              try {
-                                showToast("Uploading logo...");
-                                const res = await uploadMedia(file);
-                                setInvoiceLogoUrl(res.url);
-                                showToast("Logo uploaded successfully!");
-                              } catch (err: any) {
-                                console.error("Upload error:", err);
-                                showToast(err.message || "Failed to upload logo.");
-                              }
-                            }}
-                          />
-                        </label>
-                      </div>
-                      <input
-                        type="text"
-                        value={invoiceLogoUrl}
-                        onChange={(e) => setInvoiceLogoUrl(e.target.value)}
-                        placeholder="e.g. /logos/black.png or https://example.com/logo.png"
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none bg-transparent"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Seller GST Number</label>
-                      <input
-                        type="text"
-                        value={invoiceCompanyGst}
-                        onChange={(e) => setInvoiceCompanyGst(e.target.value)}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none uppercase"
-                        placeholder="e.g. 22AAAAA0000A1Z5"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Office Address Line 1</label>
-                      <input
-                        type="text"
-                        value={invoiceAddressLine1}
-                        onChange={(e) => setInvoiceAddressLine1(e.target.value)}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2 md:col-span-3">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Office Address Line 2</label>
-                      <input
-                        type="text"
-                        value={invoiceAddressLine2}
-                        onChange={(e) => setInvoiceAddressLine2(e.target.value)}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2 md:col-span-3">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Bottom Footer Invoice Note</label>
-                      <textarea
-                        value={invoiceFooterNotes}
-                        onChange={(e) => setInvoiceFooterNotes(e.target.value)}
-                        className="border border-slate-grey/30 p-3 rounded text-xs outline-none bg-transparent"
-                        rows={3}
-                        placeholder="e.g. Thank you for your luxury purchase. Certified authentic architectural jewels."
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                {/* Simulated Live Invoice Print Preview */}
+                {/* Google OAuth Login */}
                 <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
                   <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
-                    <div>
-                      <h4 className="font-headline-md text-base text-deep-navy uppercase">
-                        Live Simulated Invoice Printout Preview
-                      </h4>
-                      <p className="text-[10px] text-slate-grey mt-0.5">Displays how customer invoices will look when printed or saved as PDF.</p>
-                    </div>
-                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] px-2 py-0.5 rounded uppercase font-semibold">
-                      Live Preview Enabled
-                    </span>
-                  </div>
-
-                  {/* Simulated Invoice Sheet Container */}
-                  <div 
-                    className="border border-slate-grey/20 p-8 shadow-inner bg-pure-white rounded max-w-2xl mx-auto"
-                    style={{
-                      fontFamily: invoiceFontFamily === "serif" ? "'Times New Roman', Georgia, serif" : invoiceFontFamily === "monospace" ? "'Courier New', Courier, monospace" : "'Helvetica Neue', Arial, sans-serif"
-                    }}
-                  >
-                    {/* Header Row */}
-                    <div className="flex justify-between items-start pb-6 border-b-2 mb-6" style={{ borderColor: invoiceThemeColor }}>
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-deep-navy text-xl">account_circle</span>
                       <div>
-                        {invoiceLogoUrl ? (
-                          <div className="relative mb-2 flex items-center" style={{ height: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 32}px`, width: "auto" }}>
-                            <img
-                              src={invoiceLogoUrl}
-                              alt={invoiceCompanyName || "Brand Logo"}
-                              style={{ height: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 32}px`, objectFit: "contain" }}
-                            />
-                          </div>
-                        ) : (
-                          <div 
-                            className="font-bold tracking-widest uppercase text-deep-navy" 
-                            style={{ 
-                              fontSize: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 28}px`,
-                              color: invoiceThemeColor
-                            }}
-                          >
-                            {invoiceCompanyName || "VRIX"}
-                          </div>
-                        )}
-                        <div className="text-[10px] uppercase tracking-wider text-slate-grey mt-1 font-semibold">Official Tax Invoice</div>
-                        {invoiceCompanyGst && (
-                          <div className="text-[9px] text-slate-grey mt-1 font-semibold">GSTIN: {invoiceCompanyGst}</div>
-                        )}
-                      </div>
-                      <div className="text-right text-[11px] text-slate-grey space-y-0.5">
-                        <div>Invoice Date: 29 July 2026</div>
-                        <div>Order ID: <strong className="text-ink-black font-semibold">order_dev_1785319053475</strong></div>
-                        <div>Payment ID: pay_dev_1785334592</div>
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase">Google OAuth Sign-In</h3>
+                        <p className="text-xs text-slate-grey font-body-md">Allows customers to log in using their Google account in 1 click.</p>
                       </div>
                     </div>
-
-                    {/* Shipped & Seller side-by-side block */}
-                    <div className="flex justify-between gap-6 mb-6">
-                      <div className="flex-1 bg-soft-linen/10 border border-slate-grey/15 p-4 rounded text-xs leading-relaxed">
-                        <h5 className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest mb-1.5 font-bold">Billed &amp; Shipped To</h5>
-                        <div><strong className="text-deep-navy">Dhruvil Thummar</strong></div>
-                        <div>ahn, ahm</div>
-                        <div>ahm, 380063</div>
-                        <div>Email: dhruvilthummar1303@gmail.com</div>
-                        <div>Phone: 9265809361</div>
-                      </div>
-
-                      <div className="flex-1 bg-soft-linen/10 border border-slate-grey/15 p-4 rounded text-xs leading-relaxed">
-                        <h5 className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest mb-1.5 font-bold">Seller Details</h5>
-                        <div><strong className="text-deep-navy">{invoiceCompanyName || "VRIX Jewels"}</strong></div>
-                        <div>{invoiceAddressLine1 || "VRIX Architectural Fine Jewelry"}</div>
-                        <div>{invoiceAddressLine2 || "Mumbai, India"}</div>
-                        {invoiceCompanyGst && <div>GSTIN: {invoiceCompanyGst}</div>}
-                      </div>
-                    </div>
-
-                    {/* Table row */}
-                    <table className="w-full text-left border-collapse text-xs mb-6">
-                      <thead>
-                        <tr className="border-b-2" style={{ borderColor: invoiceThemeColor }}>
-                          <th className="py-2.5 font-semibold text-slate-grey uppercase tracking-wider text-[9px]">Description</th>
-                          <th className="py-2.5 font-semibold text-slate-grey text-center w-12 uppercase tracking-wider text-[9px]">Qty</th>
-                          <th className="py-2.5 font-semibold text-slate-grey text-right w-24 uppercase tracking-wider text-[9px]">Unit Price</th>
-                          <th className="py-2.5 font-semibold text-slate-grey text-right w-24 uppercase tracking-wider text-[9px]">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className="border-b border-slate-grey/10">
-                          <td className="py-3">
-                            <div className="font-bold text-ink-black" style={{ color: invoiceThemeColor }}>VRIX Fine Jewelry Purchase</div>
-                            <div className="text-[10px] text-slate-grey mt-1">Collection Category: RINGS | Material Swatch: 18K YELLOW GOLD | Size Option: 6</div>
-                          </td>
-                          <td className="py-3 text-center">1</td>
-                          <td className="py-3 text-right">INR 329.66</td>
-                          <td className="py-3 text-right font-bold">INR 329.66</td>
-                        </tr>
-                        {/* Gift Wrap Row */}
-                        <tr className="border-b border-slate-grey/10">
-                          <td className="py-3">
-                            <div className="font-bold text-ink-black">Signature Gift Packaging</div>
-                            <div className="text-[10px] text-slate-grey mt-1">Note: "Happy Anniversary!"</div>
-                          </td>
-                          <td className="py-3 text-center">1</td>
-                          <td className="py-3 text-right">INR 250.00</td>
-                          <td className="py-3 text-right font-bold">INR 250.00</td>
-                        </tr>
-
-                        {/* Calculations */}
-                        <tr className="border-t border-slate-grey/20">
-                          <td colSpan={2}></td>
-                          <td className="py-2 text-right text-slate-grey">Subtotal (excl. tax)</td>
-                          <td className="py-2 text-right">INR 579.66</td>
-                        </tr>
-                        <tr>
-                          <td colSpan={2}></td>
-                          <td className="py-2 text-right text-slate-grey">CGST (9%)</td>
-                          <td className="py-2 text-right">INR 52.17</td>
-                        </tr>
-                        <tr>
-                          <td colSpan={2}></td>
-                          <td className="py-2 text-right text-slate-grey">SGST (9%)</td>
-                          <td className="py-2 text-right">INR 52.17</td>
-                        </tr>
-                        <tr className="font-bold text-sm bg-soft-linen/5 border-t border-b border-slate-grey/25">
-                          <td colSpan={2} className="py-3"></td>
-                          <td className="py-3 text-right text-deep-navy">Grand Total</td>
-                          <td className="py-3 text-right text-deep-navy" style={{ color: invoiceThemeColor }}>INR 684.00</td>
-                        </tr>
-                      </tbody>
-                    </table>
-
-                    {/* Footer sign off */}
-                    <div className="text-center text-[10px] text-slate-grey leading-relaxed mt-8 border-t border-slate-grey/10 pt-4">
-                      {invoiceFooterNotes || "This is a computer generated document. Signed under official luxury brand licensing."}
-                    </div>
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {/* 13. MULTI-CURRENCY & INTERNATIONALIZATION TAB */}
-            {activeTab === "currency-settings" && (
-              <div className="space-y-6 animate-fade-in">
-                <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <div className="border-b border-slate-grey/15 pb-2">
-                    <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                      Exchange Rates &amp; Taxation Configurations
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">USD Exchange Rate (1 USD in INR)</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={usdRate}
-                        onChange={(e) => setUsdRate(Number(e.target.value))}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none font-bold"
-                        placeholder="e.g. 85.00"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">EUR Exchange Rate (1 EUR in INR)</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={eurRate}
-                        onChange={(e) => setEurRate(Number(e.target.value))}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none font-bold"
-                        placeholder="e.g. 92.00"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">India GST Tax Rate (%)</label>
-                      <input
-                        type="number"
-                        value={inTaxRate}
-                        onChange={(e) => setInTaxRate(Number(e.target.value))}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">US Sales Tax Rate (%)</label>
-                      <input
-                        type="number"
-                        value={usTaxRate}
-                        onChange={(e) => setUsTaxRate(Number(e.target.value))}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">European Union VAT Rate (%)</label>
-                      <input
-                        type="number"
-                        value={euTaxRate}
-                        onChange={(e) => setEuTaxRate(Number(e.target.value))}
-                        className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-4">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input
                         type="checkbox"
-                        id="always-ceiling-price"
-                        checked={alwaysCeilingPrice}
-                        onChange={(e) => setAlwaysCeilingPrice(e.target.checked)}
-                        className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                        checked={googleEnabled}
+                        onChange={(e) => setGoogleEnabled(e.target.checked)}
+                        className="w-4 h-4 accent-deep-navy cursor-pointer"
                       />
-                      <label htmlFor="always-ceiling-price" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer font-bold">
-                        Always Round Up (Math.ceil)
-                      </label>
+                      <span className="font-label-caps text-[10px] uppercase text-deep-navy font-semibold">Enable Google Login</span>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Google Client ID</label>
+                      <input
+                        type="text"
+                        value={googleClientId}
+                        onChange={(e) => setGoogleClientId(e.target.value)}
+                        placeholder="xxxxxx.apps.googleusercontent.com"
+                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Google Client Secret</label>
+                      <input
+                        type="password"
+                        value={googleClientSecret}
+                        onChange={(e) => setGoogleClientSecret(e.target.value)}
+                        placeholder="GOCSPX-xxxxxx"
+                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black bg-transparent"
+                      />
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-grey italic">
-                    Note: Round Up logic ensures that converting minor values like ₹95 does not yield fractional decimals (e.g. $1.23 becomes $2.00, protecting international margins).
-                  </p>
                 </section>
               </div>
             )}
 
-            {/* OFFERS & SHOWCASES TAB */}
-            {activeTab === "offers-showcase" && (
-              <div className="space-y-8">
-                {/* Hero Header Config */}
-                <section className="space-y-4">
-                  <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest border-b border-slate-grey/15 pb-2 font-bold">
-                    Offers Page Hero Banner
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-label-caps text-slate-grey uppercase">Badge Tag Text</label>
-                      <input
-                        type="text"
-                        value={offersBadge}
-                        onChange={(e) => setOffersBadge(e.target.value)}
-                        placeholder="★ Limited Time Privileges"
-                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Title</label>
-                      <input
-                        type="text"
-                        value={offersTitle}
-                        onChange={(e) => setOffersTitle(e.target.value)}
-                        placeholder="Exclusive Sale & Offers"
-                        className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Subtitle</label>
-                    <textarea
-                      rows={2}
-                      value={offersSubtitle}
-                      onChange={(e) => setOffersSubtitle(e.target.value)}
-                      className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md rounded"
+
+      {/* 12. INVOICE PDF CUSTOMIZER TAB */}
+      {activeTab === "invoice-customizer" && (
+        <div className="space-y-6 animate-fade-in">
+          <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+            <div className="border-b border-slate-grey/15 pb-2">
+              <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                Tax Invoice Customizer &amp; PDF Styling
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Theme Color Accent</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={invoiceThemeColor}
+                    onChange={(e) => setInvoiceThemeColor(e.target.value)}
+                    className="w-10 h-10 border border-slate-grey/30 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={invoiceThemeColor}
+                    onChange={(e) => setInvoiceThemeColor(e.target.value)}
+                    className="border border-slate-grey/30 px-3 py-2 text-xs flex-1 uppercase font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Typography font</label>
+                <select
+                  value={invoiceFontFamily}
+                  onChange={(e) => setInvoiceFontFamily(e.target.value)}
+                  className="bg-pure-white border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none cursor-pointer"
+                >
+                  <option value="sans-serif">Sans-serif (Modern Clean)</option>
+                  <option value="serif">Serif (Traditional Luxury)</option>
+                  <option value="monospace">Monospace (Technical Detail)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Logo Font Size (px)</label>
+                <input
+                  type="number"
+                  value={invoiceLogoWidth}
+                  onChange={(e) => setInvoiceLogoWidth(e.target.value)}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                  placeholder="e.g. 28"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Company Name</label>
+                <input
+                  type="text"
+                  value={invoiceCompanyName}
+                  onChange={(e) => setInvoiceCompanyName(e.target.value)}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <div className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold flex justify-between items-center">
+                  <span>Company Image Logo URL (Optional)</span>
+                  <label className="text-[9px] text-deep-navy font-semibold cursor-pointer underline hover:text-slate-grey">
+                    Or Upload File
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          showToast("Uploading logo...");
+                          const res = await uploadMedia(file);
+                          setInvoiceLogoUrl(res.url);
+                          showToast("Logo uploaded successfully!");
+                        } catch (err: any) {
+                          console.error("Upload error:", err);
+                          showToast(err.message || "Failed to upload logo.");
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Banner Image URL</label>
-                    <div className="flex gap-2 items-center">
-                      <input
-                        type="text"
-                        value={offersBannerImage}
-                        onChange={(e) => setOffersBannerImage(e.target.value)}
-                        className="flex-1 border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  value={invoiceLogoUrl}
+                  onChange={(e) => setInvoiceLogoUrl(e.target.value)}
+                  placeholder="e.g. /logos/black.png or https://example.com/logo.png"
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none bg-transparent"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Seller GST Number</label>
+                <input
+                  type="text"
+                  value={invoiceCompanyGst}
+                  onChange={(e) => setInvoiceCompanyGst(e.target.value)}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none uppercase"
+                  placeholder="e.g. 22AAAAA0000A1Z5"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Office Address Line 1</label>
+                <input
+                  type="text"
+                  value={invoiceAddressLine1}
+                  onChange={(e) => setInvoiceAddressLine1(e.target.value)}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 md:col-span-3">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Office Address Line 2</label>
+                <input
+                  type="text"
+                  value={invoiceAddressLine2}
+                  onChange={(e) => setInvoiceAddressLine2(e.target.value)}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 md:col-span-3">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Bottom Footer Invoice Note</label>
+                <textarea
+                  value={invoiceFooterNotes}
+                  onChange={(e) => setInvoiceFooterNotes(e.target.value)}
+                  className="border border-slate-grey/30 p-3 rounded text-xs outline-none bg-transparent"
+                  rows={3}
+                  placeholder="e.g. Thank you for your luxury purchase. Certified authentic architectural jewels."
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Simulated Live Invoice Print Preview */}
+          <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+              <div>
+                <h4 className="font-headline-md text-base text-deep-navy uppercase">
+                  Live Simulated Invoice Printout Preview
+                </h4>
+                <p className="text-[10px] text-slate-grey mt-0.5">Displays how customer invoices will look when printed or saved as PDF.</p>
+              </div>
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] px-2 py-0.5 rounded uppercase font-semibold">
+                Live Preview Enabled
+              </span>
+            </div>
+
+            {/* Simulated Invoice Sheet Container */}
+            <div
+              className="border border-slate-grey/20 p-8 shadow-inner bg-pure-white rounded max-w-2xl mx-auto"
+              style={{
+                fontFamily: invoiceFontFamily === "serif" ? "'Times New Roman', Georgia, serif" : invoiceFontFamily === "monospace" ? "'Courier New', Courier, monospace" : "'Helvetica Neue', Arial, sans-serif"
+              }}
+            >
+              {/* Header Row */}
+              <div className="flex justify-between items-start pb-6 border-b-2 mb-6" style={{ borderColor: invoiceThemeColor }}>
+                <div>
+                  {invoiceLogoUrl ? (
+                    <div className="relative mb-2 flex items-center" style={{ height: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 32}px`, width: "auto" }}>
+                      <img
+                        src={invoiceLogoUrl}
+                        alt={invoiceCompanyName || "Brand Logo"}
+                        style={{ height: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 32}px`, objectFit: "contain" }}
                       />
                     </div>
-                  </div>
-                </section>
+                  ) : (
+                    <div
+                      className="font-bold tracking-widest uppercase text-deep-navy"
+                      style={{
+                        fontSize: `${invoiceLogoWidth ? Number(invoiceLogoWidth) : 28}px`,
+                        color: invoiceThemeColor
+                      }}
+                    >
+                      {invoiceCompanyName || "VRIX"}
+                    </div>
+                  )}
+                  <div className="text-[10px] uppercase tracking-wider text-slate-grey mt-1 font-semibold">Official Tax Invoice</div>
+                  {invoiceCompanyGst && (
+                    <div className="text-[9px] text-slate-grey mt-1 font-semibold">GSTIN: {invoiceCompanyGst}</div>
+                  )}
+                </div>
+                <div className="text-right text-[11px] text-slate-grey space-y-0.5">
+                  <div>Invoice Date: 29 July 2026</div>
+                  <div>Order ID: <strong className="text-ink-black font-semibold">order_dev_1785319053475</strong></div>
+                  <div>Payment ID: pay_dev_1785334592</div>
+                </div>
+              </div>
 
-                {/* SKU Product Filter Section */}
-                <section className="space-y-4 pt-4 border-t border-slate-grey/15">
-                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-                    <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest font-bold">
-                      Products Selection & SKU Filtering
-                    </h3>
-                    <span className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 uppercase font-semibold">
-                      Control products displayed on /offers
+              {/* Shipped & Seller side-by-side block */}
+              <div className="flex justify-between gap-6 mb-6">
+                <div className="flex-1 bg-soft-linen/10 border border-slate-grey/15 p-4 rounded text-xs leading-relaxed">
+                  <h5 className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest mb-1.5 font-bold">Billed &amp; Shipped To</h5>
+                  <div><strong className="text-deep-navy">Dhruvil Thummar</strong></div>
+                  <div>ahn, ahm</div>
+                  <div>ahm, 380063</div>
+                  <div>Email: dhruvilthummar1303@gmail.com</div>
+                  <div>Phone: 9265809361</div>
+                </div>
+
+                <div className="flex-1 bg-soft-linen/10 border border-slate-grey/15 p-4 rounded text-xs leading-relaxed">
+                  <h5 className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest mb-1.5 font-bold">Seller Details</h5>
+                  <div><strong className="text-deep-navy">{invoiceCompanyName || "VRIX Jewels"}</strong></div>
+                  <div>{invoiceAddressLine1 || "VRIX Architectural Fine Jewelry"}</div>
+                  <div>{invoiceAddressLine2 || "Mumbai, India"}</div>
+                  {invoiceCompanyGst && <div>GSTIN: {invoiceCompanyGst}</div>}
+                </div>
+              </div>
+
+              {/* Table row */}
+              <table className="w-full text-left border-collapse text-xs mb-6">
+                <thead>
+                  <tr className="border-b-2" style={{ borderColor: invoiceThemeColor }}>
+                    <th className="py-2.5 font-semibold text-slate-grey uppercase tracking-wider text-[9px]">Description</th>
+                    <th className="py-2.5 font-semibold text-slate-grey text-center w-12 uppercase tracking-wider text-[9px]">Qty</th>
+                    <th className="py-2.5 font-semibold text-slate-grey text-right w-24 uppercase tracking-wider text-[9px]">Unit Price</th>
+                    <th className="py-2.5 font-semibold text-slate-grey text-right w-24 uppercase tracking-wider text-[9px]">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-slate-grey/10">
+                    <td className="py-3">
+                      <div className="font-bold text-ink-black" style={{ color: invoiceThemeColor }}>VRIX Fine Jewelry Purchase</div>
+                      <div className="text-[10px] text-slate-grey mt-1">Collection Category: RINGS | Material Swatch: 18K YELLOW GOLD | Size Option: 6</div>
+                    </td>
+                    <td className="py-3 text-center">1</td>
+                    <td className="py-3 text-right">INR 329.66</td>
+                    <td className="py-3 text-right font-bold">INR 329.66</td>
+                  </tr>
+                  {/* Gift Wrap Row */}
+                  <tr className="border-b border-slate-grey/10">
+                    <td className="py-3">
+                      <div className="font-bold text-ink-black">Signature Gift Packaging</div>
+                      <div className="text-[10px] text-slate-grey mt-1">Note: "Happy Anniversary!"</div>
+                    </td>
+                    <td className="py-3 text-center">1</td>
+                    <td className="py-3 text-right">INR 250.00</td>
+                    <td className="py-3 text-right font-bold">INR 250.00</td>
+                  </tr>
+
+                  {/* Calculations */}
+                  <tr className="border-t border-slate-grey/20">
+                    <td colSpan={2}></td>
+                    <td className="py-2 text-right text-slate-grey">Subtotal (excl. tax)</td>
+                    <td className="py-2 text-right">INR 579.66</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2}></td>
+                    <td className="py-2 text-right text-slate-grey">CGST (9%)</td>
+                    <td className="py-2 text-right">INR 52.17</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2}></td>
+                    <td className="py-2 text-right text-slate-grey">SGST (9%)</td>
+                    <td className="py-2 text-right">INR 52.17</td>
+                  </tr>
+                  <tr className="font-bold text-sm bg-soft-linen/5 border-t border-b border-slate-grey/25">
+                    <td colSpan={2} className="py-3"></td>
+                    <td className="py-3 text-right text-deep-navy">Grand Total</td>
+                    <td className="py-3 text-right text-deep-navy" style={{ color: invoiceThemeColor }}>INR 684.00</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Footer sign off */}
+              <div className="text-center text-[10px] text-slate-grey leading-relaxed mt-8 border-t border-slate-grey/10 pt-4">
+                {invoiceFooterNotes || "This is a computer generated document. Signed under official luxury brand licensing."}
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* 13. MULTI-CURRENCY & INTERNATIONALIZATION TAB */}
+      {activeTab === "currency-settings" && (
+        <div className="space-y-6 animate-fade-in">
+          <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+            <div className="border-b border-slate-grey/15 pb-2">
+              <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                Exchange Rates &amp; Taxation Configurations
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">USD Exchange Rate (1 USD in INR)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={usdRate}
+                  onChange={(e) => setUsdRate(Number(e.target.value))}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none font-bold"
+                  placeholder="e.g. 85.00"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">EUR Exchange Rate (1 EUR in INR)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={eurRate}
+                  onChange={(e) => setEurRate(Number(e.target.value))}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none font-bold"
+                  placeholder="e.g. 92.00"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">India GST Tax Rate (%)</label>
+                <input
+                  type="number"
+                  value={inTaxRate}
+                  onChange={(e) => setInTaxRate(Number(e.target.value))}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">US Sales Tax Rate (%)</label>
+                <input
+                  type="number"
+                  value={usTaxRate}
+                  onChange={(e) => setUsTaxRate(Number(e.target.value))}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">European Union VAT Rate (%)</label>
+                <input
+                  type="number"
+                  value={euTaxRate}
+                  onChange={(e) => setEuTaxRate(Number(e.target.value))}
+                  className="border border-slate-grey/30 px-3 py-2 rounded text-xs outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-4">
+                <input
+                  type="checkbox"
+                  id="always-ceiling-price"
+                  checked={alwaysCeilingPrice}
+                  onChange={(e) => setAlwaysCeilingPrice(e.target.checked)}
+                  className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
+                />
+                <label htmlFor="always-ceiling-price" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer font-bold">
+                  Always Round Up (Math.ceil)
+                </label>
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-grey italic">
+              Note: Round Up logic ensures that converting minor values like ₹95 does not yield fractional decimals (e.g. $1.23 becomes $2.00, protecting international margins).
+            </p>
+          </section>
+        </div>
+      )}
+
+      {/* OFFERS & SHOWCASES TAB */}
+      {activeTab === "offers-showcase" && (
+        <div className="space-y-8">
+          {/* Hero Header Config */}
+          <section className="space-y-4">
+            <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest border-b border-slate-grey/15 pb-2 font-bold">
+              Offers Page Hero Banner
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-label-caps text-slate-grey uppercase">Badge Tag Text</label>
+                <input
+                  type="text"
+                  value={offersBadge}
+                  onChange={(e) => setOffersBadge(e.target.value)}
+                  placeholder="★ Limited Time Privileges"
+                  className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Title</label>
+                <input
+                  type="text"
+                  value={offersTitle}
+                  onChange={(e) => setOffersTitle(e.target.value)}
+                  placeholder="Exclusive Sale & Offers"
+                  className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Subtitle</label>
+              <textarea
+                rows={2}
+                value={offersSubtitle}
+                onChange={(e) => setOffersSubtitle(e.target.value)}
+                className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md rounded"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-label-caps text-slate-grey uppercase">Hero Banner Image URL</label>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  value={offersBannerImage}
+                  onChange={(e) => setOffersBannerImage(e.target.value)}
+                  className="flex-1 border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* SKU Product Filter Section */}
+          <section className="space-y-4 pt-4 border-t border-slate-grey/15">
+            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+              <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest font-bold">
+                Products Selection & SKU Filtering
+              </h3>
+              <span className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 uppercase font-semibold">
+                Control products displayed on /offers
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-[10px] font-label-caps text-slate-grey uppercase">Selection Mode</label>
+                <select
+                  value={offersFilterMode}
+                  onChange={(e: any) => setOffersFilterMode(e.target.value)}
+                  className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md rounded cursor-pointer"
+                >
+                  <option value="sku">Selected SKUs / Product IDs</option>
+                  <option value="discount">Automatic (Discounted / VRIX+ Exclusive)</option>
+                  <option value="all">Show All Products</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-label-caps text-slate-grey uppercase">
+                    Allowed SKUs / Product IDs (Comma-Separated)
+                  </label>
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const val = e.target.value;
+                        const currentList = offersSkuInput.split(",").map(s => s.trim()).filter(Boolean);
+                        if (!currentList.includes(val)) {
+                          const next = [...currentList, val].join(", ");
+                          setOffersSkuInput(next);
+                        }
+                      }
+                    }}
+                    defaultValue=""
+                    className="text-[10px] border border-amber-300 bg-amber-50 px-2 py-0.5 rounded outline-none cursor-pointer"
+                  >
+                    <option value="" disabled>+ Pick Product from Catalog...</option>
+                    {allProducts.map((p) => (
+                      <option key={p.id} value={p.sku || p.id}>
+                        {p.title} ({p.sku || p.id}) - ${p.price}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <input
+                  type="text"
+                  value={offersSkuInput}
+                  onChange={(e) => setOffersSkuInput(e.target.value)}
+                  placeholder="e.g. VRX-101, bespoke-tennis-bracelet-preset, VRX-1212"
+                  className="w-full border-b border-slate-grey/30 py-2 text-xs outline-none bg-transparent font-body-md text-deep-navy font-semibold"
+                />
+                <p className="text-[9px] text-slate-grey mt-1">
+                  Tip: Enter exact product IDs or SKUs separated by commas. Click "+ Pick Product" above to append products directly!
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Multiple Project Showcase Manager */}
+          <section className="space-y-4 pt-4 border-t border-slate-grey/15">
+            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+              <div>
+                <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest font-bold">
+                  Project & Offer Showcase Blocks ({offersShowcases.length})
+                </h3>
+                <p className="text-[10px] text-slate-grey">Add luxury promotional showcase banners and featured collections to the offers page.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const newShowcase = {
+                    id: `showcase-${Date.now()}`,
+                    title: "New Project Showcase",
+                    subtitle: "Discover high precision architectural craftsmanship.",
+                    badge: "Featured Collection",
+                    bannerImage: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1000&auto=format&fit=crop",
+                    link: "/collections",
+                    linkText: "Explore Collection",
+                    featuredSkus: [],
+                    layout: "banner_left"
+                  };
+                  setOffersShowcases([...offersShowcases, newShowcase]);
+                }}
+                className="px-3 py-1.5 bg-deep-navy text-white text-[10px] font-label-caps uppercase tracking-wider rounded flex items-center gap-1 cursor-pointer hover:bg-black"
+              >
+                <span className="material-symbols-outlined text-[14px]">add</span>
+                Add Showcase Block
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {offersShowcases.map((sc, idx) => (
+                <div key={sc.id || idx} className="p-4 border border-slate-grey/20 rounded bg-soft-linen/20 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-grey/15 pb-2">
+                    <span className="font-label-caps text-xs font-bold text-deep-navy uppercase flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px] text-amber-600">view_carousel</span>
+                      Showcase #{idx + 1}: {sc.title || "Untitled Showcase"}
                     </span>
+                    <div className="flex items-center gap-2">
+                      {idx > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const arr = [...offersShowcases];
+                            const temp = arr[idx - 1];
+                            arr[idx - 1] = arr[idx];
+                            arr[idx] = temp;
+                            setOffersShowcases(arr);
+                          }}
+                          className="text-[10px] text-slate-grey hover:text-black font-semibold"
+                        >
+                          ↑ Move Up
+                        </button>
+                      )}
+                      {idx < offersShowcases.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const arr = [...offersShowcases];
+                            const temp = arr[idx + 1];
+                            arr[idx + 1] = arr[idx];
+                            arr[idx] = temp;
+                            setOffersShowcases(arr);
+                          }}
+                          className="text-[10px] text-slate-grey hover:text-black font-semibold"
+                        >
+                          ↓ Move Down
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOffersShowcases(offersShowcases.filter((_, i) => i !== idx));
+                        }}
+                        className="text-[10px] text-red-600 hover:text-red-800 font-semibold"
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="text-[10px] font-label-caps text-slate-grey uppercase">Selection Mode</label>
+                      <label className="text-[9px] font-label-caps text-slate-grey uppercase">Showcase Title</label>
+                      <input
+                        type="text"
+                        value={sc.title || ""}
+                        onChange={(e) => {
+                          const arr = [...offersShowcases];
+                          arr[idx].title = e.target.value;
+                          setOffersShowcases(arr);
+                        }}
+                        className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-label-caps text-slate-grey uppercase">Badge Label</label>
+                      <input
+                        type="text"
+                        value={sc.badge || ""}
+                        onChange={(e) => {
+                          const arr = [...offersShowcases];
+                          arr[idx].badge = e.target.value;
+                          setOffersShowcases(arr);
+                        }}
+                        className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-label-caps text-slate-grey uppercase">Layout Style</label>
                       <select
-                        value={offersFilterMode}
-                        onChange={(e: any) => setOffersFilterMode(e.target.value)}
-                        className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md rounded cursor-pointer"
+                        value={sc.layout || "banner_left"}
+                        onChange={(e) => {
+                          const arr = [...offersShowcases];
+                          arr[idx].layout = e.target.value;
+                          setOffersShowcases(arr);
+                        }}
+                        className="w-full border border-slate-grey/30 py-1 px-2 text-xs outline-none bg-transparent rounded cursor-pointer"
                       >
-                        <option value="sku">Selected SKUs / Product IDs</option>
-                        <option value="discount">Automatic (Discounted / VRIX+ Exclusive)</option>
-                        <option value="all">Show All Products</option>
+                        <option value="banner_left">Banner Left / Grid Right</option>
+                        <option value="banner_right">Grid Left / Banner Right</option>
+                        <option value="hero_grid">Hero Banner + Featured Cards</option>
+                        <option value="full_width">Full Width Panoramic Banner</option>
                       </select>
                     </div>
+                  </div>
 
-                    <div className="md:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="text-[9px] font-label-caps text-slate-grey uppercase">Subtitle / Description</label>
+                      <input
+                        type="text"
+                        value={sc.subtitle || ""}
+                        onChange={(e) => {
+                          const arr = [...offersShowcases];
+                          arr[idx].subtitle = e.target.value;
+                          setOffersShowcases(arr);
+                        }}
+                        className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-label-caps text-slate-grey uppercase">Banner Image URL</label>
+                      <input
+                        type="text"
+                        value={sc.bannerImage || ""}
+                        onChange={(e) => {
+                          const arr = [...offersShowcases];
+                          arr[idx].bannerImage = e.target.value;
+                          setOffersShowcases(arr);
+                        }}
+                        className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-[9px] font-label-caps text-slate-grey uppercase">Button Text</label>
+                      <input
+                        type="text"
+                        value={sc.linkText || "Explore Collection"}
+                        onChange={(e) => {
+                          const arr = [...offersShowcases];
+                          arr[idx].linkText = e.target.value;
+                          setOffersShowcases(arr);
+                        }}
+                        className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-label-caps text-slate-grey uppercase">Button Link URL</label>
+                      <input
+                        type="text"
+                        value={sc.link || "/collections"}
+                        onChange={(e) => {
+                          const arr = [...offersShowcases];
+                          arr[idx].link = e.target.value;
+                          setOffersShowcases(arr);
+                        }}
+                        className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
+                      />
+                    </div>
+                    <div>
                       <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-label-caps text-slate-grey uppercase">
-                          Allowed SKUs / Product IDs (Comma-Separated)
-                        </label>
+                        <label className="text-[9px] font-label-caps text-slate-grey uppercase">Featured SKUs/IDs</label>
                         <select
                           onChange={(e) => {
                             if (e.target.value) {
                               const val = e.target.value;
-                              const currentList = offersSkuInput.split(",").map(s => s.trim()).filter(Boolean);
-                              if (!currentList.includes(val)) {
-                                const next = [...currentList, val].join(", ");
-                                setOffersSkuInput(next);
+                              const arr = [...offersShowcases];
+                              const current = Array.isArray(arr[idx].featuredSkus) ? arr[idx].featuredSkus : [];
+                              if (!current.includes(val)) {
+                                arr[idx].featuredSkus = [...current, val];
+                                setOffersShowcases(arr);
                               }
                             }
                           }}
                           defaultValue=""
-                          className="text-[10px] border border-amber-300 bg-amber-50 px-2 py-0.5 rounded outline-none cursor-pointer"
+                          className="text-[9px] border border-amber-300 bg-amber-50 px-1.5 py-0.5 rounded outline-none cursor-pointer"
                         >
-                          <option value="" disabled>+ Pick Product from Catalog...</option>
+                          <option value="" disabled>+ Add SKU...</option>
                           {allProducts.map((p) => (
                             <option key={p.id} value={p.sku || p.id}>
-                              {p.title} ({p.sku || p.id}) - ${p.price}
+                              {p.title} ({p.sku || p.id})
                             </option>
                           ))}
                         </select>
                       </div>
                       <input
                         type="text"
-                        value={offersSkuInput}
-                        onChange={(e) => setOffersSkuInput(e.target.value)}
-                        placeholder="e.g. VRX-101, bespoke-tennis-bracelet-preset, VRX-1212"
-                        className="w-full border-b border-slate-grey/30 py-2 text-xs outline-none bg-transparent font-body-md text-deep-navy font-semibold"
+                        value={Array.isArray(sc.featuredSkus) ? sc.featuredSkus.join(", ") : ""}
+                        onChange={(e) => {
+                          const arr = [...offersShowcases];
+                          arr[idx].featuredSkus = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
+                          setOffersShowcases(arr);
+                        }}
+                        placeholder="e.g. VRX-101, bespoke-tennis-bracelet-preset"
+                        className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
                       />
-                      <p className="text-[9px] text-slate-grey mt-1">
-                        Tip: Enter exact product IDs or SKUs separated by commas. Click "+ Pick Product" above to append products directly!
-                      </p>
                     </div>
-                  </div>
-                </section>
-
-                {/* Multiple Project Showcase Manager */}
-                <section className="space-y-4 pt-4 border-t border-slate-grey/15">
-                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-                    <div>
-                      <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest font-bold">
-                        Project & Offer Showcase Blocks ({offersShowcases.length})
-                      </h3>
-                      <p className="text-[10px] text-slate-grey">Add luxury promotional showcase banners and featured collections to the offers page.</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newShowcase = {
-                          id: `showcase-${Date.now()}`,
-                          title: "New Project Showcase",
-                          subtitle: "Discover high precision architectural craftsmanship.",
-                          badge: "Featured Collection",
-                          bannerImage: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1000&auto=format&fit=crop",
-                          link: "/collections",
-                          linkText: "Explore Collection",
-                          featuredSkus: [],
-                          layout: "banner_left"
-                        };
-                        setOffersShowcases([...offersShowcases, newShowcase]);
-                      }}
-                      className="px-3 py-1.5 bg-deep-navy text-white text-[10px] font-label-caps uppercase tracking-wider rounded flex items-center gap-1 cursor-pointer hover:bg-black"
-                    >
-                      <span className="material-symbols-outlined text-[14px]">add</span>
-                      Add Showcase Block
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {offersShowcases.map((sc, idx) => (
-                      <div key={sc.id || idx} className="p-4 border border-slate-grey/20 rounded bg-soft-linen/20 space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-grey/15 pb-2">
-                          <span className="font-label-caps text-xs font-bold text-deep-navy uppercase flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[16px] text-amber-600">view_carousel</span>
-                            Showcase #{idx + 1}: {sc.title || "Untitled Showcase"}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            {idx > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const arr = [...offersShowcases];
-                                  const temp = arr[idx - 1];
-                                  arr[idx - 1] = arr[idx];
-                                  arr[idx] = temp;
-                                  setOffersShowcases(arr);
-                                }}
-                                className="text-[10px] text-slate-grey hover:text-black font-semibold"
-                              >
-                                ↑ Move Up
-                              </button>
-                            )}
-                            {idx < offersShowcases.length - 1 && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const arr = [...offersShowcases];
-                                  const temp = arr[idx + 1];
-                                  arr[idx + 1] = arr[idx];
-                                  arr[idx] = temp;
-                                  setOffersShowcases(arr);
-                                }}
-                                className="text-[10px] text-slate-grey hover:text-black font-semibold"
-                              >
-                                ↓ Move Down
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setOffersShowcases(offersShowcases.filter((_, i) => i !== idx));
-                              }}
-                              className="text-[10px] text-red-600 hover:text-red-800 font-semibold"
-                            >
-                              ✕ Remove
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Showcase Title</label>
-                            <input
-                              type="text"
-                              value={sc.title || ""}
-                              onChange={(e) => {
-                                const arr = [...offersShowcases];
-                                arr[idx].title = e.target.value;
-                                setOffersShowcases(arr);
-                              }}
-                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Badge Label</label>
-                            <input
-                              type="text"
-                              value={sc.badge || ""}
-                              onChange={(e) => {
-                                const arr = [...offersShowcases];
-                                arr[idx].badge = e.target.value;
-                                setOffersShowcases(arr);
-                              }}
-                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Layout Style</label>
-                            <select
-                              value={sc.layout || "banner_left"}
-                              onChange={(e) => {
-                                const arr = [...offersShowcases];
-                                arr[idx].layout = e.target.value;
-                                setOffersShowcases(arr);
-                              }}
-                              className="w-full border border-slate-grey/30 py-1 px-2 text-xs outline-none bg-transparent rounded cursor-pointer"
-                            >
-                              <option value="banner_left">Banner Left / Grid Right</option>
-                              <option value="banner_right">Grid Left / Banner Right</option>
-                              <option value="hero_grid">Hero Banner + Featured Cards</option>
-                              <option value="full_width">Full Width Panoramic Banner</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="sm:col-span-2">
-                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Subtitle / Description</label>
-                            <input
-                              type="text"
-                              value={sc.subtitle || ""}
-                              onChange={(e) => {
-                                const arr = [...offersShowcases];
-                                arr[idx].subtitle = e.target.value;
-                                setOffersShowcases(arr);
-                              }}
-                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Banner Image URL</label>
-                            <input
-                              type="text"
-                              value={sc.bannerImage || ""}
-                              onChange={(e) => {
-                                const arr = [...offersShowcases];
-                                arr[idx].bannerImage = e.target.value;
-                                setOffersShowcases(arr);
-                              }}
-                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div>
-                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Button Text</label>
-                            <input
-                              type="text"
-                              value={sc.linkText || "Explore Collection"}
-                              onChange={(e) => {
-                                const arr = [...offersShowcases];
-                                arr[idx].linkText = e.target.value;
-                                setOffersShowcases(arr);
-                              }}
-                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[9px] font-label-caps text-slate-grey uppercase">Button Link URL</label>
-                            <input
-                              type="text"
-                              value={sc.link || "/collections"}
-                              onChange={(e) => {
-                                const arr = [...offersShowcases];
-                                arr[idx].link = e.target.value;
-                                setOffersShowcases(arr);
-                              }}
-                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                            />
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <label className="text-[9px] font-label-caps text-slate-grey uppercase">Featured SKUs/IDs</label>
-                              <select
-                                onChange={(e) => {
-                                  if (e.target.value) {
-                                    const val = e.target.value;
-                                    const arr = [...offersShowcases];
-                                    const current = Array.isArray(arr[idx].featuredSkus) ? arr[idx].featuredSkus : [];
-                                    if (!current.includes(val)) {
-                                      arr[idx].featuredSkus = [...current, val];
-                                      setOffersShowcases(arr);
-                                    }
-                                  }
-                                }}
-                                defaultValue=""
-                                className="text-[9px] border border-amber-300 bg-amber-50 px-1.5 py-0.5 rounded outline-none cursor-pointer"
-                              >
-                                <option value="" disabled>+ Add SKU...</option>
-                                {allProducts.map((p) => (
-                                  <option key={p.id} value={p.sku || p.id}>
-                                    {p.title} ({p.sku || p.id})
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <input
-                              type="text"
-                              value={Array.isArray(sc.featuredSkus) ? sc.featuredSkus.join(", ") : ""}
-                              onChange={(e) => {
-                                const arr = [...offersShowcases];
-                                arr[idx].featuredSkus = e.target.value.split(",").map(s => s.trim()).filter(Boolean);
-                                setOffersShowcases(arr);
-                              }}
-                              placeholder="e.g. VRX-101, bespoke-tennis-bracelet-preset"
-                              className="w-full border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {/* General form submit button */}
-            <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-grey/15">
-              <button
-                type="submit"
-                disabled={saveLoading}
-                className="px-6 py-3 bg-deep-navy text-pure-white hover:bg-ink-black font-label-caps text-xs tracking-widest uppercase cursor-pointer disabled:opacity-50 shadow transition-all duration-200"
-              >
-                {saveLoading ? "Saving Module..." : `Save ${CMS_TABS.find(t => t.id === activeTab)?.label}`}
-              </button>
-            </div>
-          </form>
-        ) : (
-          /* JOURNAL TAB (Unique structure with sub-form for articles list) */
-          <div className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded animate-fade-in">
-            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
-              <div>
-                <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                  Journal Editorial Articles
-                </h3>
-                <p className="text-[10px] text-slate-grey">Create, edit, or delete editorial blog stories.</p>
-              </div>
-              <button
-                type="button"
-                onClick={handleNewArticle}
-                className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase cursor-pointer rounded shadow-xs"
-              >
-                + Write New Article
-              </button>
-            </div>
-
-            {selectedArticleId !== null ? (
-              <form onSubmit={handleSaveArticle} className="space-y-6 border border-slate-grey/15 p-6 rounded bg-soft-linen/5">
-                <h4 className="font-headline-md text-sm text-deep-navy uppercase font-semibold">
-                  {selectedArticleId ? "Edit Article" : "New Article Post"}
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Article Title</label>
-                    <input
-                      type="text"
-                      value={editingArticle.title}
-                      onChange={(e) => setEditingArticle({ ...editingArticle, title: e.target.value })}
-                      className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none text-xs text-deep-navy font-bold"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Read Time (e.g. 5 min read)</label>
-                    <input
-                      type="text"
-                      value={editingArticle.readTime}
-                      onChange={(e) => setEditingArticle({ ...editingArticle, readTime: e.target.value })}
-                      className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none text-xs"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Banner Image URL</label>
-                    <input
-                      type="text"
-                      value={editingArticle.image}
-                      onChange={(e) => setEditingArticle({ ...editingArticle, image: e.target.value })}
-                      className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none text-xs text-slate-grey"
-                    />
-                    <VisualImagePreview src={editingArticle.image} alt="Article banner preview" />
-                  </div>
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Article Excerpt Summary</label>
-                    <input
-                      type="text"
-                      value={editingArticle.excerpt}
-                      onChange={(e) => setEditingArticle({ ...editingArticle, excerpt: e.target.value })}
-                      className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none text-xs"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Full Narrative Content (Markdown Supported)</label>
-                    <textarea
-                      value={editingArticle.content}
-                      onChange={(e) => setEditingArticle({ ...editingArticle, content: e.target.value })}
-                      className="border border-slate-grey/30 p-3 focus:border-deep-navy outline-none text-xs"
-                      rows={8}
-                      required
-                    />
                   </div>
                 </div>
-                <div className="flex gap-3 justify-end pt-4 border-t border-slate-grey/10">
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black cursor-pointer rounded"
-                  >
-                    Save Post
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedArticleId(null)}
-                    className="px-5 py-2.5 border border-slate-grey/30 text-slate-grey text-[10px] font-label-caps uppercase hover:bg-slate-50 cursor-pointer rounded"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {journalArticles.map((article) => (
-                  <div key={article.id} className="border border-slate-grey/15 p-4 rounded flex gap-4 bg-soft-linen/5 justify-between items-start">
-                    <div className="flex gap-3">
-                      <div className="w-16 h-16 bg-soft-linen rounded overflow-hidden relative flex-shrink-0">
-                        {article.image && <img src={article.image} alt={article.title} className="object-cover w-full h-full" />}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-deep-navy truncate">{article.title}</h4>
-                        <p className="text-[10px] text-slate-grey line-clamp-2 mt-1">{article.excerpt}</p>
-                        <span className="text-[9px] text-slate-grey font-label-caps uppercase mt-1.5 block">{article.readTime}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectArticle(article)}
-                        className="text-deep-navy hover:underline text-[10px] font-label-caps"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteArticle(article.id)}
-                        className="text-red-500 hover:underline text-[10px] font-label-caps"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* General form submit button */}
+      <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-grey/15">
+        <button
+          type="submit"
+          disabled={saveLoading}
+          className="px-6 py-3 bg-deep-navy text-pure-white hover:bg-ink-black font-label-caps text-xs tracking-widest uppercase cursor-pointer disabled:opacity-50 shadow transition-all duration-200"
+        >
+          {saveLoading ? "Saving Module..." : `Save ${CMS_TABS.find(t => t.id === activeTab)?.label}`}
+        </button>
       </div>
+    </form>
+  ) : (
+    /* JOURNAL TAB (Unique structure with sub-form for articles list) */
+    <div className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded animate-fade-in">
+      <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+        <div>
+          <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+            Journal Editorial Articles
+          </h3>
+          <p className="text-[10px] text-slate-grey">Create, edit, or delete editorial blog stories.</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleNewArticle}
+          className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase cursor-pointer rounded shadow-xs"
+        >
+          + Write New Article
+        </button>
+      </div>
+
+      {selectedArticleId !== null ? (
+        <form onSubmit={handleSaveArticle} className="space-y-6 border border-slate-grey/15 p-6 rounded bg-soft-linen/5">
+          <h4 className="font-headline-md text-sm text-deep-navy uppercase font-semibold">
+            {selectedArticleId ? "Edit Article" : "New Article Post"}
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Article Title</label>
+              <input
+                type="text"
+                value={editingArticle.title}
+                onChange={(e) => setEditingArticle({ ...editingArticle, title: e.target.value })}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none text-xs text-deep-navy font-bold"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Read Time (e.g. 5 min read)</label>
+              <input
+                type="text"
+                value={editingArticle.readTime}
+                onChange={(e) => setEditingArticle({ ...editingArticle, readTime: e.target.value })}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none text-xs"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Banner Image URL</label>
+              <input
+                type="text"
+                value={editingArticle.image}
+                onChange={(e) => setEditingArticle({ ...editingArticle, image: e.target.value })}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none text-xs text-slate-grey"
+              />
+              <VisualImagePreview src={editingArticle.image} alt="Article banner preview" />
+            </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Article Excerpt Summary</label>
+              <input
+                type="text"
+                value={editingArticle.excerpt}
+                onChange={(e) => setEditingArticle({ ...editingArticle, excerpt: e.target.value })}
+                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none text-xs"
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Full Narrative Content (Markdown Supported)</label>
+              <textarea
+                value={editingArticle.content}
+                onChange={(e) => setEditingArticle({ ...editingArticle, content: e.target.value })}
+                className="border border-slate-grey/30 p-3 focus:border-deep-navy outline-none text-xs"
+                rows={8}
+                required
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end pt-4 border-t border-slate-grey/10">
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black cursor-pointer rounded"
+            >
+              Save Post
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedArticleId(null)}
+              className="px-5 py-2.5 border border-slate-grey/30 text-slate-grey text-[10px] font-label-caps uppercase hover:bg-slate-50 cursor-pointer rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {journalArticles.map((article) => (
+            <div key={article.id} className="border border-slate-grey/15 p-4 rounded flex gap-4 bg-soft-linen/5 justify-between items-start">
+              <div className="flex gap-3">
+                <div className="w-16 h-16 bg-soft-linen rounded overflow-hidden relative flex-shrink-0">
+                  {article.image && <img src={article.image} alt={article.title} className="object-cover w-full h-full" />}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-deep-navy truncate">{article.title}</h4>
+                  <p className="text-[10px] text-slate-grey line-clamp-2 mt-1">{article.excerpt}</p>
+                  <span className="text-[9px] text-slate-grey font-label-caps uppercase mt-1.5 block">{article.readTime}</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSelectArticle(article)}
+                  className="text-deep-navy hover:underline text-[10px] font-label-caps"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteArticle(article.id)}
+                  className="text-red-500 hover:underline text-[10px] font-label-caps"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
+  )
+}
+      </div >
+    </div >
   );
 }

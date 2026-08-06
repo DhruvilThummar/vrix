@@ -1,7 +1,8 @@
 import express from "express";
 import crypto from "crypto";
 import { db } from "../database.js";
-import { getTransporter, sendEmailWithTimeout, getApiSettings, getTruecallerConfig, getGoogleConfig } from "../config/apiResolvers.js";
+import { getTransporter, sendEmailWithTimeout, getApiSettings, getGoogleConfig } from "../config/apiResolvers.js";
+
 
 
 const router = express.Router();
@@ -142,7 +143,8 @@ router.post("/login", async (req, res) => {
     if (!user) return res.status(401).json({ error: "Incorrect email or password." });
 
     const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
-    const isPasswordValid = user.password === hashedPassword || user.password === cleanPass || user.password === "truecaller_oauth_account";
+    const isPasswordValid = user.password === hashedPassword || user.password === cleanPass;
+
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Incorrect email or password." });
     }
@@ -209,7 +211,8 @@ router.post("/login/direct", async (req, res) => {
     }
 
     const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
-    const isPasswordValid = user.password === hashedPassword || user.password === cleanPass || user.password === "truecaller_oauth_account";
+    const isPasswordValid = user.password === hashedPassword || user.password === cleanPass;
+
     if (!isPasswordValid) {
       db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "FAILED" } }).catch(() => { });
       return res.status(401).json({ error: "Incorrect email or password." });
@@ -264,96 +267,6 @@ router.post("/login/confirm", async (req, res) => {
   }
 });
 
-// POST /api/truecaller/verify
-router.post("/truecaller/verify", async (req, res) => {
-  const { payload, signature, signatureAlgorithm } = req.body;
-
-  try {
-    const config = await getTruecallerConfig();
-    if (!config.enabled) {
-      return res.status(400).json({ error: "Truecaller verification is not enabled in settings." });
-    }
-
-    if (config.sandbox || signature === "mock-signature" || !signature) {
-      console.log("[TRUECALLER] Sandbox mode verification requested.");
-      let profile = { name: "Dhruv Agent", email: "dhruv@vrix.com", phone: "+919876543210" };
-
-      if (payload) {
-        try {
-          const decoded = JSON.parse(Buffer.from(payload, "base64").toString("utf-8"));
-          profile.name = (decoded.firstName + " " + (decoded.lastName || "")).trim() || profile.name;
-          profile.email = decoded.email || profile.email;
-          profile.phone = decoded.phoneNumber || profile.phone;
-        } catch (e) { /* ignore */ }
-      }
-
-      let existingUser = await db.users.findUnique({ where: { email: profile.email } });
-      try {
-        if (!existingUser) {
-          existingUser = await db.users.create({
-            data: { email: profile.email, name: profile.name, phone: profile.phone, password: "truecaller_oauth_account", isVrixPlusMember: false, vrixPlusJoinedDate: null },
-          });
-        }
-      } catch (dbErr) {
-        console.error("Failed to auto-register Truecaller user:", dbErr.message);
-      }
-
-      return res.json({ success: true, verified: true, profile: { name: profile.name, email: profile.email, phone: profile.phone, isVrixPlusMember: !!existingUser?.isVrixPlusMember, vrixPlusJoinedDate: existingUser?.vrixPlusJoinedDate || null }, mode: "sandbox" });
-    }
-
-    // Live Signature Verification
-    if (!payload || !signature || !signatureAlgorithm) {
-      return res.status(400).json({ error: "payload, signature, and signatureAlgorithm are required for live verification." });
-    }
-
-    const keyRes = await fetch("https://api4.truecaller.com/v1/key");
-    if (!keyRes.ok) throw new Error("Failed to retrieve public keys from Truecaller API.");
-    const { keys } = await keyRes.json();
-
-    let isSignatureValid = false;
-    for (const keyObj of keys) {
-      const pemKey = `-----BEGIN PUBLIC KEY-----\n${keyObj.key}\n-----END PUBLIC KEY-----`;
-      const verify = crypto.createVerify("RSA-SHA512");
-      verify.update(payload);
-      if (verify.verify(pemKey, signature, "base64")) { isSignatureValid = true; break; }
-    }
-
-    if (!isSignatureValid) {
-      return res.status(401).json({ error: "Truecaller signature verification failed." });
-    }
-
-    const decodedProfile = JSON.parse(Buffer.from(payload, "base64").toString("utf-8"));
-
-    if (config.partnerKey && config.appId) {
-      const expectedVerifier = crypto.createHmac("sha256", config.partnerKey).update(config.appId).digest("base64");
-      if (decodedProfile.verifier !== expectedVerifier) {
-        return res.status(401).json({ error: "Truecaller payload verification mismatch (possible replay attack)." });
-      }
-    }
-
-    const profileObj = {
-      name: (decodedProfile.firstName + " " + (decodedProfile.lastName || "")).trim(),
-      email: decodedProfile.email,
-      phone: decodedProfile.phoneNumber,
-    };
-
-    let existingUser = await db.users.findUnique({ where: { email: profileObj.email } });
-    try {
-      if (!existingUser) {
-        existingUser = await db.users.create({
-          data: { email: profileObj.email, name: profileObj.name, phone: profileObj.phone, password: "truecaller_oauth_account", isVrixPlusMember: false, vrixPlusJoinedDate: null },
-        });
-      }
-    } catch (dbErr) {
-      console.error("Failed to auto-register Truecaller user:", dbErr.message);
-    }
-
-    return res.json({ success: true, verified: true, profile: { ...profileObj, isVrixPlusMember: !!existingUser?.isVrixPlusMember, vrixPlusJoinedDate: existingUser?.vrixPlusJoinedDate || null }, mode: "live" });
-  } catch (err) {
-    console.error("Truecaller verification error:", err.message);
-    res.status(500).json({ error: "Truecaller verification failed: " + err.message });
-  }
-});
 
 // POST /api/auth/join-vrix-plus
 router.post("/join-vrix-plus", async (req, res) => {

@@ -53,10 +53,9 @@ export async function fetchHealth() {
     cloudinary: boolean;
     razorpay: boolean;
     nodemailer: boolean;
-    truecaller: boolean;
-    truecallerSandbox: boolean;
   }>("/health");
 }
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  DATABASE / CMS
@@ -360,18 +359,6 @@ export async function fetchUserOrders(email: string) {
   }>>(`/payment/user-orders?email=${encodeURIComponent(email)}`);
 }
 
-export async function verifyTruecaller(payload?: string, signature?: string, signatureAlgorithm?: string) {
-  return apiFetch<{
-    success: boolean;
-    verified: boolean;
-    profile: { name: string; email: string; phone: string };
-    mode: "sandbox" | "live";
-  }>("/auth/truecaller/verify", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ payload, signature, signatureAlgorithm }),
-  });
-}
 
 
 

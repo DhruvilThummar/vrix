@@ -149,7 +149,8 @@ export default function AdminHelpPage() {
         },
         {
           question: "Why are transactional emails or OTPs not sending?",
-          answer: "Emails and phone OTP notifications rely on the SMTP/Nodemailer and Truecaller integrations. Go to Security & Logs to ensure the Host, Port, Email User/Pass, or SMS Partner Keys are entered correctly and the toggles are set to 'Active'.",
+          answer: "Emails and phone OTP notifications rely on the SMTP/Nodemailer integrations. Go to Security & Logs to ensure the Host, Port, Email User/Pass are entered correctly and the toggles are set to 'Active'.",
+
           actionLabel: "Configure Email/SMS Server",
           actionLink: "/admin/security"
         },

@@ -3,7 +3,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { fetchDbPublic as fetchDb, verifyTruecaller } from "@/utils/api";
+import { fetchDbPublic as fetchDb } from "@/utils/api";
+
 import { useAuth } from "@/context/AuthContext";
 import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
 import { useCurrency } from "@/utils/useCurrency";
@@ -31,71 +32,13 @@ export default function Page() {
     }
   }, [user]);
 
-  const [truecallerEnabled, setTruecallerEnabled] = useState(false);
-  const [truecallerSandbox, setTruecallerSandbox] = useState(true);
-  const [showTruecallerModal, setShowTruecallerModal] = useState(false);
-  const [verifyLoading, setVerifyLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Custom mock profile states
-  const [simName, setSimName] = useState("Dhruv Agent");
-  const [simPhone, setSimPhone] = useState("+919876543210");
-  const [simEmail, setSimEmail] = useState("dhruv@vrix.com");
-
-  useEffect(() => {
-    fetchDb()
-      .then((res) => {
-        if (res.api_settings) {
-          setTruecallerEnabled(!!res.api_settings.truecallerEnabled);
-          setTruecallerSandbox(!!res.api_settings.truecallerSandboxMode);
-        }
-      })
-      .catch((err) => console.error("Failed to load API settings for Truecaller:", err));
-  }, []);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleTruecallerVerification = async () => {
-    if (truecallerSandbox) {
-      setShowTruecallerModal(true);
-    } else {
-      triggerToast("Initiating live Truecaller verification...");
-      alert("Live Truecaller verification requires HTTPS and an App registration. Please toggle 'Sandbox Simulator Mode' in the Admin panel to test locally.");
-    }
-  };
-
-  const handleAutofillConfirm = async () => {
-    setVerifyLoading(true);
-    try {
-      const rawPayload = {
-        firstName: simName.split(" ")[0] || "",
-        lastName: simName.split(" ").slice(1).join(" ") || "",
-        email: simEmail,
-        phoneNumber: simPhone,
-        verifier: "mock-verifier-check"
-      };
-      const base64Payload = btoa(JSON.stringify(rawPayload));
-      
-      const res = await verifyTruecaller(base64Payload, "mock-signature", "RSA-SHA512");
-      
-      if (res.success && res.profile) {
-        setEmail(res.profile.email);
-        setFullName(res.profile.name);
-        setPhone(res.profile.phone);
-        triggerToast("⚡ Profile successfully autofilled via Truecaller!");
-      } else {
-        triggerToast("Truecaller verification failed.");
-      }
-    } catch (err: any) {
-      triggerToast("Verification failed: " + err.message);
-    } finally {
-      setVerifyLoading(false);
-      setShowTruecallerModal(false);
-    }
-  };
 
   const { convertPrice, currency, getTaxRate } = useCurrency();
   const [country, setCountry] = useState("IN");
@@ -175,27 +118,7 @@ export default function Page() {
           <h1 className="font-headline-md text-headline-md mb-stack-lg uppercase text-center md:text-left">Shipping Information</h1>
           <form onSubmit={handleSubmit} className="space-y-stack-lg">
 
-            {truecallerEnabled && (
-              <div className="bg-soft-linen/30 border border-slate-grey/20 p-6 mb-stack-md flex flex-col md:flex-row justify-between items-center gap-4 hover:border-slate-grey/40 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-deep-navy/5 flex items-center justify-center rounded-full text-deep-navy">
-                    <span className="material-symbols-outlined text-2xl">verified_user</span>
-                  </div>
-                  <div>
-                    <h3 className="font-headline-md text-sm text-deep-navy uppercase tracking-wider">Instant Checkout Autofill</h3>
-                    <p className="text-[11px] text-slate-grey font-body-md mt-0.5">Securely verify your number and populate address details using Truecaller.</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleTruecallerVerification}
-                  className="bg-deep-navy text-pure-white py-2.5 px-5 font-button text-xs uppercase tracking-widest hover:bg-ink-black transition-colors flex items-center gap-2 group cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[16px] group-hover:scale-110 transition-transform">bolt</span>
-                  Autofill Profile
-                </button>
-              </div>
-            )}
+
 
             <div className="space-y-stack-md">
               <h2 className="font-label-caps text-label-caps text-slate-grey uppercase mb-stack-sm">Contact</h2>
@@ -269,116 +192,7 @@ export default function Page() {
         </div>
       </main>
 
-      {/* Truecaller Simulator Modal */}
-      {showTruecallerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-pure-white border border-slate-grey/20 w-full max-w-md shadow-2xl p-8 relative flex flex-col gap-6">
-            <button 
-              type="button" 
-              onClick={() => setShowTruecallerModal(false)}
-              className="absolute top-4 right-4 text-slate-grey hover:text-ink-black cursor-pointer"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
 
-            <div className="flex items-center gap-3 border-b border-slate-grey/15 pb-4">
-              <div className="w-10 h-10 bg-[#0087FF] flex items-center justify-center rounded-full text-pure-white shrink-0">
-                <span className="material-symbols-outlined text-xl">shield_with_heart</span>
-              </div>
-              <div>
-                <h2 className="font-headline-md text-base text-deep-navy">Truecaller verification</h2>
-                <p className="text-[10px] font-label-caps text-slate-grey tracking-widest uppercase">Sandbox Simulator</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <p className="text-xs text-slate-grey font-body-md">Select or modify a user profile to simulate a verified callback payload:</p>
-              
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSimName("Dhruv Agent");
-                    setSimPhone("+919876543210");
-                    setSimEmail("dhruv@vrix.com");
-                  }}
-                  className={`p-3 border text-left cursor-pointer transition-colors ${simName === "Dhruv Agent" ? "border-deep-navy bg-soft-linen/25" : "border-slate-grey/15 hover:bg-soft-linen/10"}`}
-                >
-                  <p className="font-body-md text-xs font-semibold text-deep-navy">Dhruv Agent</p>
-                  <p className="text-[10px] text-slate-grey">+91 98765 43210</p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSimName("John Doe");
-                    setSimPhone("+15550199");
-                    setSimEmail("john@example.com");
-                  }}
-                  className={`p-3 border text-left cursor-pointer transition-colors ${simName === "John Doe" ? "border-deep-navy bg-soft-linen/25" : "border-slate-grey/15 hover:bg-soft-linen/10"}`}
-                >
-                  <p className="font-body-md text-xs font-semibold text-deep-navy">John Doe</p>
-                  <p className="text-[10px] text-slate-grey">+1 555-0199</p>
-                </button>
-              </div>
-
-              <div className="space-y-3 pt-3 border-t border-slate-grey/10">
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">Simulated Name</label>
-                  <input
-                    type="text"
-                    value={simName}
-                    onChange={(e) => setSimName(e.target.value)}
-                    className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">Simulated Phone</label>
-                  <input
-                    type="text"
-                    value={simPhone}
-                    onChange={(e) => setSimPhone(e.target.value)}
-                    className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">Simulated Email</label>
-                  <input
-                    type="email"
-                    value={simEmail}
-                    onChange={(e) => setSimEmail(e.target.value)}
-                    className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-xs text-ink-black"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 pt-2">
-              <button
-                type="button"
-                onClick={handleAutofillConfirm}
-                disabled={verifyLoading}
-                className="w-full bg-[#0087FF] text-pure-white py-3.5 font-button text-xs uppercase tracking-widest hover:bg-[#0076E5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md"
-              >
-                {verifyLoading ? (
-                  <div className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[16px]">verified</span>
-                    Allow & Autofill
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowTruecallerModal(false)}
-                className="w-full border border-slate-grey/30 text-slate-grey py-3 font-button text-xs uppercase tracking-widest hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toast Notification */}
       {toastMessage && (

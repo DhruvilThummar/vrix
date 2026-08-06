@@ -4,7 +4,8 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { db, migrateIfNeeded } from "./database.js";
-import { getCloudinary, getRazorpay, getTransporter, getTruecallerConfig } from "./config/apiResolvers.js";
+import { getCloudinary, getRazorpay, getTransporter } from "./config/apiResolvers.js";
+
 
 // Route Modules
 import cmsRouter from "./routes/cms.js";
@@ -120,17 +121,15 @@ const healthHandler = async (req, res) => {
   const cClient = await getCloudinary();
   const rClient = await getRazorpay();
   const tClient = await getTransporter();
-  const tcConfig = await getTruecallerConfig();
   res.json({
     status: "ok",
     dbMode: db.isConnected() ? "prisma" : "local-json",
     cloudinary: !!cClient,
     razorpay: !!rClient,
     nodemailer: !!tClient,
-    truecaller: tcConfig.enabled,
-    truecallerSandbox: tcConfig.sandbox,
   });
 };
+
 app.get("/api/health", healthHandler);
 app.get("/health", healthHandler);
 

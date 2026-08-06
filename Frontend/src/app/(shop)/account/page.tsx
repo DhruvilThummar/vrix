@@ -14,11 +14,11 @@ import {
   addSecurityLog,
   fetchProducts,
   fetchDbPublic as fetchDb,
-  verifyTruecaller,
   getApiBaseUrl,
   fetchUserOrders,
   getWishlistKey
 } from "@/utils/api";
+
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 
 
@@ -61,19 +61,11 @@ export default function UserAccountPage() {
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
   const [authPhone, setAuthPhone] = useState("");
-  
+
   const [otpInput, setOtpInput] = useState(["", "", "", "", "", ""]);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  // ── Truecaller Config & Simulation State ─────────────────────────────────────
-  const [truecallerEnabled, setTruecallerEnabled] = useState(false);
-  const [truecallerSandbox, setTruecallerSandbox] = useState(true);
-  const [showTruecallerModal, setShowTruecallerModal] = useState(false);
-  const [simName, setSimName] = useState("Dhruv Agent");
-  const [simPhone, setSimPhone] = useState("+919876543210");
-  const [simEmail, setSimEmail] = useState("dhruv@vrix.com");
 
   // ── Account State ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -91,11 +83,11 @@ export default function UserAccountPage() {
     return "";
   };
 
-  const [profile, setProfile] = useState({ 
-    firstName: getFirstName(user?.name, user?.email), 
-    lastName: getLastName(user?.name), 
-    email: user?.email || "", 
-    phone: user?.phone || "" 
+  const [profile, setProfile] = useState({
+    firstName: getFirstName(user?.name, user?.email),
+    lastName: getLastName(user?.name),
+    email: user?.email || "",
+    phone: user?.phone || ""
   });
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     street: "",
@@ -109,18 +101,6 @@ export default function UserAccountPage() {
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // Sync Truecaller API settings
-  useEffect(() => {
-    fetchDb()
-      .then((res) => {
-        if (res.api_settings) {
-          setTruecallerEnabled(!!res.api_settings.truecallerEnabled);
-          setTruecallerSandbox(!!res.api_settings.truecallerSandboxMode);
-        }
-      })
-      .catch((err) => console.error("Failed to load API settings for Truecaller:", err));
-  }, []);
 
   // Sync user profile state
   useEffect(() => {
@@ -362,50 +342,7 @@ export default function UserAccountPage() {
 
 
 
-  // ── Truecaller Verification Handlers ────────────────────────────────────────
-  const handleTruecallerVerification = async () => {
-    if (truecallerSandbox) {
-      setShowTruecallerModal(true);
-    } else {
-      alert("Live Truecaller verification requires HTTPS. Please toggle Sandbox Mode in the Admin panel to test locally.");
-    }
-  };
 
-  const handleTruecallerAutofillConfirm = async () => {
-    setAuthLoading(true);
-    setAuthError(null);
-    try {
-      const rawPayload = {
-        firstName: simName.split(" ")[0] || "",
-        lastName: simName.split(" ").slice(1).join(" ") || "",
-        email: simEmail,
-        phoneNumber: simPhone,
-        verifier: "mock-verifier-check"
-      };
-      const base64Payload = btoa(JSON.stringify(rawPayload));
-      
-      const res = await verifyTruecaller(base64Payload, "mock-signature", "RSA-SHA512");
-      
-      if (res.success && res.profile) {
-        login(res.profile.email, { name: res.profile.name, phone: res.profile.phone });
-        setProfile({
-          firstName: res.profile.name.split(" ")[0],
-          lastName: res.profile.name.split(" ").slice(1).join(" ") || "",
-          email: res.profile.email,
-          phone: res.profile.phone
-        });
-        setAuthStep("verified");
-        triggerFeedback("⚡ Successfully signed in via Truecaller!");
-      } else {
-        setAuthError("Truecaller verification failed.");
-      }
-    } catch (err: any) {
-      setAuthError("Verification failed: " + err.message);
-    } finally {
-      setAuthLoading(false);
-      setShowTruecallerModal(false);
-    }
-  };
 
   const menuItems = [
     { key: "dashboard", label: "Dashboard", icon: "dashboard" },
@@ -432,13 +369,13 @@ export default function UserAccountPage() {
             <div className="space-y-6">
               {/* Tabs for Sign In vs Register */}
               <div className="flex border-b border-slate-grey/25 pb-2 justify-center gap-6 text-sm font-label-caps tracking-widest">
-                <button 
+                <button
                   onClick={() => { setAuthMode("signin"); setAuthError(null); }}
                   className={`pb-1 cursor-pointer transition-colors ${authMode === "signin" ? "border-b-2 border-deep-navy text-deep-navy font-semibold" : "text-slate-grey hover:text-ink-black"}`}
                 >
                   SIGN IN
                 </button>
-                <button 
+                <button
                   onClick={() => { setAuthMode("signup"); setAuthError(null); }}
                   className={`pb-1 cursor-pointer transition-colors ${authMode === "signup" ? "border-b-2 border-deep-navy text-deep-navy font-semibold" : "text-slate-grey hover:text-ink-black"}`}
                 >
@@ -532,22 +469,7 @@ export default function UserAccountPage() {
                 </button>
               </form>
 
-              {/* Instant Verification Block */}
-              {truecallerEnabled && (
-                <div className="pt-4 border-t border-slate-grey/15 space-y-3">
-                  <p className="text-center text-[10px] font-label-caps text-slate-grey tracking-wider uppercase">Or verify instantly</p>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button
-                      type="button"
-                      onClick={handleTruecallerVerification}
-                      className="w-full bg-[#0087FF] text-pure-white py-3 font-button text-xs uppercase tracking-widest hover:bg-[#0076E5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">bolt</span>
-                      {authMode === "signup" ? "Sign up with Truecaller" : "Sign in with Truecaller"}
-                    </button>
-                  </div>
-                </div>
-              )}
+
 
               {authMode === "signup" ? (
                 <p className="text-center text-[11px] text-slate-grey font-body-md leading-relaxed">
@@ -610,97 +532,12 @@ export default function UserAccountPage() {
               </button>
               <button
                 type="button"
-                onClick={() => { setAuthStep("email"); setOtpInput(["","","","","",""]); setAuthError(null); }}
+                onClick={() => { setAuthStep("email"); setOtpInput(["", "", "", "", "", ""]); setAuthError(null); }}
                 className="w-full text-center text-xs text-slate-grey hover:text-deep-navy transition-colors font-body-md underline cursor-pointer"
               >
                 Use a different email
               </button>
             </form>
-          )}
-
-          {/* Truecaller Sandbox Modal */}
-          {showTruecallerModal && (
-            <div className="fixed inset-0 bg-deep-navy/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 transition-all animate-fade-in">
-              <div className="bg-pure-white w-full max-w-sm border border-slate-grey/25 shadow-2xl p-6 relative flex flex-col space-y-5 animate-scale-up">
-                {/* Close Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowTruecallerModal(false)}
-                  className="absolute top-4 right-4 text-slate-grey hover:text-ink-black transition-colors cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[20px]">close</span>
-                </button>
-
-                {/* Header */}
-                <div className="text-center space-y-1">
-                  <div className="w-12 h-12 bg-[#0087FF]/10 text-[#0087FF] rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="material-symbols-outlined text-[26px]">bolt</span>
-                  </div>
-                  <h3 className="font-display-lg text-lg text-deep-navy tracking-wide uppercase">Truecaller Sandbox</h3>
-                  <p className="font-body-md text-[11px] text-slate-grey">Simulating Truecaller 1-Tap Verification</p>
-                </div>
-
-                {/* Form Fields */}
-                <div className="space-y-4 pt-2">
-                  <div className="space-y-1">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Simulated Name</label>
-                    <input
-                      type="text"
-                      value={simName}
-                      onChange={(e) => setSimName(e.target.value)}
-                      placeholder="Dhruv Agent"
-                      required
-                      className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Simulated Email</label>
-                    <input
-                      type="email"
-                      value={simEmail}
-                      onChange={(e) => setSimEmail(e.target.value)}
-                      placeholder="dhruv@vrix.com"
-                      required
-                      className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Simulated Phone</label>
-                    <input
-                      type="tel"
-                      value={simPhone}
-                      onChange={(e) => setSimPhone(e.target.value)}
-                      placeholder="+919876543210"
-                      required
-                      className="w-full border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* Verify Button */}
-                <button
-                  type="button"
-                  onClick={handleTruecallerAutofillConfirm}
-                  disabled={authLoading}
-                  className="w-full bg-[#0087FF] text-pure-white py-3.5 font-button text-xs uppercase tracking-widest hover:bg-[#0076E5] transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md mt-4"
-                >
-                  {authLoading ? (
-                    <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-[16px]">verified_user</span>
-                      Instant Verification
-                    </>
-                  )}
-                </button>
-
-                <p className="text-[10px] text-center text-slate-grey leading-relaxed pt-1">
-                  Clicking verify will send a mock payload to `/api/truecaller/verify` to simulate a real Truecaller callback response.
-                </p>
-              </div>
-            </div>
           )}
         </div>
       </div>
@@ -732,11 +569,10 @@ export default function UserAccountPage() {
               <button
                 key={item.key}
                 onClick={() => setActiveTab(item.key)}
-                className={`flex items-center space-x-3 w-full text-left font-body-md text-sm transition-colors py-2 border-l-2 -ml-[18px] pl-[16px] cursor-pointer ${
-                  activeTab === item.key
+                className={`flex items-center space-x-3 w-full text-left font-body-md text-sm transition-colors py-2 border-l-2 -ml-[18px] pl-[16px] cursor-pointer ${activeTab === item.key
                     ? "text-deep-navy border-deep-navy font-semibold"
                     : "text-slate-grey border-transparent hover:text-ink-black"
-                }`}
+                  }`}
               >
                 <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
                 <span>{item.label}</span>
@@ -1107,7 +943,7 @@ export default function UserAccountPage() {
                   {/* Luxury Digital Pass Card */}
                   <div className="relative overflow-hidden bg-gradient-to-br from-[#0F1728] via-[#1B263B] to-[#0F1728] text-pure-white p-8 md:p-10 border border-[#B59D7C]/40 shadow-2xl space-y-6">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-[#B59D7C]/10 rounded-full blur-3xl pointer-events-none" />
-                    
+
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
                         <span className="font-label-caps text-[10px] tracking-[0.3em] uppercase text-[#B59D7C] font-bold">
