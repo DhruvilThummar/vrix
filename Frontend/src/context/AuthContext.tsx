@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // 2. Initial Supabase session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       if (!mounted) return;
       if (session?.user?.email) {
         const authUser: User = {
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // 3. Supabase Auth State Change Listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } }: any = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (!mounted) return;
       if (session?.user?.email) {
         const authUser: User = {
@@ -112,6 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("vrix-user");
       }
     });
+
 
     return () => {
       mounted = false;
