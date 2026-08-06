@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { loginWithGoogle } from "@/utils/api";
-import { supabase } from "@/utils/supabase";
 
 interface GoogleAuthButtonProps {
   onSuccess?: (user: any) => void;
@@ -68,7 +67,6 @@ export default function GoogleAuthButton({
   );
 
   useEffect(() => {
-    let scriptLoaded = false;
     const existingScript = document.getElementById("google-gsi-script");
 
     const initializeGoogleGSI = () => {
@@ -93,7 +91,6 @@ export default function GoogleAuthButton({
       script.async = true;
       script.defer = true;
       script.onload = () => {
-        scriptLoaded = true;
         initializeGoogleGSI();
       };
       document.body.appendChild(script);
@@ -102,42 +99,14 @@ export default function GoogleAuthButton({
     }
   }, [googleClientId, handleCredentialResponse]);
 
-  const handleGoogleClick = async () => {
-    setLoading(true);
-    try {
-      if (window.google?.accounts?.id) {
-        window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // Trigger Supabase Google OAuth fallback or custom Google Auth flow if GSI prompt suppressed
-            supabase.auth
-              .signInWithOAuth({
-                provider: "google",
-                options: {
-                  redirectTo: typeof window !== "undefined" ? window.location.href : undefined,
-                },
-              })
-              .catch((err) => {
-                console.warn("Supabase Google Auth fallback error:", err.message);
-                if (onError) onError("Google Sign-In prompt unavailable. Please check popup permissions.");
-              })
-              .finally(() => setLoading(false));
-          }
-        });
-      } else {
-        // Fallback to Supabase Google OAuth directly if GSI script didn't load
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: typeof window !== "undefined" ? window.location.href : undefined,
-          },
-        });
-        if (error && onError) onError(error.message);
-      }
-    } catch (err: any) {
-      if (onError) onError(err.message || "Unable to open Google sign in window.");
-      setLoading(false);
+  const handleGoogleClick = () => {
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
+    } else {
+      if (onError) onError("Google Sign-In initializing... Please try again.");
     }
   };
+
 
   return (
     <button

@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { getApiBaseUrl } from "@/utils/api";
-import { supabase } from "@/utils/supabase";
 
 interface User {
   email: string;
@@ -66,59 +65,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("vrix-user");
-    supabase.auth.signOut().catch(() => {});
   }, []);
 
   useEffect(() => {
-    let mounted = true;
-
-    // 1. Initial local state check from localStorage
+    // Initial local state check from localStorage
     try {
       const saved = localStorage.getItem("vrix-user");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (mounted && parsed?.email) setUser(parsed);
+        if (parsed?.email) setUser(parsed);
       }
     } catch (err) {
       console.error("Failed to parse saved user:", err);
-    }
-
-    // 2. Initial Supabase session check
-    supabase.auth.getSession().then(({ data: { session } }: any) => {
-      if (!mounted) return;
-      if (session?.user?.email) {
-        const authUser: User = {
-          email: session.user.email,
-          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email.split("@")[0],
-        };
-        login(authUser.email, authUser);
-      }
+    } finally {
       setLoading(false);
-    }).catch(() => {
-      if (mounted) setLoading(false);
-    });
+    }
+  }, []);
 
-    // 3. Supabase Auth State Change Listener
-    const { data: { subscription } }: any = supabase.auth.onAuthStateChange((event: any, session: any) => {
-      if (!mounted) return;
-      if (session?.user?.email) {
-        const authUser: User = {
-          email: session.user.email,
-          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email.split("@")[0],
-        };
-        login(authUser.email, authUser);
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        localStorage.removeItem("vrix-user");
-      }
-    });
-
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [login]);
 
   const isLoggedIn = !!user;
 
