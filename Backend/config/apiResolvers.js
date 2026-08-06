@@ -1,7 +1,5 @@
 import { db } from "../database.js";
 
-const defaultCallback = process.env.GOOGLE_CALLBACK_URL || "https://snvifoikeixkgrdkgyme.supabase.co/auth/v1/callback";
-
 // ─── Dynamic API Configuration Resolvers ──────────────────────────────────────
 
 export async function getApiSettings() {
