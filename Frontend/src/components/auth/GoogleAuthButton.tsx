@@ -15,6 +15,7 @@ interface GoogleAuthButtonProps {
 declare global {
   interface Window {
     google?: any;
+    _gsiInitialized?: boolean;
   }
 }
 
@@ -66,38 +67,45 @@ export default function GoogleAuthButton({
     [login, joinVrixPlus, onSuccess, onError]
   );
 
+  const callbackRef = React.useRef(handleCredentialResponse);
   useEffect(() => {
-    const existingScript = document.getElementById("google-gsi-script");
+    callbackRef.current = handleCredentialResponse;
+  }, [handleCredentialResponse]);
+
+  useEffect(() => {
+    if (!googleClientId) return;
 
     const initializeGoogleGSI = () => {
       if (window.google?.accounts?.id) {
-        try {
-          window.google.accounts.id.initialize({
-            client_id: googleClientId,
-            callback: handleCredentialResponse,
-            auto_select: false,
-            cancel_on_tap_outside: true,
-          });
-        } catch (e) {
-          console.warn("Google GSI init warning:", e);
+        if (!window._gsiInitialized) {
+          try {
+            window.google.accounts.id.initialize({
+              client_id: googleClientId,
+              callback: (resp: any) => callbackRef.current(resp),
+              auto_select: false,
+              cancel_on_tap_outside: true,
+            });
+            window._gsiInitialized = true;
+          } catch (e) {
+            console.warn("Google GSI init warning:", e);
+          }
         }
       }
     };
 
+    const existingScript = document.getElementById("google-gsi-script");
     if (!existingScript) {
       const script = document.createElement("script");
       script.id = "google-gsi-script";
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
       script.defer = true;
-      script.onload = () => {
-        initializeGoogleGSI();
-      };
+      script.onload = initializeGoogleGSI;
       document.body.appendChild(script);
     } else {
       initializeGoogleGSI();
     }
-  }, [googleClientId, handleCredentialResponse]);
+  }, [googleClientId]);
 
   const handleGoogleClick = () => {
     if (window.google?.accounts?.id) {
