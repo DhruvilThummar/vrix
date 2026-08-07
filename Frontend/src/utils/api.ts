@@ -75,6 +75,7 @@ export async function updateCMS(data: {
   story?: any;
   legal?: any;
   navigation?: any[];
+  footerLinks?: any[];
   brand?: any;
   features?: any;
   collections?: any;

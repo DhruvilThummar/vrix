@@ -16,6 +16,7 @@ export default function Footer() {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [footerLinks, setFooterLinks] = useState<any[]>([]);
 
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterLoading, setNewsletterLoading] = useState(false);
@@ -30,6 +31,9 @@ export default function Footer() {
           if (res.brand.address) setAddress(res.brand.address);
           if (res.brand.phone) setPhone(res.brand.phone);
           if (res.brand.email) setEmail(res.brand.email);
+        }
+        if (Array.isArray(res.footerLinks)) {
+          setFooterLinks(res.footerLinks);
         }
       })
       .catch((err) => console.error("Error loading footer brand info:", err));
@@ -161,97 +165,136 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Column 2: HELP */}
-        <div className="flex flex-col gap-3">
-          <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
-            Help
-          </h4>
-          <Link href="/legal?tab=faq" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            FAQ
-          </Link>
-          <Link href="/legal?tab=shipping" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Shipping
-          </Link>
-          <Link href="/legal?tab=returns" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Returns & Exchanges
-          </Link>
-          <Link href="/legal?tab=care" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Warranty
-          </Link>
-          <Link href="/account" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Track Order
-          </Link>
-          <Link href="/contact" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Contact Us
-          </Link>
-        </div>
+        {footerLinks && footerLinks.length > 0 ? (
+          <>
+            {footerLinks.map((column, idx) => (
+              <div key={column.id || idx} className="flex flex-col gap-3">
+                <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+                  {column.title}
+                </h4>
+                {column.links && column.links.map((link: any, linkIdx: number) => {
+                  const isExternal = link.path.startsWith("http://") || link.path.startsWith("https://");
+                  if (isExternal) {
+                    return (
+                      <a
+                        key={linkIdx}
+                        href={link.path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90"
+                      >
+                        {link.label}
+                      </a>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={linkIdx}
+                      href={link.path}
+                      className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90"
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            {/* Column 2: HELP */}
+            <div className="flex flex-col gap-3">
+              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+                Help
+              </h4>
+              <Link href="/legal?tab=faq" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                FAQ
+              </Link>
+              <Link href="/legal?tab=shipping" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Shipping
+              </Link>
+              <Link href="/legal?tab=returns" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Returns & Exchanges
+              </Link>
+              <Link href="/legal?tab=care" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Warranty
+              </Link>
+              <Link href="/account" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Track Order
+              </Link>
+              <Link href="/contact" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Contact Us
+              </Link>
+            </div>
 
-        {/* Column 3: ABOUT VRIX */}
-        <div className="flex flex-col gap-3">
-          <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
-            About VRIX
-          </h4>
-          <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Our Story
-          </Link>
-          <Link href="/craftsmanship" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Craftsmanship
-          </Link>
-          <Link href="/materials" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Materials
-          </Link>
-          <Link href="/sustainability" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Sustainability
-          </Link>
-          <Link href="/careers" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Careers
-          </Link>
-        </div>
+            {/* Column 3: ABOUT VRIX */}
+            <div className="flex flex-col gap-3">
+              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+                About VRIX
+              </h4>
+              <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Our Story
+              </Link>
+              <Link href="/craftsmanship" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Craftsmanship
+              </Link>
+              <Link href="/materials" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Materials
+              </Link>
+              <Link href="/sustainability" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Sustainability
+              </Link>
+              <Link href="/careers" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Careers
+              </Link>
+            </div>
 
-        {/* Column 4: JOURNAL */}
-        <div className="flex flex-col gap-3">
-          <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
-            Journal
-          </h4>
-          <Link href="/journal" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Stories
-          </Link>
-          <Link href="/legal?tab=care" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Jewelry Care
-          </Link>
-          <Link href="/search?filter=gifts" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Gift Guide
-          </Link>
-          <Link href="/style-guide" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Style Guide
-          </Link>
-          <Link href="/behind-the-design" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
-            Behind The Design
-          </Link>
-        </div>
+            {/* Column 4: JOURNAL */}
+            <div className="flex flex-col gap-3">
+              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+                Journal
+              </h4>
+              <Link href="/journal" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Stories
+              </Link>
+              <Link href="/legal?tab=care" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Jewelry Care
+              </Link>
+              <Link href="/search?filter=gifts" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Gift Guide
+              </Link>
+              <Link href="/style-guide" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Style Guide
+              </Link>
+              <Link href="/behind-the-design" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
+                Behind The Design
+              </Link>
+            </div>
 
-        {/* Column 5: FOLLOW */}
-        <div className="flex flex-col gap-3">
-          <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
-            Follow
-          </h4>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
-            <i className="fa-brands fa-instagram text-sm w-4 text-center"></i>
-            Instagram
-          </a>
-          <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
-            <i className="fa-brands fa-pinterest text-sm w-4 text-center"></i>
-            Pinterest
-          </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
-            <i className="fa-brands fa-linkedin-in text-sm w-4 text-center"></i>
-            LinkedIn
-          </a>
-          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
-            <i className="fa-brands fa-youtube text-sm w-4 text-center"></i>
-            YouTube
-          </a>
-        </div>
+            {/* Column 5: FOLLOW */}
+            <div className="flex flex-col gap-3">
+              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+                Follow
+              </h4>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+                <i className="fa-brands fa-instagram text-sm w-4 text-center"></i>
+                Instagram
+              </a>
+              <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+                <i className="fa-brands fa-pinterest text-sm w-4 text-center"></i>
+                Pinterest
+              </a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+                <i className="fa-brands fa-linkedin-in text-sm w-4 text-center"></i>
+                LinkedIn
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+                <i className="fa-brands fa-youtube text-sm w-4 text-center"></i>
+                YouTube
+              </a>
+            </div>
+          </>
+        )}
 
       </div>
 

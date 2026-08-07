@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections, uploadMedia } from "@/utils/api";
 
-type TabType = "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "custom-pages" | "invoice-customizer" | "currency-settings" | "offers-showcase";
+type TabType = "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "custom-pages" | "invoice-customizer" | "currency-settings" | "offers-showcase" | "footer";
 
 
 // --- Visual Image Preview Helper Component ---
@@ -84,6 +84,7 @@ export default function AdminCMSPage() {
 
   // --- Navbar & Brand States ---
   const [navLinks, setNavLinks] = useState<any[]>([]);
+  const [footerLinks, setFooterLinks] = useState<any[]>([]);
   const [brandName, setBrandName] = useState("");
   const [brandLogo, setBrandLogo] = useState("");
   const [brandEmail, setBrandEmail] = useState("");
@@ -279,6 +280,9 @@ export default function AdminCMSPage() {
         if (res.navigation) {
           setNavLinks(res.navigation);
         }
+        if (res.footerLinks) {
+          setFooterLinks(res.footerLinks);
+        }
         if (res.brand) {
           setBrandName(res.brand.name || "");
           setBrandLogo(res.brand.logoUrl || "");
@@ -472,6 +476,7 @@ export default function AdminCMSPage() {
           anchorLinkText: storyAnchorLink
         },
         navigation: navLinks,
+        footerLinks: footerLinks,
         brand: {
           name: brandName,
           logoUrl: brandLogo,
@@ -653,6 +658,7 @@ export default function AdminCMSPage() {
     { id: "story", label: "Brand Story", icon: "auto_stories", category: "Storefront", description: "Brand narrative & ethos" },
     { id: "offers-showcase", label: "Offers & Showcases", icon: "local_offer", category: "Storefront", description: "Offers page, SKU filters & showcase projects" },
     { id: "announcement-bar", label: "Announcement Bar", icon: "campaign", category: "Storefront", description: "Top ticker & alerts" },
+    { id: "footer", label: "Footer Links", icon: "splitscreen", category: "Storefront", description: "Dynamic Footer columns & URLs" },
     { id: "journal", label: "Journal", icon: "newspaper", category: "Storefront", description: "Articles & editorial" },
     { id: "custom-pages", label: "Custom Pages", icon: "description", category: "Storefront", description: "CMS pages content" },
     { id: "vrix-plus", label: "VRIX+ Club", icon: "stars", category: "Experience", description: "Membership privileges" },
@@ -2563,6 +2569,140 @@ export default function AdminCMSPage() {
                 </div>
               ))}
             </div>
+          </section>
+        </div>
+      )}
+      
+      {/* 14. FOOTER CONFIGURATION TAB */}
+      {activeTab === "footer" && (
+        <div className="space-y-6 animate-fade-in">
+          <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+              <div>
+                <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+                  Dynamic Footer Links Columns
+                </h3>
+                <p className="text-xs text-slate-grey font-body-md mt-0.5">
+                  Configure dynamic link columns displayed at the footer of the public store front.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const newCol = {
+                    id: `footer-col-${Date.now()}`,
+                    title: "New Column",
+                    links: [
+                      { label: "New Link", path: "/" }
+                    ]
+                  };
+                  setFooterLinks([...footerLinks, newCol]);
+                }}
+                className="px-3 py-1.5 bg-deep-navy text-white text-[10px] font-label-caps uppercase tracking-wider rounded flex items-center gap-1 cursor-pointer hover:bg-black"
+              >
+                <span className="material-symbols-outlined text-[14px]">add</span>
+                Add Column
+              </button>
+            </div>
+
+            {footerLinks.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-grey border border-dashed border-slate-grey/20 bg-slate-50/50 rounded">
+                No custom footer columns configured. Dynamic rendering will fall back to default footer links.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {footerLinks.map((column: any, colIdx: number) => (
+                  <div key={column.id || colIdx} className="p-5 border border-slate-grey/20 rounded bg-soft-linen/10 space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-grey/15 pb-2">
+                      <div className="flex-1 max-w-sm">
+                        <label className="text-[9px] font-label-caps text-slate-grey uppercase tracking-wider font-semibold">Column Title</label>
+                        <input
+                          type="text"
+                          value={column.title || ""}
+                          onChange={(e) => {
+                            const arr = [...footerLinks];
+                            arr[colIdx].title = e.target.value;
+                            setFooterLinks(arr);
+                          }}
+                          className="w-full border-b border-slate-grey/30 py-1 text-xs font-bold text-deep-navy outline-none bg-transparent"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const arr = [...footerLinks];
+                            const currentLinks = Array.isArray(column.links) ? column.links : [];
+                            arr[colIdx].links = [...currentLinks, { label: "New Link", path: "/" }];
+                            setFooterLinks(arr);
+                          }}
+                          className="text-[10px] text-deep-navy hover:text-black font-semibold uppercase font-label-caps"
+                        >
+                          + Add Link
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFooterLinks(footerLinks.filter((_, i) => i !== colIdx));
+                          }}
+                          className="text-[10px] text-red-600 hover:text-red-800 font-semibold uppercase font-label-caps"
+                        >
+                          ✕ Remove Column
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {Array.isArray(column.links) && column.links.map((link: any, linkIdx: number) => (
+                        <div key={linkIdx} className="flex items-center gap-3 bg-pure-white p-2 border border-slate-grey/10 rounded">
+                          <div className="flex-1">
+                            <label className="text-[8px] font-label-caps text-slate-grey uppercase">Link Text</label>
+                            <input
+                              type="text"
+                              value={link.label || ""}
+                              onChange={(e) => {
+                                const arr = [...footerLinks];
+                                arr[colIdx].links[linkIdx].label = e.target.value;
+                                setFooterLinks(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
+                              placeholder="e.g. FAQ"
+                              required
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="text-[8px] font-label-caps text-slate-grey uppercase">Target Path / URL</label>
+                            <input
+                              type="text"
+                              value={link.path || ""}
+                              onChange={(e) => {
+                                const arr = [...footerLinks];
+                                arr[colIdx].links[linkIdx].path = e.target.value;
+                                setFooterLinks(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
+                              placeholder="e.g. /legal?tab=faq"
+                              required
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const arr = [...footerLinks];
+                              arr[colIdx].links = arr[colIdx].links.filter((_: any, i: number) => i !== linkIdx);
+                              setFooterLinks(arr);
+                            }}
+                            className="text-red-500 hover:text-red-700 text-xs font-semibold px-2 cursor-pointer mt-3"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       )}

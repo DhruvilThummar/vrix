@@ -48,7 +48,7 @@ router.get("/db/public", async (req, res) => {
 router.post("/cms", adminAuth, async (req, res) => {
   try {
     const sections = [
-      "homepage", "story", "legal", "navigation", "brand", "features",
+      "homepage", "story", "legal", "navigation", "footerLinks", "brand", "features",
       "collections", "api_settings", "vrix_plus", "announcement_bar",
       "currency_settings", "shipping_settings", "gift_wrapping", "metal_types",
       "custom_pages", "invoice_settings", "bespoke_config", "offers_page",

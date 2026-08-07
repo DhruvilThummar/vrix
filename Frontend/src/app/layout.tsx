@@ -149,10 +149,26 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         />
         <style dangerouslySetInnerHTML={{ __html: `
-          body, p, span, li, a, td, th {
+          html:not([class*="admin"]) body:not(.admin-layout), 
+          html:not([class*="admin"]) body:not(.admin-layout) p, 
+          html:not([class*="admin"]) body:not(.admin-layout) span:not(.material-symbols-outlined), 
+          html:not([class*="admin"]) body:not(.admin-layout) li, 
+          html:not([class*="admin"]) body:not(.admin-layout) a, 
+          html:not([class*="admin"]) body:not(.admin-layout) td, 
+          html:not([class*="admin"]) body:not(.admin-layout) th {
             font-family: var(--font-jost), sans-serif !important;
           }
-          h1, h2, h3, h4, h5, h6, button, input, select, textarea, label {
+          html:not([class*="admin"]) body:not(.admin-layout) h1, 
+          html:not([class*="admin"]) body:not(.admin-layout) h2, 
+          html:not([class*="admin"]) body:not(.admin-layout) h3, 
+          html:not([class*="admin"]) body:not(.admin-layout) h4, 
+          html:not([class*="admin"]) body:not(.admin-layout) h5, 
+          html:not([class*="admin"]) body:not(.admin-layout) h6, 
+          html:not([class*="admin"]) body:not(.admin-layout) button, 
+          html:not([class*="admin"]) body:not(.admin-layout) input, 
+          html:not([class*="admin"]) body:not(.admin-layout) select, 
+          html:not([class*="admin"]) body:not(.admin-layout) textarea, 
+          html:not([class*="admin"]) body:not(.admin-layout) label {
             font-family: var(--font-inter), sans-serif !important;
           }
           .font-logo, .font-aquavit {
@@ -160,6 +176,9 @@ export default function RootLayout({
           }
           .font-accent, .font-chancery {
             font-family: var(--font-chancery), cursive !important;
+          }
+          .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined' !important;
           }
         `}} />
       </head>
