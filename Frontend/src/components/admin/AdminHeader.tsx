@@ -314,59 +314,74 @@ export default function AdminHeader({
           </button>
 
           {isNotifOpen && (
-            <div className="absolute right-0 mt-3 w-80 bg-pure-white border border-slate-grey/25 shadow-2xl z-50 animate-fade-in rounded-none">
-              <div className="px-4 py-3 border-b border-slate-grey/15 flex items-center justify-between bg-soft-linen/10">
-                <span className="font-semibold text-deep-navy text-xs uppercase tracking-wider">Notifications ({unreadCount})</span>
+            <div className="absolute right-0 mt-3 w-96 bg-pure-white border border-slate-grey/20 shadow-2xl z-50 animate-fade-in rounded-none">
+              <div className="px-5 py-4 border-b border-slate-grey/10 flex items-center justify-between bg-soft-linen/10">
+                <div>
+                  <span className="font-semibold text-deep-navy text-xs uppercase tracking-widest font-label-caps block">Notifications</span>
+                  <span className="text-[10px] text-slate-grey/80 mt-0.5">{unreadCount} unread activities</span>
+                </div>
                 {unreadCount > 0 && (
                   <button
                     onClick={onMarkAllRead}
-                    className="text-[10px] text-deep-navy hover:underline font-semibold"
+                    className="text-[10px] text-deep-navy hover:text-black font-semibold hover:underline font-label-caps uppercase tracking-wider"
                   >
                     Mark all read
                   </button>
                 )}
               </div>
-              <div className="max-h-72 overflow-y-auto divide-y divide-slate-grey/10">
+              
+              <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-grey/10">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-slate-grey">
-                    <span className="material-symbols-outlined text-3xl mb-1 text-slate-grey/40">notifications_off</span>
-                    <p className="text-xs uppercase tracking-widest font-label-caps">No new activities</p>
+                  <div className="p-10 text-center text-slate-grey flex flex-col items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-4xl text-slate-grey/30">notifications_off</span>
+                    <p className="text-[10px] uppercase tracking-widest font-label-caps font-bold">No new activities</p>
+                    <p className="text-[9px] text-slate-grey/70">Everything is fully processed</p>
                   </div>
                 ) : (
                   notifications.map((n: any) => (
                     <div
                       key={n.id}
                       onClick={() => onMarkRead(n.id)}
-                      className={`p-3.5 hover:bg-soft-linen/20 cursor-pointer flex gap-3 transition-colors ${!n.isRead ? "bg-amber-50/40" : ""}`}
+                      className={`p-4 hover:bg-soft-linen/25 cursor-pointer flex gap-3.5 transition-all duration-300 ${!n.isRead ? "bg-amber-50/20 border-l-2 border-deep-navy" : "border-l-2 border-transparent"}`}
                     >
-                      <span className="material-symbols-outlined text-slate-grey text-lg shrink-0 mt-0.5">
-                        {getNotifIcon(n.type)}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-xs text-ink-black leading-snug ${!n.isRead ? "font-semibold" : ""}`}>{n.title}</p>
-                        <p className="text-[10px] text-slate-grey mt-0.5 truncate">{n.message}</p>
-                        <p className="text-[9px] text-slate-grey/60 mt-1 font-mono">{timeAgo(n.createdAt)}</p>
+                      <div className="shrink-0 mt-0.5">
+                        <span className={`material-symbols-outlined text-lg p-1.5 rounded-full ${
+                          !n.isRead ? "bg-deep-navy/5 text-deep-navy" : "bg-slate-100 text-slate-400"
+                        }`}>
+                          {getNotifIcon(n.type)}
+                        </span>
                       </div>
+                      
+                      <div className="min-w-0 flex-1">
+                        <div className="flex justify-between items-baseline gap-2">
+                          <p className={`text-xs text-ink-black leading-snug ${!n.isRead ? "font-semibold" : ""}`}>{n.title}</p>
+                          <span className="text-[9px] text-slate-grey/60 font-mono shrink-0">{timeAgo(n.createdAt)}</span>
+                        </div>
+                        <p className="text-[10px] text-slate-grey/85 mt-1 leading-relaxed">{n.message}</p>
+                      </div>
+
                       {!n.isRead && (
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shrink-0 self-center"></div>
+                        <div className="w-2 h-2 bg-deep-navy rounded-full shrink-0 self-center"></div>
                       )}
                     </div>
                   ))
                 )}
               </div>
+
               {notifications.length > 0 && (
-                <div className="p-2 border-t border-slate-grey/15 text-center">
+                <div className="p-3.5 border-t border-slate-grey/10 bg-soft-linen/5 text-center">
                   <button
                     onClick={onClearAll}
-                    className="text-[10px] text-red-600 hover:text-red-700 hover:underline uppercase tracking-wider font-semibold w-full py-1.5"
+                    className="text-[10px] text-red-600 hover:text-red-700 hover:underline uppercase tracking-widest font-bold w-full py-1.5 font-label-caps"
                   >
-                    Clear All Notifications
+                    Clear All History
                   </button>
                 </div>
               )}
             </div>
           )}
         </div>
+
 
         {/* User Dropdown */}
         <div className="relative" ref={dropdownRef}>

@@ -2,6 +2,8 @@ import express from "express";
 import crypto from "crypto";
 import { db } from "../database.js";
 import { getRazorpay, getApiSettings, getTransporter } from "../config/apiResolvers.js";
+import { createAdminNotification } from "../config/notificationHelper.js";
+
 
 const router = express.Router();
 
@@ -192,14 +194,13 @@ router.post("/verify", async (req, res) => {
     }
 
     // Trigger notification for new order placed
-    db.notifications.create({
-      data: {
-        type: "NEW_ORDER",
-        title: "📦 New Order Placed",
-        message: `📦 New order #${paymentRecord.orderId} of ₹${paymentRecord.amount.toLocaleString()} placed by ${paymentRecord.userEmail || "guest"}`,
-        userEmail: paymentRecord.userEmail
-      }
-    }).catch(e => console.warn("Failed to create order notification:", e.message));
+    createAdminNotification({
+      type: "NEW_ORDER",
+      title: "📦 New Order Placed",
+      message: `📦 New order #${paymentRecord.orderId} of ₹${paymentRecord.amount.toLocaleString()} placed by ${paymentRecord.userEmail || "guest"}`,
+      userEmail: paymentRecord.userEmail
+    });
+
 
 
     // Send order confirmation emails

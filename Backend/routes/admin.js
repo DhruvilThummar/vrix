@@ -1,7 +1,9 @@
 import express from "express";
 import { db } from "../database.js";
+import { createAdminNotification } from "../config/notificationHelper.js";
 
 const router = express.Router();
+
 
 const normalizeStatus = (status = "") => String(status).trim().toUpperCase();
 const getAmount = (payment = {}) => Number(payment.amount || 0);
@@ -72,15 +74,14 @@ router.patch("/users/:email/vrix-plus", async (req, res) => {
     });
 
     if (isVrixPlusMember) {
-      db.notifications.create({
-        data: {
-          type: "VRIX_PLUS_JOINED",
-          title: "🎉 VRIX+ Member Joined",
-          message: `🎉 ${user.name || user.email} just became a VRIX+ Member (via Admin Panel)`,
-          userEmail: user.email
-        }
-      }).catch(e => console.warn("Failed to create VRIX+ join notification:", e.message));
+      createAdminNotification({
+        type: "VRIX_PLUS_JOINED",
+        title: "🎉 VRIX+ Member Joined",
+        message: `🎉 ${user.name || user.email} just became a VRIX+ Member (via Admin Panel)`,
+        userEmail: user.email
+      });
     }
+
 
     res.json({ success: true, user });
 

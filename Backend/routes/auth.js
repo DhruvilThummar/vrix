@@ -2,6 +2,8 @@ import express from "express";
 import crypto from "crypto";
 import { db } from "../database.js";
 import { getTransporter, sendEmailWithTimeout, getApiSettings, getGoogleConfig } from "../config/apiResolvers.js";
+import { createAdminNotification } from "../config/notificationHelper.js";
+
 
 
 
@@ -120,14 +122,13 @@ router.post("/register/confirm", async (req, res) => {
     }
 
     // Trigger notification for new registration
-    db.notifications.create({
-      data: {
-        type: "NEW_REGISTRATION",
-        title: "👤 New Customer Registered",
-        message: `New customer registered: ${newUser.name || newUser.email} (${newUser.email})`,
-        userEmail: newUser.email
-      }
-    }).catch(e => console.warn("Failed to create registration notification:", e.message));
+    createAdminNotification({
+      type: "NEW_REGISTRATION",
+      title: "👤 New Customer Registered",
+      message: `New customer registered: ${newUser.name || newUser.email} (${newUser.email})`,
+      userEmail: newUser.email
+    });
+
 
     db.securityLogs.create({
       data: { event: "ACCOUNT_REGISTER", user: cleanEmail, status: "SUCCESS" },
@@ -321,14 +322,13 @@ router.post("/join-vrix-plus", async (req, res) => {
     });
 
     // VRIX+ Joined Notification
-    db.notifications.create({
-      data: {
-        type: "VRIX_PLUS_JOINED",
-        title: "🎉 VRIX+ Member Joined",
-        message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
-        userEmail: user.email
-      }
-    }).catch(e => console.warn("Failed to create VRIX+ join notification:", e.message));
+    createAdminNotification({
+      type: "VRIX_PLUS_JOINED",
+      title: "🎉 VRIX+ Member Joined",
+      message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
+      userEmail: user.email
+    });
+
 
     res.json({
 
@@ -565,14 +565,12 @@ router.post("/google", async (req, res) => {
           year: "numeric"
         });
         // Notification for joining VRIX+
-        db.notifications.create({
-          data: {
-            type: "VRIX_PLUS_JOINED",
-            title: "🎉 VRIX+ Member Joined",
-            message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
-            userEmail: user.email
-          }
-        }).catch(e => console.warn("Failed to create VRIX+ join notification:", e.message));
+        createAdminNotification({
+          type: "VRIX_PLUS_JOINED",
+          title: "🎉 VRIX+ Member Joined",
+          message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
+          userEmail: user.email
+        });
       }
 
 
@@ -607,25 +605,22 @@ router.post("/google", async (req, res) => {
       });
 
       // New registration notification
-      db.notifications.create({
-        data: {
-          type: "NEW_REGISTRATION",
-          title: "👤 New Customer Registered",
-          message: `New customer registered: ${user.name || user.email} (${user.email})`,
-          userEmail: user.email
-        }
-      }).catch(e => console.warn("Failed to create registration notification:", e.message));
+      createAdminNotification({
+        type: "NEW_REGISTRATION",
+        title: "👤 New Customer Registered",
+        message: `New customer registered: ${user.name || user.email} (${user.email})`,
+        userEmail: user.email
+      });
 
       if (joinVrixPlus) {
-        db.notifications.create({
-          data: {
-            type: "VRIX_PLUS_JOINED",
-            title: "🎉 VRIX+ Member Joined",
-            message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
-            userEmail: user.email
-          }
-        }).catch(e => console.warn("Failed to create VRIX+ join notification:", e.message));
+        createAdminNotification({
+          type: "VRIX_PLUS_JOINED",
+          title: "🎉 VRIX+ Member Joined",
+          message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
+          userEmail: user.email
+        });
       }
+
 
       await db.securityLogs.create({
         data: { event: "GOOGLE_REGISTER", user: cleanEmail, status: "SUCCESS" },
