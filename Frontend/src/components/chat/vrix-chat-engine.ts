@@ -1,4 +1,4 @@
-import { ChatMessage, ChatProduct, EntryPoint, EntryPointId, QuickOption } from "./vrix-chat-types";
+import { ChatMessage, ChatProduct, EntryPoint, EntryPointId, QuickOption, HumanHandoffData } from "./vrix-chat-types";
 
 export const VRIX_ENTRY_POINTS: EntryPoint[] = [
   {
