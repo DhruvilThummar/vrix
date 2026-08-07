@@ -229,6 +229,7 @@ export default function AdminCMSPage() {
   const [brandEmail, setBrandEmail] = useState("");
   const [brandPhone, setBrandPhone] = useState("");
   const [brandAddress, setBrandAddress] = useState("");
+  const [brandPaymentIcons, setBrandPaymentIcons] = useState<string[]>(["visa", "mastercard", "amex", "apple-pay", "google-pay", "stripe", "paypal"]);
 
   // --- Features Toggles States ---
   const [bespokeEnabled, setBespokeEnabled] = useState(true);
@@ -428,6 +429,9 @@ export default function AdminCMSPage() {
           setBrandEmail(res.brand.email || "");
           setBrandPhone(res.brand.phone || "");
           setBrandAddress(res.brand.address || "");
+          if (Array.isArray(res.brand.paymentIcons)) {
+            setBrandPaymentIcons(res.brand.paymentIcons);
+          }
         }
         // Features
         if (res.features) {
@@ -621,7 +625,8 @@ export default function AdminCMSPage() {
           logoUrl: brandLogo,
           email: brandEmail,
           phone: brandPhone,
-          address: brandAddress
+          address: brandAddress,
+          paymentIcons: brandPaymentIcons
         },
         features: {
           bespokeEnabled
@@ -2841,6 +2846,41 @@ export default function AdminCMSPage() {
                   onChange={(e) => setVrixPlusHeadline(e.target.value)}
                   className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
                 />
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-grey/10 space-y-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold block mb-1">Enabled Payment Methods / Icons</label>
+              <div className="flex flex-wrap gap-4 items-center bg-soft-linen/5 p-4 border border-slate-grey/15 rounded">
+                {[
+                  { id: "visa", label: "Visa", icon: "fa-cc-visa" },
+                  { id: "mastercard", label: "Mastercard", icon: "fa-cc-mastercard" },
+                  { id: "amex", label: "Amex", icon: "fa-cc-amex" },
+                  { id: "apple-pay", label: "Apple Pay", icon: "fa-cc-apple-pay" },
+                  { id: "google-pay", label: "Google Pay", icon: "fa-google-pay" },
+                  { id: "stripe", label: "Stripe", icon: "fa-cc-stripe" },
+                  { id: "paypal", label: "PayPal", icon: "fa-cc-paypal" }
+                ].map((item) => {
+                  const checked = brandPaymentIcons.includes(item.id);
+                  return (
+                    <label key={item.id} className="flex items-center gap-2 text-xs font-semibold cursor-pointer text-deep-navy">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          if (checked) {
+                            setBrandPaymentIcons(brandPaymentIcons.filter(id => id !== item.id));
+                          } else {
+                            setBrandPaymentIcons([...brandPaymentIcons, item.id]);
+                          }
+                        }}
+                        className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer rounded"
+                      />
+                      <i className={`fa-brands ${item.icon} text-lg`}></i>
+                      <span>{item.label}</span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           </section>

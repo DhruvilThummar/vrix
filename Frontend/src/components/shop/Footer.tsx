@@ -22,6 +22,7 @@ export default function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
+  const [brandPaymentIcons, setBrandPaymentIcons] = useState<string[]>(["visa", "mastercard", "amex", "apple-pay", "google-pay", "stripe", "paypal"]);
 
   useEffect(() => {
     fetchDb()
@@ -32,6 +33,9 @@ export default function Footer() {
           if (res.brand.address) setAddress(res.brand.address);
           if (res.brand.phone) setPhone(res.brand.phone);
           if (res.brand.email) setEmail(res.brand.email);
+          if (Array.isArray(res.brand.paymentIcons)) {
+            setBrandPaymentIcons(res.brand.paymentIcons);
+          }
         }
         if (res.vrix_plus && res.vrix_plus.headline) {
           setVrixPlusHeadline(res.vrix_plus.headline);
@@ -316,13 +320,13 @@ export default function Footer() {
 
           {/* Payment Icons */}
           <div className="flex flex-wrap gap-4 items-center text-xl text-ink-black/60">
-            <i className="fa-brands fa-cc-visa hover:text-[#1A1F71] transition-colors" title="Visa"></i>
-            <i className="fa-brands fa-cc-mastercard hover:text-[#EB001B] transition-colors" title="Mastercard"></i>
-            <i className="fa-brands fa-cc-amex hover:text-[#007CC3] transition-colors" title="Amex"></i>
-            <i className="fa-brands fa-cc-apple-pay hover:text-black transition-colors" title="Apple Pay"></i>
-            <i className="fa-brands fa-google-pay hover:text-[#4285F4] transition-colors text-2xl" title="Google Pay"></i>
-            <i className="fa-brands fa-cc-stripe hover:text-[#6772E5] transition-colors" title="Stripe"></i>
-            <i className="fa-brands fa-cc-paypal hover:text-[#003087] transition-colors" title="PayPal"></i>
+            {brandPaymentIcons.includes("visa") && <i className="fa-brands fa-cc-visa hover:text-[#1A1F71] transition-colors" title="Visa"></i>}
+            {brandPaymentIcons.includes("mastercard") && <i className="fa-brands fa-cc-mastercard hover:text-[#EB001B] transition-colors" title="Mastercard"></i>}
+            {brandPaymentIcons.includes("amex") && <i className="fa-brands fa-cc-amex hover:text-[#007CC3] transition-colors" title="Amex"></i>}
+            {brandPaymentIcons.includes("apple-pay") && <i className="fa-brands fa-cc-apple-pay hover:text-black transition-colors" title="Apple Pay"></i>}
+            {brandPaymentIcons.includes("google-pay") && <i className="fa-brands fa-google-pay hover:text-[#4285F4] transition-colors text-2xl" title="Google Pay"></i>}
+            {brandPaymentIcons.includes("stripe") && <i className="fa-brands fa-cc-stripe hover:text-[#6772E5] transition-colors" title="Stripe"></i>}
+            {brandPaymentIcons.includes("paypal") && <i className="fa-brands fa-cc-paypal hover:text-[#003087] transition-colors" title="PayPal"></i>}
           </div>
         </div>
       </div>
