@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import CookieConsentBanner from "@/components/privacy/CookieConsentBanner";
 import ConditionalScriptLoader from "@/components/privacy/ConditionalScriptLoader";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -198,6 +199,7 @@ export default function RootLayout({
               {children}
               <CookieConsentBanner />
               <ConditionalScriptLoader />
+              <Analytics />
             </CartProvider>
           </CurrencyProvider>
         </AuthProvider>
