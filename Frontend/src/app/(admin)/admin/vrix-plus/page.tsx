@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { fetchUsers, updateUserVrixPlus, fetchDb, updateCMS } from "@/utils/api";
 import { useCurrency } from "@/utils/useCurrency";
+
 
 interface UserRecord {
   email: string;
