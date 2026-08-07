@@ -7,7 +7,7 @@ import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 import { useAuth } from "@/context/AuthContext";
 import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 export default function Page() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function Page() {
   };
 
 
-  const { convertPrice, currency, getTaxRate } = useCurrency();
+  const { formatPrice, formatPriceRaw, currency, taxRate, taxName, taxLabel } = useCurrency();
   const [country, setCountry] = useState("IN");
 
   // Update country mapping from select field
@@ -55,17 +55,10 @@ export default function Page() {
       ? Math.min(discount, subtotal)
       : 0;
 
-  const finalSubtotal = subtotal - discountAmount;
-  // Convert standard shipping limits (e.g. ₹150 limit)
-  const convertedSubtotal = convertPrice(finalSubtotal);
-  const rawShippingFee = finalSubtotal >= 150 ? 0 : 15;
-  const shippingFee = convertPrice(rawShippingFee);
+  const finalSubtotal = Math.max(0, subtotal - discountAmount);
+  const rawShippingFee = finalSubtotal >= 15000 ? 0 : 1500;
 
-  // Apply country-specific tax rules
-  const taxRate = getTaxRate();
-  const taxAmount = Number(((convertedSubtotal + shippingFee) * (taxRate / 100)).toFixed(2));
-  
-  const grandTotal = Number((convertedSubtotal + shippingFee + taxAmount).toFixed(2));
+  const grandTotal = finalSubtotal + rawShippingFee;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,7 +81,8 @@ export default function Page() {
       city,
       postalCode,
       phone,
-      grandTotal,
+      grandTotal: formatPriceRaw(grandTotal),
+      grandTotalInr: grandTotal,
       currency
     };
 

@@ -1252,38 +1252,85 @@ function AdminProductsContent() {
                   {/* ── PRICING TAB ──────────────────────────────────────── */}
                   {activeFormTab === "Pricing" && (
                     <div className="space-y-5">
+                      <div className="p-3 bg-amber-50/80 border border-amber-200 text-amber-900 rounded-sm text-xs font-body-md flex items-start gap-2">
+                        <span className="material-symbols-outlined text-amber-700 text-base shrink-0 mt-0.5">info</span>
+                        <div>
+                          <p className="font-semibold font-label-caps uppercase tracking-wider text-[10px]">Base Currency: Indian Rupee (INR ₹)</p>
+                          <p className="text-[11px] text-amber-800 mt-0.5">
+                            Enter product prices in <strong>INR (₹)</strong>. The system will automatically convert prices for international customers (e.g. European countries, USA, UK) based on real-time exchange rates and country tax rules.
+                          </p>
+                        </div>
+                      </div>
 
                       {/* Price & Discount */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
                           <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
                             <span className="material-symbols-outlined text-[12px]">local_offer</span>
-                            Selling Price (With Discount) <span className="text-red-500">*</span>
+                            Base Selling Price (INR ₹) <span className="text-red-500">*</span>
                           </label>
-                          <input type="number" value={fPrice} onChange={(e) => setFPrice(Number(e.target.value))} min={0} required className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent" />
+                          <div className="relative flex items-center">
+                            <span className="absolute left-2.5 text-slate-grey font-semibold text-sm">₹</span>
+                            <input
+                              type="number"
+                              value={fPrice}
+                              onChange={(e) => setFPrice(Number(e.target.value))}
+                              min={0}
+                              required
+                              placeholder="0"
+                              className="w-full border-b border-slate-grey/30 pl-7 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent font-semibold"
+                            />
+                          </div>
                         </div>
 
                         <div className="flex flex-col gap-1.5">
                           <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
                             <span className="material-symbols-outlined text-[12px]">sell</span>
-                            Original Strikethrough Price (Without Discount)
+                            Original Strikethrough Price (INR ₹)
                           </label>
-                          <input
-                            type="number"
-                            value={fOriginalPrice === "" ? "" : fOriginalPrice}
-                            onChange={(e) => setFOriginalPrice(e.target.value === "" ? "" : Number(e.target.value))}
-                            placeholder="Optional original MRP price"
-                            min={0}
-                            className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent placeholder:text-slate-grey/40"
-                          />
+                          <div className="relative flex items-center">
+                            <span className="absolute left-2.5 text-slate-grey font-semibold text-sm">₹</span>
+                            <input
+                              type="number"
+                              value={fOriginalPrice === "" ? "" : fOriginalPrice}
+                              onChange={(e) => setFOriginalPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                              placeholder="Optional original MRP in ₹"
+                              min={0}
+                              className="w-full border-b border-slate-grey/30 pl-7 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent placeholder:text-slate-grey/40"
+                            />
+                          </div>
                         </div>
                       </div>
+
+                      {/* Auto International Multi-Currency Live Preview Badge */}
+                      {Number(fPrice) > 0 && (
+                        <div className="p-3 bg-soft-linen/80 border border-slate-grey/20 rounded-sm space-y-1.5">
+                          <p className="font-label-caps text-[10px] uppercase text-deep-navy font-semibold tracking-wider flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[13px]">public</span>
+                            Auto International Customer Price Estimates
+                          </p>
+                          <div className="grid grid-cols-3 gap-2 text-xs font-body-md">
+                            <div className="bg-pure-white p-2 border border-slate-grey/15 rounded text-center">
+                              <span className="block text-[9px] font-label-caps text-slate-grey uppercase">USA & Global ($)</span>
+                              <span className="font-semibold text-ink-black">${(Number(fPrice) * 0.012).toFixed(2)}</span>
+                            </div>
+                            <div className="bg-pure-white p-2 border border-slate-grey/15 rounded text-center">
+                              <span className="block text-[9px] font-label-caps text-slate-grey uppercase">Europe / EU (€)</span>
+                              <span className="font-semibold text-ink-black">€{(Number(fPrice) * 0.011).toFixed(2)}</span>
+                            </div>
+                            <div className="bg-pure-white p-2 border border-slate-grey/15 rounded text-center">
+                              <span className="block text-[9px] font-label-caps text-slate-grey uppercase">United Kingdom (£)</span>
+                              <span className="font-semibold text-ink-black">£{(Number(fPrice) * 0.0095).toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Discount Preview Badge */}
                       {Number(fOriginalPrice) > Number(fPrice) && Number(fPrice) > 0 && (
                         <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between font-label-caps">
                           <span>
-                            Discount Active: Save {formatPrice(Number(fOriginalPrice) - Number(fPrice))}
+                            Discount Active: Save ₹{(Number(fOriginalPrice) - Number(fPrice)).toLocaleString("en-IN")}
                           </span>
                           <span className="bg-emerald-600 text-white px-2 py-0.5 font-bold uppercase tracking-wider">
                             {Math.round(((Number(fOriginalPrice) - Number(fPrice)) / Number(fOriginalPrice)) * 100)}% OFF

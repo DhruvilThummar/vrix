@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useCart, GiftOption } from "@/context/CartContext";
 import { fetchGiftWrappingAPI } from "@/utils/api";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 export default function GiftWrappingSection() {
   const { isGiftWrapped, toggleGiftWrap, giftMessage, setGiftMessage, selectedGiftOptions, toggleGiftOption } = useCart();

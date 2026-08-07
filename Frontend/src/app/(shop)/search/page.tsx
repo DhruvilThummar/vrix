@@ -6,7 +6,7 @@ import Image from "next/image";
 import { fetchProducts } from "@/utils/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface Product {
   id: string;

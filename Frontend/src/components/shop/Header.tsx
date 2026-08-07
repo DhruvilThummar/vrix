@@ -9,7 +9,7 @@ import { fetchDb, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 
 const DEFAULT_LINKS: any[] = [];
@@ -20,7 +20,7 @@ export default function Header() {
   const router = useRouter();
   const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem, isGiftWrapped, toggleGiftWrap, giftWrapPrice, selectedGiftOptions, toggleGiftOption } = useCart();
   const { user, isLoggedIn } = useAuth();
-  const { currency, changeCurrency, formatPrice } = useCurrency();
+  const { currency, setCurrency: changeCurrency, formatPrice } = useCurrency();
 
   const isHomePage = pathname === "/";
   const [scrolled, setScrolled] = useState(false);

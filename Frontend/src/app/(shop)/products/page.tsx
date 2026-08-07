@@ -8,7 +8,7 @@ import { fetchCollections, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 const DEFAULT_PRODUCTS: any[] = [];
 const MATERIAL_OPTIONS = ["All", "Gold", "Silver", "Platinum"];

@@ -8,11 +8,13 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { verifyPromo } from "@/utils/api";
 import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
+import { useCurrency } from "@/context/CurrencyContext";
 
 export default function CartPage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const { items, subtotal, discount, promoCode, promoType, updateQty, removeItem, applyPromo, clearPromo } = useCart();
+  const { formatPrice, taxLabel } = useCurrency();
   const [promoInput, setPromoInput] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export default function CartPage() {
       : 0;
 
   const total = Math.max(0, subtotal - discountAmount);
-  const shipping = total >= 150 ? 0 : 15;
+  const shipping = total >= 15000 ? 0 : 1500;
   const grandTotal = total + shipping;
 
   const handleApplyPromo = async (e: React.FormEvent) => {
@@ -183,24 +185,27 @@ export default function CartPage() {
               <div className="space-y-3 font-body-md text-body-md text-primary">
                 <div className="flex justify-between">
                   <span className="text-slate-grey">Subtotal</span>
-                  <span>₹{subtotal.toLocaleString()}</span>
+                  <span>{formatPrice(subtotal)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-green-700">
                     <span>Discount ({promoCode})</span>
-                    <span>−₹{discountAmount.toFixed(2)}</span>
+                    <span>−{formatPrice(discountAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate-grey">Shipping</span>
-                  <span>{shipping === 0 ? <span className="text-green-700">Free</span> : `₹${shipping}`}</span>
+                  <span>{shipping === 0 ? <span className="text-green-700">Free</span> : formatPrice(shipping)}</span>
                 </div>
                 {shipping > 0 && (
-                  <p className="text-[10px] text-slate-grey font-body-md">Add ₹{(150 - subtotal).toFixed(0)} more for free shipping.</p>
+                  <p className="text-[10px] text-slate-grey font-body-md">Add {formatPrice(Math.max(0, 15000 - subtotal))} more for free shipping.</p>
                 )}
-                <div className="pt-4 border-t border-slate-grey/20 flex justify-between font-headline-md text-headline-md">
+                {taxLabel && (
+                  <p className="text-[10px] text-slate-grey/70 italic border-t border-slate-grey/10 pt-2">{taxLabel}</p>
+                )}
+                <div className="pt-3 border-t border-slate-grey/20 flex justify-between font-headline-md text-headline-md">
                   <span>Total</span>
-                  <span>₹{grandTotal.toFixed(2)}</span>
+                  <span>{formatPrice(grandTotal)}</span>
                 </div>
               </div>
 

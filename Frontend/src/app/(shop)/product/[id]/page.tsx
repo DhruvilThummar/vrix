@@ -10,7 +10,7 @@ import ProductImageGrid2x2 from "@/components/pdp/ProductImageGrid2x2";
 import MetalSwatches from "@/components/pdp/MetalSwatches";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 import Link from "next/link";
  
 const DEFAULT_PRODUCT = {

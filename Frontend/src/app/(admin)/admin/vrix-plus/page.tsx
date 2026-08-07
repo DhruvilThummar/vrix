@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { fetchUsers, updateUserVrixPlus, fetchDb, updateCMS } from "@/utils/api";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 
 interface UserRecord {

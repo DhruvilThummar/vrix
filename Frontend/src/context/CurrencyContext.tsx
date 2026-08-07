@@ -6,7 +6,7 @@ import { fetchDb, getApiBaseUrl } from "@/utils/api";
 export interface CurrencyConfig {
   code: string;
   symbol: string;
-  rate: number;
+  rate: number; // Conversion multiplier from INR (Base price is in INR)
   locale: string;
   countries: string[];
 }
@@ -39,9 +39,9 @@ interface CurrencyContextType {
 
 const DEFAULT_CURRENCIES: CurrencyConfig[] = [
   { code: "INR", symbol: "₹", rate: 1, locale: "en-IN", countries: ["IN"] },
-  { code: "EUR", symbol: "€", rate: 0.011, locale: "de-DE", countries: ["DE","FR","IT","ES","NL","BE","AT","PT","IE","FI","GR"] },
+  { code: "EUR", symbol: "€", rate: 0.011, locale: "de-DE", countries: ["DE","FR","IT","ES","NL","BE","AT","PT","IE","FI","GR","SE","DK","PL"] },
   { code: "GBP", symbol: "£", rate: 0.0095, locale: "en-GB", countries: ["GB"] },
-  { code: "USD", symbol: "$", rate: 0.012, locale: "en-US", countries: ["US","CA","AU","SG"] },
+  { code: "USD", symbol: "$", rate: 0.012, locale: "en-US", countries: ["US","CA","AU","SG","AE"] },
 ];
 
 const DEFAULT_TAX_RULES: TaxRule[] = [
@@ -49,6 +49,11 @@ const DEFAULT_TAX_RULES: TaxRule[] = [
   { country: "GB", taxName: "VAT", rate: 20, inclusive: true, label: "Prices include 20% VAT" },
   { country: "DE", taxName: "MwSt", rate: 19, inclusive: true, label: "Preise inkl. 19% MwSt" },
   { country: "FR", taxName: "TVA", rate: 20, inclusive: true, label: "Prix TTC (TVA 20%)" },
+  { country: "IT", taxName: "IVA", rate: 22, inclusive: true, label: "Prezzi inclusi IVA 22%" },
+  { country: "ES", taxName: "IVA", rate: 21, inclusive: true, label: "Precios incl. 21% IVA" },
+  { country: "NL", taxName: "BTW", rate: 21, inclusive: true, label: "Prijzen incl. 21% BTW" },
+  { country: "BE", taxName: "TVA/BTW", rate: 21, inclusive: true, label: "Prices incl. 21% VAT" },
+  { country: "AT", taxName: "MwSt", rate: 20, inclusive: true, label: "Preise inkl. 20% MwSt" },
   { country: "US", taxName: "Sales Tax", rate: 0, inclusive: false, label: "Tax calculated at checkout" },
   { country: "*", taxName: "Tax", rate: 0, inclusive: false, label: "Tax may apply at checkout" },
 ];
@@ -113,6 +118,12 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             if (matched) {
               setCurrencyState(matched.code);
               setIsAutoDetected(true);
+            } else if (geo.currency) {
+              const matchedByCode = activeList.find((c: CurrencyConfig) => c.code === geo.currency);
+              if (matchedByCode) {
+                setCurrencyState(matchedByCode.code);
+                setIsAutoDetected(true);
+              }
             }
           }
         }
@@ -133,18 +144,26 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   const formatPriceRaw = useCallback(
     (inrAmount: number) => {
-      const converted = inrAmount * activeCurConfig.rate;
+      const num = Number(inrAmount);
+      if (isNaN(num) || num <= 0) return 0;
+      const converted = num * activeCurConfig.rate;
+      if (activeCurConfig.code === "INR") {
+        return Math.round(converted);
+      }
       return Number(converted.toFixed(2));
     },
-    [activeCurConfig.rate]
+    [activeCurConfig.code, activeCurConfig.rate]
   );
 
   const formatPrice = useCallback(
     (inrAmount: number) => {
       const val = formatPriceRaw(inrAmount);
-      return `${activeCurConfig.symbol}${val.toLocaleString(activeCurConfig.locale || "en-US")}`;
+      if (activeCurConfig.code === "INR") {
+        return `${activeCurConfig.symbol}${val.toLocaleString(activeCurConfig.locale || "en-IN")}`;
+      }
+      return `${activeCurConfig.symbol}${val.toLocaleString(activeCurConfig.locale || "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     },
-    [activeCurConfig.symbol, activeCurConfig.locale, formatPriceRaw]
+    [activeCurConfig.code, activeCurConfig.symbol, activeCurConfig.locale, formatPriceRaw]
   );
 
   return (
@@ -177,3 +196,4 @@ export function useCurrency() {
   if (!ctx) throw new Error("useCurrency must be used within CurrencyProvider");
   return ctx;
 }
+

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { createPaymentOrder, fetchPaymentConfig, verifyPayment } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 declare global {
   interface Window {
@@ -30,7 +30,7 @@ interface ShippingData {
 export default function PaymentPage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const { convertPrice } = useCurrency();
+  const { formatPrice, formatPriceRaw } = useCurrency();
   const { items, subtotal, discount, promoCode, promoType, clearCart, isGiftWrapped, giftMessage, giftWrapPrice } = useCart();
   const [shipping, setShipping] = useState<ShippingData | null>(null);
   const [loading, setLoading] = useState(false);
