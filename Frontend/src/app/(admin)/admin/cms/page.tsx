@@ -223,6 +223,7 @@ export default function AdminCMSPage() {
   // --- Navbar & Brand States ---
   const [navLinks, setNavLinks] = useState<any[]>([]);
   const [footerLinks, setFooterLinks] = useState<any[]>([]);
+  const [selectedLinkIndex, setSelectedLinkIndex] = useState<number | null>(null);
   const [brandName, setBrandName] = useState("");
   const [brandLogo, setBrandLogo] = useState("");
   const [brandEmail, setBrandEmail] = useState("");
@@ -2713,147 +2714,283 @@ export default function AdminCMSPage() {
       
       {/* 14. FOOTER CONFIGURATION TAB */}
       {activeTab === "footer" && (
-        <div className="space-y-6 animate-fade-in">
-          <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-            <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-              <div>
-                <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                  Dynamic Footer Links Columns
-                </h3>
-                <p className="text-xs text-slate-grey font-body-md mt-0.5">
-                  Configure dynamic link columns displayed at the footer of the public store front.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const newCol = {
-                    id: `footer-col-${Date.now()}`,
-                    title: "New Column",
-                    links: [
-                      { label: "New Link", path: "/" }
-                    ]
-                  };
-                  setFooterLinks([...footerLinks, newCol]);
-                }}
-                className="px-3 py-1.5 bg-deep-navy text-white text-[10px] font-label-caps uppercase tracking-wider rounded flex items-center gap-1 cursor-pointer hover:bg-black"
-              >
-                <span className="material-symbols-outlined text-[14px]">add</span>
-                Add Column
-              </button>
+        <div className="space-y-8 animate-fade-in text-ink-black">
+          {/* Interactive Footer Mockup Preview */}
+          <section className="bg-pure-white border border-slate-grey/25 p-6 shadow-sm space-y-4 rounded relative">
+            <div>
+              <h3 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider uppercase flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-sm">visibility</span>
+                Live Footer Interactive Preview
+              </h3>
+              <p className="text-[10px] text-slate-grey mt-0.5">Mock shell representing how dynamic changes appear in the storefront footer.</p>
             </div>
 
-            {footerLinks.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-grey border border-dashed border-slate-grey/20 bg-slate-50/50 rounded">
-                No custom footer columns configured. Dynamic rendering will fall back to default footer links.
+            <div className="border border-slate-grey/15 rounded bg-[#F5F4F0] p-6 text-ink-black/80 font-body-md text-xs space-y-6">
+              {/* VRIX+ Newsletter Promotion Block Mock */}
+              <div className="border-b border-slate-grey/10 pb-6 mb-4 text-center space-y-3">
+                <span className="font-label-caps text-[9px] tracking-[0.2em] uppercase text-[#B59D7C] font-semibold">VRIX+ CIRCLE</span>
+                <h4 className="font-display-lg text-sm text-deep-navy uppercase tracking-wider max-w-lg mx-auto">
+                  {vrixPlusHeadline || "Join VRIX+ Circle for early sale access, birthday treats, and more."}
+                </h4>
+                <div className="flex gap-2 max-w-xs mx-auto">
+                  <input disabled type="email" placeholder="Email address" className="flex-1 bg-pure-white border border-slate-grey/30 px-3 py-1 text-[10px] outline-none opacity-60" />
+                  <button disabled type="button" className="px-4 py-1.5 bg-black text-white text-[10px] font-label-caps uppercase tracking-wider opacity-60">Join Now</button>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-6">
-                {footerLinks.map((column: any, colIdx: number) => (
-                  <div key={column.id || colIdx} className="p-5 border border-slate-grey/20 rounded bg-soft-linen/10 space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-grey/15 pb-2">
-                      <div className="flex-1 max-w-sm">
-                        <label className="text-[9px] font-label-caps text-slate-grey uppercase tracking-wider font-semibold">Column Title</label>
-                        <input
-                          type="text"
-                          value={column.title || ""}
-                          onChange={(e) => {
-                            const arr = [...footerLinks];
-                            arr[colIdx].title = e.target.value;
-                            setFooterLinks(arr);
-                          }}
-                          className="w-full border-b border-slate-grey/30 py-1 text-xs font-bold text-deep-navy outline-none bg-transparent"
-                        />
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const arr = [...footerLinks];
-                            const currentLinks = Array.isArray(column.links) ? column.links : [];
-                            arr[colIdx].links = [...currentLinks, { label: "New Link", path: "/" }];
-                            setFooterLinks(arr);
-                          }}
-                          className="text-[10px] text-deep-navy hover:text-black font-semibold uppercase font-label-caps"
-                        >
-                          + Add Link
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFooterLinks(footerLinks.filter((_, i) => i !== colIdx));
-                          }}
-                          className="text-[10px] text-red-600 hover:text-red-800 font-semibold uppercase font-label-caps"
-                        >
-                          ✕ Remove Column
-                        </button>
-                      </div>
-                    </div>
 
-                    <div className="space-y-2.5">
-                      {Array.isArray(column.links) && column.links.map((link: any, linkIdx: number) => (
-                        <div key={linkIdx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-pure-white p-3 border border-slate-grey/10 rounded">
-                          <div className="flex-1">
-                            <label className="text-[8px] font-label-caps text-slate-grey uppercase">Link Text / Label</label>
-                            <input
-                              type="text"
-                              value={link.label || ""}
-                              onChange={(e) => {
-                                const arr = [...footerLinks];
-                                arr[colIdx].links[linkIdx].label = e.target.value;
-                                setFooterLinks(arr);
-                              }}
-                              className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
-                              placeholder="e.g. Instagram"
-                              required
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <label className="text-[8px] font-label-caps text-slate-grey uppercase">Target Path / URL</label>
-                            <PathSelector
-                              value={link.path || "/"}
-                              onChange={(val) => {
-                                const arr = [...footerLinks];
-                                arr[colIdx].links[linkIdx].path = val;
-                                setFooterLinks(arr);
-                              }}
-                              allProducts={allProducts}
-                              allCollections={allCollections}
-                            />
-                          </div>
-                          <div className="w-full sm:w-44">
-                            <label className="text-[8px] font-label-caps text-slate-grey uppercase">Optional Icon (FontAwesome class)</label>
-                            <input
-                              type="text"
-                              value={link.icon || ""}
-                              onChange={(e) => {
-                                const arr = [...footerLinks];
-                                arr[colIdx].links[linkIdx].icon = e.target.value;
-                                setFooterLinks(arr);
-                              }}
-                              className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
-                              placeholder="e.g. fa-brands fa-instagram"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const arr = [...footerLinks];
-                              arr[colIdx].links = arr[colIdx].links.filter((_: any, i: number) => i !== linkIdx);
-                              setFooterLinks(arr);
-                            }}
-                            className="text-red-500 hover:text-red-700 text-xs font-semibold px-2 cursor-pointer self-end sm:self-center"
-                          >
-                            ✕
-                          </button>
-                        </div>
+              {/* Dynamic Columns Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 border-b border-slate-grey/10 pb-6">
+                {/* Brand Column */}
+                <div className="flex flex-col gap-2">
+                  <span className="font-display-lg text-sm font-bold tracking-widest text-ink-black uppercase">VRIX</span>
+                  <span className="text-[8px] font-label-caps tracking-widest text-[#B59D7C] uppercase">Feel The Luxury</span>
+                  <div className="text-[#B59D7C] text-xs">✦</div>
+                  <p className="text-[10px] text-slate-grey/90 leading-relaxed">Designed for the moments that belong only to you.</p>
+                </div>
+
+                {/* Render Footer Columns Configured */}
+                {footerLinks.map((column: any, idx: number) => (
+                  <div key={idx} className="flex flex-col gap-2">
+                    <h5 className="font-label-caps text-[10px] tracking-wider uppercase text-ink-black font-bold mb-1">
+                      {column.title || "Column Header"}
+                    </h5>
+                    <div className="flex flex-col gap-1.5">
+                      {column.links && column.links.map((link: any, linkIdx: number) => (
+                        <a key={linkIdx} href="#" onClick={(e) => e.preventDefault()} className="text-[10px] text-slate-grey/90 hover:text-black flex items-center gap-1.5">
+                          {link.icon && <i className={`${link.icon} text-[9px] w-3 text-center`}></i>}
+                          {link.label || "Link"}
+                        </a>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-            )}
+
+              {/* Bottom Copyright Area */}
+              <div className="flex justify-between items-center text-[9px] text-slate-grey font-label-caps">
+                <div className="flex gap-3">
+                  <span>Privacy Policy</span>
+                  <span>Terms &amp; Conditions</span>
+                </div>
+                <span>© 2026 VRIX. All rights reserved.</span>
+              </div>
+            </div>
           </section>
+
+          {/* Builder Columns Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Columns List Panel */}
+            <section className="bg-pure-white border border-slate-grey/25 p-6 shadow-sm space-y-6 lg:col-span-1 rounded">
+              <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+                <div>
+                  <h3 className="font-label-caps text-xs text-deep-navy font-bold tracking-wider uppercase">
+                    Footer Columns
+                  </h3>
+                  <p className="text-[9px] text-slate-grey">Top header groups</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newCol = {
+                      id: `footer-col-${Date.now()}`,
+                      title: "New Column",
+                      links: [
+                        { label: "New Link", path: "/" }
+                      ]
+                    };
+                    const next = [...footerLinks, newCol];
+                    setFooterLinks(next);
+                  }}
+                  className="px-3 py-1.5 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase cursor-pointer hover:bg-ink-black transition-colors rounded shadow-xs"
+                >
+                  + Add Column
+                </button>
+              </div>
+
+              {footerLinks.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-grey border border-dashed border-slate-grey/20 bg-slate-50/50 rounded">
+                  No columns configured.
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                  {footerLinks.map((column: any, idx: number) => (
+                    <div
+                      key={column.id || idx}
+                      onClick={() => setSelectedLinkIndex(idx)}
+                      className={`p-4 border transition-all cursor-pointer flex flex-col gap-3 relative rounded ${selectedLinkIndex === idx
+                          ? "border-deep-navy bg-soft-linen/10 shadow-sm ring-1 ring-deep-navy/30"
+                          : "border-slate-grey/15 bg-surface/30 hover:border-slate-grey/30"
+                        }`}
+                    >
+                      <div className="absolute top-3 right-3 flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const arr = [...footerLinks];
+                            const temp = arr[idx];
+                            arr[idx] = arr[idx - 1];
+                            arr[idx - 1] = temp;
+                            setFooterLinks(arr);
+                          }}
+                          className="text-slate-grey hover:text-deep-navy text-xs font-bold disabled:opacity-30"
+                        >
+                          ▲
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === footerLinks.length - 1}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const arr = [...footerLinks];
+                            const temp = arr[idx];
+                            arr[idx] = arr[idx + 1];
+                            arr[idx + 1] = temp;
+                            setFooterLinks(arr);
+                          }}
+                          className="text-slate-grey hover:text-deep-navy text-xs font-bold disabled:opacity-30"
+                        >
+                          ▼
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFooterLinks(footerLinks.filter((_, i) => i !== idx));
+                            setSelectedLinkIndex(null);
+                          }}
+                          className="text-red-500 hover:text-red-700 text-[10px] font-label-caps cursor-pointer hover:underline ml-2"
+                        >
+                          Delete
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col gap-1 pr-24">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">Column Title</label>
+                        <input
+                          type="text"
+                          value={column.title || ""}
+                          onChange={(e) => {
+                            const arr = [...footerLinks];
+                            arr[idx].title = e.target.value;
+                            setFooterLinks(arr);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="border-b border-slate-grey/20 py-1 text-xs outline-none font-bold text-deep-navy focus:border-deep-navy bg-transparent"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-1.5 mt-1 border-t border-slate-grey/10 pt-2">
+                        <span className="material-symbols-outlined text-xs text-deep-navy font-semibold">list</span>
+                        <span className="text-[9px] text-slate-grey">
+                          {column.links ? `${column.links.length} Link(s) Configured` : "No links configured"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Links Editor Panel */}
+            <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 lg:col-span-2 rounded">
+              <h3 className="font-headline-md text-base text-deep-navy uppercase border-b border-slate-grey/15 pb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined">menu_open</span>
+                Column Links Configuration Builder
+              </h3>
+
+              {selectedLinkIndex === null || !footerLinks[selectedLinkIndex] ? (
+                <div className="h-64 flex flex-col gap-2 items-center justify-center border-2 border-dashed border-slate-grey/30 text-slate-grey font-label-caps text-xs tracking-wider rounded bg-soft-linen/5">
+                  <span className="material-symbols-outlined text-lg">touch_app</span>
+                  Click a Column from the left list to view or add links
+                </div>
+              ) : (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="p-4 bg-soft-linen/10 border border-slate-grey/10 flex justify-between items-center rounded">
+                    <div>
+                      <h4 className="font-headline-md text-sm text-deep-navy font-semibold">
+                        Editing Column: {footerLinks[selectedLinkIndex].title}
+                      </h4>
+                      <p className="text-[10px] text-slate-grey mt-0.5">Define text, URLs, and optional icons for this column group.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const arr = [...footerLinks];
+                        const currentLinks = Array.isArray(arr[selectedLinkIndex].links) ? arr[selectedLinkIndex].links : [];
+                        arr[selectedLinkIndex].links = [...currentLinks, { label: "New Link", path: "/" }];
+                        setFooterLinks(arr);
+                      }}
+                      className="px-3 py-1.5 bg-deep-navy text-white text-[10px] font-label-caps uppercase tracking-wider rounded hover:bg-black"
+                    >
+                      + Add Link Row
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {Array.isArray(footerLinks[selectedLinkIndex].links) && footerLinks[selectedLinkIndex].links.map((link: any, linkIdx: number) => (
+                      <div key={linkIdx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-pure-white p-3 border border-slate-grey/10 rounded">
+                        <div className="flex-1">
+                          <label className="text-[8px] font-label-caps text-slate-grey uppercase">Link Text / Label</label>
+                          <input
+                            type="text"
+                            value={link.label || ""}
+                            onChange={(e) => {
+                              const arr = [...footerLinks];
+                              arr[selectedLinkIndex].links[linkIdx].label = e.target.value;
+                              setFooterLinks(arr);
+                            }}
+                            className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
+                            placeholder="e.g. Instagram"
+                            required
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="text-[8px] font-label-caps text-slate-grey uppercase">Target Path / URL</label>
+                          <PathSelector
+                            value={link.path || "/"}
+                            onChange={(val) => {
+                              const arr = [...footerLinks];
+                              arr[selectedLinkIndex].links[linkIdx].path = val;
+                              setFooterLinks(arr);
+                            }}
+                            allProducts={allProducts}
+                            allCollections={allCollections}
+                          />
+                        </div>
+                        <div className="w-full sm:w-36">
+                          <label className="text-[8px] font-label-caps text-slate-grey uppercase">Icon class</label>
+                          <input
+                            type="text"
+                            value={link.icon || ""}
+                            onChange={(e) => {
+                              const arr = [...footerLinks];
+                              arr[selectedLinkIndex].links[linkIdx].icon = e.target.value;
+                              setFooterLinks(arr);
+                            }}
+                            className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
+                            placeholder="e.g. fa-brands fa-instagram"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const arr = [...footerLinks];
+                            arr[selectedLinkIndex].links = arr[selectedLinkIndex].links.filter((_: any, i: number) => i !== linkIdx);
+                            setFooterLinks(arr);
+                          }}
+                          className="text-red-500 hover:text-red-700 text-xs font-semibold px-2 cursor-pointer self-end sm:self-center mt-3"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       )}
 

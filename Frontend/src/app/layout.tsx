@@ -171,6 +171,12 @@ export default function RootLayout({
           html:not([class*="admin"]) body:not(.admin-layout) label {
             font-family: var(--font-inter), sans-serif !important;
           }
+          .font-label-caps, .font-button, .font-display-lg, .font-display-lg-mobile, .font-inter {
+            font-family: var(--font-inter), sans-serif !important;
+          }
+          .font-body-lg, .font-body-md, .font-jost {
+            font-family: var(--font-jost), sans-serif !important;
+          }
           .font-logo, .font-aquavit {
             font-family: var(--font-aquavit), Georgia, serif !important;
           }
