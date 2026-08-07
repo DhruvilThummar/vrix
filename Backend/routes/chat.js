@@ -342,12 +342,13 @@ router.post("/query", async (req, res) => {
   // Step 4: Call Gemini 1.5 Flash Model RAG Generator
   const geminiJson = await generateGeminiRagResponse(userText, retrievedProducts);
 
-  let botText = "Welcome to VRIX. Tell me who this is for and the occasion, and I'll narrow it down.";
-  let displayProducts = retrievedProducts.length ? retrievedProducts : undefined;
+  let botText = "VRIX creates architectural minimalist jewelry crafted from consciously mined metals and conflict-free stones. Tell me who this is for or what category you would like to explore.";
+  let displayProducts = undefined;
   let options = [
     { label: "Find a piece for myself", value: "myself" },
     { label: "Find a gift", value: "gift" },
     { label: "Compare these pieces", value: "trigger-compare" },
+    { label: "Explore collections", value: "collections" },
     { label: "Talk to concierge", value: "trigger-handoff" },
   ];
 
@@ -364,7 +365,7 @@ router.post("/query", async (req, res) => {
     }
     if (Array.isArray(geminiJson.productCards) && geminiJson.productCards.length > 0) {
       displayProducts = geminiJson.productCards.map((card) => {
-        const matched = retrievedProducts.find((p) => p.id === card.productId);
+        const matched = (retrievedProducts || []).find((p) => p.id === card.productId);
         return {
           id: card.productId || matched?.id || `card-${Math.random()}`,
           title: card.name || matched?.title || "Signature Piece",
@@ -377,7 +378,8 @@ router.post("/query", async (req, res) => {
         };
       });
     }
-  } else if (retrievedProducts.length > 0) {
+  } else if (retrievedProducts && retrievedProducts.length > 0 && (categoryFilter || maxPrice)) {
+    displayProducts = retrievedProducts;
     botText = "Here are architectural pieces selected for you from our live catalog:";
   }
 

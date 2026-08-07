@@ -513,24 +513,59 @@ export function handleUserAction(
     });
   } else {
     // Free text fallback or unknown option
-    const parsed = parseUserQuery(userLabel || actionValue);
-    const results = filterCatalog(parsed.category, parsed.budgetStr);
-    messages.push({
-      id: `msg-${Date.now()}-fb`,
-      sender: "bot",
-      text: results.length
-        ? "Here are pieces matching your inquiry:"
-        : "I can assist you with recommendations, gift selection, or bespoke design. How would you like to begin?",
-      products: results.length ? results : undefined,
-      options: results.length
-        ? [{ label: "Compare these pieces", value: "trigger-compare" }]
-        : [
-            { label: "Find a piece for myself", value: "myself" },
-            { label: "Find a gift", value: "gift" },
-            { label: "Talk to concierge", value: "trigger-handoff" },
-          ],
-      timestamp: time,
-    });
+    const textInput = (userLabel || actionValue || "").trim();
+    const qLower = textInput.toLowerCase();
+    const isGeneralBrandQuery =
+      qLower.includes("what") ||
+      qLower.includes("make") ||
+      qLower.includes("craft") ||
+      qLower.includes("about") ||
+      qLower.includes("who") ||
+      qLower.includes("collection") ||
+      qLower.includes("vrix");
+
+    const parsed = parseUserQuery(textInput);
+    const results = (parsed.category || parsed.budgetStr) ? filterCatalog(parsed.category, parsed.budgetStr) : [];
+
+    if (results.length > 0) {
+      messages.push({
+        id: `msg-${Date.now()}-fb`,
+        sender: "bot",
+        text: `Here are architectural pieces matching your request:`,
+        products: results,
+        options: [
+          { label: "Compare these pieces", value: "trigger-compare" },
+          { label: "Talk to concierge", value: "trigger-handoff" },
+        ],
+        timestamp: time,
+      });
+    } else if (isGeneralBrandQuery) {
+      messages.push({
+        id: `msg-${Date.now()}-brand-info`,
+        sender: "bot",
+        text: "VRIX crafts architectural minimalist fine jewelry using consciously mined metals and conflict-free stones. Our collections include Necklaces, Earrings, Rings, Bracelets, and made-to-order Bespoke creations.",
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Find a gift", value: "gift" },
+          { label: "Explore collections", value: "collections" },
+          { label: "Talk to concierge", value: "trigger-handoff" },
+        ],
+        timestamp: time,
+      });
+    } else {
+      messages.push({
+        id: `msg-${Date.now()}-fb-def`,
+        sender: "bot",
+        text: "I can assist you with recommendations, gift selection, diamond education, or bespoke design. How would you like to begin?",
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Find a gift", value: "gift" },
+          { label: "Explore collections", value: "collections" },
+          { label: "Talk to concierge", value: "trigger-handoff" },
+        ],
+        timestamp: time,
+      });
+    }
   }
 
   return {
@@ -555,7 +590,7 @@ function filterCatalog(category?: string, budgetStr?: string): ChatProduct[] {
       list = list.filter((p) => p.price <= budgetVal);
     }
   }
-  return list.length ? list : VRIX_CATALOG.slice(0, 3);
+  return list;
 }
 
 function parseUserQuery(query: string): { category?: string; budgetStr?: string } {
