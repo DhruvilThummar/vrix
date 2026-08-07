@@ -2777,6 +2777,74 @@ export default function AdminCMSPage() {
             </div>
           </section>
 
+          {/* Brand Details & Footer Settings Section */}
+          <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+            <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
+              Brand Details & General Footer Settings
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Brand Display Name</label>
+                <input
+                  type="text"
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                  className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Footer Logo URL</label>
+                <input
+                  type="text"
+                  value={brandLogo}
+                  onChange={(e) => setBrandLogo(e.target.value)}
+                  className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm"
+                  placeholder="/logos/black.png"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Brand Contact Email</label>
+                <input
+                  type="email"
+                  value={brandEmail}
+                  onChange={(e) => setBrandEmail(e.target.value)}
+                  className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Brand Contact Phone</label>
+                <input
+                  type="text"
+                  value={brandPhone}
+                  onChange={(e) => setBrandPhone(e.target.value)}
+                  className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Brand Showroom Address / Slogan</label>
+                <input
+                  type="text"
+                  value={brandAddress}
+                  onChange={(e) => setBrandAddress(e.target.value)}
+                  className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                  placeholder="Designed for the moments that belong only to you."
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">VRIX+ Banner Headline</label>
+                <input
+                  type="text"
+                  value={vrixPlusHeadline}
+                  onChange={(e) => setVrixPlusHeadline(e.target.value)}
+                  className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black"
+                />
+              </div>
+            </div>
+          </section>
+
           {/* Builder Columns Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Columns List Panel */}

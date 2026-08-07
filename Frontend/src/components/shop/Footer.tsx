@@ -18,6 +18,7 @@ export default function Footer() {
   const [email, setEmail] = useState("");
   const [footerLinks, setFooterLinks] = useState<any[]>([]);
 
+  const [vrixPlusHeadline, setVrixPlusHeadline] = useState("Join VRIX+ Circle for early sale access, birthday treats, a discount on your first order, and more.");
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
@@ -31,6 +32,9 @@ export default function Footer() {
           if (res.brand.address) setAddress(res.brand.address);
           if (res.brand.phone) setPhone(res.brand.phone);
           if (res.brand.email) setEmail(res.brand.email);
+        }
+        if (res.vrix_plus && res.vrix_plus.headline) {
+          setVrixPlusHeadline(res.vrix_plus.headline);
         }
         if (Array.isArray(res.footerLinks)) {
           setFooterLinks(res.footerLinks);
@@ -82,7 +86,7 @@ export default function Footer() {
               VRIX+ CIRCLE
             </span>
             <h3 className="font-display-lg text-2xl md:text-3xl text-deep-navy font-light uppercase tracking-wider max-w-2xl mx-auto leading-snug">
-              Join VRIX+ Circle for early sale access, birthday treats, a discount on your first order, and more.
+              {vrixPlusHeadline}
             </h3>
 
             {newsletterSuccess ? (
