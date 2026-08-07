@@ -189,8 +189,13 @@
 
 /* Base resets & animations */
 body {
+  font-family: var(--font-jost), sans-serif;
   background-color: var(--color-surface);
   color: var(--color-on-surface);
+}
+
+h1, h2, h3, h4, h5, h6, button, input, select, textarea {
+  font-family: var(--font-inter), sans-serif;
 }
 
 input:focus, select:focus, textarea:focus {
