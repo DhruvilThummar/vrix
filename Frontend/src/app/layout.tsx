@@ -148,7 +148,22 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         />
+        <style dangerouslySetInnerHTML={{ __html: `
+          body, p, span, li, a, td, th {
+            font-family: var(--font-jost), sans-serif !important;
+          }
+          h1, h2, h3, h4, h5, h6, button, input, select, textarea, label {
+            font-family: var(--font-inter), sans-serif !important;
+          }
+          .font-logo, .font-aquavit {
+            font-family: var(--font-aquavit), Georgia, serif !important;
+          }
+          .font-accent, .font-chancery {
+            font-family: var(--font-chancery), cursive !important;
+          }
+        `}} />
       </head>
+
 
       <body className="min-h-full flex flex-col bg-surface text-on-surface font-body-md antialiased overflow-x-hidden">
         <AuthProvider>
