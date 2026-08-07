@@ -3,37 +3,36 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { getApiBaseUrl } from "@/utils/api";
-
-interface OrderDetails {
-  orderId: string;
-  paymentId?: string;
-  amount: number;
-  email: string;
-  name: string;
-}
+import { useCheckoutStorage } from "@/hooks/useCheckoutStorage";
+import { OrderDetails } from "@/types/checkout";
 
 export default function ConfirmationPage() {
+  const { consumeOrder } = useCheckoutStorage();
   const [order, setOrder] = useState<OrderDetails | null>(null);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("vrix-order");
-    if (saved) {
-      setOrder(JSON.parse(saved));
-      sessionStorage.removeItem("vrix-order");
+    const consumed = consumeOrder();
+    if (consumed) {
+      setOrder(consumed);
     }
-  }, []);
+  }, [consumeOrder]);
 
   return (
     <div className="w-full min-h-screen bg-pure-white flex items-center justify-center px-4">
       <main className="w-full max-w-xl text-center space-y-10 py-20">
-        {/* Animated checkmark */}
+        {/* Animated Checkmark Badge */}
         <div className="flex justify-center">
-          <div className="w-24 h-24 border border-slate-grey/20 flex items-center justify-center bg-soft-linen/50 animate-fade-in">
-            <span className="material-symbols-outlined text-[52px] text-deep-navy" style={{ fontVariationSettings: "'wght' 100, 'FILL' 0" }}>check_circle</span>
+          <div className="w-24 h-24 border border-slate-grey/20 flex items-center justify-center bg-soft-linen/50 animate-fade-in shadow-xs">
+            <span
+              className="material-symbols-outlined text-[52px] text-deep-navy"
+              style={{ fontVariationSettings: "'wght' 100, 'FILL' 0" }}
+            >
+              check_circle
+            </span>
           </div>
         </div>
 
-        {/* Thank you message */}
+        {/* Thank You Greeting */}
         <div className="space-y-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
           <p className="font-label-caps text-[11px] uppercase tracking-widest text-slate-grey">Order Confirmed</p>
           <h1 className="font-display-lg text-3xl md:text-4xl text-ink-black tracking-tight uppercase">
@@ -46,8 +45,13 @@ export default function ConfirmationPage() {
 
         {/* Order Details Card */}
         {order && (
-          <div className="bg-soft-linen/40 border border-slate-grey/20 p-6 text-left space-y-4 animate-fade-in" style={{ animationDelay: "200ms" }}>
-            <h2 className="font-label-caps text-[10px] uppercase tracking-widest text-slate-grey border-b border-slate-grey/15 pb-3">Order Details</h2>
+          <div
+            className="bg-soft-linen/40 border border-slate-grey/20 p-6 text-left space-y-4 animate-fade-in"
+            style={{ animationDelay: "200ms" }}
+          >
+            <h2 className="font-label-caps text-[10px] uppercase tracking-widest text-slate-grey border-b border-slate-grey/15 pb-3">
+              Order Details
+            </h2>
             <div className="space-y-3">
               {[
                 { label: "Order ID", value: order.orderId },
@@ -64,14 +68,14 @@ export default function ConfirmationPage() {
           </div>
         )}
 
-        {/* What's next */}
+        {/* Status Timeline Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center animate-fade-in" style={{ animationDelay: "300ms" }}>
           {[
             { icon: "mail", title: "Confirmation Email", desc: "Sent to your inbox shortly" },
             { icon: "inventory_2", title: "Processing", desc: "Your order enters production" },
             { icon: "local_shipping", title: "Delivery", desc: "Delivered within 5–7 days" },
           ].map((s) => (
-            <div key={s.title} className="border border-slate-grey/15 p-4 space-y-2">
+            <div key={s.title} className="border border-slate-grey/15 p-4 space-y-2 bg-pure-white">
               <span className="material-symbols-outlined text-deep-navy text-2xl">{s.icon}</span>
               <p className="font-label-caps text-[9px] uppercase tracking-widest text-ink-black">{s.title}</p>
               <p className="font-body-md text-[11px] text-slate-grey">{s.desc}</p>
@@ -79,39 +83,43 @@ export default function ConfirmationPage() {
           ))}
         </div>
 
-        {/* Actions */}
+        {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "400ms" }}>
           <Link
             href="/collections/silent-center"
-            className="inline-flex items-center justify-center bg-deep-navy text-pure-white font-button text-button px-10 py-4 hover:bg-ink-black transition-colors uppercase tracking-widest cursor-pointer gap-2"
+            className="inline-flex items-center justify-center bg-deep-navy text-pure-white font-button text-button px-8 py-4 hover:bg-ink-black transition-colors uppercase tracking-widest cursor-pointer gap-2 shadow-md"
           >
             <span className="material-symbols-outlined text-[16px]">storefront</span>
             Continue Shopping
           </Link>
+
           {order?.orderId && (
             <a
               href={`${getApiBaseUrl()}/api/payment/invoice/${order.orderId}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center border border-slate-grey/30 text-ink-black font-button text-button px-10 py-4 hover:border-ink-black transition-colors uppercase tracking-widest cursor-pointer gap-2"
+              className="inline-flex items-center justify-center border border-slate-grey/30 text-ink-black font-button text-button px-8 py-4 hover:border-ink-black transition-colors uppercase tracking-widest cursor-pointer gap-2"
             >
               <span className="material-symbols-outlined text-[16px]">receipt</span>
               Print Invoice
             </a>
           )}
+
           <Link
             href="/account"
-            className="inline-flex items-center justify-center border border-slate-grey/30 text-ink-black font-button text-button px-10 py-4 hover:border-ink-black transition-colors uppercase tracking-widest cursor-pointer gap-2"
+            className="inline-flex items-center justify-center border border-slate-grey/30 text-ink-black font-button text-button px-8 py-4 hover:border-ink-black transition-colors uppercase tracking-widest cursor-pointer gap-2"
           >
             <span className="material-symbols-outlined text-[16px]">person</span>
             My Account
           </Link>
         </div>
 
-        {/* Footer note */}
+        {/* Support Footer Note */}
         <p className="font-body-md text-xs text-slate-grey animate-fade-in" style={{ animationDelay: "500ms" }}>
           Questions? Contact us at{" "}
-          <a href="mailto:contact@vrix.com" className="text-deep-navy underline">contact@vrix.com</a>
+          <a href="mailto:contact@vrix.com" className="text-deep-navy underline">
+            contact@vrix.com
+          </a>
         </p>
       </main>
     </div>

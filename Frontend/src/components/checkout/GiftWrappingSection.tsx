@@ -6,16 +6,24 @@ import { useCart, GiftOption } from "@/context/CartContext";
 import { fetchGiftWrappingAPI } from "@/utils/api";
 import { useCurrency } from "@/context/CurrencyContext";
 
+interface GiftWrappingConfig {
+  isEnabled: boolean;
+  title: string;
+  price: number;
+  image: string;
+  description: string;
+}
+
 export default function GiftWrappingSection() {
   const { isGiftWrapped, toggleGiftWrap, giftMessage, setGiftMessage, selectedGiftOptions, toggleGiftOption } = useCart();
   const { formatPrice } = useCurrency();
 
-  const [config, setConfig] = useState({
+  const [config, setConfig] = useState<GiftWrappingConfig>({
     isEnabled: true,
     title: "Signature Gift Packaging & Ribbon Card",
     price: 250,
     image: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
-    description: "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card."
+    description: "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card.",
   });
   const [dbGiftOptions, setDbGiftOptions] = useState<GiftOption[]>([]);
 
@@ -28,7 +36,7 @@ export default function GiftWrappingSection() {
             title: res.title || "Signature Gift Packaging & Ribbon Card",
             price: res.price || 250,
             image: res.image || "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600&auto=format&fit=crop",
-            description: res.description || "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card."
+            description: res.description || "Delivered in signature luxury pouch, ribbon-wrapped box, and custom hand-written gift card.",
           });
           if (Array.isArray(res.giftOptions)) {
             setDbGiftOptions(res.giftOptions);
@@ -98,11 +106,11 @@ export default function GiftWrappingSection() {
         </button>
       </div>
 
-      {/* Multiple Gift Packaging Catalog from DB */}
+      {/* Custom Cases & Cards Catalog */}
       {dbGiftOptions.length > 0 && (
         <div className="space-y-2.5">
           <h4 className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
-            Select Custom Presentation Cases & Cards
+            Select Custom Presentation Cases &amp; Cards
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {dbGiftOptions.map((option: GiftOption) => {
@@ -147,7 +155,7 @@ export default function GiftWrappingSection() {
         </div>
       )}
 
-      {/* Gift Note Box when checked or gift options selected */}
+      {/* Custom Calligraphy Note Box */}
       {(isGiftWrapped || selectedGiftOptions.length > 0) && (
         <div className="pt-3 border-t border-soft-linen space-y-2 animate-fade-in">
           <div className="flex justify-between items-center text-[10px] font-label-caps text-slate-grey uppercase tracking-widest">
