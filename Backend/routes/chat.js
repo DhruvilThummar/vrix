@@ -1,10 +1,11 @@
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "../database.js";
 
 const router = express.Router();
 
-// ── VRIX Quiet Luxury System Prompt ─────────────────────────────────────────
+// ── VRIX Quiet Luxury System Prompt & 7 Core Intents Directive ──────────────
 const VRIX_SYSTEM_PROMPT = `
 You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
 Your brand tagline is: "Designed for the moments that belong only to you."
@@ -15,9 +16,19 @@ VOICE & TONE GUIDELINES (STRICT):
 - ABSOLUTELY ZERO exclamation points (!). Do not use them under any circumstances.
 - Zero fluff. Be polite but highly concise and direct.
 
+CORE INTENT RECOGNITION (7 INTENTS):
+Identify the user's intent from the following 7 categories and select appropriate actionChips:
+1. "Find a piece for myself" -> Return chips: ["Explore Necklaces", "Filter by Budget"]
+2. "Find a gift" -> Return chips: ["Gift Guide", "VRIX+ Circle Discount"]
+3. "Explore collections" -> Return chips: ["Rings", "Earrings", "Bespoke"]
+4. "Compare Products" -> Return chips: ["Compare Features", "Side-by-Side View"]
+5. "Diamond / Material Education" -> Return chips: ["The 4Cs Guide", "Ethical Sourcing"]
+6. "Repairs & Warranty" -> Return chips: ["Human Concierge", "Warranty Policy"]
+7. "Bespoke Consultation" -> Return chips: ["Bespoke Consultation", "Atelier Quote"]
+
 YOUR CORE DIRECTIVES:
 1. Grounding: Answer customer questions STRICTLY based on the provided [PRODUCT CONTEXT]. Do not hallucinate prices, materials, or policies.
-2. Recommendations: When recommending a product, include a brief, tailored "why this fits" reasoning based on their request (e.g., occasion, budget, feel).
+2. Recommendations: When recommending a product, include a brief, tailored "why this fits" reasoning based on their request.
 3. Diamond/Material Education: Provide plain, factual guidance on the 4Cs and metal purities if asked, emphasizing VRIX's conflict-free ethical sourcing.
 4. Fallback: If a user asks something outside the provided context, politely route them to the human concierge or bespoke atelier.
 
@@ -35,9 +46,9 @@ Your JSON must strictly follow this structure:
       "reason": "One short sentence explaining why this fits."
     }
   ],
-  "actionChips": ["Explore Necklaces", "Bespoke Consultation"] 
+  "actionChips": ["Chip Label 1", "Chip Label 2"] 
 }
-If no products are relevant, leave the "productCards" array empty []. Provide 2-3 logical next steps in "actionChips".
+If no products are relevant, leave "productCards" empty []. Always provide 2-3 logical actionChips matching the detected intent.
 `;
 
 // ── Vector Embedding Generator via Gemini text-embedding-004 ───────────────
@@ -152,8 +163,8 @@ async function searchLocalDbProducts(userQuery, categoryFilter, maxPrice, limit 
   }
 }
 
-// ── Gemini 1.5 Flash Model RAG Generator with Strict JSON Parsing ──────────
-async function generateGeminiRagResponse(userPrompt, retrievedProducts) {
+// ── Complete production generateGeminiRagResponse Function ──────────────────
+export async function generateGeminiRagResponse(userPrompt, retrievedProducts) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) return null;
 
@@ -169,29 +180,49 @@ ${contextData || "No direct product matches found."}
 User Question: "${userPrompt}"
 `;
 
+  // 1. Try @google/generative-ai SDK first if available
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: fullPrompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.2,
-        },
-      }),
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.2,
+      },
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (rawText) {
-        const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-        return JSON.parse(cleanJson);
-      }
+    const result = await model.generateContent(fullPrompt);
+    const rawText = result.response.text();
+    if (rawText) {
+      const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+      return JSON.parse(cleanJson);
     }
-  } catch (err) {
-    console.error("Gemini API call error:", err);
+  } catch (sdkErr) {
+    // 2. Fallback to Direct REST API Call
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: fullPrompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.2,
+          },
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+          return JSON.parse(cleanJson);
+        }
+      }
+    } catch (restErr) {
+      console.error("Gemini RAG REST call error:", restErr);
+    }
   }
 
   return null;
