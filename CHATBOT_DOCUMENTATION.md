@@ -43,7 +43,7 @@ The assistant uses a **Retrieval-Augmented Generation (RAG)** pipeline:
 
 ---
 
-## 🤖 3. Gemini System Prompt & Output Schema
+## 🤖 3. Gemini System Prompt & Anti-Hallucination Grounding Rules
 
 The backend sends this system prompt and forces strict JSON schema generation (`responseMimeType: "application/json"`):
 
@@ -61,6 +61,16 @@ VOICE & TONE (STRICT):
 - Warm, restrained, and confident. Plain verbs, sentence case.
 - ABSOLUTELY ZERO exclamation points (!).
 - Zero fluff.
+
+CORE INTENT RECOGNITION (7 INTENTS):
+Identify the user's intent from the following 7 categories and select appropriate actionChips:
+1. "Find a piece for myself" -> Return chips: ["Explore Necklaces", "Filter by Budget"]
+2. "Find a gift" -> Return chips: ["Gift Guide", "VRIX+ Circle Discount"]
+3. "Explore collections" -> Return chips: ["Rings", "Earrings", "Bespoke"]
+4. "Compare Products" -> Return chips: ["Compare Features", "Side-by-Side View"]
+5. "Diamond / Material Education" -> Return chips: ["The 4Cs Guide", "Ethical Sourcing"]
+6. "Repairs & Warranty" -> Return chips: ["Human Concierge", "Warranty Policy"]
+7. "Bespoke Consultation" -> Return chips: ["Bespoke Consultation", "Atelier Quote"]
 
 OUTPUT FORMAT (STRICT JSON):
 {
@@ -146,11 +156,35 @@ $$;
 ```javascript
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "../database.js";
 
 const router = express.Router();
 
-// Generate vector embedding via Gemini text-embedding-004
+// ── Search Query Optimizer via @google/generative-ai SDK ──────────────────
+async function optimizeSearchQuery(userMessage) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!apiKey || !userMessage || userMessage.trim().length === 0) return userMessage;
+
+  const prompt = `You are a search query optimizer for a luxury jewelry store database.
+Convert the user's conversational message into a highly effective, keyword-rich search string for a Vector/Cosine similarity search.
+1. Remove conversational filler words (e.g., "show me", "I want", "looking for").
+2. Extract core intent: Category, Material, Occasion, Budget descriptors.
+3. Output ONLY the extracted search keywords as a single line.\n\nUser Message: "${userMessage}"`;
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    if (text) return text.trim().replace(/^["']|["']$/g, "");
+  } catch (err) {
+    console.error("SDK Query optimization error:", err);
+  }
+  return userMessage;
+}
+
+// ── Vector Embedding Generator via Gemini text-embedding-004 ───────────────
 async function generateGeminiEmbedding(text, apiKey) {
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
     method: "POST",
@@ -165,8 +199,8 @@ async function generateGeminiEmbedding(text, apiKey) {
   return data?.embedding?.values || null;
 }
 
-// Perform vector search via Supabase RPC
-async function searchSupabaseRpc(userMessage) {
+// ── Supabase RPC match_products Vector Similarity Search ───────────────────
+async function searchSupabaseRpc(userText) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
@@ -174,10 +208,11 @@ async function searchSupabaseRpc(userMessage) {
   if (!supabaseUrl || !supabaseKey || !apiKey) return null;
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const queryVector = await generateGeminiEmbedding(userMessage, apiKey);
+    const optimizedKeywords = await optimizeSearchQuery(userText);
+    const queryVector = await generateGeminiEmbedding(optimizedKeywords, apiKey);
     if (!queryVector) return null;
 
+    const supabase = createClient(supabaseUrl, supabaseKey);
     const { data: matched, error } = await supabase.rpc("match_products", {
       query_embedding: queryVector,
       match_threshold: 0.3,
@@ -199,6 +234,43 @@ async function searchSupabaseRpc(userMessage) {
   } catch (err) {
     return null;
   }
+}
+
+// ── Complete production generateGeminiRagResponse Function ──────────────────
+export async function generateGeminiRagResponse(userPrompt, retrievedProducts) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!apiKey) return null;
+
+  const contextData = (retrievedProducts || [])
+    .map(
+      (p) =>
+        `ID: ${p.id} | Name: ${p.title || p.name} | Category: ${p.category || p.type || "Jewelry"} | Material: ${p.material || "18K Gold / Sterling Silver"} | Price: ₹${p.price} | Description: ${p.description || p.whyFits || "Architectural minimal design"}`
+    )
+    .join("\n");
+
+  const fullPrompt = `${VRIX_SYSTEM_PROMPT}\n\n[PRODUCT CONTEXT]\n${contextData || "No direct product matches found in catalog."}\n\nUser Question: "${userPrompt}"`;
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.2,
+      },
+    });
+
+    const result = await model.generateContent(fullPrompt);
+    const rawText = result.response.text();
+    if (rawText) {
+      const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+      return JSON.parse(cleanJson);
+    }
+  } catch (sdkErr) {
+    console.error("SDK Gemini RAG error:", sdkErr);
+  }
+
+  return null;
 }
 
 // POST /api/chat/query
@@ -279,9 +351,11 @@ GEMINI_API_KEY=your_gemini_api_key
 
 ## 🚀 8. High-Availability & UX Features
 
-1. **Context Memory Window Persistence**: Conversation state and surfaced products are stored in `localStorage` (`vrix-chat-history-v1` and `vrix-chat-engine-state-v1`), preserving chat threads across page reloads.
-2. **Polite High-Volume Busy Error Handling**: If database or API connectivity drops, the assistant emits a restrained quiet-luxury busy message instead of crashing.
-3. **Bespoke Live Estimate Card**: Provides live estimated price ranges (e.g. ₹65,000 – ₹1,80,000) and crafting lead times (3–4 weeks) with direct atelier consultation booking buttons.
+1. **Search Query Optimizer**: Conversational user prompts are preprocessed using `gemini-1.5-flash` to extract space-separated search keywords before embedding generation.
+2. **Critical Grounding Rules**: Strict anti-hallucination prompt forces verbatim fallback (*"I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests."*) if data is outside catalog context.
+3. **Context Memory Window Persistence**: Conversation state and surfaced products are stored in `localStorage` (`vrix-chat-history-v1` and `vrix-chat-engine-state-v1`), preserving chat threads across page reloads.
+4. **Polite High-Volume Busy Error Handling**: If database or API connectivity drops, the assistant emits a restrained quiet-luxury busy message instead of crashing.
+5. **Bespoke Live Estimate Card**: Provides live estimated price ranges (e.g. ₹65,000 – ₹1,80,000) and crafting lead times (3–4 weeks) with direct atelier consultation booking buttons.
 
 ---
 

@@ -62,27 +62,40 @@ Instructions:
 4. Output ONLY the extracted search keywords as a single line. Do not wrap it in JSON or quotes.
 `;
 
-// Preprocess user conversational prompt into keyword-rich vector search query
-async function optimizeSearchQuery(userMessage, apiKey) {
+// Preprocess user conversational prompt into keyword-rich vector search query using @google/generative-ai SDK
+async function optimizeSearchQuery(userMessage) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey || !userMessage || userMessage.trim().length === 0) return userMessage;
+
+  const prompt = `${SEARCH_OPTIMIZER_PROMPT}\n\nUser Message: "${userMessage}"`;
+
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: `${SEARCH_OPTIMIZER_PROMPT}\n\nUser Message: "${userMessage}"` }] }],
-        generationConfig: { temperature: 0.1 },
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) {
-        return text.trim().replace(/^["']|["']$/g, "");
-      }
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    if (text) {
+      return text.trim().replace(/^["']|["']$/g, "");
     }
   } catch (err) {
-    console.error("Query optimization error:", err);
+    console.error("SDK Query optimization error, using fallback REST:", err);
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.1 },
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return text.trim().replace(/^["']|["']$/g, "");
+      }
+    } catch (restErr) {
+      console.error("REST Query optimization error:", restErr);
+    }
   }
   return userMessage;
 }
@@ -108,17 +121,23 @@ async function generateGeminiEmbedding(text, apiKey) {
 }
 
 // ── Supabase RPC match_products Vector Similarity Search ───────────────────
-async function searchSupabaseRpc(userMessage, apiKey) {
+async function searchSupabaseRpc(userText) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
   if (!supabaseUrl || !supabaseKey || !apiKey) return null;
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const queryVector = await generateGeminiEmbedding(userMessage, apiKey);
+    // Step 1: Preprocess raw conversational userText into optimized search keywords
+    const optimizedKeywords = await optimizeSearchQuery(userText);
+
+    // Step 2: Generate vector embedding for optimized keywords
+    const queryVector = await generateGeminiEmbedding(optimizedKeywords, apiKey);
     if (!queryVector) return null;
 
+    // Step 3: Execute match_products RPC in Supabase pgvector
+    const supabase = createClient(supabaseUrl, supabaseKey);
     const { data: matched, error } = await supabase.rpc("match_products", {
       query_embedding: queryVector,
       match_threshold: 0.3,
@@ -204,13 +223,16 @@ export async function generateGeminiRagResponse(userPrompt, retrievedProducts) {
   if (!apiKey) return null;
 
   const contextData = (retrievedProducts || [])
-    .map((p) => `ID: ${p.id} | Name: ${p.title} | Category: ${p.category} | Material: ${p.material} | Price: ₹${p.price} | Reason: ${p.whyFits}`)
+    .map(
+      (p) =>
+        `ID: ${p.id} | Name: ${p.title || p.name} | Category: ${p.category || p.type || "Jewelry"} | Material: ${p.material || "18K Gold / Sterling Silver"} | Price: ₹${p.price} | Description: ${p.description || p.whyFits || "Architectural minimal design"}`
+    )
     .join("\n");
 
   const fullPrompt = `${VRIX_SYSTEM_PROMPT}
 
 [PRODUCT CONTEXT]
-${contextData || "No direct product matches found."}
+${contextData || "No direct product matches found in catalog."}
 
 User Question: "${userPrompt}"
 `;
@@ -288,14 +310,12 @@ router.post("/query", async (req, res) => {
   else if (lower.includes("40k") || lower.includes("40000")) maxPrice = 40000;
   else if (lower.includes("75k") || lower.includes("75000")) maxPrice = 75000;
 
-  // Step 1: Preprocess conversational prompt into keyword-rich vector search query
-  const optimizedQuery = await optimizeSearchQuery(userText, apiKey);
+  // Step 1: Execute Supabase RPC match_products vector search (which calls optimizeSearchQuery internally)
+  let retrievedProducts = await searchSupabaseRpc(userText);
 
-  // Step 2: Try Supabase RPC match_products vector search first with optimized query
-  let retrievedProducts = await searchSupabaseRpc(optimizedQuery, apiKey);
-
-  // Step 3: Fallback to local DB vector search if Supabase RPC returned null
+  // Step 2: Fallback to local DB vector search if Supabase RPC returned null
   if (!retrievedProducts) {
+    const optimizedQuery = await optimizeSearchQuery(userText);
     retrievedProducts = await searchLocalDbProducts(optimizedQuery, categoryFilter, maxPrice);
   }
 
