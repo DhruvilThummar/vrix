@@ -5,14 +5,19 @@ import { db } from "../database.js";
 
 const router = express.Router();
 
-// ── VRIX Quiet Luxury System Prompt & 7 Core Intents Directive ──────────────
+// ── VRIX Quiet Luxury System Prompt & Grounding Anti-Hallucination Directive ──
 const VRIX_SYSTEM_PROMPT = `
 You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
 Your brand tagline is: "Designed for the moments that belong only to you."
 
-VOICE & TONE GUIDELINES (STRICT):
-- Maintain a warm, restrained, and confident tone.
-- Use plain verbs and sentence case.
+CRITICAL GROUNDING RULES (ANTI-HALLUCINATION):
+1. You MUST answer strictly and only using the [PRODUCT CONTEXT] provided below.
+2. If the user asks about a product, price, or policy that is NOT explicitly mentioned in the [PRODUCT CONTEXT], you MUST say exactly: "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests."
+3. DO NOT invent, guess, or assume prices, materials, discounts, or inventory status.
+4. DO NOT bring in outside general knowledge about jewelry to answer specific inventory questions.
+
+VOICE & TONE (STRICT):
+- Warm, restrained, and confident. Plain verbs, sentence case.
 - ABSOLUTELY ZERO exclamation points (!). Do not use them under any circumstances.
 - Zero fluff. Be polite but highly concise and direct.
 
@@ -26,18 +31,12 @@ Identify the user's intent from the following 7 categories and select appropriat
 6. "Repairs & Warranty" -> Return chips: ["Human Concierge", "Warranty Policy"]
 7. "Bespoke Consultation" -> Return chips: ["Bespoke Consultation", "Atelier Quote"]
 
-YOUR CORE DIRECTIVES:
-1. Grounding: Answer customer questions STRICTLY based on the provided [PRODUCT CONTEXT]. Do not hallucinate prices, materials, or policies.
-2. Recommendations: When recommending a product, include a brief, tailored "why this fits" reasoning based on their request.
-3. Diamond/Material Education: Provide plain, factual guidance on the 4Cs and metal purities if asked, emphasizing VRIX's conflict-free ethical sourcing.
-4. Fallback: If a user asks something outside the provided context, politely route them to the human concierge or bespoke atelier.
-
 OUTPUT FORMAT (STRICT JSON):
 You must ALWAYS respond in valid JSON format only. Do not include markdown formatting like \`\`\`json.
 Your JSON must strictly follow this structure:
 
 {
-  "botText": "Your elegant, quiet-luxury response here. (No exclamation marks)",
+  "botText": "Your quiet-luxury response here.",
   "productCards": [
     {
       "productId": "id_from_context",
@@ -46,10 +45,47 @@ Your JSON must strictly follow this structure:
       "reason": "One short sentence explaining why this fits."
     }
   ],
-  "actionChips": ["Chip Label 1", "Chip Label 2"] 
+  "actionChips": ["Chip Label 1", "Chip Label 2"]
 }
-If no products are relevant, leave "productCards" empty []. Always provide 2-3 logical actionChips matching the detected intent.
+If no products are relevant, leave "productCards" empty []. Provide 2-3 logical actionChips matching the detected intent.
 `;
+
+// ── Search Query Optimizer System Prompt ──────────────────────────────────
+const SEARCH_OPTIMIZER_PROMPT = `
+You are a search query optimizer for a luxury jewelry store database.
+Your task is to convert the user's conversational message into a highly effective, keyword-rich search string for a Vector/Cosine similarity search.
+
+Instructions:
+1. Remove all conversational filler words (e.g., "show me", "I want", "looking for", "my wife").
+2. Extract the core intent: Category (ring, necklace), Material (gold, silver, diamond), Occasion (gift, wedding), and Budget attributes (affordable, luxury).
+3. If the user mentions a specific budget (e.g., "under 50k"), convert it into descriptive keywords like "budget, affordable, premium" depending on the context.
+4. Output ONLY the extracted search keywords as a single line. Do not wrap it in JSON or quotes.
+`;
+
+// Preprocess user conversational prompt into keyword-rich vector search query
+async function optimizeSearchQuery(userMessage, apiKey) {
+  if (!apiKey || !userMessage || userMessage.trim().length === 0) return userMessage;
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `${SEARCH_OPTIMIZER_PROMPT}\n\nUser Message: "${userMessage}"` }] }],
+        generationConfig: { temperature: 0.1 },
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        return text.trim().replace(/^["']|["']$/g, "");
+      }
+    }
+  } catch (err) {
+    console.error("Query optimization error:", err);
+  }
+  return userMessage;
+}
 
 // ── Vector Embedding Generator via Gemini text-embedding-004 ───────────────
 async function generateGeminiEmbedding(text, apiKey) {
@@ -72,10 +108,9 @@ async function generateGeminiEmbedding(text, apiKey) {
 }
 
 // ── Supabase RPC match_products Vector Similarity Search ───────────────────
-async function searchSupabaseRpc(userMessage) {
+async function searchSupabaseRpc(userMessage, apiKey) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
   if (!supabaseUrl || !supabaseKey || !apiKey) return null;
 
@@ -108,7 +143,7 @@ async function searchSupabaseRpc(userMessage) {
   }
 }
 
-// ── Local Fallback Vector Similarity Search over Prisma / Database ──────────
+// ── Local Fallback Vector Similarity Search over Database ──────────────────
 function computeTextVector(text = "") {
   const words = text.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean);
   const tf = {};
@@ -236,6 +271,7 @@ function formatTime() {
 router.post("/query", async (req, res) => {
   const { actionValue, userLabel, currentFlow, step, data, query, userMessage } = req.body || {};
   const userText = userMessage || query || userLabel || actionValue || "show jewelry";
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   const time = formatTime();
 
   // Extract category & budget parameters
@@ -252,12 +288,15 @@ router.post("/query", async (req, res) => {
   else if (lower.includes("40k") || lower.includes("40000")) maxPrice = 40000;
   else if (lower.includes("75k") || lower.includes("75000")) maxPrice = 75000;
 
-  // Step 1: Try Supabase RPC match_products vector search first
-  let retrievedProducts = await searchSupabaseRpc(userText);
+  // Step 1: Preprocess conversational prompt into keyword-rich vector search query
+  const optimizedQuery = await optimizeSearchQuery(userText, apiKey);
 
-  // Step 2: Fallback to local DB vector search if Supabase RPC returned null
+  // Step 2: Try Supabase RPC match_products vector search first with optimized query
+  let retrievedProducts = await searchSupabaseRpc(optimizedQuery, apiKey);
+
+  // Step 3: Fallback to local DB vector search if Supabase RPC returned null
   if (!retrievedProducts) {
-    retrievedProducts = await searchLocalDbProducts(userText, categoryFilter, maxPrice);
+    retrievedProducts = await searchLocalDbProducts(optimizedQuery, categoryFilter, maxPrice);
   }
 
   // High-Volume Busy Fallback Error Handling if DB and fallback fail completely
@@ -280,7 +319,7 @@ router.post("/query", async (req, res) => {
     });
   }
 
-  // Step 3: Call Gemini 1.5 Flash Model RAG Generator
+  // Step 4: Call Gemini 1.5 Flash Model RAG Generator
   const geminiJson = await generateGeminiRagResponse(userText, retrievedProducts);
 
   let botText = "Welcome to VRIX. Tell me who this is for and the occasion, and I'll narrow it down.";
@@ -327,6 +366,7 @@ router.post("/query", async (req, res) => {
     rag: {
       vectorRetrievedCount: retrievedProducts.length,
       geminiUsed: !!geminiJson,
+      optimizedQuery,
     },
     messages: [
       {

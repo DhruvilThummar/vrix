@@ -22,19 +22,20 @@ The assistant uses a **Retrieval-Augmented Generation (RAG)** pipeline:
 ┌──────────────────────────┐          ┌──────────────────────────┐
 │  VRIX Frontend (Next.js) │          │   VRIX Backend (Node.js) │
 │  - VrixChatWidget        │          │   - /api/chat/query      │
-│  - Tailwind v4 Tokens    │          │   - Supabase RPC Match   │
-│  - LocalStorage Memory   │          │   - Gemini 1.5 Flash RAG │
+│  - Tailwind v4 Tokens    │          │   - Search Query Optimizer   │
+│  - LocalStorage Memory   │          │   - Supabase RPC Match   │
 └────────────┬─────────────┘          └────────────┬─────────────┘
              │                                     │
-             │ 1. POST /api/chat/query             │ 2. Embed user prompt via
-             ├────────────────────────────────────>│    Gemini text-embedding-004
-             │                                     │ 3. Execute match_products RPC
-             │                                     │    in Supabase pgvector
-             │                                     │ 4. Build [PRODUCT CONTEXT]
-             │                                     │ 5. Call Gemini 1.5 Flash
+             │ 1. POST /api/chat/query             │ 2. Preprocess prompt via
+             ├────────────────────────────────────>│    Search Query Optimizer
+             │                                     │ 3. Embed keywords via
+             │                                     │    Gemini text-embedding-004
+             │                                     │ 4. Execute match_products RPC
+             │                                     │ 5. Build [PRODUCT CONTEXT]
+             │                                     │ 6. Call Gemini 1.5 Flash
              │                                     │    with Strict JSON Schema
              │                                     │
-             │ 6. Parsed JSON Response             │
+             │ 7. Parsed JSON Response             │
              │    (botText, productCards, chips)   │
              │<────────────────────────────────────┤
              v                                     v
@@ -50,21 +51,20 @@ The backend sends this system prompt and forces strict JSON schema generation (`
 You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
 Your brand tagline is: "Designed for the moments that belong only to you."
 
-VOICE & TONE GUIDELINES (STRICT):
-- Maintain a warm, restrained, and confident tone.
-- Use plain verbs and sentence case.
-- ABSOLUTELY ZERO exclamation points (!). Do not use them under any circumstances.
-- Zero fluff. Be polite but highly concise and direct.
+CRITICAL GROUNDING RULES (ANTI-HALLUCINATION):
+1. You MUST answer strictly and only using the [PRODUCT CONTEXT] provided below.
+2. If the user asks about a product, price, or policy that is NOT explicitly mentioned in the [PRODUCT CONTEXT], you MUST say exactly: "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests."
+3. DO NOT invent, guess, or assume prices, materials, discounts, or inventory status.
+4. DO NOT bring in outside general knowledge about jewelry to answer specific inventory questions.
 
-YOUR CORE DIRECTIVES:
-1. Grounding: Answer customer questions STRICTLY based on the provided [PRODUCT CONTEXT]. Do not hallucinate prices, materials, or policies.
-2. Recommendations: When recommending a product, include a brief, tailored "why this fits" reasoning based on their request (e.g., occasion, budget, feel).
-3. Diamond/Material Education: Provide plain, factual guidance on the 4Cs and metal purities if asked, emphasizing VRIX's conflict-free ethical sourcing.
-4. Fallback: If a user asks something outside the provided context, politely route them to the human concierge or bespoke atelier.
+VOICE & TONE (STRICT):
+- Warm, restrained, and confident. Plain verbs, sentence case.
+- ABSOLUTELY ZERO exclamation points (!).
+- Zero fluff.
 
 OUTPUT FORMAT (STRICT JSON):
 {
-  "botText": "Your elegant, quiet-luxury response here. (No exclamation marks)",
+  "botText": "Your quiet-luxury response here.",
   "productCards": [
     {
       "productId": "id_from_context",
@@ -73,7 +73,7 @@ OUTPUT FORMAT (STRICT JSON):
       "reason": "One short sentence explaining why this fits."
     }
   ],
-  "actionChips": ["Explore Necklaces", "Bespoke Consultation"]
+  "actionChips": ["Chip 1", "Chip 2"]
 }
 ```
 
@@ -302,3 +302,12 @@ Expected Output:
   "geminiConfigured": true
 }
 ```
+
+---
+
+## ✨ 10. UI/UX Micro-Interactions & Polish
+
+1. **Hover Copy Message**: Hovering over any assistant message bubble reveals a minimal `content_copy` button that copies the text with a subtle "Copied" confirmation.
+2. **Restrained Motion Signature**: Features a single-glint CSS animation on the floating FAB button and send button on hover/idle without distracting flashy loops.
+3. **Seamless Mobile Takeover**: Automatically transitions to a full-screen takeover on mobile screens (`<640px`) with body scroll locking to prevent background page scroll drift.
+4. **Instant Persistent Memory**: Preserves thread history and surfaced product context in `localStorage` across reloads and tab changes.
