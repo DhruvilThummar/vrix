@@ -330,7 +330,7 @@ export default function PaymentPage() {
             <div className="bg-deep-navy/5 border border-deep-navy/15 p-4 flex justify-between items-center">
               <div>
                 <p className="font-label-caps text-[10px] uppercase tracking-widest text-slate-grey">Amount to Pay</p>
-                <p className="font-headline-md text-2xl text-deep-navy font-bold mt-1">₹{grandTotal.toFixed(2)}</p>
+                <p className="font-headline-md text-2xl text-deep-navy font-bold mt-1">{formatPrice(grandTotal)}</p>
               </div>
               {promoCode && (
                 <div className="text-right">

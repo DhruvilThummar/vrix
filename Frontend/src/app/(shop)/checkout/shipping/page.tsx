@@ -81,9 +81,8 @@ export default function Page() {
       city,
       postalCode,
       phone,
-      grandTotal: formatPriceRaw(grandTotal),
-      grandTotalInr: grandTotal,
-      currency
+      grandTotal: grandTotal,
+      currency: currency || "INR"
     };
 
     sessionStorage.setItem("vrix-shipping", JSON.stringify(shippingData));

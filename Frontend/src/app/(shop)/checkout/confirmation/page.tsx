@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { getApiBaseUrl } from "@/utils/api";
 
 interface OrderDetails {
   orderId: string;
@@ -89,7 +90,7 @@ export default function ConfirmationPage() {
           </Link>
           {order?.orderId && (
             <a
-              href={`/api/payment/invoice/${order.orderId}`}
+              href={`${getApiBaseUrl()}/api/payment/invoice/${order.orderId}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center border border-slate-grey/30 text-ink-black font-button text-button px-10 py-4 hover:border-ink-black transition-colors uppercase tracking-widest cursor-pointer gap-2"
