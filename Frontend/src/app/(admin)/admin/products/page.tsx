@@ -8,7 +8,7 @@ import {
   updateProductStock, updateProductVisibility, fetchAllCollections,
   fetchSiteConfig, saveSiteConfigKey
 } from "@/utils/api";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 const DEFAULT_COLLECTIONS = ["silent-center", "solitude", "presence", "light"];
 const DEFAULT_COLLECTION_LABELS: Record<string, string> = {
@@ -808,7 +808,7 @@ function AdminProductsContent() {
                             {collectionLabels[p.collection || ""] || p.collection || "No Collection"} · {p.type}
                           </p>
                           {p.sku && <p className="text-[9px] text-slate-grey/60 font-mono truncate">{p.sku}</p>}
-                          <p className="text-xs text-deep-navy font-semibold mt-0.5">${p.price?.toLocaleString()}</p>
+                          <p className="text-xs text-deep-navy font-semibold mt-0.5">{formatPrice(p.price || 0)}</p>
                         </div>
                         {/* Badges */}
                         <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -1302,26 +1302,16 @@ function AdminProductsContent() {
                         </div>
                       </div>
 
-                      {/* Auto International Multi-Currency Live Preview Badge */}
+                      {/* Rupee Price Summary Badge */}
                       {Number(fPrice) > 0 && (
                         <div className="p-3 bg-soft-linen/80 border border-slate-grey/20 rounded-sm space-y-1.5">
                           <p className="font-label-caps text-[10px] uppercase text-deep-navy font-semibold tracking-wider flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[13px]">public</span>
-                            Auto International Customer Price Estimates
+                            <span className="material-symbols-outlined text-[13px]">payments</span>
+                            Admin Price Preview (Rupee ₹)
                           </p>
-                          <div className="grid grid-cols-3 gap-2 text-xs font-body-md">
-                            <div className="bg-pure-white p-2 border border-slate-grey/15 rounded text-center">
-                              <span className="block text-[9px] font-label-caps text-slate-grey uppercase">USA & Global ($)</span>
-                              <span className="font-semibold text-ink-black">${(Number(fPrice) * 0.012).toFixed(2)}</span>
-                            </div>
-                            <div className="bg-pure-white p-2 border border-slate-grey/15 rounded text-center">
-                              <span className="block text-[9px] font-label-caps text-slate-grey uppercase">Europe / EU (€)</span>
-                              <span className="font-semibold text-ink-black">€{(Number(fPrice) * 0.011).toFixed(2)}</span>
-                            </div>
-                            <div className="bg-pure-white p-2 border border-slate-grey/15 rounded text-center">
-                              <span className="block text-[9px] font-label-caps text-slate-grey uppercase">United Kingdom (£)</span>
-                              <span className="font-semibold text-ink-black">£{(Number(fPrice) * 0.0095).toFixed(2)}</span>
-                            </div>
+                          <div className="bg-pure-white p-2.5 border border-slate-grey/15 rounded flex items-center justify-between text-xs font-body-md">
+                            <span className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Selling Price</span>
+                            <span className="font-bold text-deep-navy text-sm">₹{Number(fPrice).toLocaleString("en-IN")}</span>
                           </div>
                         </div>
                       )}
@@ -1383,7 +1373,7 @@ function AdminProductsContent() {
                         </div>
                         {fVrixPlusExclusive && (
                           <div className="flex flex-col gap-1.5 pt-2 border-t border-amber-200/60">
-                            <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Member-Only Price (USD) — Optional</label>
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Member-Only Price (INR ₹) — Optional</label>
                             <input
                               type="number" value={fVrixPlusPrice}
                               onChange={(e) => setFVrixPlusPrice(Number(e.target.value))}
@@ -1426,7 +1416,7 @@ function AdminProductsContent() {
                               <input type="number" value={fEngravingLimit} onChange={(e) => setFEngravingLimit(Number(e.target.value))} min={1} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent font-body-md" />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Extra Charge (USD)</label>
+                              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Extra Charge (INR ₹)</label>
                               <input type="number" value={fEngravingPrice} onChange={(e) => setFEngravingPrice(Number(e.target.value))} min={0} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent font-body-md" />
                             </div>
                           </div>
@@ -1609,7 +1599,7 @@ function AdminProductsContent() {
                     <p className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">{collectionLabels[fCollection] || fCollection || "No Collection"}</p>
                     <h3 className="font-body-md text-sm text-ink-black font-medium leading-snug">{fTitle || "Product Title"}</h3>
                     {fMaterial && <p className="text-[10px] text-slate-grey">{fMaterial}</p>}
-                    <p className="text-deep-navy font-semibold text-sm">{fPrice ? `$${Number(fPrice).toLocaleString()}` : "$0"}</p>
+                    <p className="text-deep-navy font-semibold text-sm">{formatPrice(Number(fPrice || 0))}</p>
                   </div>
                 </div>
 
@@ -1728,7 +1718,7 @@ function AdminProductsContent() {
                             </span>
                           </div>
                           <span className="text-[9px] text-slate-grey uppercase tracking-wider">
-                            {t.type} • {t.material} • <span className="text-deep-navy font-bold">${t.price}</span>
+                            {t.type} • {t.material} • <span className="text-deep-navy font-bold">{formatPrice(t.price)}</span>
                           </span>
                         </button>
                       );
@@ -1796,7 +1786,7 @@ function AdminProductsContent() {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Price ($)</label>
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Base Price (INR ₹)</label>
                       <input
                         type="number"
                         min={0}
@@ -1809,7 +1799,7 @@ function AdminProductsContent() {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Original Price ($)</label>
+                      <label className="text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">Original Price (INR ₹)</label>
                       <input
                         type="number"
                         min={0}

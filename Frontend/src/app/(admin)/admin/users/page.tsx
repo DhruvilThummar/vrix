@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { fetchUsers, updateUserVrixPlus, fetchDb } from "@/utils/api";
-import { useCurrency } from "@/utils/useCurrency";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface UserRecord {
   email: string;
