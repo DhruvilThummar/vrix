@@ -22,6 +22,9 @@ import deliveryRouter from "./routes/delivery.js";
 import adminRouter from "./routes/admin.js";
 import geoRouter from "./routes/geo.js";
 import newsletterRouter from "./routes/newsletter.js";
+import notificationsRouter from "./routes/notifications.js";
+
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -151,7 +154,9 @@ const registerRoutes = (prefix = "") => {
   app.use(p("/delivery"), deliveryRouter);
   app.use(p("/newsletter"), newsletterRouter);
   app.use(p("/admin"), adminAuth, adminRouter);
+  app.use(p("/notifications"), notificationsRouter);
   app.use(p("/geo"), geoRouter);
+
 };
 
 registerRoutes("/api");

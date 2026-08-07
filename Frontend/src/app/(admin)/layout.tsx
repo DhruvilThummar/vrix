@@ -147,6 +147,60 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setIsModalOpen(false);
   };
 
+  // Notifications State
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadNotifications = async () => {
+    try {
+      const { fetchNotifications } = await import("@/utils/api");
+      const list = await fetchNotifications();
+      if (Array.isArray(list)) {
+        setNotifications(list);
+        setUnreadCount(list.filter((n: any) => !n.isRead).length);
+      }
+    } catch (e) {
+      console.error("Failed to load notifications:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (pathname === "/admin/login") return;
+    loadNotifications();
+    const timer = setInterval(loadNotifications, 30000);
+    return () => clearInterval(timer);
+  }, [pathname]);
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      const { markNotificationRead } = await import("@/utils/api");
+      await markNotificationRead(id);
+      loadNotifications();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      const { markAllNotificationsRead } = await import("@/utils/api");
+      await markAllNotificationsRead();
+      loadNotifications();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      const { clearAllNotifications } = await import("@/utils/api");
+      await clearAllNotifications();
+      loadNotifications();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("vrix-admin-token");
     localStorage.removeItem("vrix_admin_name");
@@ -198,6 +252,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setSelectedIndex={setSelectedIndex}
           onLoadSearchData={loadSearchData}
           searchContainerRef={searchContainerRef}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkRead={handleMarkRead}
+          onMarkAllRead={handleMarkAllRead}
+          onClearAll={handleClearAll}
         />
 
         <div className="flex-1 overflow-y-auto bg-soft-linen">
@@ -215,3 +274,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
+

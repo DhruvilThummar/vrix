@@ -41,7 +41,17 @@ router.post("/verify", async (req, res) => {
       const perkValue = vrixPlusConfig?.birthdayDiscountValue !== undefined ? Number(vrixPlusConfig.birthdayDiscountValue) : 15;
       const perkDesc = vrixPlusConfig?.birthdayPerkDesc || "Exclusive VRIX+ Member Birthday Perk";
 
+      db.notifications.create({
+        data: {
+          type: "BIRTHDAY_PERK_USED",
+          title: "🎂 Birthday Perk Code Verified",
+          message: `🎂 Birthday perk code verified for user: ${userEmail || "anonymous"}`,
+          userEmail: userEmail || null
+        }
+      }).catch(e => console.warn("Failed to create birthday perk notification:", e.message));
+
       return res.json({
+
         success: true,
         code: birthdayCoupon,
         discount: perkValue,

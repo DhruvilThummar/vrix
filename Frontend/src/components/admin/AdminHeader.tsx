@@ -1,6 +1,4 @@
-"use client";
-
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -37,6 +35,13 @@ interface AdminHeaderProps {
   setSelectedIndex: (idx: number) => void;
   onLoadSearchData: () => void;
   searchContainerRef: React.RefObject<HTMLDivElement | null>;
+
+  // Notifications
+  notifications?: any[];
+  unreadCount?: number;
+  onMarkRead?: (id: string) => void;
+  onMarkAllRead?: () => void;
+  onClearAll?: () => void;
 }
 
 export default function AdminHeader({
@@ -58,8 +63,25 @@ export default function AdminHeader({
   setSelectedIndex,
   onLoadSearchData,
   searchContainerRef,
+  notifications = [],
+  unreadCount = 0,
+  onMarkRead = () => { },
+  onMarkAllRead = () => { },
+  onClearAll = () => { },
 }: AdminHeaderProps) {
   const router = useRouter();
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setIsNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleSelectResult = (item: FlatResult) => {
     setSearchQuery("");
@@ -92,6 +114,40 @@ export default function AdminHeader({
       setSelectedIndex(-1);
     }
   };
+
+  const getNotifIcon = (type: string) => {
+    switch (type) {
+      case "NEW_REGISTRATION":
+        return "person_add";
+      case "VRIX_PLUS_JOINED":
+        return "workspace_premium";
+      case "NEW_ORDER":
+        return "shopping_bag";
+      case "BIRTHDAY_PERK_USED":
+        return "cake";
+      default:
+        return "notifications";
+    }
+  };
+
+  // Capture current timestamp at render start to keep helper pure/idempotent relative to the render frame
+  const nowTime = new Date().getTime();
+
+  const timeAgo = (dateStr: string) => {
+    try {
+      const diff = nowTime - new Date(dateStr).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return "Just now";
+      if (mins < 60) return `${mins}m ago`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}h ago`;
+      const days = Math.floor(hrs / 24);
+      return `${days}d ago`;
+    } catch (e) {
+      return "";
+    }
+  };
+
 
   return (
     <header className="h-16 bg-pure-white border-b border-slate-grey/20 flex items-center justify-between px-12 flex-shrink-0">
@@ -176,10 +232,10 @@ export default function AdminHeader({
                         o.status === "SUCCESS"
                           ? "bg-green-50 text-green-700 border-green-200"
                           : o.status === "DELIVERED"
-                          ? "bg-blue-50 text-blue-700 border-blue-200"
-                          : o.status === "FAILED"
-                          ? "bg-red-50 text-red-700 border-red-200"
-                          : "bg-amber-50 text-amber-700 border-amber-200";
+                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            : o.status === "FAILED"
+                              ? "bg-red-50 text-red-700 border-red-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200";
                       return (
                         <div
                           key={o.orderId}
@@ -222,9 +278,8 @@ export default function AdminHeader({
                             <p className="text-[9px] text-slate-grey truncate">{c.email}</p>
                           </div>
                           <div className="text-right shrink-0 ml-3">
-                            <span className={`text-[8px] font-label-caps uppercase tracking-widest px-1.5 py-0.5 border ${
-                              c.type === "registered" ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-slate-50 text-slate-600 border-slate-200"
-                            }`}>
+                            <span className={`text-[8px] font-label-caps uppercase tracking-widest px-1.5 py-0.5 border ${c.type === "registered" ? "bg-purple-50 text-purple-700 border-purple-200" : "bg-slate-50 text-slate-600 border-slate-200"
+                              }`}>
                               {c.type}
                             </span>
                             {c.phone && <p className="text-[8px] text-slate-grey/80 mt-1">{c.phone}</p>}
@@ -242,12 +297,76 @@ export default function AdminHeader({
 
       {/* Right Controls */}
       <div className="flex items-center gap-6">
-        <button className="relative text-slate-grey hover:text-deep-navy transition-colors cursor-pointer">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 300" }}>
-            notifications
-          </span>
-          <span className="absolute top-0 right-0 w-2 h-2 bg-on-tertiary-container rounded-full"></span>
-        </button>
+        {/* Notification Bell */}
+        <div className="relative" ref={notifRef}>
+          <button
+            onClick={() => setIsNotifOpen(!isNotifOpen)}
+            className="relative text-slate-grey hover:text-deep-navy transition-colors cursor-pointer focus:outline-none"
+          >
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 300" }}>
+              notifications
+            </span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {isNotifOpen && (
+            <div className="absolute right-0 mt-3 w-80 bg-pure-white border border-slate-grey/25 shadow-2xl z-50 animate-fade-in rounded-none">
+              <div className="px-4 py-3 border-b border-slate-grey/15 flex items-center justify-between bg-soft-linen/10">
+                <span className="font-semibold text-deep-navy text-xs uppercase tracking-wider">Notifications ({unreadCount})</span>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={onMarkAllRead}
+                    className="text-[10px] text-deep-navy hover:underline font-semibold"
+                  >
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-72 overflow-y-auto divide-y divide-slate-grey/10">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-slate-grey">
+                    <span className="material-symbols-outlined text-3xl mb-1 text-slate-grey/40">notifications_off</span>
+                    <p className="text-xs uppercase tracking-widest font-label-caps">No new activities</p>
+                  </div>
+                ) : (
+                  notifications.map((n: any) => (
+                    <div
+                      key={n.id}
+                      onClick={() => onMarkRead(n.id)}
+                      className={`p-3.5 hover:bg-soft-linen/20 cursor-pointer flex gap-3 transition-colors ${!n.isRead ? "bg-amber-50/40" : ""}`}
+                    >
+                      <span className="material-symbols-outlined text-slate-grey text-lg shrink-0 mt-0.5">
+                        {getNotifIcon(n.type)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-xs text-ink-black leading-snug ${!n.isRead ? "font-semibold" : ""}`}>{n.title}</p>
+                        <p className="text-[10px] text-slate-grey mt-0.5 truncate">{n.message}</p>
+                        <p className="text-[9px] text-slate-grey/60 mt-1 font-mono">{timeAgo(n.createdAt)}</p>
+                      </div>
+                      {!n.isRead && (
+                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shrink-0 self-center"></div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+              {notifications.length > 0 && (
+                <div className="p-2 border-t border-slate-grey/15 text-center">
+                  <button
+                    onClick={onClearAll}
+                    className="text-[10px] text-red-600 hover:text-red-700 hover:underline uppercase tracking-wider font-semibold w-full py-1.5"
+                  >
+                    Clear All Notifications
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* User Dropdown */}
         <div className="relative" ref={dropdownRef}>
@@ -307,3 +426,4 @@ export default function AdminHeader({
     </header>
   );
 }
+

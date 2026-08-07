@@ -133,7 +133,19 @@ model User {
   dateOfBirth        String?  @map("date_of_birth")
   createdAt          DateTime @default(now()) @map("created_at")
 
-
   @@map("users")
 }
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  userEmail String?  @map("user_email")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
 

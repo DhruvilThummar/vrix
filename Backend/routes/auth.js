@@ -119,9 +119,20 @@ router.post("/register/confirm", async (req, res) => {
       });
     }
 
+    // Trigger notification for new registration
+    db.notifications.create({
+      data: {
+        type: "NEW_REGISTRATION",
+        title: "👤 New Customer Registered",
+        message: `New customer registered: ${newUser.name || newUser.email} (${newUser.email})`,
+        userEmail: newUser.email
+      }
+    }).catch(e => console.warn("Failed to create registration notification:", e.message));
+
     db.securityLogs.create({
       data: { event: "ACCOUNT_REGISTER", user: cleanEmail, status: "SUCCESS" },
     }).catch(() => { });
+
 
     res.json({ success: true, user: { email: newUser.email, name: newUser.name, phone: newUser.phone, isVrixPlusMember: !!newUser.isVrixPlusMember, vrixPlusJoinedDate: newUser.vrixPlusJoinedDate || null } });
   } catch (err) {
@@ -309,7 +320,18 @@ router.post("/join-vrix-plus", async (req, res) => {
       data: { event: "VRIX_PLUS_JOIN", user: cleanEmail, status: "SUCCESS" }
     });
 
+    // VRIX+ Joined Notification
+    db.notifications.create({
+      data: {
+        type: "VRIX_PLUS_JOINED",
+        title: "🎉 VRIX+ Member Joined",
+        message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
+        userEmail: user.email
+      }
+    }).catch(e => console.warn("Failed to create VRIX+ join notification:", e.message));
+
     res.json({
+
       success: true,
       user: {
         email: user.email,
@@ -542,7 +564,17 @@ router.post("/google", async (req, res) => {
           month: "long",
           year: "numeric"
         });
+        // Notification for joining VRIX+
+        db.notifications.create({
+          data: {
+            type: "VRIX_PLUS_JOINED",
+            title: "🎉 VRIX+ Member Joined",
+            message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
+            userEmail: user.email
+          }
+        }).catch(e => console.warn("Failed to create VRIX+ join notification:", e.message));
       }
+
 
       if (Object.keys(updateData).length > 0) {
         user = await db.users.update({
@@ -574,9 +606,31 @@ router.post("/google", async (req, res) => {
         },
       });
 
+      // New registration notification
+      db.notifications.create({
+        data: {
+          type: "NEW_REGISTRATION",
+          title: "👤 New Customer Registered",
+          message: `New customer registered: ${user.name || user.email} (${user.email})`,
+          userEmail: user.email
+        }
+      }).catch(e => console.warn("Failed to create registration notification:", e.message));
+
+      if (joinVrixPlus) {
+        db.notifications.create({
+          data: {
+            type: "VRIX_PLUS_JOINED",
+            title: "🎉 VRIX+ Member Joined",
+            message: `🎉 ${user.name || user.email} just became a VRIX+ Member`,
+            userEmail: user.email
+          }
+        }).catch(e => console.warn("Failed to create VRIX+ join notification:", e.message));
+      }
+
       await db.securityLogs.create({
         data: { event: "GOOGLE_REGISTER", user: cleanEmail, status: "SUCCESS" },
       }).catch(() => { });
+
     }
 
     return res.json({

@@ -70,7 +70,20 @@ router.patch("/users/:email/vrix-plus", async (req, res) => {
         vrixPlusJoinedDate: isVrixPlusMember ? today : null 
       }
     });
+
+    if (isVrixPlusMember) {
+      db.notifications.create({
+        data: {
+          type: "VRIX_PLUS_JOINED",
+          title: "🎉 VRIX+ Member Joined",
+          message: `🎉 ${user.name || user.email} just became a VRIX+ Member (via Admin Panel)`,
+          userEmail: user.email
+        }
+      }).catch(e => console.warn("Failed to create VRIX+ join notification:", e.message));
+    }
+
     res.json({ success: true, user });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

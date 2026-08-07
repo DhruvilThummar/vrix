@@ -105,6 +105,7 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "security_logs" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "event" TEXT NOT NULL, "user_email" TEXT, "status" TEXT NOT NULL);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "payments" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "order_id" TEXT UNIQUE NOT NULL, "payment_id" TEXT, "signature" TEXT, "amount" DOUBLE PRECISION NOT NULL, "currency" TEXT DEFAULT 'INR', "status" TEXT DEFAULT 'created', "user_email" TEXT, "customer_name" TEXT, "customer_phone" TEXT, "address" TEXT, "city" TEXT, "postal_code" TEXT, "assigned_agent" TEXT);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "verification_otps" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "email" TEXT NOT NULL, "otp" TEXT NOT NULL, "expires_at" TIMESTAMP NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "notifications" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "type" TEXT NOT NULL, "title" TEXT NOT NULL, "message" TEXT NOT NULL, "is_read" BOOLEAN DEFAULT false, "user_email" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
 
     // Structural migrations for missing columns
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB;').catch(() => { });
@@ -123,6 +124,7 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "role" TEXT DEFAULT \'customer\';').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "date_of_birth" TEXT;').catch(() => { });
 
     // Database Performance Indexing
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_users_email" ON "users" ("email");').catch(() => { });
@@ -132,6 +134,9 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_security_logs_user_email" ON "security_logs" ("user_email");').catch(() => { });
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_products_is_visible" ON "products" ("is_visible");').catch(() => { });
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_payments_order_id" ON "payments" ("order_id");').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_created_at" ON "notifications" ("created_at" DESC);').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_is_read" ON "notifications" ("is_read");').catch(() => { });
+
 
     tablesCreated = true;
   } catch (e) {
@@ -915,47 +920,194 @@ export const db = {
       return updated;
     },
 
-    upsert: async ({ where: { email }, update, create }) => {
+    delete: async ({ where: { email } }) => {
       const targetEmail = email ? String(email).toLowerCase().trim() : "";
-      const existing = userMemoryMap.get(targetEmail);
-      let record;
-      if (existing) {
-        record = { ...existing, ...update, email: targetEmail };
-      } else {
-        record = { createdAt: new Date().toISOString(), ...create, email: targetEmail };
-      }
-      syncUserToMemory(record);
-
-      // Async background persistence
+      userMemoryMap.delete(targetEmail);
       (async () => {
         if (db.isConnected()) {
-          try {
-            await prisma.user.upsert({
-              where: { email: targetEmail },
-              update,
-              create: { ...create, email: targetEmail }
-            });
-          } catch (err) {}
+          try { await prisma.user.delete({ where: { email: targetEmail } }); } catch (err) {}
         }
         if (supabase) {
-          try { await supabase.from("users").upsert([{ ...create, ...update, email: targetEmail }]); } catch (e) {}
+          try { await supabase.from("users").delete().eq("email", targetEmail); } catch (e) {}
         }
         const localData = readLocalDb();
-        localData.users = localData.users || [];
-        const idx = localData.users.findIndex(u => u.email && u.email.toLowerCase().trim() === targetEmail);
-        if (idx !== -1) {
-          localData.users[idx] = { ...localData.users[idx], ...update };
-        } else {
-          localData.users.push({ createdAt: new Date().toISOString(), ...create, email: targetEmail });
-        }
+        localData.users = (localData.users || []).filter(u => String(u.email).toLowerCase().trim() !== targetEmail);
         writeLocalDb(localData);
       })();
+      return { email: targetEmail };
+    }
+  },
 
+  // Notifications
+  notifications: {
+    findMany: async (options = {}) => {
+      const orderBy = options.orderBy || { createdAt: "desc" };
+      const limit = options.take || 50;
+
+      if (db.isConnected()) {
+        try {
+          return await prisma.notification.findMany({
+            orderBy,
+            take: limit
+          });
+        } catch (err) {
+          console.error("Prisma notifications.findMany failed:", err.message);
+        }
+      }
+
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from("notifications")
+            .select("*")
+            .order(orderBy.createdAt === "desc" ? "created_at" : "created_at", { ascending: orderBy.createdAt !== "desc" })
+            .limit(limit);
+          if (!error && data) return data.map(n => ({
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            message: n.message,
+            isRead: n.is_read,
+            userEmail: n.user_email,
+            createdAt: n.created_at
+          }));
+        } catch (e) {}
+      }
+
+      const localData = readLocalDb();
+      let notifs = localData.notifications || [];
+      notifs = [...notifs];
+      if (orderBy.createdAt === "desc") {
+        notifs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      } else {
+        notifs.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      }
+      return notifs.slice(0, limit);
+    },
+
+    create: async ({ data }) => {
+      const record = {
+        id: Math.random().toString(36).substring(2, 15),
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        userEmail: data.userEmail || null,
+        ...data
+      };
+
+      if (db.isConnected()) {
+        try {
+          return await prisma.notification.create({ data: {
+            type: record.type,
+            title: record.title,
+            message: record.message,
+            isRead: record.isRead,
+            userEmail: record.userEmail
+          }});
+        } catch (err) {
+          console.error("Prisma notifications.create failed:", err.message);
+        }
+      }
+
+      if (supabase) {
+        try {
+          await supabase.from("notifications").insert([{
+            type: record.type,
+            title: record.title,
+            message: record.message,
+            is_read: record.isRead,
+            user_email: record.userEmail
+          }]);
+        } catch (e) {}
+      }
+
+      const localData = readLocalDb();
+      localData.notifications = localData.notifications || [];
+      localData.notifications.push(record);
+      writeLocalDb(localData);
       return record;
+    },
+
+    update: async ({ where: { id }, data }) => {
+      const mappedData = {};
+      if (data.isRead !== undefined) mappedData.isRead = data.isRead;
+
+      if (db.isConnected()) {
+        try {
+          return await prisma.notification.update({ where: { id }, data: mappedData });
+        } catch (err) {
+          console.error("Prisma notifications.update failed:", err.message);
+        }
+      }
+
+      if (supabase) {
+        try {
+          const supData = {};
+          if (data.isRead !== undefined) supData.is_read = data.isRead;
+          await supabase.from("notifications").update(supData).eq("id", id);
+        } catch (e) {}
+      }
+
+      const localData = readLocalDb();
+      localData.notifications = localData.notifications || [];
+      const idx = localData.notifications.findIndex(n => n.id === id);
+      if (idx !== -1) {
+        localData.notifications[idx] = { ...localData.notifications[idx], ...data };
+        writeLocalDb(localData);
+        return localData.notifications[idx];
+      }
+      return null;
+    },
+
+    updateMany: async ({ data }) => {
+      const mappedData = {};
+      if (data.isRead !== undefined) mappedData.isRead = data.isRead;
+
+      if (db.isConnected()) {
+        try {
+          return await prisma.notification.updateMany({ data: mappedData });
+        } catch (err) {
+          console.error("Prisma notifications.updateMany failed:", err.message);
+        }
+      }
+
+      if (supabase) {
+        try {
+          const supData = {};
+          if (data.isRead !== undefined) supData.is_read = data.isRead;
+          await supabase.from("notifications").update(supData);
+        } catch (e) {}
+      }
+
+      const localData = readLocalDb();
+      localData.notifications = (localData.notifications || []).map(n => ({ ...n, ...data }));
+      writeLocalDb(localData);
+      return { count: localData.notifications.length };
+    },
+
+    deleteMany: async () => {
+      if (db.isConnected()) {
+        try {
+          return await prisma.notification.deleteMany();
+        } catch (err) {
+          console.error("Prisma notifications.deleteMany failed:", err.message);
+        }
+      }
+
+      if (supabase) {
+        try {
+          await supabase.from("notifications").delete();
+        } catch (e) {}
+      }
+
+      const localData = readLocalDb();
+      localData.notifications = [];
+      writeLocalDb(localData);
+      return { count: 0 };
     }
   },
 
   // Verification OTPs
+
   verificationOtps: {
     create: async ({ data }) => {
       if (db.isConnected()) {
