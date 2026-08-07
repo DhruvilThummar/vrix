@@ -28,6 +28,13 @@ export function useCurrency() {
   const [config, setConfig] = useState<CurrencyConfig>(DEFAULT_CONFIG);
 
   useEffect(() => {
+    // If inside admin panel routes, lock currency to INR for admin calculations
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
+      setCurrency("INR");
+      setCountryCode("IN");
+      return;
+    }
+
     // Load config from DB
     fetchDb().then(res => {
       if (res.currency_settings) {
