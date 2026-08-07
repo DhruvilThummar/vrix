@@ -180,11 +180,11 @@ export default function Home() {
                   sizes="100vw"
                 />
               </div>
-              <div className="absolute inset-0 bg-black/10 md:bg-transparent" />
+              <div className="absolute inset-0 bg-white/75 md:bg-black/25" />
               
               <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
                 <div className="max-w-xl text-ink-black md:text-pure-white">
-                  <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-80">
+                  <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-90">
                     {slide.subtitle}
                   </p>
                   <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
@@ -212,9 +212,10 @@ export default function Home() {
                 sizes="100vw"
               />
             </div>
-            <div className="relative z-10 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full">
+            <div className="absolute inset-0 bg-white/75 md:bg-black/25" />
+            <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
               <div className="max-w-xl text-ink-black md:text-pure-white">
-                <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-80">
+                <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-90">
                   {store.homepage.heroSubtitle}
                 </p>
                 <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
@@ -230,6 +231,8 @@ export default function Home() {
             </div>
           </>
         )}
+
+
 
         {/* Carousel indicator dots */}
         {!loading && slides.length > 1 && (
