@@ -10,6 +10,7 @@
     "db:push": "prisma db push --accept-data-loss"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.0",
     "@prisma/client": "^5.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "cloudinary": "^2.10.0",
