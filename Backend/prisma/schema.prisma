@@ -39,6 +39,8 @@ model Product {
   weight              String?
   dimensions          String?
   availableSizes      Json?    @map("available_sizes")
+  comparisonOptions   Json?    @map("comparison_options")
+  giftOptions         Json?    @map("gift_options")
   tags                Json?
   createdAt           DateTime @default(now()) @map("created_at")
 

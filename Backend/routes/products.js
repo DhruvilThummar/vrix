@@ -41,6 +41,8 @@ const normalizeProductData = (body = {}) => {
     availableSizes: Array.isArray(body.availableSizes) ? body.availableSizes : [],
     engravingOptions: body.engravingOptions || { enabled: false, limit: 25, price: 0 },
     giftNoteOptions: body.giftNoteOptions || { enabled: false, limit: 150, price: 0 },
+    comparisonOptions: body.comparisonOptions || { worthIndex: 5, hardness: 5, shine: 5, styleRating: 5 },
+    giftOptions: body.giftOptions || { wrappingPrice: 0, showCustomBox: false, packagingNote: "" },
     tags: Array.isArray(body.tags) ? body.tags : [],
   };
 

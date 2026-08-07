@@ -121,6 +121,9 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sku" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "layout_style" TEXT DEFAULT \'2x2\';').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "tags" JSONB;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "comparison_options" JSONB;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "gift_options" JSONB;').catch(() => { });
+
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "role" TEXT DEFAULT \'customer\';').catch(() => { });
@@ -167,6 +170,8 @@ const productSelect = {
   weight: true,
   dimensions: true,
   availableSizes: true,
+  comparisonOptions: true,
+  giftOptions: true,
   tags: true,
   createdAt: true,
 };
@@ -201,6 +206,8 @@ const withProductDefaults = (product) => {
     weight: product.weight || "",
     dimensions: product.dimensions || "",
     availableSizes: Array.isArray(product.availableSizes) ? product.availableSizes : [],
+    comparisonOptions: product.comparisonOptions || { worthIndex: 5, hardness: 5, shine: 5, styleRating: 5 },
+    giftOptions: product.giftOptions || { wrappingPrice: 0, showCustomBox: false, packagingNote: "" },
     tags: Array.isArray(product.tags) ? product.tags : [],
   };
 };

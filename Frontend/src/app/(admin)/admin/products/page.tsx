@@ -23,8 +23,9 @@ const MATERIAL_PRESETS = [
   "Sterling Silver", "Recycled Gold", "Lab-Grown Diamond", "Natural Diamond",
 ];
 const RING_SIZES = ["4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10"];
-const FORM_TABS = ["Core", "Media", "Pricing", "Customizations"] as const;
+const FORM_TABS = ["Core", "Media", "Pricing", "Worth & Comparison", "Gift Options", "Customizations"] as const;
 type FormTab = typeof FORM_TABS[number];
+
 
 type Product = {
   id: string;
@@ -49,8 +50,11 @@ type Product = {
   availableSizes?: string[];
   weight?: string;
   dimensions?: string;
+  comparisonOptions?: { worthIndex: number; hardness: number; shine: number; styleRating: number };
+  giftOptions?: { wrappingPrice: number; showCustomBox: boolean; packagingNote: string };
   tags?: string[];
 };
+
 
 // ── Preset Templates ────────────────────────────────────────────────────────
 const PRODUCT_TEMPLATES = [
@@ -154,6 +158,17 @@ function AdminProductsContent() {
   const [fTags, setFTags] = useState<string[]>([]);
   const [fTagInput, setFTagInput] = useState("");
 
+  // Product Comparison & Gift Packaging properties
+  const [fWorthIndex, setFWorthIndex] = useState(5);
+  const [fHardness, setFHardness] = useState(5);
+  const [fShine, setFShine] = useState(5);
+  const [fStyleRating, setFStyleRating] = useState(5);
+
+  const [fGiftWrappingPrice, setFGiftWrappingPrice] = useState(0);
+  const [fGiftShowCustomBox, setFGiftShowCustomBox] = useState(false);
+  const [fGiftPackagingNote, setFGiftPackagingNote] = useState("");
+
+
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -202,6 +217,8 @@ function AdminProductsContent() {
     setFEngravingEnabled(false); setFEngravingLimit(25); setFEngravingPrice(0);
     setFGiftNoteEnabled(false); setFGiftNoteLimit(120); setFGiftNotePrice(0);
     setFAlt(""); setFWeight(""); setFDimensions(""); setFAvailableSizes([]); setFTags([]);
+    setFWorthIndex(5); setFHardness(5); setFShine(5); setFStyleRating(5);
+    setFGiftWrappingPrice(0); setFGiftShowCustomBox(false); setFGiftPackagingNote("");
     setActiveFormTab("Core"); setDeleteConfirm(false);
   };
 
@@ -227,6 +244,13 @@ function AdminProductsContent() {
     setFGiftNotePrice(p.giftNoteOptions?.price || 0);
     setFAlt(p.alt || ""); setFWeight(p.weight || ""); setFDimensions(p.dimensions || "");
     setFAvailableSizes(p.availableSizes || []); setFTags(p.tags || []);
+    setFWorthIndex(p.comparisonOptions?.worthIndex ?? 5);
+    setFHardness(p.comparisonOptions?.hardness ?? 5);
+    setFShine(p.comparisonOptions?.shine ?? 5);
+    setFStyleRating(p.comparisonOptions?.styleRating ?? 5);
+    setFGiftWrappingPrice(p.giftOptions?.wrappingPrice ?? 0);
+    setFGiftShowCustomBox(!!p.giftOptions?.showCustomBox);
+    setFGiftPackagingNote(p.giftOptions?.packagingNote ?? "");
     setActiveFormTab("Core"); setDeleteConfirm(false);
   };
 
@@ -580,11 +604,14 @@ function AdminProductsContent() {
       vrixPlusPrice: Number(fVrixPlusPrice) || undefined,
       engravingOptions: { enabled: fEngravingEnabled, limit: fEngravingLimit, price: fEngravingPrice },
       giftNoteOptions: { enabled: fGiftNoteEnabled, limit: fGiftNoteLimit, price: fGiftNotePrice },
+      comparisonOptions: { worthIndex: fWorthIndex, hardness: fHardness, shine: fShine, styleRating: fStyleRating },
+      giftOptions: { wrappingPrice: fGiftWrappingPrice, showCustomBox: fGiftShowCustomBox, packagingNote: fGiftPackagingNote },
       alt: fAlt || `A minimalist architectural ${fType} by VRIX from the ${collectionLabels[fCollection] || fCollection} collection.`,
       weight: fWeight, dimensions: fDimensions,
       availableSizes: fAvailableSizes,
       tags: fTags,
     };
+
     try {
       if (isNew) {
         const created = await createProduct(prodData);
@@ -1409,6 +1436,68 @@ function AdminProductsContent() {
                       </div>
                     </div>
                   )}
+
+                  {/* ── WORTH & COMPARISON TAB ───────────────────────────── */}
+                  {activeFormTab === "Worth & Comparison" && (
+                    <div className="space-y-5">
+                      <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded leading-relaxed">
+                        Specify comparison parameters to help customers compare alternative pieces side-by-side. Worth Index indicates the overall design value rating.
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Worth / Value Index (1-10)</label>
+                          <input type="number" min={1} max={10} value={fWorthIndex} onChange={(e) => setFWorthIndex(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Hardness rating (1-10 Mohs)</label>
+                          <input type="number" min={1} max={10} value={fHardness} onChange={(e) => setFHardness(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Shine / Lustre Index (1-10)</label>
+                          <input type="number" min={1} max={10} value={fShine} onChange={(e) => setFShine(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Style Rating (1-10)</label>
+                          <input type="number" min={1} max={10} value={fStyleRating} onChange={(e) => setFStyleRating(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── GIFT OPTIONS TAB ─────────────────────────────────── */}
+                  {activeFormTab === "Gift Options" && (
+                    <div className="space-y-5">
+                      <div className="p-3 bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs rounded leading-relaxed">
+                        Customize bespoke luxury gift wrapping options specifically overrides for this product.
+                      </div>
+                      
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Bespoke Wrapping Extra Price (USD)</label>
+                        <input type="number" min={0} value={fGiftWrappingPrice} onChange={(e) => setFGiftWrappingPrice(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+                      </div>
+
+                      <div className="flex items-center justify-between p-3 border border-slate-grey/25 bg-soft-linen/20 rounded">
+                        <div>
+                          <p className="font-label-caps text-[9px] text-ink-black uppercase tracking-widest font-semibold">Enable Custom Gift Packaging Box</p>
+                          <p className="text-[9px] text-slate-grey mt-0.5">Show specialized presentation card or box wrapper</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setFGiftShowCustomBox(!fGiftShowCustomBox)}
+                          className={`relative inline-flex h-4 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${fGiftShowCustomBox ? "bg-indigo-600" : "bg-slate-grey/30"}`}
+                        >
+                          <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${fGiftShowCustomBox ? "translate-x-5" : "translate-x-0"}`} />
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Special Packaging Note / Description</label>
+                        <input type="text" value={fGiftPackagingNote} onChange={(e) => setFGiftPackagingNote(e.target.value)} placeholder="Delivered in a bespoke plush velvet protective case..." className="border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent" />
+                      </div>
+                    </div>
+                  )}
+
 
                   {/* ── SAVE BUTTON (always visible) ─────────────────────── */}
                   <div className="flex gap-3 pt-2 border-t border-slate-grey/10">

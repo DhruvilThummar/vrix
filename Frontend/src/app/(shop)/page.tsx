@@ -234,7 +234,7 @@ export default function Home() {
         {/* Carousel indicator dots */}
         {!loading && slides.length > 1 && (
           <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2.5">
-            {slides.map((_, sIdx: number) => (
+            {slides.map((_: any, sIdx: number) => (
               <button
                 key={sIdx}
                 onClick={() => setActiveSlide(sIdx)}

@@ -440,6 +440,104 @@ function ProductContent() {
                   </div>
                 </div>
 
+                {/* Comparison Specifications Accordion */}
+                <div className="border-b border-slate-grey/20">
+                  <button
+                    onClick={() => toggleAccordion("comparison")}
+                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
+                  >
+                    <span>Worth &amp; Comparison Metrics</span>
+                    <span
+                      className={`material-symbols-outlined transition-transform duration-300 ${
+                        activeAccordion === "comparison" ? "rotate-180" : ""
+                      }`}
+                    >
+                      expand_more
+                    </span>
+                  </button>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ${
+                      activeAccordion === "comparison" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <div className="space-y-3.5 text-xs font-body-md text-ink-black">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-soft-linen/25 border border-slate-grey/10 rounded flex flex-col justify-between">
+                          <span className="text-[9px] font-label-caps uppercase tracking-widest text-slate-grey">Worth / Value Index</span>
+                          <div className="flex items-baseline gap-1.5 mt-1">
+                            <span className="text-xl font-bold text-deep-navy">{product.comparisonOptions?.worthIndex ?? 5}</span>
+                            <span className="text-[10px] text-slate-grey">/ 10 Rating</span>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-soft-linen/25 border border-slate-grey/10 rounded flex flex-col justify-between">
+                          <span className="text-[9px] font-label-caps uppercase tracking-widest text-slate-grey">Hardness Rating</span>
+                          <div className="flex items-baseline gap-1.5 mt-1">
+                            <span className="text-xl font-bold text-deep-navy">{product.comparisonOptions?.hardness ?? 5}</span>
+                            <span className="text-[10px] text-slate-grey">Mohs scale</span>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-soft-linen/25 border border-slate-grey/10 rounded flex flex-col justify-between">
+                          <span className="text-[9px] font-label-caps uppercase tracking-widest text-slate-grey">Shine &amp; Lustre</span>
+                          <div className="flex items-baseline gap-1.5 mt-1">
+                            <span className="text-xl font-bold text-deep-navy">{product.comparisonOptions?.shine ?? 5}</span>
+                            <span className="text-[10px] text-slate-grey">/ 10 Score</span>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-soft-linen/25 border border-slate-grey/10 rounded flex flex-col justify-between">
+                          <span className="text-[9px] font-label-caps uppercase tracking-widest text-slate-grey">Style Matching</span>
+                          <div className="flex items-baseline gap-1.5 mt-1">
+                            <span className="text-xl font-bold text-deep-navy">{product.comparisonOptions?.styleRating ?? 5}</span>
+                            <span className="text-[10px] text-slate-grey">/ 10 Versatility</span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-slate-grey/85 leading-relaxed pt-2">
+                        Ratings represent official quality parameters certified by our bespoke diamond experts. Use these indices to contrast this piece with alternatives in the VRIX catalog.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Packaging Box & Ribbon Guide Accordion */}
+                <div className="border-b border-slate-grey/20">
+                  <button
+                    onClick={() => toggleAccordion("packaging")}
+                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
+                  >
+                    <span>Signature Gift Packaging</span>
+                    <span
+                      className={`material-symbols-outlined transition-transform duration-300 ${
+                        activeAccordion === "packaging" ? "rotate-180" : ""
+                      }`}
+                    >
+                      expand_more
+                    </span>
+                  </button>
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ${
+                      activeAccordion === "packaging" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <div className="space-y-3.5 text-xs font-body-md text-ink-black leading-relaxed">
+                      <p>
+                        {product.giftOptions?.packagingNote || "This item is carefully wrapped and shipped inside our signature VRIX luxury leather protective case, lined with plush velvet, and tied with a custom brand-stamped silk ribbon."}
+                      </p>
+                      {product.giftOptions?.showCustomBox && (
+                        <div className="p-3 bg-indigo-50/50 border border-indigo-200/50 text-indigo-950 rounded flex items-start gap-2.5">
+                          <span className="material-symbols-outlined text-indigo-700 text-lg">redeem</span>
+                          <div>
+                            <p className="font-semibold text-[11px] font-label-caps uppercase tracking-wider">Premium Custom Case Upgrade Available</p>
+                            <p className="text-[10px] text-indigo-900/90 mt-0.5">
+                              This piece qualifies for exclusive custom monogram presentation cases (selectable at checkout bag page for {formatPrice(product.giftOptions?.wrappingPrice || 250)} extra).
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+
                 {/* Returns Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
