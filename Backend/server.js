@@ -23,6 +23,7 @@ import adminRouter from "./routes/admin.js";
 import geoRouter from "./routes/geo.js";
 import newsletterRouter from "./routes/newsletter.js";
 import notificationsRouter from "./routes/notifications.js";
+import chatRouter from "./routes/chat.js";
 
 
 
@@ -156,6 +157,7 @@ const registerRoutes = (prefix = "") => {
   app.use(p("/admin"), adminAuth, adminRouter);
   app.use(p("/notifications"), notificationsRouter);
   app.use(p("/geo"), geoRouter);
+  app.use(p("/chat"), chatRouter);
 
 };
 
