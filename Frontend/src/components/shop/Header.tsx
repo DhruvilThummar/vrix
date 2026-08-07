@@ -73,8 +73,15 @@ export default function Header() {
     fontSize: "11px",
     lines: []
   });
-  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [currentLineIndex, setCurrentLineIndex] = useState<number>(0);
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(true);
+  const [expandedMobileIndices, setExpandedMobileIndices] = useState<number[]>([]);
+
+  const toggleMobileAccordion = (idx: number) => {
+    setExpandedMobileIndices((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx]
+    );
+  };
 
 
   useEffect(() => {
@@ -933,92 +940,192 @@ export default function Header() {
 
       {/* ─── MOBILE DRAWER (LEFT SLIDE-IN) ─── */}
       <div
-        className={`fixed top-0 left-0 h-screen w-[320px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+        className={`fixed top-0 left-0 h-screen w-[340px] max-w-[85vw] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-6 border-b border-soft-linen flex justify-between items-center">
-          <h3 className="font-label-caps text-sm tracking-widest font-semibold uppercase">Menu Navigation</h3>
+        {/* Top Header */}
+        <div className="p-6 border-b border-soft-linen flex justify-between items-center bg-pure-white shrink-0">
+          <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center">
+            {displayLogo && displayLogo !== "" ? (
+              <div className="relative h-6 w-24">
+                <Image
+                  src={displayLogo.includes("white.png") ? "/logos/black.png" : displayLogo}
+                  alt={brandName}
+                  fill
+                  className="object-contain"
+                  sizes="96px"
+                  priority
+                />
+              </div>
+            ) : (
+              <span className="font-display-lg text-xl tracking-[0.2em] uppercase text-ink-black select-none">
+                {brandName}
+              </span>
+            )}
+          </Link>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-1 text-slate-grey hover:text-ink-black transition-colors"
+            className="p-1.5 text-slate-grey hover:text-ink-black transition-colors cursor-pointer rounded-full hover:bg-soft-linen/50"
+            aria-label="Close Menu Drawer"
           >
             <span className="material-symbols-outlined text-2xl font-light">close</span>
           </button>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-6 flex flex-col space-y-6">
-          <nav className="flex flex-col gap-4 font-label-caps text-sm uppercase tracking-widest">
-            {navLinks.map((link, idx) => (
-              <div key={idx} className="border-b border-soft-linen pb-3">
-                <div className="flex justify-between items-center">
-                  <Link
-                    href={link.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`${
-                      isActive(link.path) ? "text-deep-navy font-semibold" : "text-ink-black/80 hover:text-ink-black"
-                    }`}
-                  >
-                    {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
-                  </Link>
+        {/* Scrollable Navigation Body */}
+        <div className="flex-grow overflow-y-auto px-6 py-4 space-y-2">
+          <nav className="flex flex-col font-label-caps text-sm uppercase tracking-widest divide-y divide-soft-linen/60">
+            {navLinks.map((link, idx) => {
+              const hasSubmenu = Boolean(
+                link.megaMenu?.categories ||
+                link.label.toLowerCase().includes("collection") ||
+                link.path.includes("collection")
+              );
+              const isExpanded = expandedMobileIndices.includes(idx);
 
-                  {/* Expand button if link is Collections */}
-                  {(link.label.toLowerCase().includes("collection") || link.path.includes("collection")) && (
-                    <button
-                      type="button"
-                      onClick={() => setIsMobileCategoriesOpen(!isMobileCategoriesOpen)}
-                      className="p-1 text-slate-grey hover:text-ink-black"
-                    >
-                      <span className={`material-symbols-outlined text-lg transition-transform ${isMobileCategoriesOpen ? "rotate-180" : ""}`}>
-                        expand_more
-                      </span>
-                    </button>
+              return (
+                <div key={idx} className="py-3">
+                  <div className="flex justify-between items-center">
+                    {hasSubmenu ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleMobileAccordion(idx)}
+                        className="flex-grow text-left font-label-caps text-sm uppercase tracking-wider text-ink-black hover:text-deep-navy font-medium flex items-center justify-between py-1 cursor-pointer"
+                      >
+                        <span>
+                          {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled
+                            ? `${link.label} (Waitlist)`
+                            : link.label}
+                        </span>
+                        <span
+                          className={`material-symbols-outlined text-xl text-slate-grey transition-transform duration-300 ${
+                            isExpanded ? "rotate-180 text-deep-navy" : ""
+                          }`}
+                        >
+                          expand_more
+                        </span>
+                      </button>
+                    ) : (
+                      <Link
+                        href={link.path}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block w-full py-1 font-label-caps text-sm uppercase tracking-wider transition-colors ${
+                          isActive(link.path)
+                            ? "text-deep-navy font-semibold"
+                            : "text-ink-black/80 hover:text-ink-black"
+                        }`}
+                      >
+                        {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled
+                          ? `${link.label} (Waitlist)`
+                          : link.label}
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Accordion Submenu Panel */}
+                  {hasSubmenu && isExpanded && (
+                    <div className="mt-3 pl-3 space-y-3 font-label-caps text-xs text-slate-grey border-l-2 border-deep-navy/30 animate-fade-in">
+                      {link.megaMenu?.categories ? (
+                        link.megaMenu.categories.map((cat: any, cIdx: number) => (
+                          <div key={cIdx} className="space-y-1.5 pt-1">
+                            <span className="text-[10px] text-deep-navy font-bold uppercase tracking-widest block">
+                              {cat.title}
+                            </span>
+                            {cat.links.map((lnk: any, lIdx: number) => (
+                              <Link
+                                key={lIdx}
+                                href={lnk.path}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="block py-1 text-slate-grey hover:text-ink-black transition-colors uppercase tracking-wider text-[11px]"
+                              >
+                                {lnk.label}
+                              </Link>
+                            ))}
+                          </div>
+                        ))
+                      ) : (
+                        [
+                          { name: "All Rings", path: "/collections/silent-center?type=ring" },
+                          { name: "Necklaces & Pendants", path: "/collections/silent-center?type=necklace" },
+                          { name: "Earrings", path: "/collections/silent-center?type=earring" },
+                          { name: "Bracelets & Cuffs", path: "/collections/silent-center?type=bracelet" },
+                          { name: "Special Offers & Deals ★", path: "/offers" },
+                        ].map((cat) => (
+                          <Link
+                            key={cat.name}
+                            href={cat.path}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="block py-1 hover:text-deep-navy uppercase tracking-wider text-[11px] font-semibold"
+                          >
+                            {cat.name}
+                          </Link>
+                        ))
+                      )}
+                    </div>
                   )}
                 </div>
-
-                {/* Inline Expanded Categories Drilldown */}
-                {(link.label.toLowerCase().includes("collection") || link.path.includes("collection")) && isMobileCategoriesOpen && (
-                  <div className="mt-3 pl-4 space-y-2.5 font-label-caps text-xs text-slate-grey border-l border-slate-grey/20 animate-fade-in">
-                    {[
-                      { name: "All Rings", path: "/collections/silent-center?type=ring" },
-                      { name: "Necklaces & Pendants", path: "/collections/silent-center?type=necklace" },
-                      { name: "Earrings", path: "/collections/silent-center?type=earring" },
-                      { name: "Bracelets & Cuffs", path: "/collections/silent-center?type=bracelet" },
-                      { name: "Special Offers & Deals ★", path: "/offers" },
-                    ].map((cat) => (
-                      <Link
-                        key={cat.name}
-                        href={cat.path}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="block py-1 hover:text-deep-navy uppercase tracking-wider text-[11px] font-semibold"
-                      >
-                        {cat.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </nav>
+        </div>
 
-          <div className="mt-auto border-t border-soft-linen pt-6 flex justify-around">
-            <Link
-              href="/account"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex flex-col items-center gap-1 cursor-pointer"
+        {/* Pinned Bottom Action Bar */}
+        <div className="mt-auto border-t border-soft-linen p-4 bg-soft-linen/25 shrink-0 space-y-3">
+          {/* Currency Switcher */}
+          <div className="flex items-center justify-between px-3 py-2 bg-pure-white border border-slate-grey/20 rounded-xs">
+            <span className="text-[10px] font-label-caps uppercase text-slate-grey tracking-widest">Currency</span>
+            <select
+              value={currency}
+              onChange={(e) => changeCurrency(e.target.value as any)}
+              className="bg-transparent text-xs font-semibold uppercase tracking-wider text-ink-black outline-none cursor-pointer"
             >
-              <i className="fa-regular fa-user text-[20px]"></i>
-              <span className="text-[9px] uppercase font-label-caps mt-1 text-slate-grey">Account</span>
-            </Link>
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsAuthOpen(true);
+              }}
+              className="flex flex-col items-center justify-center py-2.5 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer"
+            >
+              <i className="fa-regular fa-user text-base text-ink-black"></i>
+              <span className="text-[9px] uppercase font-label-caps mt-1 text-slate-grey tracking-wider">Account</span>
+            </button>
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 setIsWishlistOpen(true);
               }}
-              className="flex flex-col items-center gap-1 cursor-pointer"
+              className="flex flex-col items-center justify-center py-2.5 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer relative"
             >
-              <i className="fa-regular fa-heart text-[20px]"></i>
-              <span className="text-[9px] uppercase font-label-caps mt-1 text-slate-grey">Wishlist</span>
+              <i className="fa-regular fa-heart text-base text-ink-black"></i>
+              <span className="text-[9px] uppercase font-label-caps mt-1 text-slate-grey tracking-wider">Wishlist</span>
+              {wishlist.length > 0 && (
+                <span className="absolute top-1 right-2 bg-deep-navy text-pure-white text-[8px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                  {wishlist.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsCartOpen(true);
+              }}
+              className="flex flex-col items-center justify-center py-2.5 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer relative"
+            >
+              <i className="fa-solid fa-bag-shopping text-base text-ink-black"></i>
+              <span className="text-[9px] uppercase font-label-caps mt-1 text-slate-grey tracking-wider">Bag</span>
+              {totalItems > 0 && (
+                <span className="absolute top-1 right-2 bg-deep-navy text-pure-white text-[8px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                  {totalItems}
+                </span>
+              )}
             </button>
           </div>
         </div>
