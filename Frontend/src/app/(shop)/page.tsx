@@ -180,10 +180,10 @@ export default function Home() {
                   sizes="100vw"
                 />
               </div>
-              <div className="absolute inset-0 bg-white/75 md:bg-black/25" />
+              <div className="absolute inset-0 bg-black/45" />
               
               <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
-                <div className="max-w-xl text-ink-black md:text-pure-white">
+                <div className="max-w-xl text-pure-white">
                   <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-90">
                     {slide.subtitle}
                   </p>
@@ -192,7 +192,7 @@ export default function Home() {
                   </h1>
                   <Link
                     href={slide.link || "/collections/silent-center"}
-                    className="inline-block font-button text-button uppercase px-8 py-3 border border-ink-black md:border-pure-white text-ink-black md:text-pure-white hover:bg-ink-black hover:text-white md:hover:bg-pure-white md:hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
+                    className="inline-block font-button text-button uppercase px-8 py-3 border border-pure-white text-pure-white hover:bg-pure-white hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
                   >
                     {slide.linkText || "Discover Collections"}
                   </Link>
@@ -212,9 +212,9 @@ export default function Home() {
                 sizes="100vw"
               />
             </div>
-            <div className="absolute inset-0 bg-white/75 md:bg-black/25" />
+            <div className="absolute inset-0 bg-black/45" />
             <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
-              <div className="max-w-xl text-ink-black md:text-pure-white">
+              <div className="max-w-xl text-pure-white">
                 <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-90">
                   {store.homepage.heroSubtitle}
                 </p>
@@ -223,7 +223,7 @@ export default function Home() {
                 </h1>
                 <Link
                   href="/collections/silent-center"
-                  className="inline-block font-button text-button uppercase px-8 py-3 border border-ink-black md:border-pure-white text-ink-black md:text-pure-white hover:bg-ink-black hover:text-white md:hover:bg-pure-white md:hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
+                  className="inline-block font-button text-button uppercase px-8 py-3 border border-pure-white text-pure-white hover:bg-pure-white hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
                 >
                   Discover Collections
                 </Link>
@@ -231,6 +231,7 @@ export default function Home() {
             </div>
           </>
         )}
+
 
 
 
