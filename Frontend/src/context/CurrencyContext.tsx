@@ -66,6 +66,14 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   // Initialize from DB & Geo API
   useEffect(() => {
     async function init() {
+      if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
+        setCurrencyState("INR");
+        setDetectedCountry("IN");
+        setDetectedCountryName("India");
+        setIsAutoDetected(false);
+        return;
+      }
+
       let currentCountry = "IN";
       let currentCountryName = "India";
       let curSettings: any = null;

@@ -7,6 +7,7 @@ import { fetchDbPublic as fetchDb, fetchProducts } from "@/utils/api";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import SkeletonImage from "@/components/shop/SkeletonImage";
+import { useCurrency } from "@/utils/useCurrency";
 
 const DEFAULT_CATEGORIES = [
   { title: "Necklace", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/z7ekw55bkfo527ivhzme.png", link: "/collections/silent-center?type=necklace" },
@@ -54,6 +55,7 @@ const DEFAULT_DATA = {
 };
 
 export default function Home() {
+  const { formatPrice } = useCurrency();
   const [store, setStore] = useState(DEFAULT_DATA);
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -434,7 +436,7 @@ export default function Home() {
                       <h3 className="font-body-md text-sm text-ink-black font-medium truncate">{p.title}</h3>
                       <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{p.material}</span>
                     </div>
-                    <span className="font-body-md text-sm text-ink-black font-semibold">${p.price}</span>
+                    <span className="font-body-md text-sm text-ink-black font-semibold">{formatPrice(p.price)}</span>
                   </div>
                 </Link>
               ))}
@@ -487,7 +489,7 @@ export default function Home() {
                       <h3 className="font-body-md text-sm text-ink-black font-medium truncate">{p.title}</h3>
                       <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{p.material}</span>
                     </div>
-                    <span className="font-body-md text-sm text-ink-black font-semibold">${p.price}</span>
+                    <span className="font-body-md text-sm text-ink-black font-semibold">{formatPrice(p.price)}</span>
                   </div>
                 </Link>
               ))}
