@@ -42,6 +42,13 @@ export interface HumanHandoffData {
   businessProfileUrl: string;
 }
 
+export interface BespokeEstimateData {
+  pieceType: string;
+  metalChoice: string;
+  estimatedPriceRange: string;
+  leadTime: string;
+}
+
 export type MessageSender = "bot" | "user";
 
 export interface ChatMessage {
@@ -52,6 +59,7 @@ export interface ChatMessage {
   products?: ChatProduct[];
   comparison?: ComparisonData;
   handoff?: HumanHandoffData;
+  bespokeEstimate?: BespokeEstimateData;
   timestamp: string;
   isTyping?: boolean;
 }

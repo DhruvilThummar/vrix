@@ -21,10 +21,40 @@ export default function VrixChatWidget() {
   });
   const [isTyping, setIsTyping] = useState(false);
 
-  // Initialize first welcome message
+  // Persistent Context Memory Window across page reloads and tab navigation
   useEffect(() => {
-    setMessages([createInitialMessage()]);
+    if (typeof window === "undefined") return;
+    try {
+      const savedMsgs = localStorage.getItem("vrix-chat-history-v1");
+      const savedEngine = localStorage.getItem("vrix-chat-engine-state-v1");
+      if (savedMsgs) {
+        const parsed = JSON.parse(savedMsgs);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          setShowQuickMenu(false);
+        } else {
+          setMessages([createInitialMessage()]);
+        }
+      } else {
+        setMessages([createInitialMessage()]);
+      }
+      if (savedEngine) {
+        setEngineState(JSON.parse(savedEngine));
+      }
+    } catch (e) {
+      setMessages([createInitialMessage()]);
+    }
   }, []);
+
+  // Sync state to localStorage on updates
+  useEffect(() => {
+    if (typeof window === "undefined" || messages.length === 0) return;
+    try {
+      const validMsgs = messages.filter((m) => !m.isTyping);
+      localStorage.setItem("vrix-chat-history-v1", JSON.stringify(validMsgs));
+      localStorage.setItem("vrix-chat-engine-state-v1", JSON.stringify(engineState));
+    } catch (e) {}
+  }, [messages, engineState]);
 
   // Lock body scroll on mobile when full-screen chat is open (<640px)
   useEffect(() => {
@@ -153,7 +183,12 @@ export default function VrixChatWidget() {
   const handleReset = () => {
     setShowQuickMenu(true);
     setEngineState({ currentFlow: null, step: 0, data: {}, surfacedProducts: [] });
-    setMessages([createInitialMessage()]);
+    const init = [createInitialMessage()];
+    setMessages(init);
+    try {
+      localStorage.removeItem("vrix-chat-history-v1");
+      localStorage.removeItem("vrix-chat-engine-state-v1");
+    } catch (e) {}
   };
 
   return (

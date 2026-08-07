@@ -5,6 +5,7 @@ import { ChatMessage, QuickOption } from "./vrix-chat-types";
 import ProductCardItem from "./ProductCardItem";
 import ProductComparisonView from "./ProductComparisonView";
 import HumanHandoffCard from "./HumanHandoffCard";
+import BespokeEstimateCard from "./BespokeEstimateCard";
 import QuickReplyChips from "./QuickReplyChips";
 
 interface MessageBubbleProps {
@@ -49,6 +50,8 @@ export default function MessageBubble({ message, onOptionSelect }: MessageBubble
         {message.comparison && <ProductComparisonView data={message.comparison} />}
 
         {message.handoff && <HumanHandoffCard data={message.handoff} />}
+
+        {message.bespokeEstimate && <BespokeEstimateCard data={message.bespokeEstimate} />}
 
         {message.options && <QuickReplyChips options={message.options} onSelect={onOptionSelect} />}
       </div>

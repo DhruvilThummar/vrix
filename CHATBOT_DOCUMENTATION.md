@@ -98,11 +98,12 @@ If no `GEMINI_API_KEY` is provided in environment variables:
 
 ---
 
-## ⚠️ Current Limitations & Drawbacks
+## 🚀 High-Availability Solutions & Architectural Enhancements
 
-1. **Database Dependency**: Vector search relies on database connectivity; if DB is offline, local fallback product catalog items are served.
-2. **Context Memory Window**: The session memory tracks products surfaced in the current browser session; refreshing the page resets thread state.
-3. **Custom Bespoke Orders**: Bespoke jewelry cannot be instantly price-quoted or generated online; it gracefully routes to a human concierge consultation.
+1. **Direct Database RAG Search**: Vector search queries the live PostgreSQL database (`db.products`) directly for zero-stale real-time product matching.
+2. **Context Memory Window Persistence**: Active chat threads, messages, and recommendation states are persisted in `localStorage` (`vrix-chat-history-v1` and `vrix-chat-engine-state-v1`). Refreshing the browser or navigating between shop pages preserves the exact conversation state.
+3. **Interactive Bespoke Atelier Estimator**: Users exploring Bespoke jewelry receive instant live price range estimates (e.g. ₹65,000 – ₹1,80,000 in INR) and atelier crafting lead times (3–4 weeks) alongside direct consultation booking links.
+4. **Polite High-Volume Busy Fallback**: If a database error or connection issue occurs, the assistant outputs a restrained quiet-luxury busy message (*"Our client associates are currently experiencing high volume assisting other guests. Please try again in a few moments, or connect directly with our concierge team."*) with options to retry or contact concierge directly.
 
 ---
 

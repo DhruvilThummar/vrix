@@ -384,9 +384,15 @@ export function handleUserAction(
       messages.push({
         id: `msg-${Date.now()}-bespoke-out`,
         sender: "bot",
-        text: "Thank you. Our bespoke atelier works directly with you from preliminary sketch to final setting. Request a consultation below to begin.",
+        text: "Our master goldsmiths work directly with you from preliminary sketch to final setting.",
+        bespokeEstimate: {
+          pieceType: userLabel || actionValue || "Custom Fine Jewelry",
+          metalChoice: "18K Solid Gold / 950 Platinum",
+          estimatedPriceRange: "₹65,000 – ₹1,80,000",
+          leadTime: "3 – 4 Weeks",
+        },
         options: [
-          { label: "Request a bespoke consultation", value: "trigger-handoff" },
+          { label: "Book Atelier Consultation", value: "trigger-handoff" },
           { label: "Browse standard collections", value: "collections" },
         ],
         timestamp: time,

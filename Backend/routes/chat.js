@@ -79,13 +79,13 @@ async function vectorSearchProducts(userQuery, categoryFilter, maxPrice, limit =
         originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
         stone: p.description?.includes("Diamond") ? "Ethical Conflict-Free Diamond" : "Consciously Sourced Gem",
         warranty: "Lifetime Craftsmanship Guarantee",
-        image: p.image || (Array.isArray(p.images) ? p.images[0] : "") || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600",
+        image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
         whyFits: `Architectural ${p.material || 'minimal'} design, perfect for quiet luxury.`,
         slug: p.id,
       }));
   } catch (err) {
-    console.error("Vector RAG search error:", err);
-    return [];
+    console.error("Vector search DB error:", err);
+    return null; // Return null to signal DB connection issue
   }
 }
 
@@ -96,7 +96,7 @@ async function generateGeminiRagResponse(userPrompt, retrievedProducts) {
     return null; // Fallback to rule-based RAG synthesis if key not set
   }
 
-  const catalogContext = retrievedProducts
+  const catalogContext = (retrievedProducts || [])
     .map((p) => `- ${p.title} (${p.category}): ${p.material}, ₹${p.price}. ${p.whyFits}`)
     .join("\n");
 
@@ -134,7 +134,7 @@ function formatTime() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// POST /api/chat/query — Full RAG Pipeline endpoint (pgvector similarity + Gemini AI API)
+// POST /api/chat/query — Full RAG Pipeline endpoint with polite high-volume fallback
 router.post("/query", async (req, res) => {
   const { actionValue, userLabel, currentFlow, step, data, query } = req.body || {};
   const userText = query || userLabel || actionValue || "show jewelry";
@@ -157,7 +157,27 @@ router.post("/query", async (req, res) => {
   // Step 1: Perform RAG Vector Search over DB products
   const retrievedProducts = await vectorSearchProducts(userText, categoryFilter, maxPrice);
 
-  // Step 2: Generate Gemini RAG Response (with fallback)
+  // Fallback: If DB query returned null (database unreachable/busy)
+  if (retrievedProducts === null) {
+    return res.json({
+      success: true,
+      rag: { vectorRetrievedCount: 0, geminiUsed: false, dbFallbackActive: true },
+      messages: [
+        {
+          id: `msg-${Date.now()}`,
+          sender: "bot",
+          text: "Our client associates are currently experiencing high volume assisting other guests. Please try again in a few moments, or connect directly with our concierge team.",
+          options: [
+            { label: "Try again in a moment", value: "retry" },
+            { label: "Talk to concierge", value: "trigger-handoff" },
+          ],
+          timestamp: time,
+        },
+      ],
+    });
+  }
+
+  // Step 2: Generate Gemini RAG Response
   const geminiText = await generateGeminiRagResponse(userText, retrievedProducts);
 
   const botResponseText = geminiText || (retrievedProducts.length
