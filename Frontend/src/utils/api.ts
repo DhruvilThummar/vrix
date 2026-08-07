@@ -611,3 +611,30 @@ export async function updateUserVrixPlus(email: string, isVrixPlusMember: boolea
     body: JSON.stringify({ isVrixPlusMember }),
   });
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  ADMIN — NOTIFICATIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchNotifications() {
+  return adminFetch<any[]>("/notifications");
+}
+
+export async function markNotificationRead(id: string) {
+  return adminFetch<{ success: boolean }>(`/notifications/${id}/read`, {
+    method: "PATCH",
+  });
+}
+
+export async function markAllNotificationsRead() {
+  return adminFetch<{ success: boolean }>("/notifications/read-all", {
+    method: "PATCH",
+  });
+}
+
+export async function clearAllNotifications() {
+  return adminFetch<{ success: boolean }>("/notifications/clear", {
+    method: "DELETE",
+  });
+}
+
