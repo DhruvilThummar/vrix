@@ -65,6 +65,69 @@ The backend passes the following system directives to Gemini AI:
 
 ---
 
+## 🗄️ Supabase PostgreSQL & `pgvector` Schema Setup
+
+Run the following SQL migration script inside the **Supabase SQL Editor** to enable `vector` search and create the `match_products` RPC function:
+
+```sql
+-- 1. Enable the pgvector extension for vector embeddings
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- 2. Add embedding column to existing products table (or create table if new)
+ALTER TABLE public.products 
+  ADD COLUMN IF NOT EXISTS embedding vector(768);
+
+-- Ensure standard columns exist
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS material TEXT;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description TEXT;
+
+-- HNSW Index for fast vector similarity search
+CREATE INDEX IF NOT EXISTS products_embedding_hnsw_idx 
+  ON public.products 
+  USING hnsw (embedding vector_cosine_ops);
+
+-- 3. Create RPC matching function (match_products) for cosine similarity search
+CREATE OR REPLACE FUNCTION match_products (
+  query_embedding vector(768),
+  match_threshold float DEFAULT 0.3,
+  match_count int DEFAULT 4
+)
+RETURNS TABLE (
+  id TEXT,
+  title TEXT,
+  type TEXT,
+  material TEXT,
+  price NUMERIC,
+  description TEXT,
+  image TEXT,
+  similarity float
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    p.id,
+    p.title,
+    p.type,
+    p.material,
+    p.price::numeric,
+    p.description,
+    p.image,
+    1 - (p.embedding <=> query_embedding) AS similarity
+  FROM public.products p
+  WHERE p.is_visible = true
+    AND p.embedding IS NOT NULL
+    AND (1 - (p.embedding <=> query_embedding)) > match_threshold
+  ORDER BY p.embedding <=> query_embedding ASC
+  LIMIT match_count;
+END;
+$$;
+```
+
+---
+
 ## 🌟 The 7 Core Features & Entry Points
 
 | Feature | Icon | Function & Interactive Output |
