@@ -41,12 +41,27 @@ The chatbot employs a **Retrieval-Augmented Generation (RAG)** architecture comb
              v                                     v
 ```
 
-### Flow Execution Steps:
-1. **User Action**: The user selects a quick action chip or types a natural language query in the chat input.
-2. **Vector Similarity Retrieval**: The backend tokenizes the user prompt and computes a term-vector cosine similarity score against all visible products in the database (`db.products`).
-3. **RAG Context Synthesis**: The top matching product records (including material, category, price, and reason lines) are compiled into a structured context window.
-4. **Gemini AI Generation**: The backend passes the quiet-luxury system prompt, catalog context, and user prompt to Gemini API (`gemini-1.5-flash`).
-5. **Structured Response**: The backend returns a unified payload with bot text, interactive product cards, quick-reply option chips, comparison views, or human handoff details.
+### Gemini System Prompt & Output Schema (Strict JSON)
+
+The backend passes the following system directives to Gemini AI:
+
+```json
+{
+  "botText": "Your elegant, quiet-luxury response here. (No exclamation marks)",
+  "productCards": [
+    {
+      "productId": "id_from_context",
+      "name": "Product Name",
+      "price": "Price from context",
+      "reason": "One short sentence explaining why this fits."
+    }
+  ],
+  "actionChips": ["Explore Necklaces", "Bespoke Consultation"]
+}
+```
+
+- **Voice & Tone Directives**: Warm, restrained, confident, plain verbs, sentence case, zero fluff.
+- **Strict Constraint**: Zero exclamation marks (`!`). All responses are cleaned to eliminate exclamation marks.
 
 ---
 
