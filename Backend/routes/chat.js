@@ -62,7 +62,7 @@ Instructions:
 4. Output ONLY the extracted search keywords as a single line. Do not wrap it in JSON or quotes.
 `;
 
-// Preprocess user conversational prompt into keyword-rich vector search query using @google/generative-ai SDK
+// Preprocess user conversational prompt into keyword-rich vector search query
 async function optimizeSearchQuery(userMessage) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey || !userMessage || userMessage.trim().length === 0) return userMessage;
@@ -71,16 +71,15 @@ async function optimizeSearchQuery(userMessage) {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const text = result.response?.text();
     if (text) {
       return text.trim().replace(/^["']|["']$/g, "");
     }
-  } catch (err) {
-    console.error("SDK Query optimization error, using fallback REST:", err);
+  } catch (err1) {
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,8 +92,8 @@ async function optimizeSearchQuery(userMessage) {
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) return text.trim().replace(/^["']|["']$/g, "");
       }
-    } catch (restErr) {
-      console.error("REST Query optimization error:", restErr);
+    } catch (err2) {
+      // Return original message gracefully on error
     }
   }
   return userMessage;
@@ -237,11 +236,10 @@ ${contextData || "No direct product matches found in catalog."}
 User Question: "${userPrompt}"
 `;
 
-  // 1. Try @google/generative-ai SDK first if available
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest",
       generationConfig: {
         responseMimeType: "application/json",
         temperature: 0.2,
@@ -249,25 +247,27 @@ User Question: "${userPrompt}"
     });
 
     const result = await model.generateContent(fullPrompt);
-    const rawText = result.response.text();
+    const rawText = result.response?.text();
     if (rawText) {
       const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
       return JSON.parse(cleanJson);
     }
   } catch (sdkErr) {
-    // 2. Fallback to Direct REST API Call
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: fullPrompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.2,
-          },
-        }),
-      });
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: fullPrompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.2,
+            },
+          }),
+        }
+      );
 
       if (res.ok) {
         const data = await res.json();
@@ -296,6 +296,9 @@ router.post("/query", async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   const time = formatTime();
 
+  // Define optimizedQuery at top handler scope to avoid ReferenceError
+  const optimizedQuery = await optimizeSearchQuery(userText);
+
   // Extract category & budget parameters
   let categoryFilter;
   let maxPrice;
@@ -310,12 +313,11 @@ router.post("/query", async (req, res) => {
   else if (lower.includes("40k") || lower.includes("40000")) maxPrice = 40000;
   else if (lower.includes("75k") || lower.includes("75000")) maxPrice = 75000;
 
-  // Step 1: Execute Supabase RPC match_products vector search (which calls optimizeSearchQuery internally)
+  // Step 1: Execute Supabase RPC match_products vector search
   let retrievedProducts = await searchSupabaseRpc(userText);
 
   // Step 2: Fallback to local DB vector search if Supabase RPC returned null
   if (!retrievedProducts) {
-    const optimizedQuery = await optimizeSearchQuery(userText);
     retrievedProducts = await searchLocalDbProducts(optimizedQuery, categoryFilter, maxPrice);
   }
 
@@ -339,7 +341,7 @@ router.post("/query", async (req, res) => {
     });
   }
 
-  // Step 4: Call Gemini 1.5 Flash Model RAG Generator
+  // Step 3: Call Gemini 1.5 Flash Model RAG Generator
   const geminiJson = await generateGeminiRagResponse(userText, retrievedProducts);
 
   let botText = "VRIX creates architectural minimalist jewelry crafted from consciously mined metals and conflict-free stones. Tell me who this is for or what category you would like to explore.";
@@ -386,7 +388,7 @@ router.post("/query", async (req, res) => {
   res.json({
     success: true,
     rag: {
-      vectorRetrievedCount: retrievedProducts.length,
+      vectorRetrievedCount: (retrievedProducts || []).length,
       geminiUsed: !!geminiJson,
       optimizedQuery,
     },
