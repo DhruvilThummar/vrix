@@ -150,4 +150,25 @@ model Notification {
   @@map("notifications")
 }
 
+model CookieConsent {
+  id            String   @id @default(uuid())
+  userId        String?  @map("user_id")
+  sessionId     String   @map("session_id")
+  ipHash        String   @map("ip_hash")
+  region        String   @default("GLOBAL")
+  necessary     Boolean  @default(true)
+  analytics     Boolean  @default(false)
+  marketing     Boolean  @default(false)
+  preferences   Boolean  @default(false)
+  consentSource String   @default("banner") @map("consent_source")
+  userAgent     String?  @map("user_agent")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([sessionId])
+  @@index([region])
+  @@map("cookie_consents")
+}
+
+
 

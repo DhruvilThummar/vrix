@@ -1,21 +1,41 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useCurrency } from "@/context/CurrencyContext";
+import { getApiBaseUrl } from "@/utils/api";
 
-interface CookiePreferences {
+export interface CookiePreferences {
   essential: boolean; // Always true
   analytics: boolean;
   marketing: boolean;
   preferences: boolean;
+  region?: string;
 }
 
 const DEFAULT_PREFERENCES: CookiePreferences = {
   essential: true,
-  analytics: true,
-  marketing: true,
-  preferences: true,
+  analytics: false, // Default OFF for GDPR & DPDP Act compliance
+  marketing: false, // Default OFF for GDPR & DPDP Act compliance
+  preferences: false,
 };
+
+function setCookieHeader(name: string, val: string) {
+  if (typeof document !== "undefined") {
+    document.cookie = `${name}=${encodeURIComponent(val)}; path=/; max-age=31536000; SameSite=Lax`;
+  }
+}
+
+function getSessionId(): string {
+  if (typeof window === "undefined") return "";
+  let id = localStorage.getItem("vrix_session_id");
+  if (!id) {
+    id = typeof crypto !== "undefined" && crypto.randomUUID
+      ? `sess_${crypto.randomUUID()}`
+      : `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem("vrix_session_id", id);
+  }
+  return id;
+}
 
 export default function CookieConsent() {
   const { detectedCountry, detectedCountryName } = useCurrency();
@@ -23,9 +43,16 @@ export default function CookieConsent() {
   const [showModal, setShowModal] = useState(false);
   const [prefs, setPrefs] = useState<CookiePreferences>(DEFAULT_PREFERENCES);
 
+  const getJurisdictionCode = useCallback(() => {
+    if (["DE", "FR", "IT", "ES", "NL", "BE", "AT", "PT", "IE", "FI", "GR"].includes(detectedCountry)) return "EU";
+    if (detectedCountry === "US") return "US";
+    if (detectedCountry === "IN") return "IN";
+    return "GLOBAL";
+  }, [detectedCountry]);
+
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("vrix-cookie-consent");
+      const saved = localStorage.getItem("vrix_cookie_consent_v1") || localStorage.getItem("vrix-cookie-consent");
       if (!saved) {
         // First visit — show banner after small delay
         const timer = setTimeout(() => setShowBanner(true), 1000);
@@ -35,36 +62,68 @@ export default function CookieConsent() {
       }
     } catch {}
 
-    // Listen to open modal events from footer
+    // Listen to open modal events from footer or privacy links
     function handleOpenModal() {
       setShowModal(true);
     }
     window.addEventListener("vrix-open-cookie-modal", handleOpenModal);
-    return () => window.removeEventListener("vrix-open-cookie-modal", handleOpenModal);
+    window.addEventListener("openCookiePreferences", handleOpenModal);
+    return () => {
+      window.removeEventListener("vrix-open-cookie-modal", handleOpenModal);
+      window.removeEventListener("openCookiePreferences", handleOpenModal);
+    };
   }, []);
 
-  const saveConsent = (updatedPrefs: CookiePreferences) => {
+  const saveConsent = async (updatedPrefs: CookiePreferences, source: string = "banner") => {
     try {
+      localStorage.setItem("vrix_cookie_consent_v1", JSON.stringify(updatedPrefs));
       localStorage.setItem("vrix-cookie-consent", JSON.stringify(updatedPrefs));
       localStorage.setItem("vrix-cookie-consent-date", new Date().toISOString());
       localStorage.setItem("vrix-cookie-consent-country", detectedCountry);
+
+      setCookieHeader("vrix_consent", JSON.stringify(updatedPrefs));
     } catch {}
 
     setPrefs(updatedPrefs);
     setShowBanner(false);
     setShowModal(false);
+
+    // Dispatch real-time event to load/unload third-party scripts (GA4, Meta Pixel)
+    window.dispatchEvent(new CustomEvent("cookieConsentUpdated", { detail: updatedPrefs }));
+
+    // Sync consent to PostgreSQL audit log
+    try {
+      const sessionId = getSessionId();
+
+      const baseUrl = getApiBaseUrl();
+      await fetch(`${baseUrl}/consent/consent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          region: getJurisdictionCode(),
+          necessary: true,
+          analytics: updatedPrefs.analytics,
+          marketing: updatedPrefs.marketing,
+          preferences: updatedPrefs.preferences,
+          consentSource: source,
+        }),
+      });
+    } catch (err) {
+      console.warn("Failed to sync consent audit log:", err);
+    }
   };
 
   const handleAcceptAll = () => {
-    saveConsent({ essential: true, analytics: true, marketing: true, preferences: true });
+    saveConsent({ essential: true, analytics: true, marketing: true, preferences: true }, "banner_accept_all");
   };
 
   const handleRejectAll = () => {
-    saveConsent({ essential: true, analytics: false, marketing: false, preferences: false });
+    saveConsent({ essential: true, analytics: false, marketing: false, preferences: false }, "banner_reject_essential");
   };
 
   const handleSavePreferences = () => {
-    saveConsent(prefs);
+    saveConsent(prefs, "preferences_modal");
   };
 
   const handleClearAllData = () => {
@@ -77,11 +136,11 @@ export default function CookieConsent() {
 
   // Policy text per jurisdiction
   const getJurisdictionLabel = () => {
-    if (["DE", "FR", "IT", "ES", "NL", "BE", "AT", "PT", "IE", "FI", "GR"].includes(detectedCountry)) {
-      return "EU GDPR Compliant";
-    }
-    if (detectedCountry === "GB") return "UK PECR / Data Protection Compliant";
-    if (detectedCountry === "IN") return "India DPDP Act Compliant";
+    const code = getJurisdictionCode();
+    if (code === "EU") return "EU GDPR Compliant";
+    if (detectedCountry === "GB") return "UK PECR / Data Protection";
+    if (code === "IN") return "India DPDP Act Compliant";
+    if (code === "US") return "US CCPA / CPRA Compliant";
     return "Privacy Compliant";
   };
 
@@ -91,7 +150,7 @@ export default function CookieConsent() {
     <>
       {/* ─── Bottom Banner (First Visit) ─────────────────────────────────── */}
       {showBanner && !showModal && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-ink-black/95 text-pure-white backdrop-blur-md border-t border-slate-grey/30 p-5 md:p-6 shadow-2xl animate-fade-in">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-ink-black/95 text-pure-white backdrop-blur-md border-t border-slate-grey/30 p-5 md:p-6 shadow-2xl animate-fade-in font-body-md">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1 flex-1">
               <div className="flex items-center gap-2">
@@ -106,7 +165,7 @@ export default function CookieConsent() {
               <p className="font-body-md text-xs text-slate-grey/90 leading-relaxed max-w-3xl">
                 We use cookies and similar technologies to enhance your browsing experience, serve personalized content, and analyze our traffic. By clicking &quot;Accept All&quot;, you consent to our use of cookies. Read our{" "}
                 <a href="/legal?tab=privacy" className="underline text-pure-white hover:text-gold-accent transition-colors">
-                  Privacy & Cookie Policy
+                  Privacy &amp; Cookie Policy
                 </a>.
               </p>
             </div>
@@ -140,7 +199,7 @@ export default function CookieConsent() {
 
       {/* ─── Preferences Modal ───────────────────────────────────────────── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/70 backdrop-blur-sm p-4 animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-black/70 backdrop-blur-sm p-4 animate-fade-in font-body-md">
           <div className="bg-pure-white text-ink-black border border-slate-grey/20 w-full max-w-lg shadow-2xl p-6 md:p-8 relative space-y-6 max-h-[90vh] overflow-y-auto">
             <button
               type="button"
@@ -157,12 +216,12 @@ export default function CookieConsent() {
                   Cookie Preferences
                 </h2>
               </div>
-              <p className="text-xs text-slate-grey font-body-md">
-                Customize your cookie settings for {detectedCountryName} ({getJurisdictionLabel()}).
+              <p className="text-xs text-slate-grey">
+                Customize your cookie settings for {detectedCountryName || "your region"} ({getJurisdictionLabel()}).
               </p>
             </div>
 
-            <div className="space-y-4 font-body-md text-xs">
+            <div className="space-y-4 text-xs">
               {/* Category: Essential */}
               <div className="p-3.5 border border-slate-grey/15 bg-soft-linen/30 flex items-start justify-between gap-3">
                 <div className="space-y-0.5 flex-1">
@@ -178,7 +237,7 @@ export default function CookieConsent() {
               {/* Category: Analytics */}
               <div className="p-3.5 border border-slate-grey/15 flex items-start justify-between gap-3">
                 <div className="space-y-0.5 flex-1">
-                  <p className="font-semibold text-deep-navy">Analytics & Performance</p>
+                  <p className="font-semibold text-deep-navy">Analytics &amp; Performance</p>
                   <p className="text-slate-grey">Allows us to analyze site usage and improve store navigation and page speeds.</p>
                 </div>
                 <input
@@ -192,7 +251,7 @@ export default function CookieConsent() {
               {/* Category: Marketing */}
               <div className="p-3.5 border border-slate-grey/15 flex items-start justify-between gap-3">
                 <div className="space-y-0.5 flex-1">
-                  <p className="font-semibold text-deep-navy">Marketing & Personalization</p>
+                  <p className="font-semibold text-deep-navy">Marketing &amp; Personalization</p>
                   <p className="text-slate-grey">Enables tailored product recommendations, promotional offers, and relevant ads.</p>
                 </div>
                 <input

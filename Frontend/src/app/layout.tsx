@@ -5,7 +5,8 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
-import CookieConsent from "@/components/CookieConsent";
+import CookieConsentBanner from "@/components/privacy/CookieConsentBanner";
+import ConditionalScriptLoader from "@/components/privacy/ConditionalScriptLoader";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -195,7 +196,8 @@ export default function RootLayout({
           <CurrencyProvider>
             <CartProvider>
               {children}
-              <CookieConsent />
+              <CookieConsentBanner />
+              <ConditionalScriptLoader />
             </CartProvider>
           </CurrencyProvider>
         </AuthProvider>
