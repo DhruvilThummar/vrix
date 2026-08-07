@@ -166,9 +166,8 @@ export default function Home() {
           slides.map((slide: any, sIdx: number) => (
             <div
               key={sIdx}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                sIdx === activeSlide ? "opacity-100 z-10 animate-fade-in" : "opacity-0 z-0 pointer-events-none"
-              }`}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${sIdx === activeSlide ? "opacity-100 z-10 animate-fade-in" : "opacity-0 z-0 pointer-events-none"
+                }`}
             >
               <div className="absolute inset-0">
                 <SkeletonImage
@@ -180,8 +179,8 @@ export default function Home() {
                   sizes="100vw"
                 />
               </div>
-              <div className="absolute inset-0 bg-black/45" />
-              
+              <div className="absolute inset-0" />
+
               <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
                 <div className="max-w-xl text-pure-white">
                   <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-90">
@@ -242,9 +241,8 @@ export default function Home() {
               <button
                 key={sIdx}
                 onClick={() => setActiveSlide(sIdx)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  sIdx === activeSlide ? "bg-ink-black md:bg-pure-white scale-125" : "bg-ink-black/40 md:bg-pure-white/40 hover:bg-ink-black/70 md:hover:bg-pure-white/70"
-                }`}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${sIdx === activeSlide ? "bg-ink-black md:bg-pure-white scale-125" : "bg-ink-black/40 md:bg-pure-white/40 hover:bg-ink-black/70 md:hover:bg-pure-white/70"
+                  }`}
                 aria-label={`Go to slide ${sIdx + 1}`}
               />
             ))}
@@ -507,29 +505,29 @@ export default function Home() {
           <h2 className="font-headline-md text-headline-md text-deep-navy mb-section-gap leading-tight uppercase whitespace-pre-line font-light tracking-wide">
             {loading ? <Skeleton width="50%" height={32} className="mx-auto" /> : store.homepage.philosophyTitle}
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-stack-lg">
             {loading
               ? [1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex flex-col items-center space-y-3">
-                    <Skeleton circle width={50} height={50} />
-                    <Skeleton width="60%" height={14} />
-                    <Skeleton width="80%" height={10} count={2} />
-                  </div>
-                ))
+                <div key={i} className="flex flex-col items-center space-y-3">
+                  <Skeleton circle width={50} height={50} />
+                  <Skeleton width="60%" height={14} />
+                  <Skeleton width="80%" height={10} count={2} />
+                </div>
+              ))
               : store.homepage.philosophy.map((item, index) => (
-                  <div key={index} className="flex flex-col items-center">
-                    <span className="material-symbols-outlined text-deep-navy mb-stack-md text-3xl font-light">
-                      {item.icon}
-                    </span>
-                    <h4 className="font-label-caps text-label-caps text-deep-navy uppercase mb-2 font-semibold">
-                      {item.title}
-                    </h4>
-                    <p className="font-body-md text-sm text-slate-grey whitespace-pre-line leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                ))}
+                <div key={index} className="flex flex-col items-center">
+                  <span className="material-symbols-outlined text-deep-navy mb-stack-md text-3xl font-light">
+                    {item.icon}
+                  </span>
+                  <h4 className="font-label-caps text-label-caps text-deep-navy uppercase mb-2 font-semibold">
+                    {item.title}
+                  </h4>
+                  <p className="font-body-md text-sm text-slate-grey whitespace-pre-line leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              ))}
           </div>
         </div>
       </section>
