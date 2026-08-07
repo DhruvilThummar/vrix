@@ -6,6 +6,144 @@ import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournal
 type TabType = "story" | "legal" | "journal" | "api-integrations" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "custom-pages" | "invoice-customizer" | "currency-settings" | "offers-showcase" | "footer";
 
 
+// Preset standard pages
+const STANDARD_PAGES = [
+  { label: "Home Page", path: "/" },
+  { label: "All Products", path: "/products" },
+  { label: "Collections Catalog", path: "/collections" },
+  { label: "Bespoke Configurator", path: "/bespoke" },
+  { label: "Our Story", path: "/story" },
+  { label: "Journal", path: "/journal" },
+  { label: "VRIX+ Club", path: "/vrix-plus" },
+  { label: "Search Catalog", path: "/search" },
+  { label: "New Arrivals / Trending", path: "/collections/silent-center" },
+];
+
+const PathSelector = ({
+  value,
+  onChange,
+  allProducts = [],
+  allCollections = []
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  allProducts?: any[];
+  allCollections?: any[];
+}) => {
+  let type = "custom";
+  let selectedIdOrSlug = "";
+  const valStr = value || "/";
+
+  if (valStr === "/" || STANDARD_PAGES.some(p => p.path === valStr)) {
+    type = "page";
+    selectedIdOrSlug = valStr;
+  } else if (valStr.startsWith("/product/")) {
+    type = "product";
+    selectedIdOrSlug = valStr.replace("/product/", "");
+  } else if (valStr.startsWith("/collections/") && valStr !== "/collections") {
+    type = "collection";
+    selectedIdOrSlug = valStr.replace("/collections/", "");
+  } else {
+    type = "custom";
+    selectedIdOrSlug = valStr;
+  }
+
+  const handleTypeChange = (newType: string) => {
+    if (newType === "page") {
+      onChange("/");
+    } else if (newType === "product") {
+      const firstProd = allProducts[0]?.id || "";
+      onChange(firstProd ? `/product/${firstProd}` : "/");
+    } else if (newType === "collection") {
+      const firstColl = allCollections[0]?.id || allCollections[0]?.slug || "all";
+      onChange(`/collections/${firstColl}`);
+    } else {
+      onChange("/");
+    }
+  };
+
+  const handleSelectionChange = (newVal: string) => {
+    if (type === "product") {
+      onChange(`/product/${newVal}`);
+    } else if (type === "collection") {
+      onChange(`/collections/${newVal}`);
+    } else {
+      onChange(newVal);
+    }
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row gap-2 mt-1 w-full max-w-full overflow-hidden">
+      <select
+        value={type}
+        onChange={(e) => handleTypeChange(e.target.value)}
+        className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer shrink-0 max-w-full truncate rounded"
+      >
+        <option value="page">Standard Page</option>
+        <option value="collection">Collection Page</option>
+        <option value="product">Individual Product</option>
+        <option value="custom">Custom Web Link</option>
+      </select>
+
+      {type === "page" && (
+        <select
+          value={selectedIdOrSlug}
+          onChange={(e) => handleSelectionChange(e.target.value)}
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none text-slate-grey flex-1 min-w-0 max-w-full truncate cursor-pointer font-medium rounded"
+        >
+          {STANDARD_PAGES.map((p) => (
+            <option key={p.path} value={p.path}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {type === "collection" && (
+        <select
+          value={selectedIdOrSlug}
+          onChange={(e) => handleSelectionChange(e.target.value)}
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none text-slate-grey flex-1 min-w-0 max-w-full truncate cursor-pointer font-medium rounded"
+        >
+          {allCollections.length > 0 ? (
+            allCollections.map((c: any) => (
+              <option key={c.id || c.slug} value={c.id || c.slug}>
+                {c.name || c.title || c.slug}
+              </option>
+            ))
+          ) : (
+            <option value="all">All Jewelry</option>
+          )}
+        </select>
+      )}
+
+      {type === "product" && (
+        <select
+          value={selectedIdOrSlug}
+          onChange={(e) => handleSelectionChange(e.target.value)}
+          className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none text-slate-grey flex-1 min-w-0 max-w-full truncate cursor-pointer font-medium rounded"
+        >
+          {allProducts.map((p: any) => (
+            <option key={p.id} value={p.id}>
+              {p.title}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {type === "custom" && (
+        <input
+          type="text"
+          value={selectedIdOrSlug}
+          onChange={(e) => onChange(e.target.value)}
+          className="border border-slate-grey/30 px-3 py-1.5 text-xs outline-none text-ink-black flex-1 min-w-0 max-w-full rounded"
+          placeholder="e.g. /custom-url"
+        />
+      )}
+    </div>
+  );
+};
+
 // --- Visual Image Preview Helper Component ---
 const VisualImagePreview = ({ src, alt = "Preview" }: { src: string; alt?: string }) => {
   return (
@@ -2672,17 +2810,15 @@ export default function AdminCMSPage() {
                           </div>
                           <div className="flex-1">
                             <label className="text-[8px] font-label-caps text-slate-grey uppercase">Target Path / URL</label>
-                            <input
-                              type="text"
-                              value={link.path || ""}
-                              onChange={(e) => {
+                            <PathSelector
+                              value={link.path || "/"}
+                              onChange={(val) => {
                                 const arr = [...footerLinks];
-                                arr[colIdx].links[linkIdx].path = e.target.value;
+                                arr[colIdx].links[linkIdx].path = val;
                                 setFooterLinks(arr);
                               }}
-                              className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
-                              placeholder="e.g. https://instagram.com"
-                              required
+                              allProducts={allProducts}
+                              allCollections={allCollections}
                             />
                           </div>
                           <div className="w-full sm:w-44">
