@@ -331,12 +331,35 @@ export default function AdminUsersPage() {
                         <div className="text-[10px] text-slate-grey font-normal">{user.totalOrdersCount || 0} completed orders</div>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <div className="inline-flex items-center gap-2">
-                          <span className={`px-2 py-0.5 text-[10px] font-label-caps rounded font-semibold ${user.cartItemsCount ? "bg-amber-100 text-amber-900" : "bg-slate-100 text-slate-600"}`}>
-                            👜 {user.cartItemsCount || 0} in cart
+                        <div className="inline-flex items-center justify-center gap-1.5">
+                          {/* Cart Badge */}
+                          <span
+                            title={`${user.cartItemsCount || 0} items currently in cart`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-label-caps uppercase tracking-wider font-semibold rounded-full border transition-all ${
+                              (user.cartItemsCount || 0) > 0
+                                ? "bg-amber-50 text-amber-900 border-amber-200/80 shadow-2xs"
+                                : "bg-surface/60 text-slate-grey border-slate-grey/20 opacity-70"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[13px] leading-none">
+                              shopping_bag
+                            </span>
+                            <span>{user.cartItemsCount || 0}</span>
                           </span>
-                          <span className={`px-2 py-0.5 text-[10px] font-label-caps rounded font-semibold ${user.wishlistItemsCount ? "bg-red-50 text-red-800" : "bg-slate-100 text-slate-600"}`}>
-                            ♥ {user.wishlistItemsCount || 0}
+
+                          {/* Wishlist Badge */}
+                          <span
+                            title={`${user.wishlistItemsCount || 0} saved in wishlist`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-label-caps uppercase tracking-wider font-semibold rounded-full border transition-all ${
+                              (user.wishlistItemsCount || 0) > 0
+                                ? "bg-rose-50 text-rose-800 border-rose-200/80 shadow-2xs"
+                                : "bg-surface/60 text-slate-grey border-slate-grey/20 opacity-70"
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[13px] leading-none">
+                              favorite
+                            </span>
+                            <span>{user.wishlistItemsCount || 0}</span>
                           </span>
                         </div>
                       </td>
