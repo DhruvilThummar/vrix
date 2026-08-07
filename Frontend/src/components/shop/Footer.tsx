@@ -138,14 +138,11 @@ export default function Footer() {
         <div className="flex flex-col gap-4">
           <Link href="/" className="flex flex-col select-none">
             {logoUrl && logoUrl !== "" ? (
-              <div className="relative h-8 w-32 my-1">
-                <Image
-                  src={logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl}
+              <div className="relative my-1">
+                <img
+                  src={logoUrl}
                   alt={brandName}
-                  fill
-                  className="object-contain object-left"
-                  sizes="128px"
-                  priority
+                  className="h-8 max-w-[160px] object-contain object-left"
                 />
               </div>
             ) : (
@@ -287,21 +284,17 @@ export default function Footer() {
               <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
                 Follow
               </h4>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+              <a href="https://www.instagram.com/vrix.official" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
                 <i className="fa-brands fa-instagram text-sm w-4 text-center"></i>
                 Instagram
               </a>
-              <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
-                <i className="fa-brands fa-pinterest text-sm w-4 text-center"></i>
-                Pinterest
-              </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+              <a href="https://www.linkedin.com/company/vrixjewels/" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
                 <i className="fa-brands fa-linkedin-in text-sm w-4 text-center"></i>
                 LinkedIn
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
-                <i className="fa-brands fa-youtube text-sm w-4 text-center"></i>
-                YouTube
+              <a href="https://share.google/EjrRFPTc3O06labrR" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+                <i className="fa-brands fa-location-dot text-sm w-4 text-center"></i>
+                Location
               </a>
             </div>
           </>
