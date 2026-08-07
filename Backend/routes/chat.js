@@ -292,11 +292,76 @@ function formatTime() {
 // ── POST /api/chat/query — Production RAG Endpoint ─────────────────────────
 router.post("/query", async (req, res) => {
   const { actionValue, userLabel, currentFlow, step, data, query, userMessage } = req.body || {};
-  const userText = userMessage || query || userLabel || actionValue || "show jewelry";
+  const userText = (userMessage || query || userLabel || actionValue || "show jewelry").trim();
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   const time = formatTime();
 
-  // Define optimizedQuery at top handler scope to avoid ReferenceError
+  // 1. Handle Guided Flow Entry Points directly
+  if (actionValue === "myself" || userLabel === "Find a Piece for Myself") {
+    return res.json({
+      success: true,
+      nextState: { currentFlow: "myself", step: 2, data: {} },
+      messages: [
+        {
+          id: `msg-${Date.now()}`,
+          sender: "bot",
+          text: "What are you shopping for?",
+          options: [
+            { label: "Necklaces", value: "Necklaces" },
+            { label: "Earrings", value: "Earrings" },
+            { label: "Rings", value: "Rings" },
+            { label: "Bracelets", value: "Bracelets" },
+            { label: "Not sure yet", value: "All" },
+          ],
+          timestamp: time,
+        },
+      ],
+    });
+  }
+
+  if (actionValue === "gift" || userLabel === "Find a Gift") {
+    return res.json({
+      success: true,
+      nextState: { currentFlow: "gift", step: 2, data: {} },
+      messages: [
+        {
+          id: `msg-${Date.now()}`,
+          sender: "bot",
+          text: "Who is this gift for?",
+          options: [
+            { label: "Partner / Spouse", value: "Partner" },
+            { label: "Mother", value: "Mother" },
+            { label: "Friend", value: "Friend" },
+            { label: "Skip step", value: "skip" },
+          ],
+          timestamp: time,
+        },
+      ],
+    });
+  }
+
+  if (actionValue === "collections" || userLabel === "Explore Collections") {
+    return res.json({
+      success: true,
+      nextState: { currentFlow: "collections", step: 1, data: {} },
+      messages: [
+        {
+          id: `msg-${Date.now()}`,
+          sender: "bot",
+          text: "Select a collection category to explore:",
+          options: [
+            { label: "Necklaces", value: "Necklaces" },
+            { label: "Earrings", value: "Earrings" },
+            { label: "Rings", value: "Rings" },
+            { label: "Bracelets", value: "Bracelets" },
+            { label: "Bespoke", value: "Bespoke" },
+          ],
+          timestamp: time,
+        },
+      ],
+    });
+  }
+
   const optimizedQuery = await optimizeSearchQuery(userText);
 
   // Extract category & budget parameters
@@ -344,12 +409,12 @@ router.post("/query", async (req, res) => {
   // Step 3: Call Gemini 1.5 Flash Model RAG Generator
   const geminiJson = await generateGeminiRagResponse(userText, retrievedProducts);
 
-  let botText = "VRIX creates architectural minimalist jewelry crafted from consciously mined metals and conflict-free stones. Tell me who this is for or what category you would like to explore.";
+  const defaultOutCatalogMsg = "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests.";
+  let botText = defaultOutCatalogMsg;
   let displayProducts = undefined;
   let options = [
     { label: "Find a piece for myself", value: "myself" },
     { label: "Find a gift", value: "gift" },
-    { label: "Compare these pieces", value: "trigger-compare" },
     { label: "Explore collections", value: "collections" },
     { label: "Talk to concierge", value: "trigger-handoff" },
   ];

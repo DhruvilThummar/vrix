@@ -556,7 +556,7 @@ export function handleUserAction(
       messages.push({
         id: `msg-${Date.now()}-fb-def`,
         sender: "bot",
-        text: "I can assist you with recommendations, gift selection, diamond education, or bespoke design. How would you like to begin?",
+        text: "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests.",
         options: [
           { label: "Find a piece for myself", value: "myself" },
           { label: "Find a gift", value: "gift" },
