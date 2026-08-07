@@ -2654,9 +2654,9 @@ export default function AdminCMSPage() {
 
                     <div className="space-y-2.5">
                       {Array.isArray(column.links) && column.links.map((link: any, linkIdx: number) => (
-                        <div key={linkIdx} className="flex items-center gap-3 bg-pure-white p-2 border border-slate-grey/10 rounded">
+                        <div key={linkIdx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-pure-white p-3 border border-slate-grey/10 rounded">
                           <div className="flex-1">
-                            <label className="text-[8px] font-label-caps text-slate-grey uppercase">Link Text</label>
+                            <label className="text-[8px] font-label-caps text-slate-grey uppercase">Link Text / Label</label>
                             <input
                               type="text"
                               value={link.label || ""}
@@ -2666,7 +2666,7 @@ export default function AdminCMSPage() {
                                 setFooterLinks(arr);
                               }}
                               className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
-                              placeholder="e.g. FAQ"
+                              placeholder="e.g. Instagram"
                               required
                             />
                           </div>
@@ -2681,8 +2681,22 @@ export default function AdminCMSPage() {
                                 setFooterLinks(arr);
                               }}
                               className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
-                              placeholder="e.g. /legal?tab=faq"
+                              placeholder="e.g. https://instagram.com"
                               required
+                            />
+                          </div>
+                          <div className="w-full sm:w-44">
+                            <label className="text-[8px] font-label-caps text-slate-grey uppercase">Optional Icon (FontAwesome class)</label>
+                            <input
+                              type="text"
+                              value={link.icon || ""}
+                              onChange={(e) => {
+                                const arr = [...footerLinks];
+                                arr[colIdx].links[linkIdx].icon = e.target.value;
+                                setFooterLinks(arr);
+                              }}
+                              className="w-full border-b border-slate-grey/25 py-0.5 text-xs outline-none bg-transparent"
+                              placeholder="e.g. fa-brands fa-instagram"
                             />
                           </div>
                           <button
@@ -2692,7 +2706,7 @@ export default function AdminCMSPage() {
                               arr[colIdx].links = arr[colIdx].links.filter((_: any, i: number) => i !== linkIdx);
                               setFooterLinks(arr);
                             }}
-                            className="text-red-500 hover:text-red-700 text-xs font-semibold px-2 cursor-pointer mt-3"
+                            className="text-red-500 hover:text-red-700 text-xs font-semibold px-2 cursor-pointer self-end sm:self-center"
                           >
                             ✕
                           </button>

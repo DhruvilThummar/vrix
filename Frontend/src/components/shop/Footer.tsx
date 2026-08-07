@@ -174,6 +174,7 @@ export default function Footer() {
                 </h4>
                 {column.links && column.links.map((link: any, linkIdx: number) => {
                   const isExternal = link.path.startsWith("http://") || link.path.startsWith("https://");
+                  const hasIcon = !!link.icon;
                   if (isExternal) {
                     return (
                       <a
@@ -181,8 +182,9 @@ export default function Footer() {
                         href={link.path}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90"
+                        className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90 flex items-center gap-2"
                       >
+                        {hasIcon && <i className={`${link.icon} text-sm w-4 text-center`}></i>}
                         {link.label}
                       </a>
                     );
@@ -191,8 +193,9 @@ export default function Footer() {
                     <Link
                       key={linkIdx}
                       href={link.path}
-                      className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90"
+                      className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90 flex items-center gap-2"
                     >
+                      {hasIcon && <i className={`${link.icon} text-sm w-4 text-center`}></i>}
                       {link.label}
                     </Link>
                   );
