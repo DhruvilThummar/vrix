@@ -1,8 +1,10 @@
 import express from "express";
+import { createClient } from "@supabase/supabase-js";
 import { db } from "../database.js";
 
 const router = express.Router();
 
+// ── VRIX Quiet Luxury System Prompt ─────────────────────────────────────────
 const VRIX_SYSTEM_PROMPT = `
 You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
 Your brand tagline is: "Designed for the moments that belong only to you."
@@ -38,87 +40,122 @@ Your JSON must strictly follow this structure:
 If no products are relevant, leave the "productCards" array empty []. Provide 2-3 logical next steps in "actionChips".
 `;
 
-// Calculate vector embedding representation / similarity score (Cosine distance) for RAG retrieval
+// ── Vector Embedding Generator via Gemini text-embedding-004 ───────────────
+async function generateGeminiEmbedding(text, apiKey) {
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "models/text-embedding-004",
+        content: { parts: [{ text }] },
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.embedding?.values || null;
+  } catch (err) {
+    console.error("Gemini embedding error:", err);
+    return null;
+  }
+}
+
+// ── Supabase RPC match_products Vector Similarity Search ───────────────────
+async function searchSupabaseRpc(userMessage) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+  if (!supabaseUrl || !supabaseKey || !apiKey) return null;
+
+  try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const queryVector = await generateGeminiEmbedding(userMessage, apiKey);
+    if (!queryVector) return null;
+
+    const { data: matched, error } = await supabase.rpc("match_products", {
+      query_embedding: queryVector,
+      match_threshold: 0.3,
+      match_count: 4,
+    });
+
+    if (error || !matched || matched.length === 0) return null;
+
+    return matched.map((p) => ({
+      id: p.id,
+      title: p.title,
+      category: p.type || p.category || "Jewelry",
+      material: p.material || "18K Gold / Sterling Silver",
+      price: Number(p.price) || 0,
+      image: p.image || p.image_url || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600",
+      whyFits: `Architectural ${p.material || 'minimal'} design, perfect for quiet luxury.`,
+      slug: p.id,
+    }));
+  } catch (err) {
+    console.error("Supabase RPC vector search exception:", err);
+    return null;
+  }
+}
+
+// ── Local Fallback Vector Similarity Search over Prisma / Database ──────────
 function computeTextVector(text = "") {
   const words = text.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean);
   const tf = {};
-  for (const w of words) {
-    tf[w] = (tf[w] || 0) + 1;
-  }
+  for (const w of words) tf[w] = (tf[w] || 0) + 1;
   return tf;
 }
 
 function cosineSimilarity(vecA, vecB) {
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-
-  for (const key in vecA) {
-    normA += vecA[key] * vecA[key];
-    if (vecB[key]) {
-      dotProduct += vecA[key] * vecB[key];
-    }
+  let dotProduct = 0, normA = 0, normB = 0;
+  for (const k in vecA) {
+    normA += vecA[k] * vecA[k];
+    if (vecB[k]) dotProduct += vecA[k] * vecB[k];
   }
-  for (const key in vecB) {
-    normB += vecB[key] * vecB[key];
-  }
+  for (const k in vecB) normB += vecB[k] * vecB[k];
   if (normA === 0 || normB === 0) return 0;
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-// RAG Vector Retrieval over products database
-async function vectorSearchProducts(userQuery, categoryFilter, maxPrice, limit = 4) {
+async function searchLocalDbProducts(userQuery, categoryFilter, maxPrice, limit = 4) {
   try {
     const products = await db.products.findMany({ where: { isVisible: true } });
     if (!products || products.length === 0) return [];
 
     const queryVec = computeTextVector(userQuery);
-
     const scored = products.map((p) => {
       const docText = `${p.title} ${p.material || ""} ${p.type || ""} ${p.collection || ""} ${p.description || ""} ${Array.isArray(p.tags) ? p.tags.join(" ") : ""}`;
       const docVec = computeTextVector(docText);
       let score = cosineSimilarity(queryVec, docVec);
-
-      // Boost matching categories or metals
-      if (categoryFilter && p.type && p.type.toLowerCase().includes(categoryFilter.toLowerCase())) {
-        score += 0.5;
-      }
-      if (maxPrice && Number(p.price) <= maxPrice) {
-        score += 0.2;
-      }
-
+      if (categoryFilter && p.type && p.type.toLowerCase().includes(categoryFilter.toLowerCase())) score += 0.5;
+      if (maxPrice && Number(p.price) <= maxPrice) score += 0.2;
       return { product: p, score };
     });
 
     scored.sort((a, b) => b.score - a.score);
 
-    return scored
-      .slice(0, limit)
-      .map(({ product: p }) => ({
-        id: p.id,
-        title: p.title,
-        category: p.type || p.collection || "Jewelry",
-        material: p.material || "18K Gold / Sterling Silver",
-        price: Number(p.price) || 0,
-        originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
-        stone: p.description?.includes("Diamond") ? "Ethical Conflict-Free Diamond" : "Consciously Sourced Gem",
-        warranty: "Lifetime Craftsmanship Guarantee",
-        image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
-        whyFits: `Architectural ${p.material || 'minimal'} design, perfect for quiet luxury.`,
-        slug: p.id,
-      }));
+    return scored.slice(0, limit).map(({ product: p }) => ({
+      id: p.id,
+      title: p.title,
+      category: p.type || p.collection || "Jewelry",
+      material: p.material || "18K Gold / Sterling Silver",
+      price: Number(p.price) || 0,
+      originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+      stone: p.description?.includes("Diamond") ? "Ethical Conflict-Free Diamond" : "Consciously Sourced Gem",
+      warranty: "Lifetime Craftsmanship Guarantee",
+      image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+      whyFits: `Architectural ${p.material || 'minimal'} design, perfect for quiet luxury.`,
+      slug: p.id,
+    }));
   } catch (err) {
-    console.error("Vector search DB error:", err);
-    return null; // Return null to signal DB connection issue
+    console.error("Local DB product search error:", err);
+    return null;
   }
 }
 
-// Call Gemini API with RAG context and strict JSON generation config
+// ── Gemini 1.5 Flash Model RAG Generator with Strict JSON Parsing ──────────
 async function generateGeminiRagResponse(userPrompt, retrievedProducts) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  if (!apiKey) {
-    return null; // Fallback to rule-based RAG synthesis if key not set
-  }
+  if (!apiKey) return null;
 
   const contextData = (retrievedProducts || [])
     .map((p) => `ID: ${p.id} | Name: ${p.title} | Category: ${p.category} | Material: ${p.material} | Price: ₹${p.price} | Reason: ${p.whyFits}`)
@@ -164,10 +201,10 @@ function formatTime() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// POST /api/chat/query — Full RAG Pipeline endpoint with strict JSON Gemini AI integration
+// ── POST /api/chat/query — Production RAG Endpoint ─────────────────────────
 router.post("/query", async (req, res) => {
-  const { actionValue, userLabel, currentFlow, step, data, query } = req.body || {};
-  const userText = query || userLabel || actionValue || "show jewelry";
+  const { actionValue, userLabel, currentFlow, step, data, query, userMessage } = req.body || {};
+  const userText = userMessage || query || userLabel || actionValue || "show jewelry";
   const time = formatTime();
 
   // Extract category & budget parameters
@@ -184,10 +221,15 @@ router.post("/query", async (req, res) => {
   else if (lower.includes("40k") || lower.includes("40000")) maxPrice = 40000;
   else if (lower.includes("75k") || lower.includes("75000")) maxPrice = 75000;
 
-  // Step 1: Perform RAG Vector Search over DB products
-  const retrievedProducts = await vectorSearchProducts(userText, categoryFilter, maxPrice);
+  // Step 1: Try Supabase RPC match_products vector search first
+  let retrievedProducts = await searchSupabaseRpc(userText);
 
-  // Fallback: If DB query returned null (database unreachable/busy)
+  // Step 2: Fallback to local DB vector search if Supabase RPC returned null
+  if (!retrievedProducts) {
+    retrievedProducts = await searchLocalDbProducts(userText, categoryFilter, maxPrice);
+  }
+
+  // High-Volume Busy Fallback Error Handling if DB and fallback fail completely
   if (retrievedProducts === null) {
     return res.json({
       success: true,
@@ -207,7 +249,7 @@ router.post("/query", async (req, res) => {
     });
   }
 
-  // Step 2: Generate Gemini RAG Response
+  // Step 3: Call Gemini 1.5 Flash Model RAG Generator
   const geminiJson = await generateGeminiRagResponse(userText, retrievedProducts);
 
   let botText = "Welcome to VRIX. Tell me who this is for and the occasion, and I'll narrow it down.";
@@ -221,13 +263,13 @@ router.post("/query", async (req, res) => {
 
   if (geminiJson) {
     if (geminiJson.botText) {
-      // Remove any trailing exclamation marks to enforce strict tone rules
+      // Remove any trailing exclamation marks to enforce strict quiet luxury tone
       botText = geminiJson.botText.replace(/!/g, ".");
     }
     if (Array.isArray(geminiJson.actionChips) && geminiJson.actionChips.length > 0) {
       options = geminiJson.actionChips.map((chip) => ({
-        label: chip.replace(/!/g, ""),
-        value: chip.toLowerCase().includes("bespoke") ? "Bespoke" : chip.toLowerCase().includes("gift") ? "gift" : "myself",
+        label: String(chip).replace(/!/g, ""),
+        value: String(chip).toLowerCase().includes("bespoke") ? "Bespoke" : String(chip).toLowerCase().includes("gift") ? "gift" : "myself",
       }));
     }
     if (Array.isArray(geminiJson.productCards) && geminiJson.productCards.length > 0) {
@@ -268,12 +310,14 @@ router.post("/query", async (req, res) => {
   });
 });
 
-// GET /api/chat/health — Check RAG & Gemini status
+// ── GET /api/chat/health — Status Check ───────────────────────────────────────
 router.get("/health", (req, res) => {
   const hasGeminiKey = !!(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
+  const hasSupabase = !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY));
   res.json({
     status: "ok",
-    ragEngine: "pgvector + Gemini AI",
+    ragEngine: "Supabase RPC match_products + Gemini text-embedding-004 + Gemini 1.5 Flash",
+    supabaseConfigured: hasSupabase,
     geminiConfigured: hasGeminiKey,
   });
 });
