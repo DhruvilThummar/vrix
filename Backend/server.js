@@ -26,6 +26,7 @@ import notificationsRouter from "./routes/notifications.js";
 import chatRouter from "./routes/chat.js";
 import consentRouter from "./routes/consent.js";
 import bespokeRouter from "./routes/bespoke.js";
+import categoriesRouter from "./routes/categories.js";
 
 
 
@@ -163,6 +164,7 @@ const registerRoutes = (prefix = "") => {
   app.use(p("/chat"), chatRouter);
   app.use(p("/consent"), consentRouter);
   app.use(p("/bespoke"), bespokeRouter);
+  app.use(p("/categories"), categoriesRouter);
 
 
 };

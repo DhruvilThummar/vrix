@@ -589,6 +589,26 @@ export async function saveCollections(collections: any[]) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+//  ADMIN — CATEGORIES MANAGEMENT
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchCategories() {
+  return apiFetch<any[]>("/categories");
+}
+
+export async function fetchAllCategories() {
+  return apiFetch<any[]>("/categories/all");
+}
+
+export async function saveCategories(categories: any[]) {
+  return adminFetch<any>("/categories", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ categories }),
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 //  ADMIN — SITE CONFIG (features, brand, navigation, homepage, etc.)
 // ══════════════════════════════════════════════════════════════════════════════
 

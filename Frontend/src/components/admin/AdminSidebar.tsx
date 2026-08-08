@@ -8,6 +8,7 @@ const navItems = [
   { name: "Dashboard", href: "/admin", icon: "dashboard" },
   { name: "Products", href: "/admin/products", icon: "inventory_2" },
   { name: "Collections", href: "/admin/collections", icon: "category" },
+  { name: "Categories", href: "/admin/categories", icon: "grid_view" },
   { name: "Orders", href: "/admin/orders", icon: "receipt_long" },
   { name: "Customers & Analytics", href: "/admin/users", icon: "group" },
   { name: "VRIX+ Club", href: "/admin/vrix-plus", icon: "workspace_premium" },
