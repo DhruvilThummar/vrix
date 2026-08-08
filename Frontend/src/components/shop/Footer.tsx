@@ -69,7 +69,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#F5F4F0] text-ink-black/80 border-t border-slate-grey/20 pt-12 pb-8 font-body-md text-sm">
-      
+
       {/* ─── MONICA VINADER STYLE VRIX+ CIRCLE NEWSLETTER BANNER ─── */}
       <div className="border-b border-slate-grey/20 pb-12 mb-12 bg-[#FAF8F5] py-10 px-margin-mobile md:px-margin-desktop">
         {isLoggedIn && user?.isVrixPlusMember ? (
@@ -133,7 +133,7 @@ export default function Footer() {
       </div>
 
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10 md:gap-gutter pb-12">
-        
+
         {/* Column 1: Brand details */}
         <div className="flex flex-col gap-4">
           <Link href="/" className="flex flex-col select-none">
@@ -154,7 +154,7 @@ export default function Footer() {
               Feel The Luxury
             </span>
           </Link>
-          
+
           <div className="my-1 text-[#B59D7C]">
             {/* Elegant 4-point star character */}
             <span className="text-2xl font-light">✦</span>
@@ -340,7 +340,7 @@ export default function Footer() {
           </Link>
           <span className="opacity-45">|</span>
           <button
-            onClick={() => window.dispatchEvent(new Event("vrix-open-cookie-modal"))}
+            onClick={() => window.dispatchEvent(new Event("openCookiePreferences"))}
             className="hover:text-ink-black transition-colors cursor-pointer"
           >
             Cookie Preferences
