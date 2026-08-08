@@ -266,10 +266,10 @@ function ProductContent() {
 
           {/* Right Column: Sticky Product Information */}
           <div className="md:col-span-5 relative mt-2 md:mt-0">
-            <div className="sticky top-[90px] flex flex-col gap-4">
+            <div className="sticky top-[90px] flex flex-col gap-3">
 
               {/* Header Info */}
-              <div className="flex flex-col gap-2 border-b border-slate-grey/20 pb-4">
+              <div className="flex flex-col gap-1.5 border-b border-slate-grey/20 pb-3">
                 <h1 className="font-display-lg-mobile md:font-display-lg text-ink-black tracking-tight leading-tight uppercase">
                   {product.title}
                 </h1>
@@ -284,7 +284,7 @@ function ProductContent() {
                 </p>
 
                 {/* Price Display */}
-                <div className="flex items-baseline gap-3 mt-2 flex-wrap">
+                <div className="flex items-baseline gap-2.5 mt-1.5 flex-wrap">
                   {product.isVrixPlusExclusive && product.vrixPlusPrice ? (
                     <>
                       <span className="font-headline-md text-deep-navy text-2xl font-semibold">{formatPrice(product.vrixPlusPrice)}</span>
@@ -306,7 +306,7 @@ function ProductContent() {
 
                 {/* Description (hide container spacing if empty) */}
                 {product.description && product.description.trim() ? (
-                  <p className="font-body-md text-on-surface-variant mt-2 leading-relaxed text-sm">
+                  <p className="font-body-md text-on-surface-variant mt-1.5 leading-relaxed text-sm">
                     {product.description}
                   </p>
                 ) : null}
@@ -322,11 +322,11 @@ function ProductContent() {
 
               {/* Configuration Form */}
               {Boolean((product.availableSizes && product.availableSizes.length > 0) || product.engravingOptions?.enabled || product.giftNoteOptions?.enabled) && (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
 
                   {/* Size Selection (Only render if availableSizes added in Admin) */}
                   {product.availableSizes && product.availableSizes.length > 0 && (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1.5">
                       <div className="flex justify-between items-center">
                         <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="size">
                           Size
@@ -355,7 +355,7 @@ function ProductContent() {
 
                   {/* Engraving (Optional) */}
                   {product.engravingOptions?.enabled && (
-                    <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex flex-col gap-1.5 mt-1.5">
                       <div className="flex justify-between items-center">
                         <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="engraving">
                           Engraving (Optional) {product.engravingOptions.price > 0 && `(+${formatPrice(product.engravingOptions.price)})`}
@@ -376,7 +376,7 @@ function ProductContent() {
 
                   {/* Gift Note (Optional) */}
                   {product.giftNoteOptions?.enabled && (
-                    <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex flex-col gap-1.5 mt-1.5">
                       <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="giftNote">
                         Gift Message (Optional) {product.giftNoteOptions.price > 0 && `(+${formatPrice(product.giftNoteOptions.price)})`}
                       </label>
@@ -394,11 +394,11 @@ function ProductContent() {
               )}
 
               {/* Add to Bag and Wishlist Actions */}
-              <div className="flex flex-row gap-2.5 mt-3 w-full">
+              <div className="flex flex-row gap-2 mt-2.5 w-full">
                 <button
                   onClick={handleAddToBag}
                   disabled={bagLoading}
-                  className="flex-1 bg-deep-navy text-pure-white py-3.5 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
+                  className="flex-1 bg-deep-navy text-pure-white py-3 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
                 >
                   {bagLoading ? (
                     <>
@@ -411,7 +411,7 @@ function ProductContent() {
                 </button>
                 <button
                   onClick={handleAddToWishlist}
-                  className="flex-grow flex-1 border border-slate-grey/30 py-3.5 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm text-ink-black bg-transparent"
+                  className="flex-grow flex-1 border border-slate-grey/30 py-3 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm text-ink-black bg-transparent"
                 >
                   <span className={`material-symbols-outlined text-[18px] shrink-0 ${wishlistActive ? "text-red-600 fill-red-600" : ""}`}>
                     {wishlistActive ? "favorite" : "favorite_border"}
@@ -423,12 +423,12 @@ function ProductContent() {
               </div>
 
               {/* Product Info Accordions */}
-              <div className="flex flex-col border-t border-slate-grey/20 mt-8">
+              <div className="flex flex-col border-t border-slate-grey/20 mt-6">
                 {/* Details Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
                     onClick={() => toggleAccordion("details")}
-                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
+                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-4 cursor-pointer text-left focus:outline-none"
                   >
                     <span>Product Details</span>
                     <span
@@ -439,10 +439,10 @@ function ProductContent() {
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "details" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
+                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "details" ? "max-h-96 pb-4 opacity-100" : "max-h-0 opacity-0"
                       }`}
                   >
-                    <div className="font-body-md text-on-surface-variant text-sm leading-relaxed space-y-2">
+                    <div className="font-body-md text-on-surface-variant text-sm leading-relaxed space-y-1.5">
                       {product.description && <p>{product.description}</p>}
                       {product.sku && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">SKU:</span> {product.sku}</p>}
                       {product.weight && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">Weight:</span> {product.weight}</p>}
@@ -456,7 +456,7 @@ function ProductContent() {
                   <div className="border-b border-slate-grey/20">
                     <button
                       onClick={() => toggleAccordion("comparison")}
-                      className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
+                      className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-4 cursor-pointer text-left focus:outline-none"
                     >
                       <span>Worth &amp; Comparison Metrics</span>
                       <span
@@ -467,10 +467,10 @@ function ProductContent() {
                       </span>
                     </button>
                     <div
-                      className={`overflow-hidden transition-all duration-300 ${activeAccordion === "comparison" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
+                      className={`overflow-hidden transition-all duration-300 ${activeAccordion === "comparison" ? "max-h-96 pb-4 opacity-100" : "max-h-0 opacity-0"
                         }`}
                     >
-                      <div className="space-y-3.5 text-xs font-body-md text-ink-black">
+                      <div className="space-y-3 text-xs font-body-md text-ink-black">
                         <div className="grid grid-cols-2 gap-4">
                           {product.comparisonOptions.worthIndex != null && (
                             <div className="p-3 bg-soft-linen/25 border border-slate-grey/10 rounded flex flex-col justify-between">
@@ -519,7 +519,7 @@ function ProductContent() {
                   <div className="border-b border-slate-grey/20">
                     <button
                       onClick={() => toggleAccordion("packaging")}
-                      className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
+                      className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-4 cursor-pointer text-left focus:outline-none"
                     >
                       <span>Signature Gift Packaging</span>
                       <span
@@ -530,10 +530,10 @@ function ProductContent() {
                       </span>
                     </button>
                     <div
-                      className={`overflow-hidden transition-all duration-300 ${activeAccordion === "packaging" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
+                      className={`overflow-hidden transition-all duration-300 ${activeAccordion === "packaging" ? "max-h-96 pb-4 opacity-100" : "max-h-0 opacity-0"
                         }`}
                     >
-                      <div className="space-y-3.5 text-xs font-body-md text-ink-black leading-relaxed">
+                      <div className="space-y-3 text-xs font-body-md text-ink-black leading-relaxed">
                         {product.giftOptions?.packagingNote && (
                           <p>{product.giftOptions.packagingNote}</p>
                         )}
@@ -557,7 +557,7 @@ function ProductContent() {
                 <div className="border-b border-slate-grey/20">
                   <button
                     onClick={() => toggleAccordion("returns")}
-                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
+                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-4 cursor-pointer text-left focus:outline-none"
                   >
                     <span>Delivery &amp; Returns</span>
                     <span
@@ -568,7 +568,7 @@ function ProductContent() {
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "returns" ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0"
+                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "returns" ? "max-h-40 pb-4 opacity-100" : "max-h-0 opacity-0"
                       }`}
                   >
                     <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
@@ -581,7 +581,7 @@ function ProductContent() {
                 <div className="border-b border-slate-grey/20">
                   <button
                     onClick={() => toggleAccordion("care")}
-                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-5 cursor-pointer text-left focus:outline-none"
+                    className="flex justify-between items-center w-full font-label-caps uppercase text-ink-black py-4 cursor-pointer text-left focus:outline-none"
                   >
                     <span>Care Guide</span>
                     <span
@@ -592,7 +592,7 @@ function ProductContent() {
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "care" ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0"
+                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "care" ? "max-h-40 pb-4 opacity-100" : "max-h-0 opacity-0"
                       }`}
                   >
                     <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
@@ -609,7 +609,7 @@ function ProductContent() {
 
         {/* RELATED / SUGGESTED PRODUCTS CAROUSEL SECTION */}
         {relatedProducts.length > 0 && (
-          <div className="mt-10 pt-8 border-t border-slate-grey/20">
+          <div className="mt-8 pt-6 border-t border-slate-grey/20">
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-3">
               <div>
                 <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">
