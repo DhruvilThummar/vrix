@@ -63,8 +63,8 @@ const PRODUCT_TEMPLATES = [
     name: "Solitaire Gold Ring Preset",
     type: "Ring",
     material: "18K Yellow Gold",
-    price: 450,
-    originalPrice: 600,
+    price: 45000,
+    originalPrice: 60000,
     description: "Handcrafted architectural solitaire ring in 18K yellow gold with refined symmetry.",
     layoutStyle: "2x2" as const,
     availableSizes: ["5", "6", "7", "8"],
@@ -76,8 +76,8 @@ const PRODUCT_TEMPLATES = [
     name: "Diamond Pendant Necklace Preset",
     type: "Necklace",
     material: "Natural Diamond & Platinum",
-    price: 890,
-    originalPrice: 1100,
+    price: 89000,
+    originalPrice: 110000,
     description: "Luminous diamond pendant suspended on a fine platinum chain.",
     layoutStyle: "asymmetric" as const,
     availableSizes: [],
@@ -89,8 +89,8 @@ const PRODUCT_TEMPLATES = [
     name: "Bespoke Tennis Bracelet Preset",
     type: "Bracelet",
     material: "18K White Gold",
-    price: 1250,
-    originalPrice: 1500,
+    price: 125000,
+    originalPrice: 150000,
     description: "Minimalist tennis bracelet engineered for fluid everyday elegance.",
     layoutStyle: "2x2" as const,
     availableSizes: ["6.5", "7", "7.5"],
@@ -932,7 +932,7 @@ function AdminProductsContent() {
                           <option value="" disabled>Choose a pre-made product preset template...</option>
                           {allTemplates.map((tmpl) => (
                             <option key={tmpl.id} value={tmpl.id}>
-                              {tmpl.name} ({tmpl.material} • ${tmpl.price}) {tmpl.isCustom ? "⭐ Custom" : ""}
+                              {tmpl.name} ({tmpl.material} • ₹{Number(tmpl.price).toLocaleString("en-IN")}) {tmpl.isCustom ? "⭐ Custom" : ""}
                             </option>
                           ))}
                         </select>
