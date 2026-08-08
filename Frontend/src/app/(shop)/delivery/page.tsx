@@ -310,16 +310,15 @@ export default function DeliveryPanelPage() {
     }
   };
 
-  const getPresetEta = (preset: "today" | "tomorrow" | "in2days") => {
+  const getPresetEta = (preset: "today_5pm" | "today_8pm" | "tomorrow_12pm") => {
     const d = new Date();
-    if (preset === "today") {
+    if (preset === "today_5pm") {
       d.setHours(17, 0, 0, 0);
-    } else if (preset === "tomorrow") {
+    } else if (preset === "today_8pm") {
+      d.setHours(20, 0, 0, 0);
+    } else if (preset === "tomorrow_12pm") {
       d.setDate(d.getDate() + 1);
       d.setHours(12, 0, 0, 0);
-    } else if (preset === "in2days") {
-      d.setDate(d.getDate() + 2);
-      d.setHours(16, 0, 0, 0);
     }
     return d.toISOString();
   };
@@ -802,24 +801,24 @@ export default function DeliveryPanelPage() {
                         <div className="grid grid-cols-3 gap-1.5">
                           <button
                             type="button"
-                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("today"))}
-                            className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 rounded-lg py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("today_5pm"))}
+                            className="bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white/80 rounded-lg py-2 text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[36px]"
                           >
-                            Today 5 PM
+                            Today, 5:00 PM
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("tomorrow"))}
-                            className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 rounded-lg py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("today_8pm"))}
+                            className="bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white/80 rounded-lg py-2 text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[36px]"
                           >
-                            Tomorrow 12 PM
+                            Today, 8:00 PM
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("in2days"))}
-                            className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 rounded-lg py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("tomorrow_12pm"))}
+                            className="bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white/80 rounded-lg py-2 text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[36px]"
                           >
-                            In 2 Days
+                            Tomorrow, 12:00 PM
                           </button>
                         </div>
                         <input
@@ -1065,24 +1064,24 @@ export default function DeliveryPanelPage() {
                             <div className="grid grid-cols-3 gap-1">
                               <button
                                 type="button"
-                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("today"))}
-                                className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
+                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("today_5pm"))}
+                                className="bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
                               >
-                                Today
+                                Today 5PM
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("tomorrow"))}
-                                className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
+                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("today_8pm"))}
+                                className="bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
+                              >
+                                Today 8PM
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("tomorrow_12pm"))}
+                                className="bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
                               >
                                 Tomorrow
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("in2days"))}
-                                className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
-                              >
-                                +2 Days
                               </button>
                             </div>
                           </div>
