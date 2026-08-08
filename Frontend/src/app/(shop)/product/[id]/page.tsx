@@ -253,8 +253,8 @@ function ProductContent() {
         </div>
       )}
  
-      <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-4 md:py-section-gap">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-[80px]">
+      <main className="max-w-container-max mx-auto px-4 md:px-8 py-6 md:py-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
           {/* Left Column: Image Grid (PC Layout: 2x2 or Asymmetric) */}
           <div className="md:col-span-7 relative">
             <ProductImageGrid2x2
@@ -265,11 +265,11 @@ function ProductContent() {
           </div>
 
           {/* Right Column: Sticky Product Information */}
-          <div className="md:col-span-5 relative mt-4 md:mt-0">
-            <div className="sticky top-[100px] flex flex-col gap-4 md:gap-stack-lg">
+          <div className="md:col-span-5 relative mt-2 md:mt-0">
+            <div className="sticky top-[90px] flex flex-col gap-4">
               
               {/* Header Info */}
-              <div className="flex flex-col gap-2 border-b border-slate-grey/20 pb-4 md:pb-6">
+              <div className="flex flex-col gap-2 border-b border-slate-grey/20 pb-4">
                 <h1 className="font-display-lg-mobile md:font-display-lg text-ink-black tracking-tight leading-tight uppercase">
                   {product.title}
                 </h1>
@@ -619,8 +619,8 @@ function ProductContent() {
 
         {/* RELATED / SUGGESTED PRODUCTS CAROUSEL SECTION */}
         {relatedProducts.length > 0 && (
-          <div className="mt-16 pt-12 border-t border-slate-grey/20">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div className="mt-10 pt-8 border-t border-slate-grey/20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-3">
               <div>
                 <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">
                   Curated Pairings
