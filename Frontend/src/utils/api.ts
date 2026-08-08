@@ -415,7 +415,7 @@ export async function createPaymentOrder(data: {
   amount: number;
   currency?: string;
   receipt?: string;
-  notes?: any;
+  notes?: Record<string, any>;
   customerName?: string;
   customerPhone?: string;
   email?: string;
@@ -423,7 +423,7 @@ export async function createPaymentOrder(data: {
   city?: string;
   postalCode?: string;
 }) {
-  return apiFetch<{ success: boolean; order: any; devMode?: boolean }>("/payment/order", {
+  return apiFetch<{ success: boolean; order: any; devMode?: boolean; keyId?: string | null }>("/payment/order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

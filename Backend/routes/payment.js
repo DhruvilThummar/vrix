@@ -91,7 +91,8 @@ router.post("/order", async (req, res) => {
         data: { orderId: order.id, amount: amountRupees, currency: normalizedCurrency, status: "CREATED", customerName, customerPhone, address, city, postalCode, userEmail },
       });
 
-      res.json({ success: true, order });
+      const credentials = await getRazorpayCredentials();
+      res.json({ success: true, order, keyId: credentials?.keyId, devMode: false });
     } else {
       const mockOrderId = "order_dev_" + Date.now();
       await db.payments.create({

@@ -65,41 +65,76 @@ export default function PaymentPage() {
     }
 
     // Fetch Razorpay Payment Configuration
+    // Fetch Razorpay Payment Configuration
     fetchPaymentConfig()
-      .then(setPaymentConfig)
+      .then((cfg) => {
+        console.log("[Razorpay Debug] Fetched payment config:", cfg);
+        setPaymentConfig(cfg);
+      })
       .catch((err) => {
-        console.error("Failed to load Razorpay config:", err);
+        console.error("[Razorpay Debug] Failed to load Razorpay config:", err);
         setPaymentConfig({ keyId: null, currency: "INR", enabled: false, devMode: true });
       });
 
-    // Load Razorpay SDK once
+    // Load Razorpay SDK on mount
     const existingScript = document.getElementById("razorpay-sdk") as HTMLScriptElement | null;
     if (!razorpayLoaded.current && !existingScript) {
+      console.log("[Razorpay Debug] Injecting checkout.js script...");
       const script = document.createElement("script");
       script.id = "razorpay-sdk";
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
-      script.onload = () => setSdkReady(true);
+      script.onload = () => {
+        console.log("[Razorpay Debug] checkout.js script loaded.");
+        setSdkReady(true);
+      };
       script.onerror = () => {
+        console.error("[Razorpay Debug] checkout.js script load error.");
         setSdkReady(false);
         setErrorMsg("Could not load Razorpay checkout SDK. Please check your network connection.");
       };
       document.head.appendChild(script);
       razorpayLoaded.current = true;
     } else if (typeof window !== "undefined" && window.Razorpay) {
+      console.log("[Razorpay Debug] window.Razorpay already defined.");
       setSdkReady(true);
     } else if (existingScript) {
-      existingScript.addEventListener("load", () => setSdkReady(true), { once: true });
-      existingScript.addEventListener(
-        "error",
-        () => {
-          setSdkReady(false);
-          setErrorMsg("Could not load Razorpay checkout SDK. Please check your network connection.");
-        },
-        { once: true }
-      );
+      existingScript.addEventListener("load", () => {
+        console.log("[Razorpay Debug] checkout.js existing script loaded.");
+        setSdkReady(true);
+      }, { once: true });
     }
   }, [isLoggedIn, items.length, isLoaded, shipping, router]);
+
+  const ensureSdkLoaded = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window !== "undefined" && window.Razorpay) {
+        console.log("[Razorpay Debug] SDK confirmed on window.Razorpay");
+        setSdkReady(true);
+        return resolve(true);
+      }
+      const scriptId = "razorpay-sdk";
+      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+      if (!script) {
+        console.log("[Razorpay Debug] Injecting Razorpay SDK script dynamically...");
+        script = document.createElement("script");
+        script.id = scriptId;
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.head.appendChild(script);
+      }
+      script.onload = () => {
+        console.log("[Razorpay Debug] Razorpay SDK dynamically loaded!");
+        setSdkReady(true);
+        resolve(true);
+      };
+      script.onerror = () => {
+        console.error("[Razorpay Debug] Dynamic SDK load failed!");
+        setSdkReady(false);
+        resolve(false);
+      };
+    });
+  };
 
   const handlePayNow = async () => {
     if (!shipping) return;
@@ -107,9 +142,16 @@ export default function PaymentPage() {
     setStatus("processing");
     setErrorMsg("");
 
+    console.log("[Razorpay Debug] Initiating Pay Now process...", {
+      grandTotal,
+      currency: shipping.currency || "INR",
+      customer: shipping.fullName,
+      email: shipping.email,
+    });
+
     try {
       // 1. Create Razorpay Order via Backend
-      const { order, devMode } = await createPaymentOrder({
+      const orderRes = await createPaymentOrder({
         amount: Number(grandTotal.toFixed(2)),
         currency: shipping.currency || "INR",
         receipt: `vrix_${Date.now()}`,
@@ -129,8 +171,12 @@ export default function PaymentPage() {
         },
       });
 
+      console.log("[Razorpay Debug] Backend Order Response:", orderRes);
+      const { order, devMode } = orderRes;
+
       // 2. Dev Mode Fallback Simulation
       if (devMode) {
+        console.warn("[Razorpay Debug] Running in Dev Mode (No Razorpay Keys Configured). Auto-verifying test order...");
         setStatus("verifying");
         const fakePaymentId = `pay_dev_${Date.now()}`;
         try {
@@ -163,15 +209,23 @@ export default function PaymentPage() {
         return;
       }
 
-      // 3. Trigger Razorpay SDK Modal
-      const rzpKey = paymentConfig?.keyId;
-      if (!rzpKey) throw new Error("Razorpay public key is not configured.");
-      if (!sdkReady || !window.Razorpay) throw new Error("Razorpay SDK is still loading. Please try again.");
+      // 3. Strict Key & SDK Validation before Modal Open
+      const rzpKey = paymentConfig?.keyId || orderRes?.keyId;
+      console.log("[Razorpay Debug] Validating Razorpay key:", rzpKey);
+      if (!rzpKey) {
+        throw new Error("Razorpay Key is missing. Please check backend config or set RAZORPAY_KEY_ID.");
+      }
+
+      const sdkAvailable = await ensureSdkLoaded();
+      if (!sdkAvailable || !window.Razorpay) {
+        throw new Error("Razorpay Checkout SDK is not loaded. Please check your internet connection.");
+      }
 
       setStatus("idle");
       setLoading(false);
 
-      const rzp = new window.Razorpay({
+      console.log("[Razorpay Debug] Initializing new window.Razorpay(options)...");
+      const rzpOptions: RazorpayOptions = {
         key: rzpKey,
         amount: order.amount,
         currency: order.currency,
@@ -188,11 +242,13 @@ export default function PaymentPage() {
         theme: { color: "#0f1728" },
         modal: {
           ondismiss: () => {
+            console.log("[Razorpay Debug] Razorpay modal dismissed by user.");
             setStatus("idle");
             setLoading(false);
           },
         },
         handler: async (response: RazorpayResponse) => {
+          console.log("[Razorpay Debug] Payment authorized by Razorpay modal:", response);
           setStatus("verifying");
           setLoading(true);
           try {
@@ -226,10 +282,13 @@ export default function PaymentPage() {
             setLoading(false);
           }
         },
-      });
+      };
 
+      const rzp = new window.Razorpay(rzpOptions);
+      console.log("[Razorpay Debug] Calling rzp.open()...");
       rzp.open();
     } catch (err: any) {
+      console.error("[Razorpay Debug] Payment initiation error:", err);
       setStatus("error");
       setErrorMsg(err.message || "Failed to initiate payment. Please try again.");
       setLoading(false);
