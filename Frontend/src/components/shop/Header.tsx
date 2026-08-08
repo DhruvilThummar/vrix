@@ -47,7 +47,7 @@ export default function Header() {
   // Derived style states for transparent vs solid header
   const isTransparent = !scrolled;
   const isHome = isHomePage;
-  
+
   const headerBg = isTransparent
     ? `bg-transparent ${isHome ? "text-pure-white" : "text-ink-black"} border-transparent shadow-none`
     : "bg-pure-white text-ink-black border-soft-linen shadow-sm";
@@ -206,11 +206,11 @@ export default function Header() {
   // Filtered search results
   const searchResults = searchQuery.trim()
     ? allProducts.filter(
-        (p) =>
-          p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (p.collection && p.collection.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
+      (p) =>
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.collection && p.collection.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
     : [];
 
   const predictiveResults = useMemo(() => {
@@ -310,9 +310,8 @@ export default function Header() {
             <select
               value={currency}
               onChange={(e) => changeCurrency(e.target.value as any)}
-              className={`bg-transparent text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2 ${
-                isTransparent ? (isHome ? 'text-pure-white bg-[#000]' : 'text-ink-black') : 'text-ink-black'
-              }`}
+              className={`bg-transparent text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2 ${isTransparent ? (isHome ? 'text-pure-white bg-[#000]' : 'text-ink-black') : 'text-ink-black'
+                }`}
             >
               <option value="INR" style={{ color: "#000" }}>INR (₹)</option>
               <option value="USD" style={{ color: "#000" }}>USD ($)</option>
@@ -377,11 +376,10 @@ export default function Header() {
                 >
                   <Link
                     href={link.path}
-                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link ${
-                      isActive(link.path)
+                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link ${isActive(link.path)
                         ? navLinkActiveColor
                         : `${navLinkColor}`
-                    }`}
+                      }`}
                   >
                     {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
                   </Link>
@@ -467,7 +465,7 @@ export default function Header() {
         >
           <i className="fa-solid fa-bars text-[20px]"></i>
         </button>
-        
+
         <Link href="/" className="flex items-center">
           {logoUrl && logoUrl !== "" ? (
             <div className="relative h-6 w-24">
@@ -486,7 +484,7 @@ export default function Header() {
             </span>
           )}
         </Link>
-        
+
         <div className="flex gap-4 items-center">
           <button
             onClick={() => setIsSearchOpen(true)}
@@ -530,9 +528,8 @@ export default function Header() {
 
       {/* ─── CART DRAWER (RIGHT SLIDE-IN) ─── */}
       <div
-        className={`fixed top-0 right-0 h-screen w-full sm:w-[450px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
-          isCartOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 h-screen w-full sm:w-[450px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${isCartOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         {/* Header */}
         <div className="p-6 border-b border-soft-linen flex justify-between items-center">
@@ -669,16 +666,15 @@ export default function Header() {
         {/* Footer */}
         {cartItems.length > 0 && (
           <div className="p-6 border-t border-soft-linen bg-surface/30 space-y-4">
-            
+
             {/* Gift Wrapping Quick Option */}
             <button
               type="button"
               onClick={() => toggleGiftWrap(!isGiftWrapped, 250)}
-              className={`group relative flex flex-col p-3 border cursor-pointer text-left transition-all duration-200 w-full rounded ${
-                isGiftWrapped
+              className={`group relative flex flex-col p-3 border cursor-pointer text-left transition-all duration-200 w-full rounded ${isGiftWrapped
                   ? "bg-deep-navy text-pure-white border-deep-navy shadow-md translate-y-[-1px]"
                   : "bg-pure-white text-ink-black border-slate-grey/30 hover:border-deep-navy"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between gap-1 mb-1.5">
                 <span className={`material-symbols-outlined text-lg ${isGiftWrapped ? "text-amber-300" : "text-amber-600"}`}>
@@ -734,9 +730,8 @@ export default function Header() {
 
       {/* ─── WISHLIST DRAWER (RIGHT SLIDE-IN) ─── */}
       <div
-        className={`fixed top-0 right-0 h-screen w-full sm:w-[450px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
-          isWishlistOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 h-screen w-full sm:w-[450px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${isWishlistOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="p-6 border-b border-soft-linen flex justify-between items-center">
           <h3 className="font-label-caps text-sm tracking-widest font-semibold uppercase">My Wishlist ({wishlist.length})</h3>
@@ -793,9 +788,8 @@ export default function Header() {
 
       {/* ─── SEARCH DRAWER (RIGHT SLIDE-IN) ─── */}
       <div
-        className={`fixed top-0 right-0 h-screen w-full sm:w-[480px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
-          isSearchOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed top-0 right-0 h-screen w-full sm:w-[480px] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${isSearchOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="p-6 border-b border-soft-linen flex justify-between items-center">
           <h3 className="font-label-caps text-sm tracking-widest font-semibold uppercase">Search Catalog</h3>
@@ -940,12 +934,11 @@ export default function Header() {
 
       {/* ─── MOBILE DRAWER (LEFT SLIDE-IN) ─── */}
       <div
-        className={`fixed top-0 left-0 h-screen w-[340px] max-w-[85vw] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 h-[100dvh] w-[320px] max-w-[88vw] bg-pure-white text-ink-black shadow-2xl z-50 flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Top Header */}
-        <div className="p-6 border-b border-soft-linen flex justify-between items-center bg-pure-white shrink-0">
+        <div className="p-4 border-b border-soft-linen flex justify-between items-center bg-pure-white shrink-0">
           <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center">
             {displayLogo && displayLogo !== "" ? (
               <div className="relative h-6 w-24">
@@ -974,7 +967,7 @@ export default function Header() {
         </div>
 
         {/* Scrollable Navigation Body */}
-        <div className="flex-grow overflow-y-auto px-6 py-4 space-y-2">
+        <div className="flex-grow overflow-y-auto px-4 py-3 space-y-1.5">
           <nav className="flex flex-col font-label-caps text-sm uppercase tracking-widest divide-y divide-soft-linen/60">
             {navLinks.map((link, idx) => {
               const hasSubmenu = Boolean(
@@ -985,7 +978,7 @@ export default function Header() {
               const isExpanded = expandedMobileIndices.includes(idx);
 
               return (
-                <div key={idx} className="py-3">
+                <div key={idx} className="py-2.5">
                   <div className="flex justify-between items-center">
                     {hasSubmenu ? (
                       <button
@@ -999,9 +992,8 @@ export default function Header() {
                             : link.label}
                         </span>
                         <span
-                          className={`material-symbols-outlined text-xl text-slate-grey transition-transform duration-300 ${
-                            isExpanded ? "rotate-180 text-deep-navy" : ""
-                          }`}
+                          className={`material-symbols-outlined text-xl text-slate-grey transition-transform duration-300 ${isExpanded ? "rotate-180 text-deep-navy" : ""
+                            }`}
                         >
                           expand_more
                         </span>
@@ -1010,11 +1002,10 @@ export default function Header() {
                       <Link
                         href={link.path}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className={`block w-full py-1 font-label-caps text-sm uppercase tracking-wider transition-colors ${
-                          isActive(link.path)
+                        className={`block w-full py-1 font-label-caps text-sm uppercase tracking-wider transition-colors ${isActive(link.path)
                             ? "text-deep-navy font-semibold"
                             : "text-ink-black/80 hover:text-ink-black"
-                        }`}
+                          }`}
                       >
                         {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled
                           ? `${link.label} (Waitlist)`
@@ -1025,10 +1016,10 @@ export default function Header() {
 
                   {/* Accordion Submenu Panel */}
                   {hasSubmenu && isExpanded && (
-                    <div className="mt-3 pl-3 space-y-3 font-label-caps text-xs text-slate-grey border-l-2 border-deep-navy/30 animate-fade-in">
+                    <div className="mt-2.5 pl-3 space-y-2.5 font-label-caps text-xs text-slate-grey border-l-2 border-deep-navy/30 animate-fade-in">
                       {link.megaMenu?.categories ? (
                         link.megaMenu.categories.map((cat: any, cIdx: number) => (
-                          <div key={cIdx} className="space-y-1.5 pt-1">
+                          <div key={cIdx} className="space-y-1 pt-1">
                             <span className="text-[10px] text-deep-navy font-bold uppercase tracking-widest block">
                               {cat.title}
                             </span>
@@ -1071,14 +1062,14 @@ export default function Header() {
         </div>
 
         {/* Pinned Bottom Action Bar */}
-        <div className="mt-auto border-t border-soft-linen p-4 bg-soft-linen/25 shrink-0 space-y-3">
+        <div className="mt-auto border-t border-soft-linen p-2.5 bg-soft-linen/25 shrink-0 space-y-2">
           {/* Currency Switcher */}
-          <div className="flex items-center justify-between px-3 py-2 bg-pure-white border border-slate-grey/20 rounded-xs">
-            <span className="text-[10px] font-label-caps uppercase text-slate-grey tracking-widest">Currency</span>
+          <div className="flex items-center justify-between px-2.5 py-1.5 bg-pure-white border border-slate-grey/20 rounded-xs gap-2">
+            <span className="text-[9px] font-label-caps uppercase text-slate-grey tracking-widest shrink-0">Currency</span>
             <select
               value={currency}
               onChange={(e) => changeCurrency(e.target.value as any)}
-              className="bg-transparent text-xs font-semibold uppercase tracking-wider text-ink-black outline-none cursor-pointer"
+              className="bg-transparent text-[11px] font-semibold uppercase tracking-wider text-ink-black outline-none cursor-pointer min-w-0"
             >
               <option value="INR">INR (₹)</option>
               <option value="USD">USD ($)</option>
@@ -1086,26 +1077,26 @@ export default function Header() {
             </select>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="grid grid-cols-3 gap-1.5 text-center">
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 setIsAuthOpen(true);
               }}
-              className="flex flex-col items-center justify-center py-2.5 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center py-2 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer"
             >
-              <i className="fa-regular fa-user text-base text-ink-black"></i>
-              <span className="text-[9px] uppercase font-label-caps mt-1 text-slate-grey tracking-wider">Account</span>
+              <i className="fa-regular fa-user text-sm text-ink-black"></i>
+              <span className="text-[8px] uppercase font-label-caps mt-0.5 text-slate-grey tracking-wider">Account</span>
             </button>
             <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
                 setIsWishlistOpen(true);
               }}
-              className="flex flex-col items-center justify-center py-2.5 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer relative"
+              className="flex flex-col items-center justify-center py-2 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer relative"
             >
-              <i className="fa-regular fa-heart text-base text-ink-black"></i>
-              <span className="text-[9px] uppercase font-label-caps mt-1 text-slate-grey tracking-wider">Wishlist</span>
+              <i className="fa-regular fa-heart text-sm text-ink-black"></i>
+              <span className="text-[8px] uppercase font-label-caps mt-0.5 text-slate-grey tracking-wider">Wishlist</span>
               {wishlist.length > 0 && (
                 <span className="absolute top-1 right-2 bg-deep-navy text-pure-white text-[8px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
                   {wishlist.length}
@@ -1117,10 +1108,10 @@ export default function Header() {
                 setIsMobileMenuOpen(false);
                 setIsCartOpen(true);
               }}
-              className="flex flex-col items-center justify-center py-2.5 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer relative"
+              className="flex flex-col items-center justify-center py-2 px-1 border border-slate-grey/15 bg-pure-white hover:border-slate-grey/40 transition-colors cursor-pointer relative"
             >
-              <i className="fa-solid fa-bag-shopping text-base text-ink-black"></i>
-              <span className="text-[9px] uppercase font-label-caps mt-1 text-slate-grey tracking-wider">Bag</span>
+              <i className="fa-solid fa-bag-shopping text-sm text-ink-black"></i>
+              <span className="text-[8px] uppercase font-label-caps mt-0.5 text-slate-grey tracking-wider">Bag</span>
               {totalItems > 0 && (
                 <span className="absolute top-1 right-2 bg-deep-navy text-pure-white text-[8px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
                   {totalItems}
