@@ -36,9 +36,9 @@ interface CartContextType {
   toggleGiftOption: (option: GiftOption) => void;
   toggleGiftWrap: (wrapped: boolean, price?: number) => void;
   setGiftMessage: (msg: string) => void;
-  addItem: (item: Omit<CartItem, "quantity">) => void;
-  removeItem: (id: string) => void;
-  updateQty: (id: string, qty: number) => void;
+  addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
+  removeItem: (id: string, size?: string, material?: string) => void;
+  updateQty: (id: string, qty: number, size?: string, material?: string) => void;
   applyPromo: (code: string, discount: number, type: "percentage" | "fixed") => void;
   clearPromo: () => void;
   clearCart: () => void;
@@ -120,25 +120,61 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setGiftMessageState(msg);
   }, []);
 
-  const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
+  const addItem = useCallback((newItem: Omit<CartItem, "quantity"> & { quantity?: number }) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id && i.size === item.size);
-      if (existing) {
-        return prev.map((i) =>
-          i.id === item.id && i.size === item.size ? { ...i, quantity: i.quantity + 1 } : i
+      const qtyToAdd = newItem.quantity && newItem.quantity > 0 ? newItem.quantity : 1;
+
+      // 1. Check if an item with exact same id, size, material, and custom options already exists
+      const matchIndex = prev.findIndex(
+        (i) =>
+          i.id === newItem.id &&
+          (i.size || "") === (newItem.size || "") &&
+          (i.material || "") === (newItem.material || "") &&
+          (i.engraving || "") === (newItem.engraving || "") &&
+          (i.giftNote || "") === (newItem.giftNote || "")
+      );
+
+      // 2. If matching item found, increment its quantity immutably
+      if (matchIndex > -1) {
+        return prev.map((item, idx) =>
+          idx === matchIndex
+            ? { ...item, quantity: item.quantity + qtyToAdd }
+            : item
         );
       }
-      return [...prev, { ...item, quantity: 1 }];
+
+      // 3. If no matching item found, push new item with default quantity
+      return [...prev, { ...newItem, quantity: qtyToAdd }];
     });
   }, []);
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = useCallback((id: string, size?: string, material?: string) => {
+    setItems((prev) =>
+      prev.filter(
+        (i) =>
+          !(
+            i.id === id &&
+            (size === undefined || (i.size || "") === (size || "")) &&
+            (material === undefined || (i.material || "") === (material || ""))
+          )
+      )
+    );
   }, []);
 
-  const updateQty = useCallback((id: string, qty: number) => {
-    if (qty <= 0) { removeItem(id); return; }
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i)));
+  const updateQty = useCallback((id: string, qty: number, size?: string, material?: string) => {
+    if (qty <= 0) {
+      removeItem(id, size, material);
+      return;
+    }
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id &&
+        (size === undefined || (i.size || "") === (size || "")) &&
+        (material === undefined || (i.material || "") === (material || ""))
+          ? { ...i, quantity: qty }
+          : i
+      )
+    );
   }, [removeItem]);
 
   const applyPromo = useCallback((code: string, disc: number, type: "percentage" | "fixed") => {
