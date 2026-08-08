@@ -321,75 +321,77 @@ function ProductContent() {
               )}
 
               {/* Configuration Form */}
-              <div className="flex flex-col gap-6">
-                
-                {/* Size Selection (Only render if availableSizes added in Admin) */}
-                {product.availableSizes && product.availableSizes.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-center">
-                      <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="size">
-                        Size
-                      </label>
-                      <button className="font-label-caps uppercase text-slate-grey hover:text-ink-black underline decoration-1 underline-offset-4 text-[10px] transition-colors cursor-pointer">
-                        Size Guide
-                      </button>
+              {Boolean((product.availableSizes && product.availableSizes.length > 0) || product.engravingOptions?.enabled || product.giftNoteOptions?.enabled) && (
+                <div className="flex flex-col gap-6">
+                  
+                  {/* Size Selection (Only render if availableSizes added in Admin) */}
+                  {product.availableSizes && product.availableSizes.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
+                        <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="size">
+                          Size
+                        </label>
+                        <button className="font-label-caps uppercase text-slate-grey hover:text-ink-black underline decoration-1 underline-offset-4 text-[10px] transition-colors cursor-pointer">
+                          Size Guide
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <select
+                          className="w-full appearance-none bg-transparent border-0 border-b border-slate-grey/30 py-3 pl-0 pr-8 font-body-md text-ink-black cursor-pointer rounded-none transition-colors hover:border-slate-grey focus:ring-0"
+                          id="size"
+                          value={size}
+                          onChange={(e) => setSize(e.target.value)}
+                        >
+                          {product.availableSizes.map((sz: string) => (
+                            <option key={sz} value={sz}>{sz}</option>
+                          ))}
+                        </select>
+                        <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-slate-grey">
+                          expand_more
+                        </span>
+                      </div>
                     </div>
-                    <div className="relative">
-                      <select
-                        className="w-full appearance-none bg-transparent border-0 border-b border-slate-grey/30 py-3 pl-0 pr-8 font-body-md text-ink-black cursor-pointer rounded-none transition-colors hover:border-slate-grey focus:ring-0"
-                        id="size"
-                        value={size}
-                        onChange={(e) => setSize(e.target.value)}
-                      >
-                        {product.availableSizes.map((sz: string) => (
-                          <option key={sz} value={sz}>{sz}</option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-slate-grey">
-                        expand_more
-                      </span>
-                    </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Engraving (Optional) */}
-                {product.engravingOptions?.enabled && (
-                  <div className="flex flex-col gap-2 mt-2">
-                    <div className="flex justify-between items-center">
-                      <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="engraving">
-                        Engraving (Optional) {product.engravingOptions.price > 0 && `(+${formatPrice(product.engravingOptions.price)})`}
-                      </label>
-                      <span className="font-label-caps text-slate-grey text-[10px]">{engraving.length}/{product.engravingOptions.limit || 25}</span>
+                  {/* Engraving (Optional) */}
+                  {product.engravingOptions?.enabled && (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <div className="flex justify-between items-center">
+                        <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="engraving">
+                          Engraving (Optional) {product.engravingOptions.price > 0 && `(+${formatPrice(product.engravingOptions.price)})`}
+                        </label>
+                        <span className="font-label-caps text-slate-grey text-[10px]">{engraving.length}/{product.engravingOptions.limit || 25}</span>
+                      </div>
+                      <input
+                        className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
+                        id="engraving"
+                        placeholder="Add a personal message"
+                        type="text"
+                        maxLength={product.engravingOptions.limit || 25}
+                        value={engraving}
+                        onChange={(e) => setEngraving(e.target.value)}
+                      />
                     </div>
-                    <input
-                      className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
-                      id="engraving"
-                      placeholder="Add a personal message"
-                      type="text"
-                      maxLength={product.engravingOptions.limit || 25}
-                      value={engraving}
-                      onChange={(e) => setEngraving(e.target.value)}
-                    />
-                  </div>
-                )}
+                  )}
 
-                {/* Gift Note (Optional) */}
-                {product.giftNoteOptions?.enabled && (
-                  <div className="flex flex-col gap-2 mt-2">
-                    <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="giftNote">
-                      Gift Message (Optional) {product.giftNoteOptions.price > 0 && `(+${formatPrice(product.giftNoteOptions.price)})`}
-                    </label>
-                    <input
-                      className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
-                      id="giftNote"
-                      placeholder="Add a gift message"
-                      type="text"
-                      value={giftNote}
-                      onChange={(e) => setGiftNote(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
+                  {/* Gift Note (Optional) */}
+                  {product.giftNoteOptions?.enabled && (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="giftNote">
+                        Gift Message (Optional) {product.giftNoteOptions.price > 0 && `(+${formatPrice(product.giftNoteOptions.price)})`}
+                      </label>
+                      <input
+                        className="w-full bg-transparent border-0 border-b border-slate-grey/30 py-3 px-0 font-body-md text-ink-black placeholder:text-slate-grey/50 rounded-none transition-colors hover:border-slate-grey focus:ring-0"
+                        id="giftNote"
+                        placeholder="Add a gift message"
+                        type="text"
+                        value={giftNote}
+                        onChange={(e) => setGiftNote(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Add to Bag and Wishlist Actions */}
               <div className="flex flex-row gap-3 mt-4 w-full">
