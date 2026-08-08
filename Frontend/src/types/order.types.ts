@@ -1,13 +1,14 @@
-export type OrderStatus =
-  | "created"
-  | "pending"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "cancelled"
-  | "refunded";
-
-export type PaymentStatus = "created" | "paid" | "failed" | "refunded";
+export type DeliveryStatus =
+  | "CREATED"
+  | "PENDING"
+  | "SUCCESS"
+  | "PAID"
+  | "PROCESSING"
+  | "OTP_SENT"
+  | "DELIVERED"
+  | "FAILED"
+  | "CANCELLED"
+  | "REFUNDED";
 
 export interface OrderItem {
   id: string;
@@ -17,7 +18,9 @@ export interface OrderItem {
   image: string;
   material?: string;
   size?: string;
+  engraving?: string;
   engravingText?: string;
+  giftNote?: string;
 }
 
 export interface PaymentRecord {
@@ -27,7 +30,7 @@ export interface PaymentRecord {
   signature?: string | null;
   amount: number;
   currency: string;
-  status: PaymentStatus | string;
+  status: DeliveryStatus | string;
   userEmail?: string | null;
   customerName?: string | null;
   customerPhone?: string | null;
@@ -35,7 +38,20 @@ export interface PaymentRecord {
   city?: string | null;
   postalCode?: string | null;
   assignedAgent?: string | null;
-  createdAt: string | Date;
+  cartItems?: string | OrderItem[] | null;
+  isGiftWrapped?: boolean;
+  giftMessage?: string | null;
+  giftWrapPrice?: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface OrderTrackingDetails extends PaymentRecord {
+  parsedItems: OrderItem[];
+  estimatedDeliveryDate: string;
+  formattedEtaLabel: string;
+  currentStep: number; // 1: Placed, 2: Paid/Processing, 3: Out for Delivery, 4: Delivered
+  stepProgressPercentage: number;
 }
 
 export interface DeliveryStaff {

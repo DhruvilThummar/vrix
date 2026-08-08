@@ -188,6 +188,8 @@ export async function deleteJournalPost(id: string) {
 // ══════════════════════════════════════════════════════════════════════════════
 //  SECURITY LOGS
 // ══════════════════════════════════════════════════════════════════════════════
+//  SECURITY & AUDIT LOGS
+// ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchSecurityLogs() {
   return apiFetch<any[]>("/security/logs");
@@ -199,6 +201,22 @@ export async function addSecurityLog(logEntry: { event: string; user?: string; s
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(logEntry),
   });
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CUSTOMER ORDERS & TRACKING
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchUserOrders(email: string) {
+  return apiFetch<any[]>(`/payment/user-orders?email=${encodeURIComponent(email)}`);
+}
+
+export async function trackOrder(query: string) {
+  return apiFetch<any>(`/payment/track/${encodeURIComponent(query.trim())}`);
+}
+
+export async function fetchPaymentLogs() {
+  return apiFetch<any[]>("/payment/logs");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

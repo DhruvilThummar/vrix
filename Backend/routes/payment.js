@@ -320,6 +320,30 @@ router.get("/user-orders", async (req, res) => {
   }
 });
 
+// GET /api/payment/track/:query — Track specific order by orderId or paymentId
+router.get("/track/:query", async (req, res) => {
+  const { query } = req.params;
+  if (!query) return res.status(400).json({ error: "Order ID or Payment ID is required" });
+
+  try {
+    const qLower = String(query).trim().toLowerCase();
+    const allPayments = await db.payments.findMany();
+    const match = allPayments.find(
+      (p) =>
+        (p.orderId && p.orderId.toLowerCase() === qLower) ||
+        (p.paymentId && p.paymentId.toLowerCase() === qLower)
+    );
+
+    if (!match) {
+      return res.status(404).json({ error: `No order found matching "${query}". Please check your Order ID and try again.` });
+    }
+
+    res.json({ success: true, order: match });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/payment/invoice/:orderId — Generate Invoice View / Printable Document
 router.get("/invoice/:orderId", async (req, res) => {
   const { orderId } = req.params;
