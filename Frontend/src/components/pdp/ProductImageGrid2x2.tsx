@@ -76,92 +76,99 @@ export default function ProductImageGrid2x2({
         
         {/* PC / DESKTOP VIEW - RESPECTS ADMIN SELECTED LAYOUT STYLE */}
         {layoutStyle === "asymmetric" ? (
-          /* ASYMMETRIC GRID: 1 Main Large Left + Stacked Small Right */
-          <div className="hidden md:flex flex-col gap-3 w-full">
+          /* ASYMMETRIC GRID: 1 Main Large Left + 2 Small Right + 3 Small Bottom */
+          <div className="hidden md:flex flex-col gap-3.5 w-full">
+            {/* Top Grid: 2 Cols for Main Big Image + 1 Col for 2 Stacked Right Images */}
             <div className="grid grid-cols-3 gap-3.5">
-              {/* Main Tall Left */}
+              {/* Main Tall Left (col-span-2) */}
               <div
-                onClick={() => {
-                  setActiveIdx(0);
-                  setLightboxSrc(gallery[0]?.src);
-                }}
+                onClick={() => setLightboxSrc(activeImage.src)}
                 className="col-span-2 relative aspect-[4/5] bg-soft-linen/40 overflow-hidden group cursor-zoom-in border border-slate-grey/15 hover:border-slate-grey/40 transition-all duration-300 rounded-sm"
               >
                 <SkeletonImage
-                  src={gallery[0]?.src}
-                  alt={gallery[0]?.alt || `${title} main view`}
+                  key={activeImage.src}
+                  src={activeImage.src}
+                  alt={activeImage.alt || `${title} main view`}
                   fill
-                  className="object-cover object-center mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
+                  className="object-cover object-center mix-blend-multiply group-hover:scale-105 transition-all duration-700 ease-out animate-fade-in"
                   sizes="66vw"
                   priority
                 />
-                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/75 text-white text-[9px] font-label-caps px-2.5 py-1 tracking-widest uppercase z-20 rounded-xs">
-                  Enlarge
+                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/75 text-white text-[9px] font-label-caps px-2.5 py-1 tracking-widest uppercase z-20 rounded-xs flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[12px]">zoom_in</span>
+                  <span>Enlarge</span>
                 </div>
               </div>
 
-              {/* 2 Stacked Right */}
+              {/* 2 Stacked Right Images (col-span-1) */}
               <div className="col-span-1 flex flex-col gap-3.5">
-                {(gallery[1] || gallery[0]) && (
-                  <div
-                    onClick={() => {
-                      setActiveIdx(1 % gallery.length);
-                      setLightboxSrc((gallery[1] || gallery[0]).src);
-                    }}
-                    className="relative aspect-square bg-soft-linen/40 overflow-hidden group cursor-zoom-in border border-slate-grey/15 hover:border-slate-grey/40 transition-all duration-300 flex-1 rounded-sm"
-                  >
-                    <SkeletonImage
-                      src={(gallery[1] || gallery[0]).src}
-                      alt={(gallery[1] || gallery[0]).alt || `${title} view 2`}
-                      fill
-                      className="object-cover object-center mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
-                      sizes="33vw"
-                    />
-                  </div>
-                )}
-                {(gallery[2] || gallery[0]) && (
-                  <div
-                    onClick={() => {
-                      setActiveIdx(2 % gallery.length);
-                      setLightboxSrc((gallery[2] || gallery[0]).src);
-                    }}
-                    className="relative aspect-square bg-soft-linen/40 overflow-hidden group cursor-zoom-in border border-slate-grey/15 hover:border-slate-grey/40 transition-all duration-300 flex-1 rounded-sm"
-                  >
-                    <SkeletonImage
-                      src={(gallery[2] || gallery[0]).src}
-                      alt={(gallery[2] || gallery[0]).alt || `${title} view 3`}
-                      fill
-                      className="object-cover object-center mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
-                      sizes="33vw"
-                    />
-                  </div>
-                )}
+                {[1, 2].map((slotIdx) => {
+                  const imgIdx = slotIdx < gallery.length ? slotIdx : slotIdx % gallery.length;
+                  const img = gallery[imgIdx] || gallery[0];
+                  const isActive = activeIdx === imgIdx;
+
+                  return (
+                    <div
+                      key={slotIdx}
+                      onClick={() => setActiveIdx(imgIdx)}
+                      className={`relative aspect-square bg-soft-linen/40 overflow-hidden group cursor-pointer border transition-all duration-300 flex-1 rounded-sm ${
+                        isActive
+                          ? "border-deep-navy ring-2 ring-deep-navy/30 opacity-100"
+                          : "border-slate-grey/15 hover:border-slate-grey/40 opacity-80 hover:opacity-100"
+                      }`}
+                    >
+                      <SkeletonImage
+                        src={img.src}
+                        alt={img.alt || `${title} view ${imgIdx + 1}`}
+                        fill
+                        className="object-cover object-center mix-blend-multiply group-hover:scale-105 transition-transform duration-500 ease-out"
+                        sizes="33vw"
+                      />
+                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                        <span className="text-white bg-black/70 px-2.5 py-1 text-[9px] font-label-caps uppercase tracking-widest rounded-xs">
+                          Shift to Main
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Bottom Row thumbnails */}
-            {gallery.length > 3 && (
-              <div className="grid grid-cols-4 gap-3">
-                {gallery.slice(3).map((img, idx) => (
+            {/* Bottom Row: 3 Small Images (grid-cols-3) */}
+            <div className="grid grid-cols-3 gap-3.5">
+              {[0, 3, 4].map((slotIdx, colIdx) => {
+                // Determine target gallery item index
+                const imgIdx = slotIdx < gallery.length ? slotIdx : slotIdx % gallery.length;
+                const img = gallery[imgIdx] || gallery[0];
+                const isActive = activeIdx === imgIdx;
+
+                return (
                   <div
-                    key={idx}
-                    onClick={() => {
-                      setActiveIdx(idx + 3);
-                      setLightboxSrc(img.src);
-                    }}
-                    className="relative aspect-square bg-soft-linen/40 overflow-hidden group cursor-zoom-in border border-slate-grey/15 hover:border-slate-grey/40 transition-all duration-300 rounded-sm"
+                    key={colIdx}
+                    onClick={() => setActiveIdx(imgIdx)}
+                    className={`relative aspect-square bg-soft-linen/40 overflow-hidden group cursor-pointer border transition-all duration-300 rounded-sm ${
+                      isActive
+                        ? "border-deep-navy ring-2 ring-deep-navy/30 opacity-100"
+                        : "border-slate-grey/15 hover:border-slate-grey/40 opacity-80 hover:opacity-100"
+                    }`}
                   >
                     <SkeletonImage
                       src={img.src}
-                      alt={img.alt || `${title} view ${idx + 4}`}
+                      alt={img.alt || `${title} view ${imgIdx + 1}`}
                       fill
-                      className="object-cover object-center mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
-                      sizes="25vw"
+                      className="object-cover object-center mix-blend-multiply group-hover:scale-105 transition-transform duration-500 ease-out"
+                      sizes="33vw"
                     />
+                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                      <span className="text-white bg-black/70 px-2.5 py-1 text-[9px] font-label-caps uppercase tracking-widest rounded-xs">
+                        Shift to Main
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
         ) : layoutStyle === "2x2" ? (
           /* STANDARD 2x2 SQUARE GRID (PC View) */
