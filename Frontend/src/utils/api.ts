@@ -642,3 +642,55 @@ export async function clearAllNotifications() {
   });
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+//  BESPOKE ATELIER API
+// ══════════════════════════════════════════════════════════════════════════════
+
+export async function fetchBespokeData() {
+  return apiFetch<{
+    settings: any;
+    options: any[];
+    variants: any[];
+    metals: any[];
+    silhouettes: any[];
+    shapes: any[];
+  }>("/bespoke");
+}
+
+export async function updateBespokeSettings(settings: any) {
+  return adminFetch<{ success: boolean; settings: any }>("/bespoke/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings),
+  });
+}
+
+export async function saveBespokeOption(option: any) {
+  return adminFetch<{ success: boolean; option: any }>("/bespoke/options", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(option),
+  });
+}
+
+export async function deleteBespokeOption(id: string) {
+  return adminFetch<{ success: boolean; id: string }>(`/bespoke/options/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function saveBespokeVariant(variant: any) {
+  return adminFetch<{ success: boolean; variant: any }>("/bespoke/variants", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(variant),
+  });
+}
+
+export async function deleteBespokeVariant(id: string) {
+  return adminFetch<{ success: boolean; id: string }>(`/bespoke/variants/${id}`, {
+    method: "DELETE",
+  });
+}
+
+

@@ -171,5 +171,54 @@ model CookieConsent {
   @@map("cookie_consents")
 }
 
+model BespokeSettings {
+  id                  String   @id @default("default")
+  headline            String   @default("Bespoke Atelier Estimate")
+  slogan              String   @default("THE SIGNATURE COLLECTION")
+  subtitle            String   @default("Crafted to your exact specifications. Begin building your legacy piece.")
+  introParagraph      String   @default("Our master goldsmiths work directly with you in our atelier to craft bespoke, made-to-order creations.")
+  disclaimerText      String   @default("Final quote verified during 1-on-1 consultation with our lead master craftsman.")
+  consultationCtaText String   @default("Book Atelier Consultation")
+  craftingTimeline    String   @default("3 – 4 Weeks")
+  baseMinPrice        Float    @default(65000) @map("base_min_price")
+  baseMaxPrice        Float    @default(180000) @map("base_max_price")
+  isEnabled           Boolean  @default(true) @map("is_enabled")
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("bespoke_settings")
+}
+
+model BespokeOption {
+  id              String   @id @default(uuid())
+  category        String   // "metal", "silhouette", "stone_shape", "clarity", "color"
+  name            String
+  code            String
+  colorHex        String?  @map("color_hex")
+  imageUrl        String?  @map("image_url")
+  priceMultiplier Float    @default(1.0) @map("price_multiplier")
+  priceAddition   Float    @default(0) @map("price_addition")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isEnabled       Boolean  @default(true) @map("is_enabled")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("bespoke_options")
+}
+
+model BespokeVariant {
+  id            String   @id @default(uuid())
+  silhouette    String
+  metal         String
+  stoneShape    String?  @map("stone_shape")
+  imageUrl      String   @map("image_url")
+  priceModifier Float    @default(1.0) @map("price_modifier")
+  isAvailable   Boolean  @default(true) @map("is_available")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@unique([silhouette, metal, stoneShape])
+  @@map("bespoke_variants")
+}
+
+
 
 

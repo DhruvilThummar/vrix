@@ -141,6 +141,47 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_created_at" ON "notifications" ("created_at" DESC);').catch(() => { });
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_is_read" ON "notifications" ("is_read");').catch(() => { });
 
+    // Bespoke Atelier tables
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_settings" (
+      "id" TEXT PRIMARY KEY DEFAULT 'default',
+      "headline" TEXT DEFAULT 'Bespoke Atelier Estimate',
+      "slogan" TEXT DEFAULT 'THE SIGNATURE COLLECTION',
+      "subtitle" TEXT DEFAULT 'Crafted to your exact specifications. Begin building your legacy piece.',
+      "introParagraph" TEXT DEFAULT 'Our master goldsmiths work directly with you in our atelier to craft bespoke, made-to-order creations.',
+      "disclaimerText" TEXT DEFAULT 'Final quote verified during 1-on-1 consultation with our lead master craftsman.',
+      "consultationCtaText" TEXT DEFAULT 'Book Atelier Consultation',
+      "craftingTimeline" TEXT DEFAULT '3 – 4 Weeks',
+      "base_min_price" DOUBLE PRECISION DEFAULT 65000,
+      "base_max_price" DOUBLE PRECISION DEFAULT 180000,
+      "is_enabled" BOOLEAN DEFAULT true,
+      "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );`).catch(() => { });
+
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_options" (
+      "id" TEXT PRIMARY KEY,
+      "category" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "code" TEXT NOT NULL,
+      "color_hex" TEXT,
+      "image_url" TEXT,
+      "price_multiplier" DOUBLE PRECISION DEFAULT 1.0,
+      "price_addition" DOUBLE PRECISION DEFAULT 0,
+      "sort_order" INTEGER DEFAULT 0,
+      "is_enabled" BOOLEAN DEFAULT true,
+      "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );`).catch(() => { });
+
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_variants" (
+      "id" TEXT PRIMARY KEY,
+      "silhouette" TEXT NOT NULL,
+      "metal" TEXT NOT NULL,
+      "stone_shape" TEXT,
+      "image_url" TEXT NOT NULL,
+      "price_modifier" DOUBLE PRECISION DEFAULT 1.0,
+      "is_available" BOOLEAN DEFAULT true,
+      "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );`).catch(() => { });
 
     tablesCreated = true;
   } catch (e) {
