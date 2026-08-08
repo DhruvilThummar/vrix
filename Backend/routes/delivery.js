@@ -113,6 +113,30 @@ router.patch("/orders/:orderId/assign", async (req, res) => {
   }
 });
 
+// PATCH /api/delivery/orders/:orderId/eta — Manager/Agent: Update estimated delivery date (ETA)
+router.patch("/orders/:orderId/eta", async (req, res) => {
+  const { orderId } = req.params;
+  const { estimatedDeliveryDate } = req.body;
+
+  if (!estimatedDeliveryDate) {
+    return res.status(400).json({ error: "estimatedDeliveryDate is required" });
+  }
+
+  try {
+    const etaDate = new Date(estimatedDeliveryDate);
+    const updated = await db.payments.update({
+      where: { orderId },
+      data: { estimatedDeliveryDate: isNaN(etaDate.getTime()) ? estimatedDeliveryDate : etaDate },
+    });
+    await db.securityLogs.create({
+      data: { event: "DELIVERY_ETA_UPDATED", user: `${orderId} ETA set to ${estimatedDeliveryDate}`, status: "SUCCESS" },
+    });
+    res.json({ success: true, order: updated, estimatedDeliveryDate: updated.estimatedDeliveryDate });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/delivery/staff — Manager: List all delivery staff
 router.get("/staff", async (req, res) => {
   try {
@@ -163,7 +187,7 @@ router.post("/send-otp", async (req, res) => {
     });
 
     // Update order status in main ledger to reflect OTP dispatch (out for delivery)
-    await db.payments.update({
+    const updatedOrder = await db.payments.update({
       where: { orderId },
       data: { status: "OTP_SENT" }
     });
@@ -172,16 +196,22 @@ router.post("/send-otp", async (req, res) => {
     if (activeTransporter) {
       const apiSettings = await getApiSettings();
       const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+      
+      const etaString = updatedOrder.estimatedDeliveryDate
+        ? new Date(updatedOrder.estimatedDeliveryDate).toLocaleDateString("en-IN", { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : "Arriving Today";
+
       await activeTransporter.sendMail({
         from: `"VRIX Delivery" <${senderEmail}>`,
         to: customerEmail,
-        subject: "Your VRIX Delivery Verification Code",
+        subject: `Out for Delivery: Your VRIX Verification Code for ${orderId}`,
         html: `
-          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;">
-            <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;">VRIX Delivery</h2>
-            <p style="color:#666;font-size:14px;">Your delivery verification code for Order <strong>${orderId}</strong>:</p>
+          <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;background:#f9f8f6;border:1px solid #e5e3df;color:#0f1728;">
+            <h2 style="font-size:20px;letter-spacing:4px;color:#0f1728;text-transform:uppercase;margin-bottom:24px;border-bottom:1px solid #e5e3df;padding-bottom:12px;">VRIX Express Delivery</h2>
+            <p style="color:#666;font-size:14px;">Your order <strong>#${orderId}</strong> is out for delivery with our courier.</p>
+            <p style="color:#0f1728;font-size:13px;font-weight:bold;margin-top:12px;">Estimated Arrival: <span style="color:#2563eb;">${etaString}</span></p>
             <div style="font-size:36px;font-weight:700;letter-spacing:12px;color:#0f1728;text-align:center;padding:24px;background:#fff;border:1px solid #e5e3df;margin:24px 0;">${otp}</div>
-            <p style="color:#999;font-size:12px;">Share this code with the delivery agent at the time of delivery. Valid for 15 minutes.</p>
+            <p style="color:#999;font-size:12px;line-height:1.5;">Please share this 6-digit verification code with your delivery agent upon arrival. Valid for 15 minutes.</p>
           </div>
         `,
       });

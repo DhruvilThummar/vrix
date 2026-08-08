@@ -527,6 +527,14 @@ export async function assignDeliveryOrder(orderId: string, agentEmail: string | 
   });
 }
 
+export async function updateDeliveryEta(orderId: string, estimatedDeliveryDate: string) {
+  return apiFetch<{ success: boolean; order: any; estimatedDeliveryDate: string }>(`/delivery/orders/${encodeURIComponent(orderId)}/eta`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ estimatedDeliveryDate }),
+  });
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  ADMIN — STATS
 // ══════════════════════════════════════════════════════════════════════════════

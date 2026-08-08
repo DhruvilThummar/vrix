@@ -49,7 +49,7 @@ export default function CustomerOrdersPage() {
   };
 
   // ─── HELPER: ETA Calculation ───────────────────────────────────────────────
-  const calculateETA = (createdAt: string, status: string): string => {
+  const calculateETA = (createdAt: string, status: string, customEta?: string | Date | null): string => {
     const norm = (status || "").toUpperCase();
     const createdDate = new Date(createdAt);
 
@@ -68,6 +68,19 @@ export default function CustomerOrdersPage() {
 
     if (norm === "FAILED" || norm === "CANCELLED") {
       return "Order Cancelled";
+    }
+
+    if (customEta) {
+      const etaDate = new Date(customEta);
+      if (!isNaN(etaDate.getTime())) {
+        return `Arriving by ${etaDate.toLocaleDateString("en-IN", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`;
+      }
     }
 
     // Default: 5 to 7 days delivery window
@@ -147,7 +160,7 @@ export default function CustomerOrdersPage() {
       parsedItems: parseCartItems(raw.cartItems),
       currentStep: step,
       progressPercentage: percentage,
-      formattedEta: calculateETA(raw.createdAt, raw.status),
+      formattedEta: calculateETA(raw.createdAt, raw.status, raw.estimatedDeliveryDate),
       isExpanded: false,
     };
   };

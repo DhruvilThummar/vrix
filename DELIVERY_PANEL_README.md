@@ -203,6 +203,17 @@ Assigns or unassigns a shipment to a delivery agent.
   { "agentEmail": "agent@vrix.com" }
   ```
 
+#### `PATCH /api/delivery/orders/:orderId/eta`
+Updates the estimated delivery date (ETA) for a specific order.
+* **Request Body:**
+  ```json
+  { "estimatedDeliveryDate": "2026-08-10T17:00:00.000Z" }
+  ```
+* **Response (200 OK):**
+  ```json
+  { "success": true, "order": { "orderId": "order_dev_123", "estimatedDeliveryDate": "2026-08-10T17:00:00.000Z" } }
+  ```
+
 #### `GET /api/delivery/staff` & `POST /api/delivery/staff`
 Fetch staff directory or register a new staff member.
 * **POST Request Body:**

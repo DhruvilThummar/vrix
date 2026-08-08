@@ -38,6 +38,7 @@ export interface PaymentRecord {
   city?: string | null;
   postalCode?: string | null;
   assignedAgent?: string | null;
+  estimatedDeliveryDate?: string | Date | null;
   cartItems?: string | OrderItem[] | null;
   isGiftWrapped?: boolean;
   giftMessage?: string | null;

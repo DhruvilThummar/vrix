@@ -11,6 +11,7 @@ import {
   addDeliveryStaff,
   deleteDeliveryStaff,
   assignDeliveryOrder,
+  updateDeliveryEta,
 } from "@/utils/api";
 
 type DeliveryStatus = "CREATED" | "SUCCESS" | "DELIVERED" | "FAILED" | "OTP_SENT";
@@ -30,6 +31,7 @@ interface DeliveryOrder {
   postalCode?: string;
   assignedAgent?: string;
   userEmail?: string;
+  estimatedDeliveryDate?: string | Date;
 }
 
 interface StaffMember {
@@ -287,6 +289,39 @@ export default function DeliveryPanelPage() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  // Manager & Agent: Update Estimated Delivery Date (ETA)
+  const handleUpdateEta = async (orderId: string, etaDateStr: string) => {
+    setActionLoading(true);
+    try {
+      const res = await updateDeliveryEta(orderId, etaDateStr);
+      setOrders((prev) =>
+        prev.map((o) => (o.orderId === orderId ? { ...o, estimatedDeliveryDate: res.estimatedDeliveryDate } : o))
+      );
+      if (selectedOrder && selectedOrder.orderId === orderId) {
+        setSelectedOrder((prev) => (prev ? { ...prev, estimatedDeliveryDate: res.estimatedDeliveryDate } : null));
+      }
+      showToast(`Updated delivery ETA for ${orderId}!`);
+    } catch (err: any) {
+      showToast(err.message || "Failed to update ETA.", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const getPresetEta = (preset: "today" | "tomorrow" | "in2days") => {
+    const d = new Date();
+    if (preset === "today") {
+      d.setHours(17, 0, 0, 0);
+    } else if (preset === "tomorrow") {
+      d.setDate(d.getDate() + 1);
+      d.setHours(12, 0, 0, 0);
+    } else if (preset === "in2days") {
+      d.setDate(d.getDate() + 2);
+      d.setHours(16, 0, 0, 0);
+    }
+    return d.toISOString();
   };
 
   // Manager: Staff Management CRUD
@@ -753,6 +788,46 @@ export default function DeliveryPanelPage() {
                         <span className="text-white/40 uppercase tracking-widest text-[9px] font-semibold">Total Price</span>
                         <span className="text-blue-400">₹{Number(selectedOrder.amount).toLocaleString("en-IN")}</span>
                       </div>
+
+                      {/* ETA Management Picker */}
+                      <div className="border-t border-white/[0.05] pt-3 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/40 uppercase tracking-widest text-[9px] font-semibold">Set Estimated Arrival (ETA)</span>
+                          {selectedOrder.estimatedDeliveryDate && (
+                            <span className="text-blue-400 font-semibold text-[10px]">
+                              {new Date(selectedOrder.estimatedDeliveryDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("today"))}
+                            className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 rounded-lg py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                          >
+                            Today 5 PM
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("tomorrow"))}
+                            className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 rounded-lg py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                          >
+                            Tomorrow 12 PM
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateEta(selectedOrder.orderId, getPresetEta("in2days"))}
+                            className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 rounded-lg py-1.5 text-[9px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                          >
+                            In 2 Days
+                          </button>
+                        </div>
+                        <input
+                          type="datetime-local"
+                          onChange={(e) => e.target.value && handleUpdateEta(selectedOrder.orderId, new Date(e.target.value).toISOString())}
+                          className="w-full bg-[#0c0f1e] border border-white/10 text-white/70 text-[10px] px-2.5 py-1.5 rounded-lg outline-none focus:border-blue-500 bg-transparent"
+                        />
+                      </div>
                     </div>
 
                     {/* Actions */}
@@ -975,6 +1050,43 @@ export default function DeliveryPanelPage() {
                               ))}
                           </select>
                         </div>
+
+                        {/* Manager ETA Control */}
+                        {!isDelivered && (
+                          <div className="flex flex-col gap-1.5 pt-2 border-t border-white/[0.05]">
+                            <div className="flex justify-between items-center">
+                              <label className="text-[9px] text-white/40 uppercase tracking-widest font-semibold">Estimated Arrival (ETA)</label>
+                              {order.estimatedDeliveryDate && (
+                                <span className="text-blue-400 font-semibold text-[10px]">
+                                  {new Date(order.estimatedDeliveryDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-3 gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("today"))}
+                                className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
+                              >
+                                Today
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("tomorrow"))}
+                                className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
+                              >
+                                Tomorrow
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateEta(order.orderId, getPresetEta("in2days"))}
+                                className="bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 rounded py-1 text-[8px] uppercase tracking-wider font-semibold cursor-pointer"
+                              >
+                                +2 Days
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
