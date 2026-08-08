@@ -218,13 +218,14 @@ router.post("/verify", async (req, res) => {
         itemsList.forEach((item) => {
           itemsHtml += `
             <tr style="border-bottom: 1px solid #e5e3df;">
-              <td style="padding: 12px 0; font-size: 14px; color: #0f1728;">
-                <strong>${item.title}</strong><br/>
-                <span style="font-size: 12px; color: #666;">${item.material || ""} ${item.size ? `(Size: ${item.size})` : ""}</span>
-                ${item.engraving ? `<br/><span style="font-size: 12px; color: #666; font-style: italic;">"${item.engraving}"</span>` : ""}
+              <td style="padding: 14px 0; font-size: 13px; color: #0f1728; line-height: 1.5;">
+                <strong style="text-transform: uppercase; letter-spacing: 0.5px;">${item.title}</strong><br/>
+                <span style="font-size: 11px; color: #666; text-transform: uppercase;">${item.material || "Fine Jewelry"} ${item.size ? `• Size: ${item.size}` : ""}</span>
+                ${item.engraving ? `<br/><span style="font-size: 11px; color: #854d0e; font-style: italic;">Engraving: "${item.engraving}"</span>` : ""}
+                ${item.giftNote ? `<br/><span style="font-size: 11px; color: #4338ca; font-style: italic;">Gift Message: "${item.giftNote}"</span>` : ""}
               </td>
-              <td style="padding: 12px 0; font-size: 14px; color: #0f1728; text-align: center;">${item.quantity}</td>
-              <td style="padding: 12px 0; font-size: 14px; color: #0f1728; text-align: right;">₹${(item.price * item.quantity).toLocaleString()}</td>
+              <td style="padding: 14px 0; font-size: 13px; color: #0f1728; text-align: center;">${item.quantity || 1}</td>
+              <td style="padding: 14px 0; font-size: 13px; font-weight: bold; color: #0f1728; text-align: right;">₹${((item.price || 0) * (item.quantity || 1)).toLocaleString("en-IN")}</td>
             </tr>
           `;
         });
@@ -232,67 +233,92 @@ router.post("/verify", async (req, res) => {
         if (isGiftWrapped) {
           itemsHtml += `
             <tr style="border-bottom: 1px solid #e5e3df;">
-              <td style="padding: 12px 0; font-size: 14px; color: #0f1728;">
-                <strong>Signature Gift Packaging</strong><br/>
-                ${giftMessage ? `<span style="font-size: 12px; color: #666; font-style: italic;">Note: "${giftMessage}"</span>` : ""}
+              <td style="padding: 14px 0; font-size: 13px; color: #0f1728;">
+                <strong style="text-transform: uppercase; letter-spacing: 0.5px;">VRIX Signature Gift Presentation Case</strong><br/>
+                ${giftMessage ? `<span style="font-size: 11px; color: #666; font-style: italic;">Ribbon Note: "${giftMessage}"</span>` : ""}
               </td>
-              <td style="padding: 12px 0; font-size: 14px; color: #0f1728; text-align: center;">1</td>
-              <td style="padding: 12px 0; font-size: 14px; color: #0f1728; text-align: right;">₹${giftWrapPrice || 250}</td>
+              <td style="padding: 14px 0; font-size: 13px; color: #0f1728; text-align: center;">1</td>
+              <td style="padding: 14px 0; font-size: 13px; font-weight: bold; color: #0f1728; text-align: right;">₹${(giftWrapPrice || 250).toLocaleString("en-IN")}</td>
             </tr>
           `;
         }
 
+        const etaLabel = paymentRecord.estimatedDeliveryDate
+          ? new Date(paymentRecord.estimatedDeliveryDate).toLocaleDateString("en-IN", { weekday: 'long', month: 'short', day: 'numeric' })
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("en-IN", { weekday: 'long', month: 'short', day: 'numeric' });
+
         const orderSummaryHtml = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 32px; background: #f9f8f6; border: 1px solid #e5e3df;">
-            <h2 style="font-size: 20px; letter-spacing: 4px; color: #0f1728; text-transform: uppercase; margin-bottom: 24px; text-align: center; border-bottom: 1px solid #e5e3df; padding-bottom: 16px;">VRIX ORDER CONFIRMATION</h2>
-            <p style="color: #666; font-size: 14px; margin-bottom: 16px;">Hello ${paymentRecord.customerName || 'Valued Customer'},</p>
-            <p style="color: #666; font-size: 14px; margin-bottom: 24px;">Thank you for your purchase. We are preparing your architectural jewelry pieces with meticulous care. Below are your order details:</p>
-            <div style="margin-bottom: 24px; background: #fff; padding: 20px; border: 1px solid #e5e3df;">
-              <p style="font-size: 12px; color: #999; margin: 0 0 4px 0;">ORDER ID</p>
-              <p style="font-size: 16px; color: #0f1728; font-weight: bold; margin: 0 0 16px 0;">${paymentRecord.orderId}</p>
-              <p style="font-size: 12px; color: #999; margin: 0 0 4px 0;">SHIPPING ADDRESS</p>
-              <p style="font-size: 14px; color: #0f1728; margin: 0;">${paymentRecord.customerName || ""}</p>
-              <p style="font-size: 14px; color: #0f1728; margin: 0;">${paymentRecord.address || ""}</p>
-              <p style="font-size: 14px; color: #0f1728; margin: 0;">${paymentRecord.city || ""}, ${paymentRecord.postalCode || ""}</p>
-              <p style="font-size: 14px; color: #0f1728; margin: 4px 0 0 0;">Phone: ${paymentRecord.customerPhone || ""}</p>
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: auto; padding: 36px; background: #f8f6f0; border: 1px solid #e5e3df; color: #0f1728;">
+            <div style="text-align: center; border-bottom: 2px solid #0f1728; padding-bottom: 20px; margin-bottom: 28px;">
+              <h1 style="font-size: 24px; letter-spacing: 6px; color: #0f1728; text-transform: uppercase; margin: 0 0 6px 0; font-weight: 700;">VRIX</h1>
+              <p style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin: 0;">Architectural Fine Jewelry • Official Invoice</p>
             </div>
+
+            <p style="color: #444; font-size: 14px; margin-bottom: 16px;">Dear <strong>${paymentRecord.customerName || 'Valued Client'}</strong>,</p>
+            <p style="color: #666; font-size: 13px; line-height: 1.6; margin-bottom: 24px;">Thank you for selecting VRIX. Your piece has been recorded in our master ledger and is entering hand-craftsmanship inspection. Below is your official tax receipt and shipment schedule:</p>
+
+            <div style="margin-bottom: 24px; background: #ffffff; padding: 20px; border: 1px solid #e5e3df;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <tr>
+                  <td style="padding-bottom: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 10px;">Order Reference</td>
+                  <td style="padding-bottom: 10px; text-align: right; font-weight: bold; color: #0f1728;">${paymentRecord.orderId}</td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 10px;">Payment Reference ID</td>
+                  <td style="padding-bottom: 10px; text-align: right; font-mono: true; color: #0f1728;">${paymentRecord.paymentId || razorpay_payment_id}</td>
+                </tr>
+                <tr>
+                  <td style="color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 10px;">Estimated Delivery Arrival</td>
+                  <td style="text-align: right; font-weight: bold; color: #2563eb;">🚚 ${etaLabel}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="margin-bottom: 24px; background: #ffffff; padding: 20px; border: 1px solid #e5e3df;">
+              <p style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Recipient &amp; Delivery Destination</p>
+              <p style="font-size: 13px; color: #0f1728; font-weight: bold; margin: 0;">${paymentRecord.customerName || "VRIX Client"}</p>
+              <p style="font-size: 12px; color: #444; margin: 4px 0 0 0;">${paymentRecord.address || ""}, ${paymentRecord.city || ""} ${paymentRecord.postalCode || ""}</p>
+              <p style="font-size: 12px; color: #666; margin: 4px 0 0 0;">Contact Phone: ${paymentRecord.customerPhone || "N/A"}</p>
+            </div>
+
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
               <thead>
-                <tr style="border-bottom: 2px solid #e5e3df; font-size: 11px; text-transform: uppercase; color: #999; letter-spacing: 1px;">
-                  <th style="text-align: left; padding-bottom: 8px;">Item</th>
-                  <th style="text-align: center; padding-bottom: 8px; width: 60px;">Qty</th>
-                  <th style="text-align: right; padding-bottom: 8px; width: 100px;">Price</th>
+                <tr style="border-bottom: 2px solid #e5e3df; font-size: 10px; text-transform: uppercase; color: #888; letter-spacing: 1.5px;">
+                  <th style="text-align: left; padding-bottom: 8px;">Jewelry Item</th>
+                  <th style="text-align: center; padding-bottom: 8px; width: 50px;">Qty</th>
+                  <th style="text-align: right; padding-bottom: 8px; width: 100px;">Amount</th>
                 </tr>
               </thead>
-              <tbody>${itemsHtml || `<tr><td colspan="3" style="padding: 12px 0; text-align: center; color: #666;">No items registered</td></tr>`}</tbody>
+              <tbody>${itemsHtml || `<tr><td colspan="3" style="padding: 12px 0; text-align: center; color: #666;">Standard Jewelry Piece</td></tr>`}</tbody>
               <tfoot>
                 <tr>
-                  <td colspan="2" style="padding: 16px 0 0 0; font-size: 14px; color: #666; text-align: right;">Total Paid</td>
-                  <td style="padding: 16px 0 0 0; font-size: 18px; font-weight: bold; color: #0f1728; text-align: right;">₹${paymentRecord.amount.toLocaleString()}</td>
+                  <td colspan="2" style="padding: 16px 0 0 0; font-size: 13px; color: #666; text-align: right;">Total Amount Paid (Inclusive of Taxes)</td>
+                  <td style="padding: 16px 0 0 0; font-size: 18px; font-weight: bold; color: #0f1728; text-align: right;">₹${paymentRecord.amount.toLocaleString("en-IN")}</td>
                 </tr>
               </tfoot>
             </table>
-            <div style="border-top: 1px solid #e5e3df; padding-top: 24px; text-align: center;">
-              <p style="color: #999; font-size: 12px; margin: 0 0 8px 0;">If you have any questions, please contact us at ${adminEmail}</p>
-              <p style="color: #0f1728; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 0;">VRIX LUXURY JEWELRY</p>
+
+            <div style="border-top: 1px solid #e5e3df; padding-top: 20px; text-align: center;">
+              <p style="color: #888; font-size: 11px; margin: 0 0 6px 0;">For inquiries or custom sizing support: <a href="mailto:${adminEmail}" style="color: #0f1728;">${adminEmail}</a></p>
+              <p style="color: #0f1728; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 0;">VRIX FINE JEWELRY • ALL RIGHTS RESERVED</p>
             </div>
           </div>
         `;
 
         if (paymentRecord.userEmail) {
           await activeTransporter.sendMail({
-            from: `"VRIX" <${senderEmail}>`,
+            from: `"VRIX Fine Jewelry" <${senderEmail}>`,
             to: paymentRecord.userEmail,
-            subject: `Your VRIX Order Confirmation - ${paymentRecord.orderId}`,
+            subject: `Order Invoice & Receipt #${paymentRecord.orderId} - VRIX`,
             html: orderSummaryHtml,
           });
         }
 
         await activeTransporter.sendMail({
-          from: `"VRIX Order System" <${senderEmail}>`,
+          from: `"VRIX System" <${senderEmail}>`,
           to: adminEmail,
-          subject: `New VRIX Order Received - ${paymentRecord.orderId}`,
-          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e3df;"><h2 style="color: #0f1728; border-bottom: 2px solid #e5e3df; padding-bottom: 10px;">New Order Paid</h2><p>A new order has been paid and verified. Details are listed below:</p>${orderSummaryHtml}</div>`,
+          subject: `New Paid Order Verified - #${paymentRecord.orderId}`,
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e3df;"><h3 style="color: #0f1728; border-bottom: 2px solid #e5e3df; padding-bottom: 10px;">Payment Verified</h3>${orderSummaryHtml}</div>`,
         });
       }
     } catch (mailErr) {
