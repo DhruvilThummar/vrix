@@ -363,25 +363,6 @@ export async function adminLogin(payload: { email: string; password: string }) {
   });
 }
 
-export async function fetchUserOrders(email: string) {
-  return apiFetch<Array<{
-    id: string;
-    orderId: string;
-    paymentId?: string;
-    amount: number;
-    currency: string;
-    status: string;
-    createdAt: string;
-    customerName?: string;
-    address?: string;
-    city?: string;
-  }>>(`/payment/user-orders?email=${encodeURIComponent(email)}`);
-}
-
-
-
-
-
 // ══════════════════════════════════════════════════════════════════════════════
 //  PROMO / REDEEM CODES
 // ══════════════════════════════════════════════════════════════════════════════
@@ -474,10 +455,6 @@ export async function verifyPayment(data: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-}
-
-export async function fetchPaymentLogs() {
-  return apiFetch<any[]>("/payment/logs");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
