@@ -176,7 +176,7 @@ export default function Page() {
     );
   }
 
-  if (!settings.isEnabled) {
+  if (!settings?.isEnabled || (metals.length === 0 && silhouettes.length === 0)) {
     return (
       <div className="w-full bg-surface min-h-[calc(100vh-65px)] flex items-center justify-center py-section-gap px-margin-mobile md:px-margin-desktop">
         <div className="max-w-xl text-center space-y-8 bg-pure-white border border-slate-grey/15 p-8 md:p-12 shadow-sm animate-fade-in">
@@ -188,12 +188,12 @@ export default function Page() {
               Atelier VRIX
             </p>
             <h1 className="font-display-lg text-headline-lg text-deep-navy uppercase">
-              Bespoke Atelier Paused
+              Bespoke Atelier Currently Busy
             </h1>
             <div className="w-12 h-px bg-slate-grey/30 mx-auto"></div>
           </div>
           <p className="font-body-md text-sm text-slate-grey leading-relaxed">
-            {settings.introParagraph}
+            Our master goldsmiths are currently at full capacity crafting custom atelier creations. Please check back a little later or contact customer care for urgent bespoke inquiries.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
             <Link

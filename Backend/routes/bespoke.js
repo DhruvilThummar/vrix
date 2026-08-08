@@ -5,118 +5,6 @@ import { randomUUID as uuidv4 } from "crypto";
 
 const router = express.Router();
 
-// Fallback / Initial Seed Data if DB is clean
-const DEFAULT_BESPOKE_SETTINGS = {
-  id: "default",
-  headline: "Bespoke Atelier Estimate",
-  slogan: "THE SIGNATURE COLLECTION",
-  subtitle: "Crafted to your exact specifications. Begin building your legacy piece.",
-  introParagraph: "Our master goldsmiths work directly with you in our atelier to craft bespoke, made-to-order creations.",
-  disclaimerText: "Final quote verified during 1-on-1 consultation with our lead master craftsman.",
-  consultationCtaText: "Book Atelier Consultation",
-  craftingTimeline: "3 – 4 Weeks",
-  baseMinPrice: 65000,
-  baseMaxPrice: 180000,
-  isEnabled: true,
-};
-
-const DEFAULT_METALS = [
-  {
-    id: "metal-1",
-    category: "metal",
-    name: "18K Yellow Gold",
-    code: "18K_YELLOW_GOLD",
-    colorHex: "#E6C762",
-    imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
-    priceMultiplier: 1.0,
-    sortOrder: 1,
-    isEnabled: true
-  },
-  {
-    id: "metal-2",
-    category: "metal",
-    name: "18K White Gold",
-    code: "18K_WHITE_GOLD",
-    colorHex: "#E1E1E1",
-    imageUrl: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop",
-    priceMultiplier: 1.05,
-    sortOrder: 2,
-    isEnabled: true
-  },
-  {
-    id: "metal-3",
-    category: "metal",
-    name: "18K Rose Gold",
-    code: "18K_ROSE_GOLD",
-    colorHex: "#E8B2A1",
-    imageUrl: "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?q=80&w=800&auto=format&fit=crop",
-    priceMultiplier: 1.02,
-    sortOrder: 3,
-    isEnabled: true
-  },
-  {
-    id: "metal-4",
-    category: "metal",
-    name: "950 Platinum",
-    code: "950_PLATINUM",
-    colorHex: "#D1D3D4",
-    imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
-    priceMultiplier: 1.25,
-    sortOrder: 4,
-    isEnabled: true
-  }
-];
-
-const DEFAULT_SILHOUETTES = [
-  {
-    id: "sil-1",
-    category: "silhouette",
-    name: "Solitaire Ring",
-    code: "SOLITAIRE_RING",
-    imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
-    priceMultiplier: 1.0,
-    sortOrder: 1,
-    isEnabled: true
-  },
-  {
-    id: "sil-2",
-    category: "silhouette",
-    name: "Pendant Necklace",
-    code: "PENDANT_NECKLACE",
-    imageUrl: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=800&auto=format&fit=crop",
-    priceMultiplier: 1.35,
-    sortOrder: 2,
-    isEnabled: true
-  },
-  {
-    id: "sil-3",
-    category: "silhouette",
-    name: "Drop Earrings",
-    code: "DROP_EARRINGS",
-    imageUrl: "https://images.unsplash.com/photo-1635767798638-3e25273a8236?q=80&w=800&auto=format&fit=crop",
-    priceMultiplier: 1.2,
-    sortOrder: 3,
-    isEnabled: true
-  },
-  {
-    id: "sil-4",
-    category: "silhouette",
-    name: "Tennis Bracelet",
-    code: "TENNIS_BRACELET",
-    imageUrl: "https://images.unsplash.com/photo-1611591475281-8d2813298ca8?q=80&w=800&auto=format&fit=crop",
-    priceMultiplier: 1.6,
-    sortOrder: 4,
-    isEnabled: true
-  }
-];
-
-const DEFAULT_SHAPES = [
-  { id: "shp-1", category: "stone_shape", name: "ROUND", code: "ROUND", imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop", priceMultiplier: 1.0, sortOrder: 1, isEnabled: true },
-  { id: "shp-2", category: "stone_shape", name: "OVAL", code: "OVAL", imageUrl: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?q=80&w=800&auto=format&fit=crop", priceMultiplier: 1.1, sortOrder: 2, isEnabled: true },
-  { id: "shp-3", category: "stone_shape", name: "EMERALD", code: "EMERALD", imageUrl: "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?q=80&w=800&auto=format&fit=crop", priceMultiplier: 1.15, sortOrder: 3, isEnabled: true },
-  { id: "shp-4", category: "stone_shape", name: "PEAR", code: "PEAR", imageUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop", priceMultiplier: 1.12, sortOrder: 4, isEnabled: true }
-];
-
 // GET /api/bespoke — Public endpoint to load complete Bespoke Atelier config
 router.get("/", async (req, res) => {
   try {
@@ -134,24 +22,27 @@ router.get("/", async (req, res) => {
       variants = await db.bespokeVariant.findMany({ where: { isAvailable: true } }).catch(() => []);
     }
 
-    // Also check cmsSettings for legacy compatibility
+    // Check cmsSettings for legacy compatibility if database table has not been configured
     const cmsBespoke = await db.cmsSettings.findUnique({ where: { key: "bespoke_config" } }).catch(() => null);
     const legacyConfig = cmsBespoke?.value || {};
 
     if (!settings) {
       settings = {
-        ...DEFAULT_BESPOKE_SETTINGS,
-        headline: legacyConfig.title || DEFAULT_BESPOKE_SETTINGS.headline,
-        slogan: legacyConfig.slogan || DEFAULT_BESPOKE_SETTINGS.slogan,
-        subtitle: legacyConfig.subtitle || DEFAULT_BESPOKE_SETTINGS.subtitle,
+        id: "default",
+        headline: legacyConfig.title || legacyConfig.headline || "Bespoke Atelier Estimate",
+        slogan: legacyConfig.slogan || "THE SIGNATURE COLLECTION",
+        subtitle: legacyConfig.subtitle || "Our Atelier custom commission service is currently busy.",
+        introParagraph: legacyConfig.introParagraph || "Our master goldsmiths are currently busy crafting custom creations. Please check back later.",
+        disclaimerText: legacyConfig.disclaimerText || "Final quote verified during 1-on-1 consultation.",
+        consultationCtaText: legacyConfig.consultationCtaText || "Book Atelier Consultation",
+        craftingTimeline: legacyConfig.craftingTimeline || "3 – 4 Weeks",
         baseMinPrice: Number(legacyConfig.baseMinPrice || legacyConfig.basePrice || 65000),
         baseMaxPrice: Number(legacyConfig.baseMaxPrice || 180000),
+        isEnabled: legacyConfig.isEnabled !== undefined ? legacyConfig.isEnabled : true,
       };
     }
 
-    if (!options || options.length === 0) {
-      options = [...DEFAULT_METALS, ...DEFAULT_SILHOUETTES, ...DEFAULT_SHAPES];
-    }
+    const isBusy = options.length === 0;
 
     res.json({
       settings,
@@ -160,6 +51,8 @@ router.get("/", async (req, res) => {
       metals: options.filter(o => o.category === "metal"),
       silhouettes: options.filter(o => o.category === "silhouette"),
       shapes: options.filter(o => o.category === "stone_shape"),
+      isBusy,
+      busyMessage: isBusy ? "Our Bespoke Atelier is currently busy. Please check back later." : null,
     });
   } catch (err) {
     console.error("GET /api/bespoke error:", err);
