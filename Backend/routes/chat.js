@@ -1,44 +1,55 @@
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { db } from "../database.js";
 
 const router = express.Router();
 
-// ── VRIX Quiet Luxury System Prompt & Grounding Anti-Hallucination Directive ──
-const VRIX_SYSTEM_PROMPT = `
-You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
-Your brand tagline is: "Designed for the moments that belong only to you."
+// ── Gemini Response Schema for Guaranteed Structured JSON Outputs ─────────────
+const VRIX_RESPONSE_SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    botText: {
+      type: SchemaType.STRING,
+      description: "The quiet-luxury response message for the user.",
+    },
+    productCards: {
+      type: SchemaType.ARRAY,
+      description: "List of product cards matching the user query from [PRODUCT CONTEXT].",
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          productId: { type: SchemaType.STRING, description: "Product ID from context" },
+          name: { type: SchemaType.STRING, description: "Exact product title" },
+          price: { type: SchemaType.STRING, description: "Formatted price from context" },
+          reason: { type: SchemaType.STRING, description: "One concise sentence why this piece fits." },
+        },
+        required: ["productId", "name", "price", "reason"],
+      },
+    },
+    actionChips: {
+      type: SchemaType.ARRAY,
+      description: "Array of 2 to 3 concise follow-up action option titles.",
+      items: { type: SchemaType.STRING },
+    },
+  },
+  required: ["botText", "productCards", "actionChips"],
+};
 
-CRITICAL GROUNDING RULES (STRICT ANTI-HALLUCINATION RAG):
-1. You MUST answer strictly and only using the [PRODUCT CONTEXT] provided below.
-2. If the user asks about a product, price, material, or policy that is NOT explicitly mentioned in the [PRODUCT CONTEXT], you MUST say exactly: "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests."
-3. DO NOT invent, guess, or assume prices, materials, discounts, or inventory status under any circumstances.
-4. All product prices in the [PRODUCT CONTEXT] are already converted and formatted for the user's currency. You MUST present prices strictly as shown in [PRODUCT CONTEXT].
-
-VOICE & TONE (STRICT):
-- Warm, restrained, and confident. Plain verbs, sentence case.
-- ABSOLUTELY ZERO exclamation points (!). Do not use them under any circumstances.
-- Zero fluff. Be polite, concise, and direct.
-
-OUTPUT FORMAT (STRICT JSON ONLY):
-You must ALWAYS respond in valid JSON format only. Do not wrap in markdown \`\`\`json.
-Your JSON must strictly follow this structure:
-
-{
-  "botText": "Your quiet-luxury response here.",
-  "productCards": [
-    {
-      "productId": "id_from_context",
-      "name": "Product Name",
-      "price": "Formatted price from context",
-      "reason": "One short sentence explaining why this fits."
-    }
-  ],
-  "actionChips": ["Chip Label 1", "Chip Label 2"]
+// ── Dynamic Country-Specific Business Rules Helper ────────────────────────────
+function getCountryBusinessRules(countryCode = "IN") {
+  const code = String(countryCode).toUpperCase().trim();
+  if (code === "IN") {
+    return "REGION: INDIA (IN)\n- Shipping: Complimentary insured express shipping nationwide across India.\n- Delivery Time: 3 to 5 business days.\n- Taxes: Catalog prices are inclusive of 3% GST.";
+  }
+  if (code === "US" || code === "CA") {
+    return "REGION: NORTH AMERICA (US/CA)\n- Shipping: Flat-rate $50 USD insured international express courier shipping.\n- Delivery Time: 7 to 10 business days.\n- Duties & Taxes: Local custom duties, import taxes, or state taxes apply upon delivery at destination.";
+  }
+  if (["FR", "DE", "GB", "UK", "IT", "ES", "NL", "CH", "EU"].includes(code)) {
+    return "REGION: EUROPE & UK (EU/UK)\n- Shipping: Flat-rate €50 / £40 insured international express courier shipping.\n- Delivery Time: 7 to 10 business days.\n- Duties & Taxes: National customs import duties and VAT apply upon arrival at destination.";
+  }
+  return "REGION: INTERNATIONAL (REST OF WORLD)\n- Shipping: Flat-rate $50 USD insured international express shipping.\n- Delivery Time: 10 to 14 business days.\n- Duties & Taxes: Regional import tariffs, customs duties, and local taxes apply upon arrival.";
 }
-If no products in context are relevant, leave "productCards" empty []. Provide 2-3 logical actionChips matching user intent.
-`;
 
 // ── Currency Price Formatting Helper ───────────────────────────────────────
 function formatCurrencyPrice(inrAmount, currency = "INR", symbol = "₹", rate = 1, locale = "en-IN") {
@@ -58,7 +69,7 @@ function formatCurrencyPrice(inrAmount, currency = "INR", symbol = "₹", rate =
 async function classifyIntent(userText, actionValue = "", currentFlow = "") {
   const combined = `${actionValue} ${userText} ${currentFlow}`.toLowerCase();
 
-  // Rule-based fast routing for support & concierge FAQs
+  // Rule-based fast routing for support, shipping & concierge FAQs
   if (
     combined.includes("concierge") ||
     combined.includes("trigger-handoff") ||
@@ -68,7 +79,15 @@ async function classifyIntent(userText, actionValue = "", currentFlow = "") {
     combined.includes("4cs") ||
     combined.includes("sourcing") ||
     combined.includes("metal purity") ||
-    combined.includes("contact")
+    combined.includes("contact") ||
+    combined.includes("shipping") ||
+    combined.includes("delivery") ||
+    combined.includes("tax") ||
+    combined.includes("gst") ||
+    combined.includes("duty") ||
+    combined.includes("duties") ||
+    combined.includes("customs") ||
+    combined.includes("policy")
   ) {
     return "FAQ_OR_SUPPORT";
   }
@@ -286,10 +305,12 @@ async function searchLocalDbProducts(userQuery, currencyConfig, limit = 4) {
   }
 }
 
-// ── Complete generateGeminiRagResponse Function ───────────────────────────
+// ── Complete generateGeminiRagResponse Function (Structured Outputs & Temp=0) ──
 export async function generateGeminiRagResponse(userPrompt, retrievedProducts, currencyConfig) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) return null;
+
+  const countryRules = getCountryBusinessRules(currencyConfig.country);
 
   const contextData = (retrievedProducts || [])
     .map(
@@ -298,33 +319,53 @@ export async function generateGeminiRagResponse(userPrompt, retrievedProducts, c
     )
     .join("\n");
 
-  const fullPrompt = `${VRIX_SYSTEM_PROMPT}
+  const systemInstruction = `You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
+Brand Tagline: "Designed for the moments that belong only to you."
 
-User Currency: ${currencyConfig.currency} (${currencyConfig.symbol})
+CRITICAL GROUNDING RULES (STRICT ZERO-HALLUCINATION RAG):
+1. You MUST answer product queries strictly using the [PRODUCT CONTEXT] provided.
+2. If a user asks for a product, price, material, or inventory NOT in [PRODUCT CONTEXT], explicitly decline with: "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests."
+3. DO NOT invent, assume, or hallucinate products, prices, discounts, or materials under any circumstances.
+4. Product prices in [PRODUCT CONTEXT] are already converted and formatted. Present them strictly as shown.
 
-[PRODUCT CONTEXT]
+[COUNTRY & REGIONAL BUSINESS RULES]
+${countryRules}
+User Current Country: ${currencyConfig.country || "IN"} | Currency: ${currencyConfig.currency} (${currencyConfig.symbol})
+
+OUT-OF-DOMAIN & SAFETY GUARDRAILS:
+1. You are strictly forbidden from answering off-topic questions (e.g., coding, politics, weather, recipes, sports, general AI, math, or news).
+2. If the user asks an off-topic question, politely decline: "I am specialized solely in VRIX architectural fine jewelry and concierge services. How may I assist you with our collections today?"
+3. If the user prompt is ambiguous, provide 2 to 3 clear actionChips to clarify intent (e.g., "Explore Collections", "Speak to Concierge").
+
+VOICE & TONE (STRICT):
+- Warm, restrained, elegant, and confident. Plain verbs, sentence case.
+- ABSOLUTELY ZERO exclamation points (!). Do not use them under any circumstances.
+- Zero fluff. Be polite, concise, and direct.`;
+
+  const userContent = `[PRODUCT CONTEXT]
 ${contextData || "No direct product matches found in catalog."}
 
-User Question: "${userPrompt}"
-`;
+User Question: "${userPrompt}"`;
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash-latest",
+      systemInstruction,
       generationConfig: {
         responseMimeType: "application/json",
-        temperature: 0.2,
+        responseSchema: VRIX_RESPONSE_SCHEMA,
+        temperature: 0, // Deterministic zero-hallucination execution
       },
     });
 
-    const result = await model.generateContent(fullPrompt);
-    const rawText = result.response?.text();
-    if (rawText) {
-      const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-      return JSON.parse(cleanJson);
+    const result = await model.generateContent(userContent);
+    const responseText = result.response?.text();
+    if (responseText) {
+      return JSON.parse(responseText); // Guaranteed schema valid JSON
     }
   } catch (sdkErr) {
+    console.error("Gemini Structured Output SDK call error:", sdkErr);
     try {
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
@@ -332,10 +373,12 @@ User Question: "${userPrompt}"
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: fullPrompt }] }],
+            system_instruction: { parts: [{ text: systemInstruction }] },
+            contents: [{ parts: [{ text: userContent }] }],
             generationConfig: {
               responseMimeType: "application/json",
-              temperature: 0.2,
+              responseSchema: VRIX_RESPONSE_SCHEMA,
+              temperature: 0,
             },
           }),
         }
@@ -345,12 +388,11 @@ User Question: "${userPrompt}"
         const data = await res.json();
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawText) {
-          const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
-          return JSON.parse(cleanJson);
+          return JSON.parse(rawText);
         }
       }
     } catch (restErr) {
-      console.error("Gemini RAG REST call error:", restErr);
+      console.error("Gemini Structured Output REST fallback error:", restErr);
     }
   }
 
@@ -398,6 +440,38 @@ router.post("/query", async (req, res) => {
   // ── 2. Handle FAQ_OR_SUPPORT (Bypasses pgvector completely) ──
   if (intent === "FAQ_OR_SUPPORT") {
     const combined = `${actionValue} ${userText}`.toLowerCase();
+
+    // Check Shipping, Delivery, Tax, GST, Duties Queries
+    if (
+      combined.includes("shipping") ||
+      combined.includes("delivery") ||
+      combined.includes("tax") ||
+      combined.includes("duty") ||
+      combined.includes("duties") ||
+      combined.includes("gst") ||
+      combined.includes("customs")
+    ) {
+      const countryRules = getCountryBusinessRules(currencyConfig.country);
+      const cleanPolicyText = countryRules.replace(/REGION: [^\n]+\n/, "").replace(/-/g, "•");
+
+      return res.json({
+        success: true,
+        rag: { intent, bypassedVector: true, country: currencyConfig.country },
+        messages: [
+          {
+            id: `msg-${Date.now()}`,
+            sender: "bot",
+            text: cleanPolicyText,
+            options: [
+              { label: "Find a piece for myself", value: "myself" },
+              { label: "Explore collections", value: "collections" },
+              { label: "Talk to concierge", value: "trigger-handoff" },
+            ],
+            timestamp: isoTimestamp,
+          },
+        ],
+      });
+    }
 
     if (combined.includes("bespoke")) {
       const minVal = formatCurrencyPrice(65000, currencyConfig.currency, currencyConfig.symbol, currencyConfig.rate, currencyConfig.locale);
@@ -551,7 +625,7 @@ router.post("/query", async (req, res) => {
     retrievedProducts = await searchLocalDbProducts(searchQuery, currencyConfig);
   }
 
-  // ── 6. RAG Response Generation via Gemini ──
+  // ── 6. RAG Response Generation via Gemini (Structured Outputs & Temp=0) ──
   const geminiJson = await generateGeminiRagResponse(userText, retrievedProducts, currencyConfig);
 
   let botText = "Here are architectural pieces selected for you from our live catalog:";
@@ -612,6 +686,7 @@ router.post("/query", async (req, res) => {
       geminiUsed: !!geminiJson,
       searchQuery,
       currency: currencyConfig.currency,
+      country: currencyConfig.country,
     },
     messages: [
       {
@@ -632,7 +707,7 @@ router.get("/health", (req, res) => {
   const hasSupabase = !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY));
   res.json({
     status: "ok",
-    ragEngine: "Supabase RPC match_products + Gemini text-embedding-004 + Intent Router + Query Expander",
+    ragEngine: "Supabase RPC match_products + Gemini text-embedding-004 + Gemini Structured Output Schema + Country Business Rules",
     supabaseConfigured: hasSupabase,
     geminiConfigured: hasGeminiKey,
   });
