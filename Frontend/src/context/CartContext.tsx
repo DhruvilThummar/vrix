@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 
 export interface CartItem {
@@ -49,6 +49,7 @@ const CartContext = createContext<CartContextType | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [discount, setDiscount] = useState(0);
   const [promoType, setPromoType] = useState<"percentage" | "fixed" | null>(null);
@@ -57,8 +58,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [giftWrapPrice, setGiftWrapPrice] = useState(250);
   const [selectedGiftOptions, setSelectedGiftOptions] = useState<GiftOption[]>([]);
 
-  // Hydrate from localStorage per user email
+  // Prevent SSR hydration mismatch by waiting for client mount
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Hydrate from localStorage per user email safely after mount
+  useEffect(() => {
+    if (!isMounted) return;
     try {
       const userKey = user?.email ? `vrix-cart_${user.email.toLowerCase()}` : "vrix-cart-guest";
       const savedUserCart = localStorage.getItem(userKey);
@@ -82,24 +89,34 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (parsed.giftWrapPrice) setGiftWrapPrice(parsed.giftWrapPrice);
         if (Array.isArray(parsed.selectedGiftOptions)) setSelectedGiftOptions(parsed.selectedGiftOptions);
       }
-    } catch {}
-  }, [user?.email]);
+    } catch (err) {
+      console.error("Cart hydration error:", err);
+    }
+  }, [isMounted, user?.email]);
 
-  // Persist to localStorage per user email
+  // Persist to localStorage safely after mount
   useEffect(() => {
+    if (!isMounted) return;
     try {
       const userKey = user?.email ? `vrix-cart_${user.email.toLowerCase()}` : "vrix-cart-guest";
       localStorage.setItem(userKey, JSON.stringify(items));
       localStorage.setItem("vrix-cart", JSON.stringify(items));
-    } catch {}
-  }, [items, user?.email]);
+    } catch (err) {
+      console.error("Cart persistence error:", err);
+    }
+  }, [items, isMounted, user?.email]);
 
   useEffect(() => {
-    localStorage.setItem(
-      "vrix-gift-wrap",
-      JSON.stringify({ isGiftWrapped, giftMessage, giftWrapPrice, selectedGiftOptions })
-    );
-  }, [isGiftWrapped, giftMessage, giftWrapPrice, selectedGiftOptions]);
+    if (!isMounted) return;
+    try {
+      localStorage.setItem(
+        "vrix-gift-wrap",
+        JSON.stringify({ isGiftWrapped, giftMessage, giftWrapPrice, selectedGiftOptions })
+      );
+    } catch (err) {
+      console.error("Gift wrap persistence error:", err);
+    }
+  }, [isGiftWrapped, giftMessage, giftWrapPrice, selectedGiftOptions, isMounted]);
 
   const toggleGiftWrap = useCallback((wrapped: boolean, price?: number) => {
     setIsGiftWrapped(wrapped);
@@ -124,7 +141,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems((prev) => {
       const qtyToAdd = newItem.quantity && newItem.quantity > 0 ? newItem.quantity : 1;
 
-      // 1. Check if an item with exact same id, size, material, and custom options already exists
       const matchIndex = prev.findIndex(
         (i) =>
           i.id === newItem.id &&
@@ -134,7 +150,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           (i.giftNote || "") === (newItem.giftNote || "")
       );
 
-      // 2. If matching item found, increment its quantity immutably
       if (matchIndex > -1) {
         return prev.map((item, idx) =>
           idx === matchIndex
@@ -143,7 +158,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
       }
 
-      // 3. If no matching item found, push new item with default quantity
       return [...prev, { ...newItem, quantity: qtyToAdd }];
     });
   }, []);
@@ -197,12 +211,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setSelectedGiftOptions([]);
   }, [clearPromo]);
 
-  const giftOptionsTotal = selectedGiftOptions.reduce((sum, g) => sum + g.price, 0);
-  const subtotal = items.reduce((acc, i) => acc + i.price * i.quantity, 0) + (isGiftWrapped ? giftWrapPrice : 0) + giftOptionsTotal;
-  const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
+  const subtotal = useMemo(() => {
+    const giftOptionsTotal = selectedGiftOptions.reduce((sum, g) => sum + g.price, 0);
+    return items.reduce((acc, i) => acc + i.price * i.quantity, 0) + (isGiftWrapped ? giftWrapPrice : 0) + giftOptionsTotal;
+  }, [items, isGiftWrapped, giftWrapPrice, selectedGiftOptions]);
+
+  const totalItems = useMemo(() => items.reduce((acc, i) => acc + i.quantity, 0), [items]);
 
   return (
-    <CartContext.Provider value={{ items, totalItems, subtotal, discount, promoCode, promoType, isGiftWrapped, giftMessage, giftWrapPrice, selectedGiftOptions, toggleGiftOption, toggleGiftWrap, setGiftMessage, addItem, removeItem, updateQty, applyPromo, clearPromo, clearCart }}>
+    <CartContext.Provider
+      value={{
+        items,
+        totalItems,
+        subtotal,
+        discount,
+        promoCode,
+        promoType,
+        isGiftWrapped,
+        giftMessage,
+        giftWrapPrice,
+        selectedGiftOptions,
+        toggleGiftOption,
+        toggleGiftWrap,
+        setGiftMessage,
+        addItem,
+        removeItem,
+        updateQty,
+        applyPromo,
+        clearPromo,
+        clearCart,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
