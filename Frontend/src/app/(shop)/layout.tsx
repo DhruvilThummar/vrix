@@ -23,7 +23,7 @@ export default function ShopLayout({
     <>
       <Header />
       {/* Spacer for fixed desktop header on non-home pages */}
-      {!isHomePage && <div className="hidden md:block h-20" />}
+      {!isHomePage && <div className="hidden md:block h-[105px]" />}
       <main className="shop-shell flex-grow">{children}</main>
       <Footer />
       <VrixChatWidget />

@@ -162,7 +162,7 @@ export default function Page() {
   }
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative pt-8 md:pt-12">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-6 z-50 bg-deep-navy text-pure-white px-5 py-3 text-xs font-body-md shadow-2xl flex items-center gap-2 animate-fade-in border border-slate-grey/20">
@@ -194,7 +194,7 @@ export default function Page() {
         {/* Configurator Controls Sidebar */}
         <section className="w-full md:w-[400px] lg:w-[480px] bg-soft-linen flex flex-col order-2 md:order-2 h-1/2 md:h-full z-10 flex-shrink-0">
           <div className="flex-grow overflow-y-auto px-margin-mobile md:px-stack-lg py-stack-lg no-scrollbar">
-            
+
             {/* Header copy */}
             <div className="mb-stack-lg">
               <p className="font-label-caps text-xs text-slate-grey mb-2 uppercase tracking-widest">{config.slogan}</p>
@@ -203,7 +203,7 @@ export default function Page() {
             </div>
 
             <div className="space-y-0 thin-border border-t border-b border-slate-grey/20">
-              
+
               {/* 1. Metal Selection */}
               <div className="accordion-item thin-border border-b border-slate-grey/25 last:border-b-0">
                 <button className="w-full py-4 flex justify-between items-center text-left focus:outline-none group cursor-pointer" onClick={() => setActiveSection(activeSection === "metal" ? "" : "metal")}>
@@ -241,21 +241,21 @@ export default function Page() {
                 </button>
                 <div className={`accordion-content pb-4 ${activeSection === "stone" ? "" : "hidden"}`}>
                   <p className="font-body-md text-xs text-slate-grey mb-4 mt-2">Select from our curated collection of ethical, lab-grown diamonds.</p>
-                  
+
                   {/* Carat Slider */}
                   <div className="mb-4">
                     <div className="flex justify-between items-end mb-2">
                       <label className="font-label-caps text-[10px] text-ink-black uppercase font-semibold">CARAT WEIGHT</label>
                       <span className="font-body-md text-xs font-bold text-deep-navy">{carat.toFixed(2)} ct</span>
                     </div>
-                    <input 
-                      className="w-full h-1 bg-slate-grey/20 rounded-full appearance-none cursor-pointer focus:outline-none accent-deep-navy" 
-                      max={config.caratMax} 
-                      min={config.caratMin} 
-                      step="0.1" 
-                      type="range" 
+                    <input
+                      className="w-full h-1 bg-slate-grey/20 rounded-full appearance-none cursor-pointer focus:outline-none accent-deep-navy"
+                      max={config.caratMax}
+                      min={config.caratMin}
+                      step="0.1"
+                      type="range"
                       value={carat}
-                      onChange={(e) => setCarat(Number(e.target.value))} 
+                      onChange={(e) => setCarat(Number(e.target.value))}
                     />
                     <div className="flex justify-between text-[10px] text-slate-grey mt-1 font-label-caps">
                       <span>{config.caratMin} ct</span>
@@ -268,8 +268,8 @@ export default function Page() {
                     <label className="font-label-caps text-[10px] text-ink-black block mb-2 font-semibold">SHAPE</label>
                     <div className="flex space-x-2 overflow-x-auto pb-2 no-scrollbar">
                       {config.shapes.map((shape) => (
-                        <button 
-                          key={shape} 
+                        <button
+                          key={shape}
                           type="button"
                           onClick={() => setSelectedShape(shape)}
                           className={`flex-shrink-0 px-4 py-2 border text-center transition-all text-[10px] font-label-caps font-semibold cursor-pointer ${selectedShape === shape ? "border-deep-navy bg-pure-white text-deep-navy shadow-xs" : "border-slate-grey/25 text-slate-grey hover:border-slate-grey/50"}`}
@@ -298,10 +298,10 @@ export default function Page() {
                       <span>ENGRAVING</span>
                       <span>{engraving.length}/{config.engravingMax}</span>
                     </div>
-                    <input 
-                      className="w-full bg-pure-white border border-slate-grey/30 focus:border-deep-navy px-3 py-2 font-body-md text-sm text-ink-black placeholder:text-slate-grey/50 transition-colors outline-none" 
-                      placeholder={`Enter up to ${config.engravingMax} characters`} 
-                      type="text" 
+                    <input
+                      className="w-full bg-pure-white border border-slate-grey/30 focus:border-deep-navy px-3 py-2 font-body-md text-sm text-ink-black placeholder:text-slate-grey/50 transition-colors outline-none"
+                      placeholder={`Enter up to ${config.engravingMax} characters`}
+                      type="text"
                       value={engraving}
                       maxLength={config.engravingMax}
                       onChange={(e) => setEngraving(e.target.value)}
@@ -323,7 +323,7 @@ export default function Page() {
               <span className="font-headline-md text-xl text-deep-navy font-bold">₹{calculatedPrice.toLocaleString("en-IN")}</span>
             </div>
 
-            <button 
+            <button
               onClick={handleAddToBag}
               disabled={addingToBag}
               className="w-full bg-deep-navy text-pure-white font-button text-button uppercase py-4 hover:bg-ink-black transition-colors flex justify-center items-center space-x-2 rounded-none cursor-pointer disabled:opacity-60"
