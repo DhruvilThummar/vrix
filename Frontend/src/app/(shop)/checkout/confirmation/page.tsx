@@ -95,7 +95,7 @@ export default function ConfirmationPage() {
 
           {order?.orderId && (
             <a
-              href={`${getApiBaseUrl()}/api/payment/invoice/${order.orderId}`}
+              href={`${getApiBaseUrl()}/payment/invoice/${order.orderId}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center border border-slate-grey/30 text-ink-black font-button text-button px-8 py-4 hover:border-ink-black transition-colors uppercase tracking-widest cursor-pointer gap-2"
