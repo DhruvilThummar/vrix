@@ -622,5 +622,5 @@ export function getHandoffData(): HumanHandoffData {
 }
 
 function formatTime(d: Date): string {
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return d.toISOString();
 }

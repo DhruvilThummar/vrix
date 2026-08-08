@@ -13,6 +13,21 @@ interface MessageBubbleProps {
   onOptionSelect: (option: QuickOption) => void;
 }
 
+function formatLocalTime(isoString?: string): string {
+  if (!isoString) return "";
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return isoString;
+    return new Intl.DateTimeFormat(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }).format(date);
+  } catch (e) {
+    return isoString || "";
+  }
+}
+
 export default function MessageBubble({ message, onOptionSelect }: MessageBubbleProps) {
   const isBot = message.sender === "bot";
   const [copied, setCopied] = useState(false);
@@ -82,7 +97,7 @@ export default function MessageBubble({ message, onOptionSelect }: MessageBubble
 
       <div className="flex items-center gap-1.5 mt-1 px-1">
         <span className="font-label-caps text-[9px] text-on-surface-variant">
-          {message.timestamp}
+          {formatLocalTime(message.timestamp)}
         </span>
         {copied && (
           <span className="font-label-caps text-[9px] text-primary transition-all animate-fade-in-slide">

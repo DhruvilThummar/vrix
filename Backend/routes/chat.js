@@ -10,29 +10,19 @@ const VRIX_SYSTEM_PROMPT = `
 You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
 Your brand tagline is: "Designed for the moments that belong only to you."
 
-CRITICAL GROUNDING RULES (ANTI-HALLUCINATION):
+CRITICAL GROUNDING RULES (STRICT ANTI-HALLUCINATION RAG):
 1. You MUST answer strictly and only using the [PRODUCT CONTEXT] provided below.
-2. If the user asks about a product, price, or policy that is NOT explicitly mentioned in the [PRODUCT CONTEXT], you MUST say exactly: "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests."
-3. DO NOT invent, guess, or assume prices, materials, discounts, or inventory status.
-4. DO NOT bring in outside general knowledge about jewelry to answer specific inventory questions.
+2. If the user asks about a product, price, material, or policy that is NOT explicitly mentioned in the [PRODUCT CONTEXT], you MUST say exactly: "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests."
+3. DO NOT invent, guess, or assume prices, materials, discounts, or inventory status under any circumstances.
+4. All product prices in the [PRODUCT CONTEXT] are already converted and formatted for the user's currency. You MUST present prices strictly as shown in [PRODUCT CONTEXT].
 
 VOICE & TONE (STRICT):
 - Warm, restrained, and confident. Plain verbs, sentence case.
 - ABSOLUTELY ZERO exclamation points (!). Do not use them under any circumstances.
-- Zero fluff. Be polite but highly concise and direct.
+- Zero fluff. Be polite, concise, and direct.
 
-CORE INTENT RECOGNITION (7 INTENTS):
-Identify the user's intent from the following 7 categories and select appropriate actionChips:
-1. "Find a piece for myself" -> Return chips: ["Explore Necklaces", "Filter by Budget"]
-2. "Find a gift" -> Return chips: ["Gift Guide", "VRIX+ Circle Discount"]
-3. "Explore collections" -> Return chips: ["Rings", "Earrings", "Bespoke"]
-4. "Compare Products" -> Return chips: ["Compare Features", "Side-by-Side View"]
-5. "Diamond / Material Education" -> Return chips: ["The 4Cs Guide", "Ethical Sourcing"]
-6. "Repairs & Warranty" -> Return chips: ["Human Concierge", "Warranty Policy"]
-7. "Bespoke Consultation" -> Return chips: ["Bespoke Consultation", "Atelier Quote"]
-
-OUTPUT FORMAT (STRICT JSON):
-You must ALWAYS respond in valid JSON format only. Do not include markdown formatting like \`\`\`json.
+OUTPUT FORMAT (STRICT JSON ONLY):
+You must ALWAYS respond in valid JSON format only. Do not wrap in markdown \`\`\`json.
 Your JSON must strictly follow this structure:
 
 {
@@ -41,30 +31,104 @@ Your JSON must strictly follow this structure:
     {
       "productId": "id_from_context",
       "name": "Product Name",
-      "price": "Price from context",
+      "price": "Formatted price from context",
       "reason": "One short sentence explaining why this fits."
     }
   ],
   "actionChips": ["Chip Label 1", "Chip Label 2"]
 }
-If no products are relevant, leave "productCards" empty []. Provide 2-3 logical actionChips matching the detected intent.
+If no products in context are relevant, leave "productCards" empty []. Provide 2-3 logical actionChips matching user intent.
 `;
 
-// ── Search Query Optimizer System Prompt ──────────────────────────────────
+// ── Currency Price Formatting Helper ───────────────────────────────────────
+function formatCurrencyPrice(inrAmount, currency = "INR", symbol = "₹", rate = 1, locale = "en-IN") {
+  const num = Number(inrAmount);
+  if (isNaN(num) || num <= 0) return `${symbol}0`;
+  const converted = num * (rate || 1);
+  if (currency === "INR") {
+    return `${symbol}${Math.round(converted).toLocaleString(locale || "en-IN")}`;
+  }
+  return `${symbol}${Number(converted.toFixed(2)).toLocaleString(locale || "en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+// ── 1. Intent Routing Classifier ───────────────────────────────────────────
+async function classifyIntent(userText, actionValue = "", currentFlow = "") {
+  const combined = `${actionValue} ${userText} ${currentFlow}`.toLowerCase();
+
+  // Rule-based fast routing for support & concierge FAQs
+  if (
+    combined.includes("concierge") ||
+    combined.includes("trigger-handoff") ||
+    combined.includes("repair") ||
+    combined.includes("warranty") ||
+    combined.includes("bespoke") ||
+    combined.includes("4cs") ||
+    combined.includes("sourcing") ||
+    combined.includes("metal purity") ||
+    combined.includes("contact")
+  ) {
+    return "FAQ_OR_SUPPORT";
+  }
+
+  if (
+    combined.includes("gift") ||
+    combined.includes("mother") ||
+    combined.includes("partner") ||
+    combined.includes("spouse") ||
+    combined.includes("friend") ||
+    combined.includes("parent") ||
+    combined.includes("colleague") ||
+    combined.includes("wife") ||
+    combined.includes("husband") ||
+    currentFlow === "gift"
+  ) {
+    return "GIFT_GUIDE";
+  }
+
+  return "PRODUCT_SEARCH";
+}
+
+// ── 2. Query Expansion for GIFT_GUIDE ──────────────────────────────────────
+async function expandGiftQuery(userText, apiKey) {
+  const prompt = `You are a luxury jewelry search query expansion engine.
+Convert the user's gift prompt or recipient label "${userText}" into a rich, descriptive product search query for a pgvector database.
+Include descriptive attributes like: "Best luxury fine jewelry pieces suitable as a gift, elegant, timeless, refined signature necklace, earrings, or ring."
+Output ONLY the expanded search sentence as a single line. Do not wrap in quotes or JSON.`;
+
+  if (!apiKey) {
+    return `Best luxury fine jewelry pieces suitable as a gift for ${userText}, elegant and timeless.`;
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const result = await model.generateContent(prompt);
+    const text = result.response?.text();
+    if (text && text.trim().length > 5) {
+      return text.trim().replace(/^["']|["']$/g, "");
+    }
+  } catch (err) {
+    console.error("Gift query expansion error:", err);
+  }
+
+  return `Best luxury fine jewelry pieces suitable as a gift for ${userText}, elegant and timeless.`;
+}
+
+// ── Search Query Optimizer for General Queries ─────────────────────────────
 const SEARCH_OPTIMIZER_PROMPT = `
 You are a search query optimizer for a luxury jewelry store database.
 Your task is to convert the user's conversational message into a highly effective, keyword-rich search string for a Vector/Cosine similarity search.
 
 Instructions:
-1. Remove all conversational filler words (e.g., "show me", "I want", "looking for", "my wife").
-2. Extract the core intent: Category (ring, necklace), Material (gold, silver, diamond), Occasion (gift, wedding), and Budget attributes (affordable, luxury).
-3. If the user mentions a specific budget (e.g., "under 50k"), convert it into descriptive keywords like "budget, affordable, premium" depending on the context.
-4. Output ONLY the extracted search keywords as a single line. Do not wrap it in JSON or quotes.
+1. Remove all conversational filler words (e.g., "show me", "I want", "looking for").
+2. Extract the core intent: Category (ring, necklace, earrings, bracelet), Material (gold, silver, diamond), Occasion (gift, wedding), and Budget attributes.
+3. Output ONLY the extracted search keywords as a single line. Do not wrap in JSON or quotes.
 `;
 
-// Preprocess user conversational prompt into keyword-rich vector search query
-async function optimizeSearchQuery(userMessage) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+async function optimizeSearchQuery(userMessage, apiKey) {
   if (!apiKey || !userMessage || userMessage.trim().length === 0) return userMessage;
 
   const prompt = `${SEARCH_OPTIMIZER_PROMPT}\n\nUser Message: "${userMessage}"`;
@@ -77,24 +141,8 @@ async function optimizeSearchQuery(userMessage) {
     if (text) {
       return text.trim().replace(/^["']|["']$/g, "");
     }
-  } catch (err1) {
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1 },
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) return text.trim().replace(/^["']|["']$/g, "");
-      }
-    } catch (err2) {
-      // Return original message gracefully on error
-    }
+  } catch (err) {
+    // Return original message gracefully on error
   }
   return userMessage;
 }
@@ -102,14 +150,17 @@ async function optimizeSearchQuery(userMessage) {
 // ── Vector Embedding Generator via Gemini text-embedding-004 ───────────────
 async function generateGeminiEmbedding(text, apiKey) {
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "models/text-embedding-004",
-        content: { parts: [{ text }] },
-      }),
-    });
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "models/text-embedding-004",
+          content: { parts: [{ text }] },
+        }),
+      }
+    );
     if (!res.ok) return null;
     const data = await res.json();
     return data?.embedding?.values || null;
@@ -120,7 +171,7 @@ async function generateGeminiEmbedding(text, apiKey) {
 }
 
 // ── Supabase RPC match_products Vector Similarity Search ───────────────────
-async function searchSupabaseRpc(userText) {
+async function searchSupabaseRpc(searchQuery, currencyConfig) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
@@ -128,33 +179,41 @@ async function searchSupabaseRpc(userText) {
   if (!supabaseUrl || !supabaseKey || !apiKey) return null;
 
   try {
-    // Step 1: Preprocess raw conversational userText into optimized search keywords
-    const optimizedKeywords = await optimizeSearchQuery(userText);
-
-    // Step 2: Generate vector embedding for optimized keywords
-    const queryVector = await generateGeminiEmbedding(optimizedKeywords, apiKey);
+    const queryVector = await generateGeminiEmbedding(searchQuery, apiKey);
     if (!queryVector) return null;
 
-    // Step 3: Execute match_products RPC in Supabase pgvector
     const supabase = createClient(supabaseUrl, supabaseKey);
     const { data: matched, error } = await supabase.rpc("match_products", {
       query_embedding: queryVector,
-      match_threshold: 0.3,
+      match_threshold: 0.25,
       match_count: 4,
     });
 
     if (error || !matched || matched.length === 0) return null;
 
-    return matched.map((p) => ({
-      id: p.id,
-      title: p.title,
-      category: p.type || p.category || "Jewelry",
-      material: p.material || "18K Gold / Sterling Silver",
-      price: Number(p.price) || 0,
-      image: p.image || p.image_url || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600",
-      whyFits: `Architectural ${p.material || 'minimal'} design, perfect for quiet luxury.`,
-      slug: p.id,
-    }));
+    return matched.map((p) => {
+      const rawPrice = Number(p.price) || 0;
+      const formattedPrice = formatCurrencyPrice(
+        rawPrice,
+        currencyConfig.currency,
+        currencyConfig.symbol,
+        currencyConfig.rate,
+        currencyConfig.locale
+      );
+
+      return {
+        id: p.id,
+        title: p.title,
+        category: p.type || p.category || "Jewelry",
+        material: p.material || "18K Gold / Sterling Silver",
+        rawPrice,
+        formattedPrice,
+        price: rawPrice,
+        image: p.image || p.image_url || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600",
+        whyFits: `Architectural ${p.material || 'minimal'} design, perfect for quiet luxury.`,
+        slug: p.id,
+      };
+    });
   } catch (err) {
     console.error("Supabase RPC vector search exception:", err);
     return null;
@@ -180,7 +239,7 @@ function cosineSimilarity(vecA, vecB) {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-async function searchLocalDbProducts(userQuery, categoryFilter, maxPrice, limit = 4) {
+async function searchLocalDbProducts(userQuery, currencyConfig, limit = 4) {
   try {
     const products = await db.products.findMany({ where: { isVisible: true } });
     if (!products || products.length === 0) return [];
@@ -189,46 +248,59 @@ async function searchLocalDbProducts(userQuery, categoryFilter, maxPrice, limit 
     const scored = products.map((p) => {
       const docText = `${p.title} ${p.material || ""} ${p.type || ""} ${p.collection || ""} ${p.description || ""} ${Array.isArray(p.tags) ? p.tags.join(" ") : ""}`;
       const docVec = computeTextVector(docText);
-      let score = cosineSimilarity(queryVec, docVec);
-      if (categoryFilter && p.type && p.type.toLowerCase().includes(categoryFilter.toLowerCase())) score += 0.5;
-      if (maxPrice && Number(p.price) <= maxPrice) score += 0.2;
+      const score = cosineSimilarity(queryVec, docVec);
       return { product: p, score };
     });
 
     scored.sort((a, b) => b.score - a.score);
 
-    return scored.slice(0, limit).map(({ product: p }) => ({
-      id: p.id,
-      title: p.title,
-      category: p.type || p.collection || "Jewelry",
-      material: p.material || "18K Gold / Sterling Silver",
-      price: Number(p.price) || 0,
-      originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
-      stone: p.description?.includes("Diamond") ? "Ethical Conflict-Free Diamond" : "Consciously Sourced Gem",
-      warranty: "Lifetime Craftsmanship Guarantee",
-      image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
-      whyFits: `Architectural ${p.material || 'minimal'} design, perfect for quiet luxury.`,
-      slug: p.id,
-    }));
+    return scored.slice(0, limit).map(({ product: p }) => {
+      const rawPrice = Number(p.price) || 0;
+      const formattedPrice = formatCurrencyPrice(
+        rawPrice,
+        currencyConfig.currency,
+        currencyConfig.symbol,
+        currencyConfig.rate,
+        currencyConfig.locale
+      );
+
+      return {
+        id: p.id,
+        title: p.title,
+        category: p.type || p.collection || "Jewelry",
+        material: p.material || "18K Gold / Sterling Silver",
+        rawPrice,
+        formattedPrice,
+        price: rawPrice,
+        originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+        stone: p.description?.includes("Diamond") ? "Ethical Conflict-Free Diamond" : "Consciously Sourced Gem",
+        warranty: "Lifetime Craftsmanship Guarantee",
+        image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+        whyFits: `Architectural ${p.material || 'minimal'} design, perfect for quiet luxury.`,
+        slug: p.id,
+      };
+    });
   } catch (err) {
     console.error("Local DB product search error:", err);
     return null;
   }
 }
 
-// ── Complete production generateGeminiRagResponse Function ──────────────────
-export async function generateGeminiRagResponse(userPrompt, retrievedProducts) {
+// ── Complete generateGeminiRagResponse Function ───────────────────────────
+export async function generateGeminiRagResponse(userPrompt, retrievedProducts, currencyConfig) {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!apiKey) return null;
 
   const contextData = (retrievedProducts || [])
     .map(
       (p) =>
-        `ID: ${p.id} | Name: ${p.title || p.name} | Category: ${p.category || p.type || "Jewelry"} | Material: ${p.material || "18K Gold / Sterling Silver"} | Price: ₹${p.price} | Description: ${p.description || p.whyFits || "Architectural minimal design"}`
+        `ID: ${p.id} | Name: ${p.title || p.name} | Category: ${p.category || p.type || "Jewelry"} | Material: ${p.material || "18K Gold / Sterling Silver"} | Price: ${p.formattedPrice || p.price} | Description: ${p.description || p.whyFits || "Architectural minimal design"}`
     )
     .join("\n");
 
   const fullPrompt = `${VRIX_SYSTEM_PROMPT}
+
+User Currency: ${currencyConfig.currency} (${currencyConfig.symbol})
 
 [PRODUCT CONTEXT]
 ${contextData || "No direct product matches found in catalog."}
@@ -285,18 +357,120 @@ User Question: "${userPrompt}"
   return null;
 }
 
-function formatTime() {
-  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+// ── Concierge & Static Support Data Provider ──────────────────────────────
+function getHandoffData() {
+  return {
+    title: "VRIX Concierge Service",
+    description: "Quiet luxury consultation, order inquiries, and bespoke guidance.",
+    phone: "+91 90542 85693",
+    instagram: "https://www.instagram.com/vrix.official",
+    linkedin: "https://www.linkedin.com/company/vrixjewels",
+    mapsUrl: "https://share.google/EjrRFPTc3O06labrR",
+    businessProfileUrl: "https://share.google/EXKbHCShaIvgQemwL",
+  };
 }
 
-// ── POST /api/chat/query — Production RAG Endpoint ─────────────────────────
+// ── POST /api/chat/query — Production Refactored RAG Endpoint ──────────────
 router.post("/query", async (req, res) => {
-  const { actionValue, userLabel, currentFlow, step, data, query, userMessage } = req.body || {};
+  const {
+    actionValue,
+    userLabel,
+    currentFlow,
+    step,
+    data,
+    query,
+    userMessage,
+    currency = "INR",
+    symbol = "₹",
+    rate = 1,
+    locale = "en-IN",
+    country = "IN",
+  } = req.body || {};
+
+  const currencyConfig = { currency, symbol, rate: Number(rate) || 1, locale, country };
   const userText = (userMessage || query || userLabel || actionValue || "show jewelry").trim();
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  const time = formatTime();
+  const isoTimestamp = new Date().toISOString(); // Strict ISO 8601 UTC
 
-  // 1. Handle Guided Flow Entry Points directly
+  // ── 1. Intent Classification ──
+  const intent = await classifyIntent(userText, actionValue, currentFlow);
+
+  // ── 2. Handle FAQ_OR_SUPPORT (Bypasses pgvector completely) ──
+  if (intent === "FAQ_OR_SUPPORT") {
+    const combined = `${actionValue} ${userText}`.toLowerCase();
+
+    if (combined.includes("bespoke")) {
+      const minVal = formatCurrencyPrice(65000, currencyConfig.currency, currencyConfig.symbol, currencyConfig.rate, currencyConfig.locale);
+      const maxVal = formatCurrencyPrice(180000, currencyConfig.currency, currencyConfig.symbol, currencyConfig.rate, currencyConfig.locale);
+
+      return res.json({
+        success: true,
+        rag: { intent, bypassedVector: true },
+        messages: [
+          {
+            id: `msg-${Date.now()}`,
+            sender: "bot",
+            text: "Our master goldsmiths work directly with you in our atelier to craft bespoke, made-to-order creations.",
+            bespokeEstimate: {
+              pieceType: userLabel || actionValue || "Custom Fine Jewelry",
+              metalChoice: "18K Solid Gold / 950 Platinum",
+              estimatedPriceRange: `${minVal} – ${maxVal}`,
+              leadTime: "3 – 4 Weeks",
+            },
+            options: [
+              { label: "Book Atelier Consultation", value: "trigger-handoff" },
+              { label: "Find a piece for myself", value: "myself" },
+              { label: "Explore collections", value: "collections" },
+            ],
+            timestamp: isoTimestamp,
+          },
+        ],
+      });
+    }
+
+    if (combined.includes("repair") || combined.includes("warranty")) {
+      return res.json({
+        success: true,
+        rag: { intent, bypassedVector: true },
+        messages: [
+          {
+            id: `msg-${Date.now()}`,
+            sender: "bot",
+            text: "All VRIX creations are backed by our Lifetime Craftsmanship Guarantee. We provide complimentary ring resizing, gemstone claw inspection, and surface refinishing.",
+            handoff: getHandoffData(),
+            options: [
+              { label: "Talk to concierge", value: "trigger-handoff" },
+              { label: "Find a piece for myself", value: "myself" },
+              { label: "Explore collections", value: "collections" },
+            ],
+            timestamp: isoTimestamp,
+          },
+        ],
+      });
+    }
+
+    // Default Concierge Handoff
+    return res.json({
+      success: true,
+      rag: { intent, bypassedVector: true },
+      messages: [
+        {
+          id: `msg-${Date.now()}`,
+          sender: "bot",
+          text: "Connect directly with our quiet luxury retail associate team for bespoke inquiries and personalized service:",
+          handoff: getHandoffData(),
+          options: [
+            { label: "Find a piece for myself", value: "myself" },
+            { label: "Find a gift", value: "gift" },
+            { label: "Explore collections", value: "collections" },
+          ],
+          timestamp: isoTimestamp,
+        },
+      ],
+    });
+  }
+
+  // ── 3. Handle Guided Flow Entry Points ──
   if (actionValue === "myself" || userLabel === "Find a Piece for Myself") {
     return res.json({
       success: true,
@@ -313,7 +487,7 @@ router.post("/query", async (req, res) => {
             { label: "Bracelets", value: "Bracelets" },
             { label: "Not sure yet", value: "All" },
           ],
-          timestamp: time,
+          timestamp: isoTimestamp,
         },
       ],
     });
@@ -334,7 +508,7 @@ router.post("/query", async (req, res) => {
             { label: "Friend", value: "Friend" },
             { label: "Skip step", value: "skip" },
           ],
-          timestamp: time,
+          timestamp: isoTimestamp,
         },
       ],
     });
@@ -356,62 +530,32 @@ router.post("/query", async (req, res) => {
             { label: "Bracelets", value: "Bracelets" },
             { label: "Bespoke", value: "Bespoke" },
           ],
-          timestamp: time,
+          timestamp: isoTimestamp,
         },
       ],
     });
   }
 
-  const optimizedQuery = await optimizeSearchQuery(userText);
+  // ── 4. Query Preparation (Query Expansion vs Optimizer) ──
+  let searchQuery = userText;
+  if (intent === "GIFT_GUIDE") {
+    searchQuery = await expandGiftQuery(userText, apiKey);
+  } else {
+    searchQuery = await optimizeSearchQuery(userText, apiKey);
+  }
 
-  // Extract category & budget parameters
-  let categoryFilter;
-  let maxPrice;
-  const lower = userText.toLowerCase();
+  // ── 5. Vector Search (Supabase RPC -> Local DB Fallback) ──
+  let retrievedProducts = await searchSupabaseRpc(searchQuery, currencyConfig);
 
-  if (lower.includes("ring")) categoryFilter = "Ring";
-  else if (lower.includes("necklace") || lower.includes("pendant")) categoryFilter = "Necklace";
-  else if (lower.includes("earring")) categoryFilter = "Earring";
-  else if (lower.includes("bracelet") || lower.includes("cuff")) categoryFilter = "Bracelet";
-
-  if (lower.includes("15k") || lower.includes("15000")) maxPrice = 15000;
-  else if (lower.includes("40k") || lower.includes("40000")) maxPrice = 40000;
-  else if (lower.includes("75k") || lower.includes("75000")) maxPrice = 75000;
-
-  // Step 1: Execute Supabase RPC match_products vector search
-  let retrievedProducts = await searchSupabaseRpc(userText);
-
-  // Step 2: Fallback to local DB vector search if Supabase RPC returned null
   if (!retrievedProducts) {
-    retrievedProducts = await searchLocalDbProducts(optimizedQuery, categoryFilter, maxPrice);
+    retrievedProducts = await searchLocalDbProducts(searchQuery, currencyConfig);
   }
 
-  // High-Volume Busy Fallback Error Handling if DB and fallback fail completely
-  if (retrievedProducts === null) {
-    return res.json({
-      success: true,
-      rag: { vectorRetrievedCount: 0, geminiUsed: false, dbFallbackActive: true },
-      messages: [
-        {
-          id: `msg-${Date.now()}`,
-          sender: "bot",
-          text: "Our client associates are currently experiencing high volume assisting other guests. Please try again in a few moments, or connect directly with our concierge team.",
-          options: [
-            { label: "Try again in a moment", value: "retry" },
-            { label: "Talk to concierge", value: "trigger-handoff" },
-          ],
-          timestamp: time,
-        },
-      ],
-    });
-  }
+  // ── 6. RAG Response Generation via Gemini ──
+  const geminiJson = await generateGeminiRagResponse(userText, retrievedProducts, currencyConfig);
 
-  // Step 3: Call Gemini 1.5 Flash Model RAG Generator
-  const geminiJson = await generateGeminiRagResponse(userText, retrievedProducts);
-
-  const defaultOutCatalogMsg = "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests.";
-  let botText = defaultOutCatalogMsg;
-  let displayProducts = undefined;
+  let botText = "Here are architectural pieces selected for you from our live catalog:";
+  let displayProducts = (retrievedProducts && retrievedProducts.length > 0) ? retrievedProducts : undefined;
   let options = [
     { label: "Find a piece for myself", value: "myself" },
     { label: "Find a gift", value: "gift" },
@@ -421,41 +565,53 @@ router.post("/query", async (req, res) => {
 
   if (geminiJson) {
     if (geminiJson.botText) {
-      // Remove any trailing exclamation marks to enforce strict quiet luxury tone
       botText = geminiJson.botText.replace(/!/g, ".");
     }
     if (Array.isArray(geminiJson.actionChips) && geminiJson.actionChips.length > 0) {
       options = geminiJson.actionChips.map((chip) => ({
         label: String(chip).replace(/!/g, ""),
-        value: String(chip).toLowerCase().includes("bespoke") ? "Bespoke" : String(chip).toLowerCase().includes("gift") ? "gift" : "myself",
+        value: String(chip).toLowerCase().includes("bespoke")
+          ? "Bespoke"
+          : String(chip).toLowerCase().includes("gift")
+          ? "gift"
+          : "myself",
       }));
     }
     if (Array.isArray(geminiJson.productCards) && geminiJson.productCards.length > 0) {
       displayProducts = geminiJson.productCards.map((card) => {
         const matched = (retrievedProducts || []).find((p) => p.id === card.productId);
+        const rawPrice = matched?.rawPrice || (typeof card.price === "number" ? card.price : parseInt(card.price) || 25000);
+        const formattedPrice = formatCurrencyPrice(
+          rawPrice,
+          currencyConfig.currency,
+          currencyConfig.symbol,
+          currencyConfig.rate,
+          currencyConfig.locale
+        );
+
         return {
           id: card.productId || matched?.id || `card-${Math.random()}`,
           title: card.name || matched?.title || "Signature Piece",
           category: matched?.category || "Jewelry",
           material: matched?.material || "18K Solid Gold",
-          price: matched?.price || (typeof card.price === "number" ? card.price : parseInt(card.price) || 25000),
+          price: rawPrice,
+          formattedPrice: formattedPrice,
           image: matched?.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600",
           whyFits: card.reason ? card.reason.replace(/!/g, ".") : matched?.whyFits,
           slug: matched?.slug || card.productId,
         };
       });
     }
-  } else if (retrievedProducts && retrievedProducts.length > 0 && (categoryFilter || maxPrice)) {
-    displayProducts = retrievedProducts;
-    botText = "Here are architectural pieces selected for you from our live catalog:";
   }
 
   res.json({
     success: true,
     rag: {
+      intent,
       vectorRetrievedCount: (retrievedProducts || []).length,
       geminiUsed: !!geminiJson,
-      optimizedQuery,
+      searchQuery,
+      currency: currencyConfig.currency,
     },
     messages: [
       {
@@ -464,7 +620,7 @@ router.post("/query", async (req, res) => {
         text: botText,
         products: displayProducts,
         options,
-        timestamp: time,
+        timestamp: isoTimestamp,
       },
     ],
   });
@@ -476,10 +632,11 @@ router.get("/health", (req, res) => {
   const hasSupabase = !!(process.env.SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY));
   res.json({
     status: "ok",
-    ragEngine: "Supabase RPC match_products + Gemini text-embedding-004 + Gemini 1.5 Flash",
+    ragEngine: "Supabase RPC match_products + Gemini text-embedding-004 + Intent Router + Query Expander",
     supabaseConfigured: hasSupabase,
     geminiConfigured: hasGeminiKey,
   });
 });
 
 export default router;
+

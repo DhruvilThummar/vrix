@@ -8,8 +8,10 @@ import QuickActionsMenu from "./QuickActionsMenu";
 import MessageList from "./MessageList";
 import ChatComposer from "./ChatComposer";
 import { getApiBaseUrl } from "@/utils/api";
+import { useCurrency } from "@/context/CurrencyContext";
 
 export default function VrixChatWidget() {
+  const { currency, symbol, rate, locale, detectedCountry } = useCurrency();
   const [isOpen, setIsOpen] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -92,7 +94,7 @@ export default function VrixChatWidget() {
       ]);
 
       try {
-        // Attempt RAG Backend API call first
+        // Attempt RAG Backend API call first with currency context payload
         const baseUrl = getApiBaseUrl();
         const res = await fetch(`${baseUrl}/chat/query`, {
           method: "POST",
@@ -104,6 +106,11 @@ export default function VrixChatWidget() {
             step: engineState.step,
             data: engineState.data,
             query: userLabel || actionValue,
+            currency: currency || "INR",
+            symbol: symbol || "₹",
+            rate: rate || 1,
+            locale: locale || "en-IN",
+            country: detectedCountry || "IN",
           }),
         });
 
@@ -140,7 +147,7 @@ export default function VrixChatWidget() {
         setIsTyping(false);
       }, 500);
     },
-    [engineState]
+    [engineState, currency, symbol, rate, locale, detectedCountry]
   );
 
   const handleSelectEntryPoint = (entry: EntryPoint) => {
@@ -150,7 +157,7 @@ export default function VrixChatWidget() {
       id: `user-${Date.now()}`,
       sender: "user",
       text: entry.label,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
     processResponse(entry.id, entry.label);
@@ -162,7 +169,7 @@ export default function VrixChatWidget() {
       id: `user-${Date.now()}`,
       sender: "user",
       text: option.label,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
     processResponse(option.value, option.label);
@@ -174,7 +181,7 @@ export default function VrixChatWidget() {
       id: `user-${Date.now()}`,
       sender: "user",
       text,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
     processResponse("custom_text", text);
