@@ -11,7 +11,7 @@ export default function ShopLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isFullScreen = pathname === "/modular-builder";
+  const isFullScreen = pathname === "/modular-builder" || pathname === "/delivery" || pathname?.startsWith("/delivery/");
 
   if (isFullScreen) {
     return <>{children}</>;
