@@ -269,7 +269,7 @@ function ProductContent() {
             <div className="sticky top-[90px] flex flex-col gap-3">
 
               {/* Header Info */}
-              <div className="flex flex-col gap-1.5 border-b border-slate-grey/20 pb-3">
+              <div className="flex flex-col gap-1.5 border-b border-slate-grey/20 pb-0.5">
                 <h1 className="font-display-lg-mobile md:font-display-lg text-ink-black tracking-tight leading-tight uppercase">
                   {product.title}
                 </h1>
@@ -394,7 +394,7 @@ function ProductContent() {
               )}
 
               {/* Add to Bag and Wishlist Actions */}
-              <div className="flex flex-row gap-2 mt-2.5 w-full">
+              <div className="flex flex-row gap-2 mt-0.5 w-full">
                 <button
                   onClick={handleAddToBag}
                   disabled={bagLoading}
@@ -423,7 +423,7 @@ function ProductContent() {
               </div>
 
               {/* Product Info Accordions */}
-              <div className="flex flex-col border-t border-slate-grey/20 mt-6">
+              <div className="flex flex-col border-t border-slate-grey/20 mt-0.5">
                 {/* Details Accordion */}
                 <div className="border-b border-slate-grey/20">
                   <button
