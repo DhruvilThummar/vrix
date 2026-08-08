@@ -18,7 +18,7 @@ function CollectionContent() {
   const router = useRouter();
   const { user, isLoggedIn } = useAuth();
   const { formatPrice } = useCurrency();
-  
+
   // Use slug from URL if available, otherwise fall back to 'collection' search param, or default to 'silent-center'
   const collectionSlug = (params.slug as string) || searchParams.get("collection") || "silent-center";
   const collectionQuery = collectionSlug;
@@ -75,7 +75,7 @@ function CollectionContent() {
       if (saved) {
         setWishlist(JSON.parse(saved));
       }
-    } catch {}
+    } catch { }
   }, [user?.email]);
 
   // Filter & Sort menus open states
@@ -274,7 +274,7 @@ function CollectionContent() {
 
   return (
     <div className="w-full bg-pure-white relative min-h-screen">
-      
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-8 right-8 z-50 bg-deep-navy text-pure-white px-6 py-4 border border-slate-grey/30 shadow-2xl flex items-center gap-3 animate-fade-in duration-300">
@@ -290,8 +290,8 @@ function CollectionContent() {
       )}
 
       <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pb-section-gap">
-               {collectionInfo.sections && collectionInfo.sections.length > 0 ? (
-          <div className="space-y-16 py-8">
+        {collectionInfo.sections && collectionInfo.sections.length > 0 ? (
+          <div className="space-y-12 py-8">
             {collectionInfo.sections.map((sec: any) => {
               if (sec.type === "hero") {
                 const alignClass = sec.align === "left" ? "text-left items-start justify-start" : sec.align === "right" ? "text-right items-end justify-end" : "text-center items-center justify-center";
@@ -521,9 +521,8 @@ function CollectionContent() {
                           handleSortChange(sort);
                           setSortOpen(false);
                         }}
-                        className={`px-4 py-2 text-left font-label-caps text-xs tracking-wider uppercase hover:bg-soft-linen cursor-pointer ${
-                          sortBy === sort ? "text-deep-navy font-semibold" : "text-slate-grey"
-                        }`}
+                        className={`px-4 py-2 text-left font-label-caps text-xs tracking-wider uppercase hover:bg-soft-linen cursor-pointer ${sortBy === sort ? "text-deep-navy font-semibold" : "text-slate-grey"
+                          }`}
                       >
                         {sort === "Curated" ? "Curated" : sort === "PriceLowHigh" ? "Price: Low to High" : "Price: High to Low"}
                       </button>
@@ -543,9 +542,8 @@ function CollectionContent() {
                       <button
                         key={mat}
                         onClick={() => handleMaterialChange(mat)}
-                        className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${
-                          selectedMaterial === mat ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"
-                        }`}
+                        className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${selectedMaterial === mat ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"
+                          }`}
                       >
                         {mat}
                       </button>
@@ -560,9 +558,8 @@ function CollectionContent() {
                       <button
                         key={type}
                         onClick={() => handleTypeChange(type)}
-                        className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${
-                          selectedType === type ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"
-                        }`}
+                        className={`px-3 py-1.5 text-[10px] font-label-caps tracking-wider uppercase border transition-colors cursor-pointer ${selectedType === type ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/20 bg-pure-white text-slate-grey"
+                          }`}
                       >
                         {type}
                       </button>
@@ -584,9 +581,8 @@ function CollectionContent() {
                       <li key={col.id}>
                         <Link
                           href={`/collections/${col.id}`}
-                          className={`font-body-md text-xs transition-colors block py-1 ${
-                            collectionQuery === col.id ? "text-deep-navy font-semibold" : "text-slate-grey hover:text-ink-black"
-                          }`}
+                          className={`font-body-md text-xs transition-colors block py-1 ${collectionQuery === col.id ? "text-deep-navy font-semibold" : "text-slate-grey hover:text-ink-black"
+                            }`}
                         >
                           {col.title}
                         </Link>
@@ -749,9 +745,8 @@ function CollectionContent() {
                           <button
                             key={i}
                             onClick={() => setCarouselIndex(i)}
-                            className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                              carouselIndex === i ? "bg-deep-navy" : "bg-slate-grey/30"
-                            }`}
+                            className={`w-1.5 h-1.5 rounded-full transition-colors ${carouselIndex === i ? "bg-deep-navy" : "bg-slate-grey/30"
+                              }`}
                           />
                         ))}
                       </div>
@@ -784,39 +779,39 @@ function CollectionContent() {
                               className="absolute top-2 right-2 md:top-4 md:right-4 text-slate-grey hover:text-deep-navy transition-colors z-10 cursor-pointer p-1"
                             >
                               <span
-                                  className="material-symbols-outlined text-lg md:text-xl"
-                                  style={{
-                                    fontVariationSettings: `'FILL' ${isWishlisted ? 1 : 0}, 'wght' 200`,
-                                    color: isWishlisted ? "#ba1a1a" : "inherit",
-                                  }}
-                                >
-                                  favorite
-                                </span>
-                              </button>
-                            </div>
-                            {/* Details */}
-                            <div className="mt-1.5 md:mt-stack-sm flex flex-col md:flex-row md:justify-between md:items-start pt-1 md:pt-2 gap-0.5">
-                              <div className="flex flex-col space-y-0.5 md:space-y-1 min-w-0">
-                                <h2 className="font-body-md text-[11px] md:text-body-md text-on-surface font-medium truncate">
-                                  {p.title}
-                                </h2>
-                                <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
-                                  {p.material}
-                                </span>
-                              </div>
-                              <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">
-                                {formatPrice(p.price)}
+                                className="material-symbols-outlined text-lg md:text-xl"
+                                style={{
+                                  fontVariationSettings: `'FILL' ${isWishlisted ? 1 : 0}, 'wght' 200`,
+                                  color: isWishlisted ? "#ba1a1a" : "inherit",
+                                }}
+                              >
+                                favorite
+                              </span>
+                            </button>
+                          </div>
+                          {/* Details */}
+                          <div className="mt-1.5 md:mt-stack-sm flex flex-col md:flex-row md:justify-between md:items-start pt-1 md:pt-2 gap-0.5">
+                            <div className="flex flex-col space-y-0.5 md:space-y-1 min-w-0">
+                              <h2 className="font-body-md text-[11px] md:text-body-md text-on-surface font-medium truncate">
+                                {p.title}
+                              </h2>
+                              <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
+                                {p.material}
                               </span>
                             </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                            <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">
+                              {formatPrice(p.price)}
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </>
-          )}  </main>
+            </div>
+          </>
+        )}  </main>
     </div>
   );
 }

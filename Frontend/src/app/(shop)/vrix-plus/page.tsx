@@ -33,7 +33,7 @@ const DEFAULT_CMS = {
 
 export default function VrixPlusPage() {
   const { user, isLoggedIn, login } = useAuth();
-  
+
   const [cms, setCms] = useState(DEFAULT_CMS);
   const [loading, setLoading] = useState(true);
   const [emailInput, setEmailInput] = useState("");
@@ -74,7 +74,7 @@ export default function VrixPlusPage() {
 
     try {
       const apiBaseUrl = getApiBaseUrl();
-      
+
       const res = await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,9 +104,9 @@ export default function VrixPlusPage() {
   const isJoined = isLoggedIn && user?.isVrixPlusMember;
 
   return (
-    <div className="w-full min-h-screen bg-[#faf9f7] py-20 px-4 md:px-8">
-      <div className="max-w-4xl mx-auto space-y-16">
-        
+    <div className="w-full min-h-screen bg-[#faf9f7] py-12 px-4 md:px-6">
+      <div className="max-w-4xl mx-auto space-y-12">
+
         {/* Header Hero Branding */}
         <div className="text-center space-y-4">
           <p className="font-label-caps text-xs tracking-[0.3em] uppercase text-[#B59D7C] font-semibold">

@@ -128,7 +128,7 @@ export default function WishlistPage() {
         </header>
 
         {wishlist.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-6 text-center">
+          <div className="flex flex-col items-center justify-center py-12 gap-6 text-center">
             <span className="material-symbols-outlined text-slate-grey text-6xl" style={{ fontVariationSettings: "'wght' 200" }}>favorite_border</span>
             <div className="space-y-2">
               <h2 className="font-display-lg text-xl text-deep-navy uppercase tracking-widest">Your Wishlist is Empty</h2>

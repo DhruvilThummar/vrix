@@ -2,15 +2,12 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { fetchDb, getApiBaseUrl } from "@/utils/api";
 import CurrencySelector from "@/components/CurrencySelector";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Footer() {
   const { user, isLoggedIn } = useAuth();
-  const [selectedLanguage, setSelectedLanguage] = useState("English");
-  const [selectedCurrency, setSelectedCurrency] = useState("Europe (EUR)");
   const [brandName, setBrandName] = useState("VRIX");
   const [logoUrl, setLogoUrl] = useState("/logos/black.png");
   const [address, setAddress] = useState("");
@@ -68,12 +65,11 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-[#F5F4F0] text-ink-black/80 border-t border-slate-grey/20 pt-12 pb-8 font-body-md text-sm">
-
+    <footer className="bg-[#F5F4F0] text-ink-black/80 border-t border-slate-grey/20 pt-10 pb-6 font-body-md text-sm">
       {/* ─── MONICA VINADER STYLE VRIX+ CIRCLE NEWSLETTER BANNER ─── */}
-      <div className="border-b border-slate-grey/20 pb-12 mb-12 bg-[#FAF8F5] py-10 px-margin-mobile md:px-margin-desktop">
+      <div className="border-b border-slate-grey/20 mb-8 bg-[#FAF8F5] py-8 px-margin-mobile md:px-margin-desktop">
         {isLoggedIn && user?.isVrixPlusMember ? (
-          <div className="max-w-4xl mx-auto text-center space-y-3">
+          <div className="max-w-4xl mx-auto text-center space-y-2">
             <span className="font-label-caps text-[10px] tracking-[0.3em] uppercase text-[#B59D7C] font-semibold">
               ★ VRIX+ CIRCLE MEMBER
             </span>
@@ -125,20 +121,20 @@ export default function Footer() {
             )}
 
             <p className="text-[11px] text-slate-grey font-body-md max-w-lg mx-auto">
-              We'll update you by email + SMS and you can unsubscribe at any time —{" "}
+              We'll update you by email and SMS and you can unsubscribe at any time —
               <Link href="/legal?tab=privacy" className="underline hover:text-black">Privacy Policy</Link>.
             </p>
           </div>
         )}
       </div>
 
-      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-10 md:gap-gutter pb-12">
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 md:gap-10 pb-10">
 
         {/* Column 1: Brand details */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <Link href="/" className="flex flex-col select-none">
             {logoUrl && logoUrl !== "" ? (
-              <div className="relative my-1">
+              <div className="relative">
                 <img
                   src={logoUrl}
                   alt={brandName}
@@ -150,13 +146,12 @@ export default function Footer() {
                 {brandName}
               </span>
             )}
-            <span className="text-[9px] font-label-caps tracking-[0.3em] uppercase text-[#B59D7C] font-semibold mt-1">
+            <span className="mt-1 text-[9px] font-label-caps tracking-[0.3em] uppercase text-[#B59D7C] font-semibold">
               Feel The Luxury
             </span>
           </Link>
 
-          <div className="my-1 text-[#B59D7C]">
-            {/* Elegant 4-point star character */}
+          <div className="text-[#B59D7C]">
             <span className="text-2xl font-light">✦</span>
           </div>
 
@@ -174,7 +169,7 @@ export default function Footer() {
           <>
             {footerLinks.map((column, idx) => (
               <div key={column.id || idx} className="flex flex-col gap-3">
-                <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+                <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold">
                   {column.title}
                 </h4>
                 {column.links && column.links.map((link: any, linkIdx: number) => {
@@ -212,7 +207,7 @@ export default function Footer() {
           <>
             {/* Column 2: HELP */}
             <div className="flex flex-col gap-3">
-              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold">
                 Help
               </h4>
               <Link href="/legal?tab=faq" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
@@ -237,7 +232,7 @@ export default function Footer() {
 
             {/* Column 3: ABOUT VRIX */}
             <div className="flex flex-col gap-3">
-              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold">
                 About VRIX
               </h4>
               <Link href="/story" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
@@ -259,7 +254,7 @@ export default function Footer() {
 
             {/* Column 4: JOURNAL */}
             <div className="flex flex-col gap-3">
-              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold">
                 Journal
               </h4>
               <Link href="/journal" className="text-xs hover:text-ink-black transition-colors duration-200 text-slate-grey/90">
@@ -281,7 +276,7 @@ export default function Footer() {
 
             {/* Column 5: FOLLOW */}
             <div className="flex flex-col gap-3">
-              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold mb-1">
+              <h4 className="font-label-caps text-xs tracking-wider uppercase text-ink-black font-bold">
                 Follow
               </h4>
               <a href="https://www.instagram.com/vrix.official" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
@@ -303,8 +298,8 @@ export default function Footer() {
       </div>
 
       {/* Selector & Payment Row */}
-      <div className="border-t border-b border-slate-grey/25 py-6 bg-[#EBEAE4]">
-        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="border-t border-b border-slate-grey/25 py-4 bg-[#EBEAE4]">
+        <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center gap-4">
           {/* Currency Selector */}
           <div className="flex items-center gap-2 font-label-caps text-xs">
             <span className="text-slate-grey">Region & Currency:</span>
@@ -325,8 +320,8 @@ export default function Footer() {
       </div>
 
       {/* Legal Links Bar */}
-      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center pt-6 gap-4 font-label-caps text-[10px] text-slate-grey">
-        <div className="flex gap-4 flex-wrap justify-center">
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex flex-col md:flex-row justify-between items-center pt-4 gap-3 font-label-caps text-[10px] text-slate-grey">
+        <div className="flex gap-3 flex-wrap justify-center">
           <Link href="/legal?tab=privacy" className="hover:text-ink-black transition-colors">
             Privacy Policy
           </Link>

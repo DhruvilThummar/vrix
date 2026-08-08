@@ -5,6 +5,7 @@
   --spacing-section-gap-val: 50px;
   --spacing-product-gap-val: 20px;
 }
+
 @media (min-width: 1024px) {
   :root {
     --spacing-section-gap-val: 90px;
@@ -93,11 +94,24 @@
 .font-inter {
   font-family: var(--font-inter), sans-serif;
 }
+
 .font-label-caps {
   font-family: var(--font-inter), sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
+
+.shop-shell {
+  --spacing-section-gap-val: 72px;
+  --spacing-product-gap-val: 18px;
+  --spacing-stack-md: 12px;
+  --spacing-stack-sm: 6px;
+  --spacing-stack-lg: 24px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 56px;
+  --spacing-gutter: 20px;
+}
+
 .font-button {
   font-family: var(--font-inter), sans-serif;
   text-transform: uppercase;
@@ -194,11 +208,22 @@ body {
   color: var(--color-on-surface);
 }
 
-h1, h2, h3, h4, h5, h6, button, input, select, textarea {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+input,
+select,
+textarea {
   font-family: var(--font-inter), sans-serif;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
   box-shadow: none;
   border-color: #050575;
@@ -207,6 +232,7 @@ input:focus, select:focus, textarea:focus {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -217,6 +243,7 @@ input:focus, select:focus, textarea:focus {
     opacity: 0;
     transform: translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -231,6 +258,7 @@ input:focus, select:focus, textarea:focus {
 .header-nav-link {
   position: relative;
 }
+
 .header-nav-link::after {
   content: '';
   position: absolute;
@@ -243,6 +271,7 @@ input:focus, select:focus, textarea:focus {
   transform-origin: right;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
 .header-nav-link:hover::after {
   transform: scaleX(1);
   transform-origin: left;

@@ -19,7 +19,7 @@ export default function ConfirmationPage() {
 
   return (
     <div className="w-full min-h-screen bg-pure-white flex items-center justify-center px-4">
-      <main className="w-full max-w-xl text-center space-y-10 py-20">
+      <main className="w-full max-w-xl text-center space-y-8 py-12">
         {/* Animated Checkmark Badge */}
         <div className="flex justify-center">
           <div className="w-24 h-24 border border-slate-grey/20 flex items-center justify-center bg-soft-linen/50 animate-fade-in shadow-xs">

@@ -65,8 +65,8 @@ export default function OffersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-pure-white text-ink-black pt-20 md:pt-24 pb-16">
-      
+    <div className="min-h-screen bg-pure-white text-ink-black pt-16 md:pt-20 pb-12">
+
       {/* Hero Banner */}
       <section className="relative w-full h-[340px] md:h-[450px] bg-deep-navy flex items-center justify-center text-center overflow-hidden">
         {cms.bannerImage && (
@@ -93,10 +93,10 @@ export default function OffersPage() {
         </div>
       </section>
 
-      <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-16">
-        
+      <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-10 space-y-12">
+
         {loading ? (
-          <div className="py-20 text-center text-slate-grey font-label-caps text-xs tracking-widest uppercase flex justify-center items-center gap-3">
+          <div className="py-12 text-center text-slate-grey font-label-caps text-xs tracking-widest uppercase flex justify-center items-center gap-3">
             <span className="w-5 h-5 border-2 border-deep-navy border-t-transparent rounded-full animate-spin" />
             Loading Offers Catalog...
           </div>
@@ -104,7 +104,7 @@ export default function OffersPage() {
           <>
             {/* ── PROJECT SHOWCASE SECTIONS ───────────────────────────────── */}
             {Array.isArray(cms.showcaseProjects) && cms.showcaseProjects.length > 0 && (
-              <section className="space-y-16">
+              <section className="space-y-12">
                 {cms.showcaseProjects.map((showcase: any, idx: number) => {
                   const showcaseProds = getShowcaseProducts(showcase.featuredSkus || []);
                   const isRight = showcase.layout === "banner_right";
@@ -240,7 +240,7 @@ export default function OffersPage() {
               </div>
 
               {offerCatalogProducts.length === 0 ? (
-                <div className="py-20 text-center space-y-4">
+                <div className="py-12 text-center space-y-4">
                   <span className="material-symbols-outlined text-4xl text-slate-grey/40">local_offer</span>
                   <p className="font-body-md text-slate-grey text-sm">No products match the selected offer filter criteria.</p>
                   <Link href="/collections" className="inline-block px-8 py-3.5 bg-black text-white font-button text-xs uppercase tracking-widest hover:bg-black/90">
