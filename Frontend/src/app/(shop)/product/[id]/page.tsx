@@ -1,5 +1,5 @@
 "use client";
- 
+
 import Image from "next/image";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
@@ -12,7 +12,7 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useCurrency } from "@/context/CurrencyContext";
 import Link from "next/link";
- 
+
 const DEFAULT_PRODUCT = {
   id: "silent-center-ring",
   title: "The Silent Center Ring",
@@ -22,7 +22,7 @@ const DEFAULT_PRODUCT = {
   images: [] as string[],
   description: "A symbol of inner balance. Designed to remind you that you are your own center. Minimalist architecture translated into an intimate everyday companion.",
 };
- 
+
 function ProductContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -31,7 +31,7 @@ function ProductContent() {
   const { formatPrice } = useCurrency();
   const productId = (params?.id as string) || searchParams.get("id");
   const { addItem } = useCart();
- 
+
   const [products, setProducts] = useState<any[]>([]);
   const [selectedMetal, setSelectedMetal] = useState("18K Gold Vermeil & White Sapphire");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -43,21 +43,21 @@ function ProductContent() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeAccordion, setActiveAccordion] = useState<string | null>("details");
   const [loading, setLoading] = useState(true);
- 
+
   useEffect(() => {
     fetchProducts()
       .then(setProducts)
       .catch((err) => console.error("Error loading products:", err))
       .finally(() => setLoading(false));
   }, []);
- 
+
   const product = useMemo(() => {
     if (!productId) return null;
     const found = products.find((p) => String(p.id).trim().toLowerCase() === String(productId).trim().toLowerCase());
     if (!found && loading) return null;
     return found || null;
   }, [products, productId, loading]);
- 
+
   useEffect(() => {
     try {
       const key = getWishlistKey(user?.email);
@@ -66,22 +66,22 @@ function ProductContent() {
         const list = JSON.parse(saved);
         setWishlistActive(list.includes(product.id));
       }
-    } catch {}
+    } catch { }
   }, [product, user?.email]);
- 
+
   const galleryImages = useMemo(() => {
     if (!product) return [];
     const urls = [product.image, ...(Array.isArray(product.images) ? product.images : [])]
       .filter((url): url is string => typeof url === "string")
       .filter(Boolean)
       .filter((url, index, arr) => arr.indexOf(url) === index);
- 
+
     return urls.map((src, index) => ({
       src,
       alt: index === 0 ? `Main view of ${product.title}` : `Gallery view ${index + 1} of ${product.title}`,
     }));
   }, [product]);
- 
+
   const relatedProducts = useMemo(() => {
     if (!product || products.length <= 1) return [];
     const filtered = products.filter((p) => {
@@ -92,11 +92,11 @@ function ProductContent() {
     });
     return (filtered.length > 0 ? filtered : products.filter((p) => String(p.id) !== String(product.id))).slice(0, 4);
   }, [products, product]);
- 
+
   const toggleAccordion = (name: string) => {
     setActiveAccordion(activeAccordion === name ? null : name);
   };
- 
+
   // Sync default size when product loads
   useEffect(() => {
     if (product?.availableSizes && product.availableSizes.length > 0) {
@@ -113,7 +113,7 @@ function ProductContent() {
       setTimeout(() => router.push("/account"), 1000);
       return;
     }
-    
+
     // Check if product requires size selection
     const hasSizes = Array.isArray(product.availableSizes) && product.availableSizes.length > 0;
     const finalSize = hasSizes ? (size || product.availableSizes[0]) : "Standard";
@@ -121,7 +121,7 @@ function ProductContent() {
     setBagLoading(true);
     setTimeout(() => {
       const basePrice = (product.isVrixPlusExclusive && product.vrixPlusPrice) ? product.vrixPlusPrice : product.price;
-      
+
       let customizationPrice = 0;
       if (engraving && product.engravingOptions?.enabled) customizationPrice += (product.engravingOptions.price || 0);
       if (giftNote && product.giftNoteOptions?.enabled) customizationPrice += (product.giftNoteOptions.price || 0);
@@ -140,7 +140,7 @@ function ProductContent() {
       showToast(`✓ "${product.title}" has been successfully added to your bag.`);
     }, 600);
   };
- 
+
   const handleAddToWishlist = () => {
     if (!product) return;
     if (!isLoggedIn) {
@@ -168,14 +168,14 @@ function ProductContent() {
       console.error("Wishlist toggle error:", err);
     }
   };
- 
+
   const showToast = (message: string) => {
     setToastMessage(message);
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
   };
- 
+
   if (loading) {
     return (
       <div className="relative w-full">
@@ -194,7 +194,7 @@ function ProductContent() {
                 ))}
               </div>
             </div>
- 
+
             {/* Right Column: Sticky Product Information Skeletons */}
             <div className="md:col-span-5 relative mt-8 md:mt-0">
               <div className="flex flex-col gap-stack-lg">
@@ -221,7 +221,7 @@ function ProductContent() {
       </div>
     );
   }
- 
+
   if (!product && !loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4">
@@ -236,7 +236,7 @@ function ProductContent() {
       </div>
     );
   }
- 
+
   return (
     <div className="relative w-full">
       {/* Dynamic Alert Toast */}
@@ -252,7 +252,7 @@ function ProductContent() {
           </button>
         </div>
       )}
- 
+
       <main className="max-w-container-max mx-auto px-4 md:px-8 py-6 md:py-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
           {/* Left Column: Image Grid (PC Layout: 2x2 or Asymmetric) */}
@@ -267,7 +267,7 @@ function ProductContent() {
           {/* Right Column: Sticky Product Information */}
           <div className="md:col-span-5 relative mt-2 md:mt-0">
             <div className="sticky top-[90px] flex flex-col gap-4">
-              
+
               {/* Header Info */}
               <div className="flex flex-col gap-2 border-b border-slate-grey/20 pb-4">
                 <h1 className="font-display-lg-mobile md:font-display-lg text-ink-black tracking-tight leading-tight uppercase">
@@ -323,7 +323,7 @@ function ProductContent() {
               {/* Configuration Form */}
               {Boolean((product.availableSizes && product.availableSizes.length > 0) || product.engravingOptions?.enabled || product.giftNoteOptions?.enabled) && (
                 <div className="flex flex-col gap-6">
-                  
+
                   {/* Size Selection (Only render if availableSizes added in Admin) */}
                   {product.availableSizes && product.availableSizes.length > 0 && (
                     <div className="flex flex-col gap-2">
@@ -394,11 +394,11 @@ function ProductContent() {
               )}
 
               {/* Add to Bag and Wishlist Actions */}
-              <div className="flex flex-row gap-3 mt-4 w-full">
+              <div className="flex flex-row gap-2.5 mt-3 w-full">
                 <button
                   onClick={handleAddToBag}
                   disabled={bagLoading}
-                  className="flex-1 bg-deep-navy text-pure-white py-4 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
+                  className="flex-1 bg-deep-navy text-pure-white py-3.5 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
                 >
                   {bagLoading ? (
                     <>
@@ -411,7 +411,7 @@ function ProductContent() {
                 </button>
                 <button
                   onClick={handleAddToWishlist}
-                  className="flex-grow flex-1 border border-slate-grey/30 py-4 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm text-ink-black bg-transparent"
+                  className="flex-grow flex-1 border border-slate-grey/30 py-3.5 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm text-ink-black bg-transparent"
                 >
                   <span className={`material-symbols-outlined text-[18px] shrink-0 ${wishlistActive ? "text-red-600 fill-red-600" : ""}`}>
                     {wishlistActive ? "favorite" : "favorite_border"}
@@ -432,17 +432,15 @@ function ProductContent() {
                   >
                     <span>Product Details</span>
                     <span
-                      className={`material-symbols-outlined transition-transform duration-300 ${
-                        activeAccordion === "details" ? "rotate-180" : ""
-                      }`}
+                      className={`material-symbols-outlined transition-transform duration-300 ${activeAccordion === "details" ? "rotate-180" : ""
+                        }`}
                     >
                       expand_more
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      activeAccordion === "details" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
-                    }`}
+                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "details" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
+                      }`}
                   >
                     <div className="font-body-md text-on-surface-variant text-sm leading-relaxed space-y-2">
                       {product.description && <p>{product.description}</p>}
@@ -462,17 +460,15 @@ function ProductContent() {
                     >
                       <span>Worth &amp; Comparison Metrics</span>
                       <span
-                        className={`material-symbols-outlined transition-transform duration-300 ${
-                          activeAccordion === "comparison" ? "rotate-180" : ""
-                        }`}
+                        className={`material-symbols-outlined transition-transform duration-300 ${activeAccordion === "comparison" ? "rotate-180" : ""
+                          }`}
                       >
                         expand_more
                       </span>
                     </button>
                     <div
-                      className={`overflow-hidden transition-all duration-300 ${
-                        activeAccordion === "comparison" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
-                      }`}
+                      className={`overflow-hidden transition-all duration-300 ${activeAccordion === "comparison" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
+                        }`}
                     >
                       <div className="space-y-3.5 text-xs font-body-md text-ink-black">
                         <div className="grid grid-cols-2 gap-4">
@@ -527,17 +523,15 @@ function ProductContent() {
                     >
                       <span>Signature Gift Packaging</span>
                       <span
-                        className={`material-symbols-outlined transition-transform duration-300 ${
-                          activeAccordion === "packaging" ? "rotate-180" : ""
-                        }`}
+                        className={`material-symbols-outlined transition-transform duration-300 ${activeAccordion === "packaging" ? "rotate-180" : ""
+                          }`}
                       >
                         expand_more
                       </span>
                     </button>
                     <div
-                      className={`overflow-hidden transition-all duration-300 ${
-                        activeAccordion === "packaging" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
-                      }`}
+                      className={`overflow-hidden transition-all duration-300 ${activeAccordion === "packaging" ? "max-h-96 pb-5 opacity-100" : "max-h-0 opacity-0"
+                        }`}
                     >
                       <div className="space-y-3.5 text-xs font-body-md text-ink-black leading-relaxed">
                         {product.giftOptions?.packagingNote && (
@@ -567,17 +561,15 @@ function ProductContent() {
                   >
                     <span>Delivery &amp; Returns</span>
                     <span
-                      className={`material-symbols-outlined transition-transform duration-300 ${
-                        activeAccordion === "returns" ? "rotate-180" : ""
-                      }`}
+                      className={`material-symbols-outlined transition-transform duration-300 ${activeAccordion === "returns" ? "rotate-180" : ""
+                        }`}
                     >
                       expand_more
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      activeAccordion === "returns" ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0"
-                    }`}
+                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "returns" ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0"
+                      }`}
                   >
                     <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
                       We accept returns within 30 days of receipt in original, unworn condition. Engraved items are final sale.
@@ -593,17 +585,15 @@ function ProductContent() {
                   >
                     <span>Care Guide</span>
                     <span
-                      className={`material-symbols-outlined transition-transform duration-300 ${
-                        activeAccordion === "care" ? "rotate-180" : ""
-                      }`}
+                      className={`material-symbols-outlined transition-transform duration-300 ${activeAccordion === "care" ? "rotate-180" : ""
+                        }`}
                     >
                       expand_more
                     </span>
                   </button>
                   <div
-                    className={`overflow-hidden transition-all duration-300 ${
-                      activeAccordion === "care" ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0"
-                    }`}
+                    className={`overflow-hidden transition-all duration-300 ${activeAccordion === "care" ? "max-h-40 pb-5 opacity-100" : "max-h-0 opacity-0"
+                      }`}
                   >
                     <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
                       Avoid contact with harsh chemicals, perfumes, and lotions. Store in the provided VRIX pouch when not in use. Clean gently with a soft polishing cloth.
@@ -671,7 +661,7 @@ function ProductContent() {
     </div>
   );
 }
- 
+
 export default function ProductPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-pure-white flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest">Loading Product Details...</div>}>
