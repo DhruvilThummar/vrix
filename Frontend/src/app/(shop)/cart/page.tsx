@@ -106,7 +106,7 @@ export default function CartPage() {
                         {item.engraving && <p className="text-xs text-slate-grey font-body-md italic">Engraving: "{item.engraving}"</p>}
                         {item.giftNote && <p className="text-xs text-slate-grey font-body-md italic">Gift Note: "{item.giftNote}"</p>}
                       </div>
-                      <span className="font-body-md text-body-md text-primary font-semibold">₹{(item.price * item.quantity).toLocaleString()}</span>
+                      <span className="font-body-md text-body-md text-primary font-semibold">{formatPrice(item.price * item.quantity)}</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-end mt-4">

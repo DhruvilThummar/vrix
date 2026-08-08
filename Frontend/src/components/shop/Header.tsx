@@ -602,7 +602,7 @@ export default function Header() {
                           +
                         </button>
                       </div>
-                      <p className="font-body-md text-sm font-semibold">${item.price * item.quantity}</p>
+                      <p className="font-body-md text-sm font-semibold">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 </div>
@@ -641,7 +641,7 @@ export default function Header() {
                         {p.title}
                       </p>
                       <p className="font-body-md text-xs font-semibold mt-0.5">
-                        ${p.price}
+                        {formatPrice(p.price)}
                       </p>
                     </div>
                     <button
@@ -773,7 +773,7 @@ export default function Header() {
                         </button>
                       </div>
                       <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">{item.material}</p>
-                      <p className="font-body-md text-sm font-semibold mt-1">₹{item.price}</p>
+                      <p className="font-body-md text-sm font-semibold mt-1">{formatPrice(item.price)}</p>
                     </div>
                     <div className="pt-2">
                       <button
