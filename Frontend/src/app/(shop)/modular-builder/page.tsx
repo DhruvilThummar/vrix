@@ -242,7 +242,7 @@ export default function ModularBuilderPage() {
                 disabled={history.length <= 1}
                 className="p-2 rounded-full border border-slate-grey/30 text-slate-grey hover:text-ink-black hover:border-ink-black/50 transition-colors bg-pure-white/60 backdrop-blur-sm disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'wght' 300" }}>undo</span>
+                <span className="material-symbols-outlined icon-weight-regular">undo</span>
               </button>
               <button
                 aria-label="Reset Canvas"
@@ -250,7 +250,7 @@ export default function ModularBuilderPage() {
                 disabled={canvasItems.length === 0}
                 className="p-2 rounded-full border border-slate-grey/30 text-slate-grey hover:text-ink-black hover:border-ink-black/50 transition-colors bg-pure-white/60 backdrop-blur-sm disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'wght' 300" }}>restart_alt</span>
+                <span className="material-symbols-outlined icon-weight-regular">restart_alt</span>
               </button>
             </div>
           </div>
@@ -350,7 +350,7 @@ export default function ModularBuilderPage() {
               className="w-full md:w-auto bg-deep-navy text-pure-white font-button text-button uppercase tracking-widest py-4 px-8 hover:bg-deep-navy/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Review Final Piece
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'wght' 400" }}>arrow_forward</span>
+              <span className="material-symbols-outlined icon-weight-medium">arrow_forward</span>
             </button>
           </div>
         </section>

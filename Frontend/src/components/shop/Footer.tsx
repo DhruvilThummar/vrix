@@ -142,7 +142,7 @@ export default function Footer() {
                 />
               </div>
             ) : (
-              <span className="font-display-lg text-3xl font-light tracking-[0.25em] uppercase text-ink-black">
+              <span className="font-logo text-3xl font-light tracking-[0.25em] uppercase text-ink-black">
                 {brandName}
               </span>
             )}

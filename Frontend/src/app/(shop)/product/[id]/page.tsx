@@ -246,7 +246,7 @@ function ProductContent() {
   if (!product && !loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4">
-        <span className="material-symbols-outlined text-slate-grey text-5xl" style={{ fontVariationSettings: "'FILL' 0, 'wght' 200" }}>inventory_2</span>
+        <span className="material-symbols-outlined icon-weight-light text-slate-grey text-5xl">inventory_2</span>
         <div className="text-center space-y-2">
           <h1 className="font-display-lg text-xl text-deep-navy uppercase tracking-widest">Piece Not Found</h1>
           <p className="font-body-md text-slate-grey text-sm">The jewelry item you requested is unavailable or has been archived.</p>

@@ -56,7 +56,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="w-full min-h-[70vh] flex flex-col items-center justify-center gap-8 px-4">
-        <span className="material-symbols-outlined text-slate-grey text-6xl" style={{ fontVariationSettings: "'FILL' 0, 'wght' 200" }}>shopping_bag</span>
+        <span className="material-symbols-outlined icon-weight-light text-slate-grey text-6xl">shopping_bag</span>
         <div className="text-center space-y-2">
           <h1 className="font-display-lg text-2xl text-deep-navy uppercase tracking-widest">Your Bag is Empty</h1>
           <p className="font-body-md text-slate-grey text-sm">Add pieces from our collections to begin.</p>

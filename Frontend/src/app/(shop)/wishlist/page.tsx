@@ -136,7 +136,7 @@ export default function WishlistPage() {
 
         {wishlist.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-6 text-center">
-            <span className="material-symbols-outlined text-slate-grey text-6xl" style={{ fontVariationSettings: "'wght' 200" }}>favorite_border</span>
+            <span className="material-symbols-outlined icon-weight-light text-slate-grey text-6xl">favorite_border</span>
             <div className="space-y-2">
               <h2 className="font-display-lg text-xl text-deep-navy uppercase tracking-widest">Your Wishlist is Empty</h2>
               <p className="font-body-md text-slate-grey text-sm max-w-sm">
@@ -173,7 +173,7 @@ export default function WishlistPage() {
                     aria-label="Remove from Wishlist"
                     className="absolute top-2 right-2 md:top-3 md:right-3 p-1.5 rounded-full bg-pure-white/80 backdrop-blur-xs text-red-600 hover:scale-110 transition-transform cursor-pointer shadow-xs z-10"
                   >
-                    <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    <span className="material-symbols-outlined icon-favorite-filled text-lg">
                       favorite
                     </span>
                   </button>

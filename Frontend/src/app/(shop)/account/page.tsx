@@ -325,7 +325,7 @@ export default function UserAccountPage() {
         <div className="w-full max-w-md bg-pure-white border border-slate-grey/20 shadow-xl p-8 md:p-10 space-y-8 relative">
           <div className="text-center space-y-1">
             <p className="font-label-caps text-[10px] tracking-widest text-slate-grey uppercase">Member Access</p>
-            <h1 className="font-display-lg text-2xl text-deep-navy uppercase tracking-widest">VRIX</h1>
+            <h1 className="font-logo text-2xl text-deep-navy uppercase tracking-widest">VRIX</h1>
           </div>
 
           {authStep === "email" ? (
@@ -636,7 +636,7 @@ Member Tier Font Size: Reduce font size in account overview so text is fully vis
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-10 px-4 text-center border border-dashed border-slate-grey/20 bg-soft-linen/20 space-y-3">
-                      <span className="material-symbols-outlined text-slate-grey text-4xl" style={{ fontVariationSettings: "'wght' 200" }}>local_shipping</span>
+                      <span className="material-symbols-outlined icon-weight-light text-slate-grey text-4xl">local_shipping</span>
                       <p className="font-body-md text-slate-grey text-xs">No orders placed yet.</p>
                       <Link href="/products" className="font-button text-[10px] uppercase px-6 py-2.5 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors tracking-widest">
                         START SHOPPING
@@ -712,7 +712,7 @@ Member Tier Font Size: Reduce font size in account overview so text is fully vis
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-slate-grey/25 bg-soft-linen/20 space-y-4">
-                    <span className="material-symbols-outlined text-slate-grey text-5xl" style={{ fontVariationSettings: "'wght' 200" }}>
+                    <span className="material-symbols-outlined icon-weight-light text-slate-grey text-5xl">
                       local_shipping
                     </span>
                     <div className="space-y-1">
@@ -742,7 +742,7 @@ Member Tier Font Size: Reduce font size in account overview so text is fully vis
 
                 {wishlist.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-slate-grey/25 bg-soft-linen/20 space-y-4">
-                    <span className="material-symbols-outlined text-slate-grey text-5xl" style={{ fontVariationSettings: "'wght' 200" }}>
+                    <span className="material-symbols-outlined icon-weight-light text-slate-grey text-5xl">
                       favorite_border
                     </span>
                     <div className="space-y-1">

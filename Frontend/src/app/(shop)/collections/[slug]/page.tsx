@@ -740,13 +740,7 @@ function CollectionContent() {
                                 aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                                 className="absolute top-2 right-2 md:top-4 md:right-4 text-slate-grey hover:text-deep-navy transition-colors z-10 cursor-pointer p-1"
                               >
-                                <span
-                                  className="material-symbols-outlined text-lg md:text-xl"
-                                  style={{
-                                    fontVariationSettings: `'FILL' ${isWishlisted ? 1 : 0}, 'wght' 200`,
-                                    color: isWishlisted ? "#ba1a1a" : "inherit",
-                                  }}
-                                >
+                                <span className={`material-symbols-outlined text-lg md:text-xl ${isWishlisted ? "icon-favorite-filled text-error" : "icon-favorite-outline"}`}>
                                   favorite
                                 </span>
                               </button>
@@ -809,13 +803,7 @@ function CollectionContent() {
                               aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                               className="absolute top-2 right-2 md:top-4 md:right-4 text-slate-grey hover:text-deep-navy transition-colors z-10 cursor-pointer p-1"
                             >
-                              <span
-                                className="material-symbols-outlined text-lg md:text-xl"
-                                style={{
-                                  fontVariationSettings: `'FILL' ${isWishlisted ? 1 : 0}, 'wght' 200`,
-                                  color: isWishlisted ? "#ba1a1a" : "inherit",
-                                }}
-                              >
+                              <span className={`material-symbols-outlined text-lg md:text-xl ${isWishlisted ? "icon-favorite-filled text-error" : "icon-favorite-outline"}`}>
                                 favorite
                               </span>
                             </button>

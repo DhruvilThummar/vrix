@@ -8,7 +8,7 @@ export default function NotFound() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-pure-white text-on-surface antialiased flex flex-col items-center justify-center">
+    <div className="shop-typography relative w-full min-h-screen overflow-hidden bg-pure-white text-on-surface antialiased flex flex-col items-center justify-center">
       {/* Decorative ambient background elements */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-soft-linen rounded-full blur-[120px] opacity-50 mix-blend-multiply"></div>

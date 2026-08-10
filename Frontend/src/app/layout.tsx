@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-page-custom-font */
 import type { Metadata } from "next";
-import { Inter, Jost, Cormorant_Garamond, Alex_Brush } from "next/font/google";
+import { Inter, Jost, Cormorant_Garamond } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -27,10 +28,10 @@ const aquavit = Cormorant_Garamond({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const chancery = Alex_Brush({
+const chancery = localFont({
+  src: "../../public/fonts/black-chancery/black-chancery.ttf",
   variable: "--font-chancery",
-  subsets: ["latin"],
-  weight: ["400"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -150,45 +151,6 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         />
-        <style dangerouslySetInnerHTML={{ __html: `
-          html:not([class*="admin"]) body:not(.admin-layout), 
-          html:not([class*="admin"]) body:not(.admin-layout) p, 
-          html:not([class*="admin"]) body:not(.admin-layout) span:not(.material-symbols-outlined), 
-          html:not([class*="admin"]) body:not(.admin-layout) li, 
-          html:not([class*="admin"]) body:not(.admin-layout) a, 
-          html:not([class*="admin"]) body:not(.admin-layout) td, 
-          html:not([class*="admin"]) body:not(.admin-layout) th {
-            font-family: var(--font-jost), sans-serif !important;
-          }
-          html:not([class*="admin"]) body:not(.admin-layout) h1, 
-          html:not([class*="admin"]) body:not(.admin-layout) h2, 
-          html:not([class*="admin"]) body:not(.admin-layout) h3, 
-          html:not([class*="admin"]) body:not(.admin-layout) h4, 
-          html:not([class*="admin"]) body:not(.admin-layout) h5, 
-          html:not([class*="admin"]) body:not(.admin-layout) h6, 
-          html:not([class*="admin"]) body:not(.admin-layout) button, 
-          html:not([class*="admin"]) body:not(.admin-layout) input, 
-          html:not([class*="admin"]) body:not(.admin-layout) select, 
-          html:not([class*="admin"]) body:not(.admin-layout) textarea, 
-          html:not([class*="admin"]) body:not(.admin-layout) label {
-            font-family: var(--font-inter), sans-serif !important;
-          }
-          .font-label-caps, .font-button, .font-display-lg, .font-display-lg-mobile, .font-inter {
-            font-family: var(--font-inter), sans-serif !important;
-          }
-          .font-body-lg, .font-body-md, .font-jost {
-            font-family: var(--font-jost), sans-serif !important;
-          }
-          .font-logo, .font-aquavit {
-            font-family: var(--font-aquavit), Georgia, serif !important;
-          }
-          .font-accent, .font-chancery {
-            font-family: var(--font-chancery), cursive !important;
-          }
-          .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined' !important;
-          }
-        `}} />
       </head>
 
 

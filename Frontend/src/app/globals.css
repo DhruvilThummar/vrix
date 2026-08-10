@@ -2,6 +2,12 @@
 @import "tailwindcss";
 
 :root {
+  /* Storefront font switchboard. Change a role here—never page by page. */
+  --typography-logo: var(--font-aquavit), Georgia, serif;
+  --typography-primary: var(--font-inter), sans-serif;
+  --typography-body: var(--font-jost), sans-serif;
+  --typography-highlight: "Black Chancery", var(--font-chancery), cursive;
+
   --spacing-section-gap-val: 50px;
   --spacing-product-gap-val: 20px;
 
@@ -13,7 +19,7 @@
   --header-border: #F3F2F0;
   --header-menu-background: rgb(255 255 255 / 0.72);
   --header-menu-foreground: #000000;
-  --header-font: var(--font-inter), sans-serif;
+  --header-font: var(--typography-primary);
 }
 
 @media (min-width: 1024px) {
@@ -102,11 +108,11 @@
 .font-display-lg-mobile,
 .font-headline-md,
 .font-inter {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--typography-primary);
 }
 
 .font-label-caps {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--typography-primary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -184,7 +190,7 @@
 }
 
 .font-button {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--typography-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -193,20 +199,62 @@
 .font-body-lg,
 .font-body-md,
 .font-jost {
-  font-family: var(--font-jost), sans-serif;
+  font-family: var(--typography-body);
 }
 
 /* Logo Font: Aquavit (Refined contrast luxury display serif) */
 .font-logo,
 .font-aquavit {
-  font-family: var(--font-aquavit), Georgia, serif;
+  font-family: var(--typography-logo);
 }
 
-/* Accent Font: BlackChancery (Cursive luxury highlight accent) */
+/* Accent Font: Black Chancery (luxury highlight for short editorial copy) */
 .font-accent,
-.font-chancery {
-  font-family: var(--font-chancery), cursive;
+.font-chancery,
+.font-highlight {
+  font-family: var(--typography-highlight);
 }
+
+/* Customer-facing typography. The admin and delivery layouts are outside this
+   wrapper, so their existing typography remains unchanged. */
+.shop-typography,
+.shop-typography p,
+.shop-typography span:not(.material-symbols-outlined),
+.shop-typography li,
+.shop-typography a,
+.shop-typography td,
+.shop-typography th {
+  font-family: var(--typography-body);
+}
+
+.shop-typography h1,
+.shop-typography h2,
+.shop-typography h3,
+.shop-typography h4,
+.shop-typography h5,
+.shop-typography h6,
+.shop-typography button,
+.shop-typography input,
+.shop-typography select,
+.shop-typography textarea,
+.shop-typography label,
+.shop-typography .font-label-caps,
+.shop-typography .font-button,
+.shop-typography .font-display-lg,
+.shop-typography .font-display-lg-mobile,
+.shop-typography .font-headline-md,
+.shop-typography .font-inter {
+  font-family: var(--typography-primary);
+}
+
+.shop-typography .font-body-lg,
+.shop-typography .font-body-md,
+.shop-typography .font-jost { font-family: var(--typography-body); }
+.shop-typography .font-logo,
+.shop-typography .font-aquavit { font-family: var(--typography-logo); }
+.shop-typography .font-accent,
+.shop-typography .font-chancery,
+.shop-typography .font-highlight { font-family: var(--typography-highlight); }
 
 .text-display-lg {
   font-size: 48px;
@@ -272,9 +320,17 @@
   font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
 }
 
+/* Reusable Material Symbol variants replace static inline font styles. */
+.icon-weight-thin { font-variation-settings: 'FILL' 0, 'wght' 100, 'GRAD' 0, 'opsz' 24; }
+.icon-weight-light { font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24; }
+.icon-weight-regular { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+.icon-weight-medium { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.icon-favorite-outline { font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24; }
+.icon-favorite-filled { font-variation-settings: 'FILL' 1, 'wght' 200, 'GRAD' 0, 'opsz' 24; }
+
 /* Base resets & animations */
 body {
-  font-family: var(--font-jost), sans-serif;
+  font-family: var(--typography-body);
   background-color: var(--color-surface);
   color: var(--color-on-surface);
 }
@@ -289,7 +345,7 @@ button,
 input,
 select,
 textarea {
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--typography-primary);
 }
 
 input:focus,

@@ -24,8 +24,7 @@ export default function ConfirmationPage() {
         <div className="flex justify-center">
           <div className="w-24 h-24 border border-slate-grey/20 flex items-center justify-center bg-soft-linen/50 animate-fade-in shadow-xs">
             <span
-              className="material-symbols-outlined text-[52px] text-deep-navy"
-              style={{ fontVariationSettings: "'wght' 100, 'FILL' 0" }}
+              className="material-symbols-outlined icon-weight-thin text-[52px] text-deep-navy"
             >
               check_circle
             </span>

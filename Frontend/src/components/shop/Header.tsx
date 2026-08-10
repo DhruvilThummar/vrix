@@ -282,7 +282,7 @@ export default function Header() {
                   />
                 </div>
               ) : (
-                <span className="header-brand-text font-display-lg text-3xl font-light tracking-[0.25em] uppercase select-none hover:opacity-80 transition-opacity">
+                <span className="header-brand-text font-logo text-3xl font-light tracking-[0.25em] uppercase select-none hover:opacity-80 transition-opacity">
                   {brandName}
                 </span>
               )}
@@ -459,7 +459,7 @@ export default function Header() {
               />
             </div>
           ) : (
-            <span className="font-display-lg text-xl tracking-[0.2em] uppercase text-ink-black select-none">
+            <span className="font-logo text-xl tracking-[0.2em] uppercase text-ink-black select-none">
               {brandName}
             </span>
           )}
@@ -938,7 +938,7 @@ export default function Header() {
                 />
               </div>
             ) : (
-              <span className="font-display-lg text-xl tracking-[0.2em] uppercase text-ink-black select-none">
+              <span className="font-logo text-xl tracking-[0.2em] uppercase text-ink-black select-none">
                 {brandName}
               </span>
             )}
