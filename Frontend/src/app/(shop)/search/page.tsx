@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchProducts } from "@/utils/api";
+import { searchProducts } from "@/utils/productSearch";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -36,13 +37,7 @@ export default function SearchPage() {
     if (!searchQuery.trim()) {
       return []; // Do not show dummy/default products when search is empty
     }
-    const query = searchQuery.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.title.toLowerCase().includes(query) ||
-        p.material.toLowerCase().includes(query) ||
-        p.type.toLowerCase().includes(query)
-    );
+    return searchProducts(products, searchQuery);
   }, [products, searchQuery]);
 
   const trendingSearches = [

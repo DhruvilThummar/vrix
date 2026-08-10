@@ -6,6 +6,7 @@ import SkeletonImage from "@/components/shop/SkeletonImage";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { fetchDb, fetchProducts, getWishlistKey } from "@/utils/api";
+import { searchProducts } from "@/utils/productSearch";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
@@ -206,23 +207,16 @@ export default function Header() {
   };
 
   // Filtered search results
-  const searchResults = searchQuery.trim()
-    ? allProducts.filter(
-      (p) =>
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.collection && p.collection.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-    : [];
+  const searchResults = useMemo(
+    () => searchProducts(allProducts, searchQuery),
+    [allProducts, searchQuery]
+  );
 
   const predictiveResults = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return { products: [], collections: [], categories: [] };
 
-    const matchedProducts = allProducts.filter((p) =>
-      p.title.toLowerCase().includes(query) ||
-      (p.description && p.description.toLowerCase().includes(query))
-    ).slice(0, 5);
+    const matchedProducts = searchProducts(allProducts, query).slice(0, 5);
 
     const matchedCollections = collections.filter((col) =>
       col.title.toLowerCase().includes(query) ||
