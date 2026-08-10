@@ -17,6 +17,7 @@ interface Product {
   material: string;
   category?: string;
   type?: string;
+  stock?: number;
 }
 
 export default function WishlistPage() {

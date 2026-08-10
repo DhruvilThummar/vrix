@@ -84,7 +84,20 @@ export default function AdminHomepageLayoutPage() {
           setHeroSlides(res.homepage.heroSlides || []);
           setHomepageTagline(res.homepage.tagline || "");
           setPhilosophyTitle(res.homepage.philosophyTitle || "");
-          setPhilosophyCards(res.homepage.philosophy || []);
+          
+          const defaultPhilosophy = [
+            { icon: "flare", title: "Intentional Design", description: "Every piece has\na deeper meaning." },
+            { icon: "hourglass_empty", title: "Timeless Quality", description: "Crafted to last.\nMade to be lived in." },
+            { icon: "eco", title: "Conscious Luxury", description: "Ethical materials.\nThoughtful process." },
+            { icon: "favorite_border", title: "Personal Connection", description: "A piece for every\nchapter of you." }
+          ];
+          const dbPhilosophy = res.homepage.philosophy || [];
+          const finalPhilosophy = [...dbPhilosophy];
+          while (finalPhilosophy.length < 4) {
+            finalPhilosophy.push(defaultPhilosophy[finalPhilosophy.length] || { icon: "flare", title: "", description: "" });
+          }
+          setPhilosophyCards(finalPhilosophy);
+          
           setCategories(res.homepage.categories || []);
         }
         setLoading(false);
@@ -266,6 +279,53 @@ export default function AdminHomepageLayoutPage() {
             </button>
           </div>
         </div>
+
+        {/* Hero Fallback Banner (Single Image Mode) */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+          <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+            <h3 className="font-headline-md text-lg text-deep-navy uppercase">
+              Hero Fallback Banner (Single Image Mode)
+            </h3>
+            <span className="text-[10px] font-label-caps bg-slate-grey/10 text-slate-grey px-2 py-0.5 rounded font-bold">Fallback Mode</span>
+          </div>
+          <p className="text-xs text-slate-grey font-body-md leading-relaxed">
+            Configure the single hero banner settings. This will be used as a fallback if no slides are added to the Carousel Slides below.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Title</label>
+              <input
+                type="text"
+                value={heroTitle}
+                onChange={(e) => setHeroTitle(e.target.value)}
+                placeholder="e.g. the moments that belong only to you."
+                className="border border-slate-grey/30 p-2.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Subtitle</label>
+              <input
+                type="text"
+                value={heroSubtitle}
+                onChange={(e) => setHeroSubtitle(e.target.value)}
+                placeholder="e.g. Luxury for Every Day"
+                className="border border-slate-grey/30 p-2.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+              />
+            </div>
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Image URL</label>
+              <input
+                type="url"
+                value={heroImage}
+                onChange={(e) => setHeroImage(e.target.value)}
+                placeholder="e.g. https://images.unsplash.com/..."
+                className="border border-slate-grey/30 p-2.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
+              />
+              <VisualImagePreview src={heroImage} alt="Hero fallback preview" />
+            </div>
+          </div>
+        </section>
 
         {/* Hero Carousel Slides Manager */}
         <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
@@ -451,6 +511,75 @@ export default function AdminHomepageLayoutPage() {
                 rows={2}
                 required
               />
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-6 border-t border-slate-grey/15">
+            <h4 className="font-label-caps text-xs font-bold text-deep-navy uppercase">
+              Brand Philosophy Cards (4 Slots)
+            </h4>
+            <p className="text-xs text-slate-grey font-body-md leading-relaxed">
+              Customize the four values cards displayed on the storefront. Use standard Google Material symbols names for icons (e.g. flare, eco, favorite_border, hourglass_empty).
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
+              {philosophyCards.map((card, idx) => (
+                <div key={idx} className="border border-slate-grey/20 p-4 bg-soft-linen/5 rounded space-y-4 relative">
+                  <span className="absolute top-2 right-2 text-[10px] font-label-caps bg-deep-navy/10 text-deep-navy px-1.5 py-0.5 rounded font-bold">
+                    Slot {idx + 1}
+                  </span>
+                  
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Icon (Material Icon Name)</label>
+                    <input
+                      type="text"
+                      value={card.icon || ""}
+                      onChange={(e) => {
+                        const updated = [...philosophyCards];
+                        updated[idx] = { ...updated[idx], icon: e.target.value };
+                        setPhilosophyCards(updated);
+                      }}
+                      placeholder="e.g. flare"
+                      className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-xs bg-transparent"
+                    />
+                    {card.icon && (
+                      <div className="flex items-center gap-1.5 mt-1 text-deep-navy">
+                        <span className="material-symbols-outlined text-base font-light">{card.icon}</span>
+                        <span className="text-[9px] font-label-caps text-slate-grey">Live Icon Preview</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Title</label>
+                    <input
+                      type="text"
+                      value={card.title || ""}
+                      onChange={(e) => {
+                        const updated = [...philosophyCards];
+                        updated[idx] = { ...updated[idx], title: e.target.value };
+                        setPhilosophyCards(updated);
+                      }}
+                      placeholder="e.g. Intentional Design"
+                      className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-xs bg-transparent font-semibold"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Description</label>
+                    <textarea
+                      value={card.description || ""}
+                      onChange={(e) => {
+                        const updated = [...philosophyCards];
+                        updated[idx] = { ...updated[idx], description: e.target.value };
+                        setPhilosophyCards(updated);
+                      }}
+                      placeholder="e.g. Every piece has a deeper meaning."
+                      rows={3}
+                      className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-xs bg-transparent leading-relaxed"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
