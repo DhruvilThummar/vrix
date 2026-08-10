@@ -2,6 +2,8 @@ import { Metadata } from "next";
 import HomepageClient from "./page.client";
 import { fetchDbPublic, fetchProducts } from "@/utils/api";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "VRIX | Luxury Minimalist Jewellery & Fine Jewelry Online",
   description:

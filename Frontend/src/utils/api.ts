@@ -57,7 +57,10 @@ const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || "vrix_admin_secret_
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const baseUrl = getApiBaseUrl();
   const url = endpoint.startsWith("/") ? `${baseUrl}${endpoint}` : `${baseUrl}/${endpoint}`;
-  const res = await fetch(url, options);
+  const res = await fetch(url, {
+    cache: "no-store",
+    ...options,
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || "API request failed");
