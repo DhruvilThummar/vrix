@@ -108,8 +108,15 @@ function TypePageContent() {
     if (selectedMaterial !== "All") {
       result = result.filter((p) => {
         const mat = (p.material || "").toLowerCase();
-        if (selectedMaterial === "Gold")   return mat.includes("gold");
-        if (selectedMaterial === "Silver") return mat.includes("silver");
+        const variantMats = Array.isArray(p.variants)
+          ? p.variants.map((v: any) => (v.material || "").toLowerCase()).join(" ")
+          : "";
+        const combined = `${mat} ${variantMats}`;
+
+        if (selectedMaterial === "Gold")     return combined.includes("gold");
+        if (selectedMaterial === "Silver")   return combined.includes("silver");
+        if (selectedMaterial === "Platinum") return combined.includes("platinum");
+        if (selectedMaterial === "Diamond")  return combined.includes("diamond");
         return true;
       });
     }
@@ -119,6 +126,7 @@ function TypePageContent() {
 
     return result;
   }, [products, slug, typeInfo, selectedMaterial, sortBy]);
+
 
   const toggleWishlist = (id: string, title: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -259,7 +267,7 @@ function TypePageContent() {
           <div className="md:hidden bg-soft-linen/30 border border-slate-grey/10 p-4 mb-8">
             <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-4">Material</h4>
             <div className="flex flex-wrap gap-2">
-              {["All", "Gold", "Silver"].map((mat) => (
+              {["All", "Gold", "Silver", "Platinum", "Diamond"].map((mat) => (
                 <button
                   key={mat}
                   onClick={() => handleMaterialChange(mat)}
@@ -294,7 +302,7 @@ function TypePageContent() {
             <div>
               <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">Material</h4>
               <div className="flex flex-col gap-2">
-                {["All", "Gold", "Silver"].map((mat) => (
+                {["All", "Gold", "Silver", "Platinum", "Diamond"].map((mat) => (
                   <label key={mat} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
                     <input
                       type="radio"
@@ -308,6 +316,7 @@ function TypePageContent() {
                 ))}
               </div>
             </div>
+
 
             {selectedMaterial !== "All" && (
               <button onClick={handleResetFilters} className="w-full py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black transition-colors">

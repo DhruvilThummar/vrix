@@ -165,13 +165,19 @@ function ProductsCatalogContent() {
       }
     }
 
-    // Filter by Material
+    // Filter by Material (checks main material + variant materials)
     if (selectedMaterial !== "All") {
       result = result.filter((p) => {
         const mat = (p.material || "").toLowerCase();
-        if (selectedMaterial === "Gold") return mat.includes("gold");
-        if (selectedMaterial === "Silver") return mat.includes("silver");
-        if (selectedMaterial === "Platinum") return mat.includes("platinum");
+        const variantMats = Array.isArray(p.variants)
+          ? p.variants.map((v: any) => (v.material || "").toLowerCase()).join(" ")
+          : "";
+        const combined = `${mat} ${variantMats}`;
+
+        if (selectedMaterial === "Gold")     return combined.includes("gold");
+        if (selectedMaterial === "Silver")   return combined.includes("silver");
+        if (selectedMaterial === "Platinum") return combined.includes("platinum");
+        if (selectedMaterial === "Diamond")  return combined.includes("diamond");
         return true;
       });
     }
