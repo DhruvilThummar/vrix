@@ -164,15 +164,66 @@ router.post("/validate-stock", async (req, res) => {
   }
 });
 
-// GET /api/products
+// GET /api/products — Supports optional query params: ?material=Gold&type=Ring&collection=rings&search=diamond
 router.get("/", async (req, res) => {
   try {
-    const products = await db.products.findMany();
+    let products = await db.products.findMany();
+    const { material, type, collection, search } = req.query;
+
+    if (collection) {
+      const col = String(collection).toLowerCase().trim();
+      products = products.filter((p) => (p.collection || "").toLowerCase() === col);
+    }
+
+    if (type) {
+      const t = String(type).toLowerCase().trim();
+      if (t === "ring" || t === "rings") {
+        products = products.filter((p) => {
+          const pType = (p.type || "").toLowerCase().trim();
+          return pType === "ring" || pType === "rings" || (/\bring(s)?\b/i.test(pType) && !pType.includes("earring"));
+        });
+      } else {
+        products = products.filter((p) => (p.type || "").toLowerCase().includes(t));
+      }
+    }
+
+    if (material) {
+      const matFilter = String(material).toLowerCase().trim();
+      if (matFilter !== "all") {
+        products = products.filter((p) => {
+          const mainMat = (p.material || "").toLowerCase();
+          const variantMats = Array.isArray(p.variants)
+            ? p.variants.map((v) => (v.material || "").toLowerCase()).join(" ")
+            : "";
+          const combined = `${mainMat} ${variantMats}`;
+
+          if (matFilter === "gold")     return combined.includes("gold");
+          if (matFilter === "silver")   return combined.includes("silver");
+          if (matFilter === "platinum") return combined.includes("platinum");
+          if (matFilter === "diamond")  return combined.includes("diamond");
+          return combined.includes(matFilter);
+        });
+      }
+    }
+
+    if (search) {
+      const q = String(search).toLowerCase().trim();
+      products = products.filter((p) => {
+        const title = (p.title || "").toLowerCase();
+        const desc = (p.description || "").toLowerCase();
+        const mat = (p.material || "").toLowerCase();
+        const typeStr = (p.type || "").toLowerCase();
+        const sku = (p.sku || "").toLowerCase();
+        return title.includes(q) || desc.includes(q) || mat.includes(q) || typeStr.includes(q) || sku.includes(q);
+      });
+    }
+
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // GET /api/products/:id
 router.get("/:id", async (req, res) => {
