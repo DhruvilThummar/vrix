@@ -8,7 +8,9 @@ const router = express.Router();
 router.get("/", async (req, res) => {
   try {
     const data = await db.cmsSettings.findUnique({ where: { key: "categories" } });
-    const categories = Array.isArray(data?.value) ? data.value : [];
+    // cmsSettings.findUnique returns the saved JSON value directly (not a
+    // Prisma row), so categories are already the array at this point.
+    const categories = Array.isArray(data) ? data : [];
     res.json(categories.filter((cat) => cat.isVisible !== false));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -19,7 +21,7 @@ router.get("/", async (req, res) => {
 router.get("/all", async (req, res) => {
   try {
     const data = await db.cmsSettings.findUnique({ where: { key: "categories" } });
-    res.json(Array.isArray(data?.value) ? data.value : []);
+    res.json(Array.isArray(data) ? data : []);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
