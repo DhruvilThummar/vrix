@@ -216,15 +216,15 @@ function ProductsCatalogContent() {
         </header>
 
         {/* Filter & Sort Bar */}
-        <div className="border-t border-b border-slate-grey/30 py-4 mb-stack-lg flex justify-between items-center relative z-20">
+        <div className="border-t border-b border-slate-grey/30 py-3 sm:py-4 mb-stack-lg flex flex-wrap justify-between items-center gap-3 relative z-20">
           {/* Mobile Filters Toggle */}
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
             <button
               onClick={() => {
                 setFiltersOpen(!filtersOpen);
                 setSortOpen(false);
               }}
-              className="md:hidden font-label-caps text-label-caps text-on-surface hover:text-deep-navy uppercase tracking-widest flex items-center space-x-1 group transition-colors cursor-pointer"
+              className="md:hidden shrink-0 font-label-caps text-[10px] text-on-surface hover:text-deep-navy uppercase tracking-wider flex items-center gap-1 group transition-colors cursor-pointer"
             >
               <span>Filters</span>
               <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${filtersOpen ? "rotate-180" : ""}`}>
@@ -238,7 +238,7 @@ function ProductsCatalogContent() {
 
             {/* Quick Status indicators */}
             {(selectedCollection !== "All" || selectedMaterial !== "All" || selectedType !== "All") && (
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
                 <span className="text-[10px] font-body-md text-slate-grey bg-soft-linen px-2 py-0.5 uppercase tracking-wider">
                   Active Filters
                 </span>
@@ -253,17 +253,18 @@ function ProductsCatalogContent() {
           </div>
 
           {/* Sort Controls */}
-          <div className="flex items-center relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => {
                 setSortOpen(!sortOpen);
                 setFiltersOpen(false);
               }}
-              className="font-label-caps text-label-caps text-on-surface hover:text-deep-navy uppercase tracking-widest flex items-center space-x-1 group transition-colors cursor-pointer"
+              className="max-w-[11rem] sm:max-w-none font-label-caps text-[10px] sm:text-label-caps text-on-surface hover:text-deep-navy uppercase tracking-wider sm:tracking-widest flex items-center gap-1 group transition-colors cursor-pointer text-right"
             >
-              <span>
+              <span className="hidden sm:inline">
                 Sort: {sortBy === "Curated" ? "Curated" : sortBy === "PriceLowHigh" ? "Price: Low to High" : "Price: High to Low"}
               </span>
+              <span className="sm:hidden">Sort</span>
               <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${sortOpen ? "rotate-180" : ""}`}>
                 expand_more
               </span>
@@ -271,7 +272,7 @@ function ProductsCatalogContent() {
 
             {/* Sort Dropdown */}
             {sortOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-pure-white border border-slate-grey/20 shadow-xl py-2 flex flex-col z-30">
+              <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] bg-pure-white border border-slate-grey/20 shadow-xl py-2 flex flex-col z-30">
                 {["Curated", "PriceLowHigh", "PriceHighLow"].map((sort) => (
                   <button
                     key={sort}
@@ -293,7 +294,7 @@ function ProductsCatalogContent() {
 
         {/* Mobile Filters Dropdown panel */}
         {filtersOpen && (
-          <div className="md:hidden bg-soft-linen/30 border border-slate-grey/10 p-6 mb-stack-lg space-y-6 z-10 relative">
+          <div className="md:hidden bg-soft-linen/30 border border-slate-grey/10 p-4 sm:p-6 mb-stack-lg space-y-5 sm:space-y-6 z-10 relative">
             <div>
               <h4 className="font-label-caps text-[10px] text-ink-black tracking-widest uppercase mb-3">Collections</h4>
               <div className="flex flex-wrap gap-2">
