@@ -9,6 +9,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { useCheckoutStorage } from "@/hooks/useCheckoutStorage";
 import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
 import { ShippingData } from "@/types/checkout";
+import { fetchSavedAddresses, SavedAddress } from "@/utils/api";
 
 interface FormErrors {
   email?: string;
@@ -41,6 +42,8 @@ export default function ShippingPage() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [phone, setPhone] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
 
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -61,6 +64,26 @@ export default function ShippingPage() {
       if (user.phone) setPhone(user.phone);
     }
   }, [user, savedShipping]);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    fetchSavedAddresses(user.email).then((addresses) => {
+      setSavedAddresses(addresses);
+      const preferred = addresses.find((item) => item.isDefault) || addresses[0];
+      if (preferred && !savedShipping) selectAddress(preferred);
+    }).catch((error) => console.error("Failed to load saved addresses:", error));
+  }, [user?.email]);
+
+  function selectAddress(item: SavedAddress) {
+    setSelectedAddressId(item.id);
+    setFullName(item.fullName);
+    setAddress(item.address);
+    setApartment(item.apartment || "");
+    setCity(item.city);
+    setPostalCode(item.postalCode);
+    setCountry(item.country || "IN");
+    if (item.phone) setPhone(item.phone);
+  }
 
   // Discount & Shipping calculations
   const discountAmount =
@@ -194,6 +217,22 @@ export default function ShippingPage() {
               <h2 className="font-label-caps text-label-caps text-slate-grey uppercase mb-stack-sm">
                 Shipping Address
               </h2>
+              {savedAddresses.length > 0 && (
+                <div className="border border-slate-grey/20 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-label-caps text-[10px] uppercase tracking-widest text-slate-grey">Saved addresses</p>
+                    <Link href="/account" className="text-[10px] uppercase tracking-widest underline text-deep-navy">Manage</Link>
+                  </div>
+                  <div className="grid gap-2">
+                    {savedAddresses.map((item) => (
+                      <button key={item.id} type="button" onClick={() => selectAddress(item)} className={`text-left border p-3 transition-colors ${selectedAddressId === item.id ? "border-deep-navy bg-soft-linen/30" : "border-slate-grey/20 hover:border-deep-navy/50"}`}>
+                        <span className="font-label-caps text-[10px] uppercase text-deep-navy">{item.label}{item.isDefault ? " · Default" : ""}</span>
+                        <span className="block text-xs text-slate-grey mt-1">{item.fullName} — {[item.address, item.apartment, item.city, item.postalCode].filter(Boolean).join(", ")}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
                 {/* Country */}
                 <div className="relative col-span-1 md:col-span-2">

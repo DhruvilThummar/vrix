@@ -19,6 +19,70 @@ export function getWishlistKey(email?: string): string {
   return "vrix-wishlist";
 }
 
+export interface SavedAddress {
+  id: string;
+  label: string;
+  fullName: string;
+  phone?: string | null;
+  address: string;
+  apartment?: string | null;
+  city: string;
+  state?: string | null;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+export async function fetchSavedAddresses(email: string): Promise<SavedAddress[]> {
+  const result = await apiFetch<{ addresses: SavedAddress[] }>(`/auth/addresses?email=${encodeURIComponent(email)}`);
+  return result.addresses || [];
+}
+
+export async function saveAddress(email: string, address: Omit<SavedAddress, "id">, id?: string): Promise<SavedAddress> {
+  const result = await apiFetch<{ address: SavedAddress }>(id ? `/auth/addresses/${id}` : "/auth/addresses", {
+    method: id ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, ...address }),
+  });
+  return result.address;
+}
+
+export async function deleteSavedAddress(email: string, id: string): Promise<void> {
+  await apiFetch(`/auth/addresses/${id}?email=${encodeURIComponent(email)}`, { method: "DELETE" });
+}
+
+export interface SavedAddress {
+  id: string;
+  label: string;
+  fullName: string;
+  phone?: string | null;
+  address: string;
+  apartment?: string | null;
+  city: string;
+  state?: string | null;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+}
+
+export async function fetchSavedAddresses(email: string): Promise<SavedAddress[]> {
+  const result = await apiFetch<{ addresses: SavedAddress[] }>(`/auth/addresses?email=${encodeURIComponent(email)}`);
+  return result.addresses || [];
+}
+
+export async function saveAddress(email: string, address: Omit<SavedAddress, "id">, id?: string): Promise<SavedAddress> {
+  const result = await apiFetch<{ address: SavedAddress }>(id ? `/auth/addresses/${id}` : "/auth/addresses", {
+    method: id ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, ...address }),
+  });
+  return result.address;
+}
+
+export async function deleteSavedAddress(email: string, id: string): Promise<void> {
+  await apiFetch(`/auth/addresses/${id}?email=${encodeURIComponent(email)}`, { method: "DELETE" });
+}
+
 const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || "vrix_admin_secret_change_me_in_production";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────

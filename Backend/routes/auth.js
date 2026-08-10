@@ -438,6 +438,74 @@ router.put("/profile", async (req, res) => {
   }
 });
 
+const cleanAddress = (input = {}) => ({
+  label: String(input.label || "Home").trim().slice(0, 50) || "Home",
+  fullName: String(input.fullName || "").trim(),
+  phone: String(input.phone || "").trim() || null,
+  address: String(input.address || "").trim(),
+  apartment: String(input.apartment || "").trim() || null,
+  city: String(input.city || "").trim(),
+  state: String(input.state || "").trim() || null,
+  postalCode: String(input.postalCode || "").trim(),
+  country: String(input.country || "IN").trim().toUpperCase().slice(0, 2) || "IN",
+  isDefault: Boolean(input.isDefault),
+});
+
+const getAddressEmail = (req) => String(req.query.email || req.body.email || "").trim().toLowerCase();
+
+// Address book endpoints. The client supplies its authenticated email, matching the existing profile API pattern.
+router.get("/addresses", async (req, res) => {
+  const email = getAddressEmail(req);
+  if (!email) return res.status(400).json({ error: "Email is required." });
+  try {
+    const addresses = await db.addresses.findMany({ where: { userEmail: email }, orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }] });
+    res.json({ success: true, addresses });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/addresses", async (req, res) => {
+  const email = getAddressEmail(req);
+  const address = cleanAddress(req.body);
+  if (!email || !address.fullName || !address.address || !address.city || !address.postalCode) return res.status(400).json({ error: "Email, name, address, city and postal code are required." });
+  try {
+    const count = await db.addresses.count({ where: { userEmail: email } });
+    const isDefault = address.isDefault || count === 0;
+    if (isDefault) await db.addresses.updateMany({ where: { userEmail: email }, data: { isDefault: false } });
+    const saved = await db.addresses.create({ data: { ...address, isDefault, userEmail: email } });
+    res.status(201).json({ success: true, address: saved });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put("/addresses/:id", async (req, res) => {
+  const email = getAddressEmail(req);
+  const address = cleanAddress(req.body);
+  if (!email || !address.fullName || !address.address || !address.city || !address.postalCode) return res.status(400).json({ error: "Complete address details are required." });
+  try {
+    const existing = await db.addresses.findFirst({ where: { id: req.params.id, userEmail: email } });
+    if (!existing) return res.status(404).json({ error: "Address not found." });
+    if (address.isDefault) await db.addresses.updateMany({ where: { userEmail: email }, data: { isDefault: false } });
+    const saved = await db.addresses.update({ where: { id: existing.id }, data: address });
+    res.json({ success: true, address: saved });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.delete("/addresses/:id", async (req, res) => {
+  const email = getAddressEmail(req);
+  if (!email) return res.status(400).json({ error: "Email is required." });
+  try {
+    const existing = await db.addresses.findFirst({ where: { id: req.params.id, userEmail: email } });
+    if (!existing) return res.status(404).json({ error: "Address not found." });
+    await db.addresses.delete({ where: { id: existing.id } });
+    if (existing.isDefault) {
+      const fallback = await db.addresses.findFirst({ where: { userEmail: email }, orderBy: { updatedAt: "desc" } });
+      if (fallback) await db.addresses.update({ where: { id: fallback.id }, data: { isDefault: true } });
+    }
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // POST /api/auth/admin-login — Admin-only login, checks role=admin
 router.post("/admin-login", async (req, res) => {
   const { email, password } = req.body;
@@ -646,4 +714,4 @@ router.post("/google", async (req, res) => {
   }
 });
 
-export default router;
+export default router;

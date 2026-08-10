@@ -135,8 +135,30 @@ model User {
   vrixPlusJoinedDate String?  @map("vrix_plus_joined_date")
   dateOfBirth        String?  @map("date_of_birth")
   createdAt          DateTime @default(now()) @map("created_at")
+  addresses          Address[]
 
   @@map("users")
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userEmail String   @map("user_email")
+  label     String   @default("Home")
+  fullName  String   @map("full_name")
+  phone     String?
+  address   String
+  apartment String?
+  city      String
+  state     String?
+  postalCode String  @map("postal_code")
+  country   String   @default("IN")
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+
+  @@index([userEmail])
+  @@map("addresses")
 }
 
 model Notification {

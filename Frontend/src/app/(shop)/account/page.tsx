@@ -16,7 +16,11 @@ import {
   fetchProducts,
   getApiBaseUrl,
   fetchUserOrders,
-  getWishlistKey
+  getWishlistKey,
+  fetchSavedAddresses,
+  saveAddress,
+  deleteSavedAddress,
+  SavedAddress
 } from "@/utils/api";
 
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
@@ -105,6 +109,8 @@ export default function UserAccountPage() {
     useSamePhone: true,
   });
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -172,40 +178,11 @@ export default function UserAccountPage() {
     }
   }, [isLoggedIn, user?.email]);
 
-  // Load saved address from localStorage or latest order
+  // Load the persisted address book. The legacy local entry is only used as a one-time display fallback.
   useEffect(() => {
     if (!user?.email) return;
-    try {
-      const saved = localStorage.getItem(`vrix_address_${user.email}`);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setShippingAddress({
-          street: parsed.street || "",
-          city: parsed.city || "",
-          state: parsed.state || "",
-          zip: parsed.zip || "",
-          country: parsed.country || "",
-          phone: parsed.phone || "",
-          useSamePhone: parsed.useSamePhone !== undefined ? parsed.useSamePhone : true,
-        });
-      } else if (userOrders.length > 0) {
-        const latest = userOrders[0];
-        if (latest.address) {
-          setShippingAddress({
-            street: latest.address || "",
-            city: latest.city || "",
-            state: "",
-            zip: latest.postalCode || "",
-            country: "India",
-            phone: user.phone || "",
-            useSamePhone: true,
-          });
-        }
-      }
-    } catch (e) {
-      console.error("Error loading address:", e);
-    }
-  }, [user?.email, userOrders]);
+    fetchSavedAddresses(user.email).then(setSavedAddresses).catch((e) => console.error("Error loading saved addresses:", e));
+  }, [user?.email]);
 
   const totalSpent = userOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
   const rewardPoints = Math.floor(totalSpent * 0.1);
@@ -827,27 +804,41 @@ export default function UserAccountPage() {
                   </div>
                   {!isEditingAddress && (
                     <button
-                      onClick={() => setIsEditingAddress(true)}
+                      onClick={() => { setEditingAddressId(null); setShippingAddress({ street: "", city: "", state: "", zip: "", country: "IN", phone: "", useSamePhone: true }); setIsEditingAddress(true); }}
                       className="font-label-caps text-xs text-deep-navy border border-deep-navy px-4 py-2 hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer"
                     >
-                      EDIT
+                      + ADD ADDRESS
                     </button>
                   )}
                 </header>
 
                 {isEditingAddress ? (
-                  <form onSubmit={(e) => {
+                  <form onSubmit={async (e) => {
                     e.preventDefault();
                     const savedObj = {
                       ...shippingAddress,
                       phone: shippingAddress.useSamePhone ? profile.phone : shippingAddress.phone
                     };
                     setShippingAddress(savedObj);
-                    if (user?.email) {
-                      localStorage.setItem(`vrix_address_${user.email}`, JSON.stringify(savedObj));
-                    }
-                    setIsEditingAddress(false);
-                    triggerFeedback("Shipping address updated successfully.");
+                    if (!user?.email) return;
+                    try {
+                      await saveAddress(user.email, {
+                        label: "Home",
+                        fullName: `${profile.firstName} ${profile.lastName}`.trim() || user.name || "VRIX Member",
+                        phone: savedObj.phone,
+                        address: savedObj.street,
+                        apartment: null,
+                        city: savedObj.city,
+                        state: savedObj.state,
+                        postalCode: savedObj.zip,
+                        country: savedObj.country,
+                        isDefault: savedAddresses.length === 0 || savedAddresses.find((item) => item.id === editingAddressId)?.isDefault || false,
+                      }, editingAddressId || undefined);
+                      setSavedAddresses(await fetchSavedAddresses(user.email));
+                      setIsEditingAddress(false);
+                      setEditingAddressId(null);
+                      triggerFeedback("Address saved successfully.");
+                    } catch (error) { setAuthError(error instanceof Error ? error.message : "Could not save address."); }
                   }} className="space-y-5">
                     {[
                       { label: "Street Address", field: "street" as const, placeholder: "Building, Flat / House No., Street" },
@@ -874,13 +865,12 @@ export default function UserAccountPage() {
                       <button type="button" onClick={() => setIsEditingAddress(false)} className="font-button text-xs uppercase px-8 py-3 border border-slate-grey/30 text-slate-grey hover:text-ink-black cursor-pointer">Cancel</button>
                     </div>
                   </form>
-                ) : (shippingAddress.street || shippingAddress.city) ? (
-                  <div className="bg-soft-linen/30 border border-slate-grey/15 p-6 space-y-3">
-                    <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest block">Primary Shipping Location</span>
-                    <p className="font-body-md text-sm text-deep-navy font-semibold">{profile.firstName} {profile.lastName}</p>
-                    <p className="font-body-md text-xs text-slate-grey">{shippingAddress.street}</p>
-                    <p className="font-body-md text-xs text-slate-grey">{shippingAddress.city}{shippingAddress.state ? `, ${shippingAddress.state}` : ""} {shippingAddress.zip}</p>
-                    <p className="font-body-md text-xs text-slate-grey">{shippingAddress.country}</p>
+                ) : savedAddresses.length > 0 ? (
+                  <div className="grid gap-3">
+                    {savedAddresses.map((item) => <div key={item.id} className="bg-soft-linen/30 border border-slate-grey/15 p-5 flex justify-between gap-4">
+                      <div className="space-y-1"><span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest block">{item.label}{item.isDefault ? " · Default" : ""}</span><p className="font-body-md text-sm text-deep-navy font-semibold">{item.fullName}</p><p className="font-body-md text-xs text-slate-grey">{[item.address, item.apartment, item.city, item.state, item.postalCode, item.country].filter(Boolean).join(", ")}</p><p className="font-body-md text-xs text-slate-grey">{item.phone}</p></div>
+                      <div className="flex flex-col gap-2 text-[10px] uppercase tracking-widest"><button onClick={() => { setEditingAddressId(item.id); setShippingAddress({ street: item.address, city: item.city, state: item.state || "", zip: item.postalCode, country: item.country, phone: item.phone || "", useSamePhone: !item.phone || item.phone === profile.phone }); setIsEditingAddress(true); }} className="text-deep-navy cursor-pointer">Edit</button><button onClick={async () => { if (!user?.email || !confirm("Remove this address?")) return; await deleteSavedAddress(user.email, item.id); setSavedAddresses(await fetchSavedAddresses(user.email)); }} className="text-red-600 cursor-pointer">Remove</button></div>
+                    </div>)}
                   </div>
                 ) : (
                   <div className="bg-soft-linen/20 border border-dashed border-slate-grey/20 p-8 text-center space-y-4">
@@ -894,10 +884,10 @@ export default function UserAccountPage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => setIsEditingAddress(true)}
+                      onClick={() => { setEditingAddressId(null); setIsEditingAddress(true); }}
                       className="font-button text-xs uppercase px-6 py-2.5 bg-deep-navy text-pure-white hover:bg-ink-black transition-colors cursor-pointer"
                     >
-                      + Add Primary Address
+                      + Add Address
                     </button>
                   </div>
                 )}

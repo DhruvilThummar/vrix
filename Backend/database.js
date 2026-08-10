@@ -106,6 +106,7 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "payments" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "order_id" TEXT UNIQUE NOT NULL, "payment_id" TEXT, "signature" TEXT, "amount" DOUBLE PRECISION NOT NULL, "currency" TEXT DEFAULT 'INR', "status" TEXT DEFAULT 'created', "user_email" TEXT, "customer_name" TEXT, "customer_phone" TEXT, "address" TEXT, "city" TEXT, "postal_code" TEXT, "assigned_agent" TEXT);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "verification_otps" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "email" TEXT NOT NULL, "otp" TEXT NOT NULL, "expires_at" TIMESTAMP NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "notifications" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "type" TEXT NOT NULL, "title" TEXT NOT NULL, "message" TEXT NOT NULL, "is_read" BOOLEAN DEFAULT false, "user_email" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "addresses" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "user_email" TEXT NOT NULL REFERENCES "users"("email") ON DELETE CASCADE, "label" TEXT NOT NULL DEFAULT 'Home', "full_name" TEXT NOT NULL, "phone" TEXT, "address" TEXT NOT NULL, "apartment" TEXT, "city" TEXT NOT NULL, "state" TEXT, "postal_code" TEXT NOT NULL, "country" TEXT NOT NULL DEFAULT 'IN', "is_default" BOOLEAN NOT NULL DEFAULT false, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
 
     // Structural migrations for missing columns
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB;').catch(() => { });
@@ -140,6 +141,7 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_payments_order_id" ON "payments" ("order_id");').catch(() => { });
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_created_at" ON "notifications" ("created_at" DESC);').catch(() => { });
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_is_read" ON "notifications" ("is_read");').catch(() => { });
+    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_addresses_user_email" ON "addresses" ("user_email");').catch(() => { });
 
     // Bespoke Atelier tables
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_settings" (
