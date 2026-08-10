@@ -91,7 +91,17 @@ function TypePageContent() {
       if (p.isVisible === false) return false;
       if ((p.stock ?? 999) <= 0) return false;
       const byCollection = (p.collection || "").toLowerCase() === slug;
-      const byType       = (p.type || "").toLowerCase().includes(keyword);
+      
+      const pType = (p.type || "").toLowerCase().trim();
+      let byType = false;
+
+      if (keyword === "ring") {
+        // Special case for 'ring' to exclude 'earring'
+        byType = pType === "ring" || pType === "rings" || (/\bring(s)?\b/i.test(pType) && !pType.includes("earring"));
+      } else {
+        byType = pType.includes(keyword);
+      }
+
       return byCollection || byType;
     });
 
