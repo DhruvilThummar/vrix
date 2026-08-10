@@ -383,7 +383,7 @@ function CollectionContent() {
                             <div className="mt-1.5 md:mt-stack-sm flex flex-col md:flex-row md:justify-between md:items-start pt-1 md:pt-2 gap-0.5">
                               <div className="flex flex-col space-y-0.5 md:space-y-1 min-w-0">
                                 <h2 className="font-body-md text-[11px] md:text-body-md text-on-surface font-medium truncate">{p.title}</h2>
-                                <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">{p.material}</span>
+                                <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">{p.subtitle || p.type}</span>
                               </div>
                               <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">{formatPrice(p.price)}</span>
                             </div>
@@ -726,7 +726,7 @@ function CollectionContent() {
                                   {p.title}
                                 </h2>
                                 <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
-                                  {p.material}
+                                  {p.subtitle || p.type}
                                 </span>
                               </div>
                               <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">
@@ -796,7 +796,7 @@ function CollectionContent() {
                                 {p.title}
                               </h2>
                               <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
-                                {p.material}
+                                {p.subtitle || p.type}
                               </span>
                             </div>
                             <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">

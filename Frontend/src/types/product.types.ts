@@ -31,9 +31,22 @@ export interface GiftNoteOption {
   paperType?: string;
 }
 
+export interface ProductVariant {
+  id: string;
+  material: string;
+  label?: string;
+  price?: number | null;
+  originalPrice?: number | null;
+  stock?: number;
+  image?: string;
+  images?: string[];
+  isAvailable?: boolean;
+}
+
 export interface Product {
   id: string;
   title: string;
+  subtitle?: string | null;
   material?: string | null;
   type: string;
   price: number;
@@ -54,6 +67,7 @@ export interface Product {
   weight?: string | null;
   dimensions?: string | null;
   availableSizes?: string[] | number[] | null;
+  variants?: ProductVariant[] | null;
   comparisonOptions?: ComparisonOption | null;
   tags?: string[] | null;
   whyFits?: string;

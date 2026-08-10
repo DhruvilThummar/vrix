@@ -434,7 +434,7 @@ export default function Home() {
                   <div className="mt-3 flex justify-between items-start">
                     <div className="flex flex-col min-w-0">
                       <h3 className="font-body-md text-sm text-ink-black font-medium truncate">{p.title}</h3>
-                      <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{p.material}</span>
+                      <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{p.subtitle || p.type}</span>
                     </div>
                     <span className="font-body-md text-sm text-ink-black font-semibold">{formatPrice(p.price)}</span>
                   </div>
@@ -487,7 +487,7 @@ export default function Home() {
                   <div className="mt-3 flex justify-between items-start">
                     <div className="flex flex-col min-w-0">
                       <h3 className="font-body-md text-sm text-ink-black font-medium truncate">{p.title}</h3>
-                      <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{p.material}</span>
+                      <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-wider">{p.subtitle || p.type}</span>
                     </div>
                     <span className="font-body-md text-sm text-ink-black font-semibold">{formatPrice(p.price)}</span>
                   </div>

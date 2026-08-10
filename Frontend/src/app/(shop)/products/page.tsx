@@ -480,7 +480,7 @@ function ProductsCatalogContent() {
                             {p.title}
                           </h2>
                           <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
-                            {p.material || p.type}
+                            {p.subtitle || p.type}
                           </span>
                         </div>
                         <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">

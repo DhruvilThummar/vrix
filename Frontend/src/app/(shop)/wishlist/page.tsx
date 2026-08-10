@@ -11,6 +11,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 interface Product {
   id: string;
   title: string;
+  subtitle?: string;
   price: number;
   image: string;
   material: string;
@@ -181,7 +182,7 @@ export default function WishlistPage() {
                 <div className="p-3 md:p-4 flex flex-col flex-grow justify-between space-y-3">
                   <div>
                     <span className="font-label-caps text-[9px] md:text-[10px] text-slate-grey uppercase tracking-widest block truncate">
-                      {item.material || item.type || "Fine Jewelry"}
+                      {item.subtitle || item.type || "Fine Jewelry"}
                     </span>
                     <Link href={`/product/${item.id}`} className="block">
                       <h2 className="font-body-md text-xs md:text-body-md text-ink-black font-medium line-clamp-1 hover:text-deep-navy transition-colors mt-0.5">

@@ -19,6 +19,7 @@ model CmsSetting {
 model Product {
   id                  String   @id
   title               String
+  subtitle            String?
   material            String?
   type                String
   price               Float
@@ -39,6 +40,7 @@ model Product {
   weight              String?
   dimensions          String?
   availableSizes      Json?    @map("available_sizes")
+  variants            Json?
   comparisonOptions   Json?    @map("comparison_options")
   giftOptions         Json?    @map("gift_options")
   tags                Json?

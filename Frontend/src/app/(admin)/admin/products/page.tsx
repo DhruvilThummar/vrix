@@ -23,13 +23,14 @@ const MATERIAL_PRESETS = [
   "Sterling Silver", "Recycled Gold", "Lab-Grown Diamond", "Natural Diamond",
 ];
 const RING_SIZES = ["4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10"];
-const FORM_TABS = ["Core", "Media", "Pricing", "Worth & Comparison", "Gift Options", "Customizations"] as const;
+const FORM_TABS = ["Core", "Variants", "Media", "Pricing", "Worth & Comparison", "Gift Options", "Customizations"] as const;
 type FormTab = typeof FORM_TABS[number];
 
 
 type Product = {
   id: string;
   title: string;
+  subtitle?: string;
   material: string;
   type: string;
   price: number;
@@ -48,11 +49,24 @@ type Product = {
   alt?: string;
   sku?: string;
   availableSizes?: string[];
+  variants?: ProductVariant[];
   weight?: string;
   dimensions?: string;
   comparisonOptions?: { worthIndex: number; hardness: number; shine: number; styleRating: number };
   giftOptions?: { wrappingPrice: number; showCustomBox: boolean; packagingNote: string };
   tags?: string[];
+};
+
+type ProductVariant = {
+  id: string;
+  material: string;
+  label?: string;
+  price?: number | null;
+  originalPrice?: number | null;
+  stock?: number;
+  image?: string;
+  images?: string[];
+  isAvailable?: boolean;
 };
 
 
@@ -131,6 +145,7 @@ function AdminProductsContent() {
 
   // Form fields
   const [fTitle, setFTitle] = useState("");
+  const [fSubtitle, setFSubtitle] = useState("");
   const [fSku, setFSku] = useState("");
   const [fMaterial, setFMaterial] = useState("");
   const [fType, setFType] = useState("Ring");
@@ -156,6 +171,7 @@ function AdminProductsContent() {
   const [fDimensions, setFDimensions] = useState("");
   const [fAvailableSizes, setFAvailableSizes] = useState<string[]>([]);
   const [fTags, setFTags] = useState<string[]>([]);
+  const [fVariants, setFVariants] = useState<ProductVariant[]>([]);
   const [fTagInput, setFTagInput] = useState("");
 
   // Product Comparison & Gift Packaging properties
@@ -209,14 +225,14 @@ function AdminProductsContent() {
   };
 
   const resetForm = () => {
-    setFTitle(""); setFSku(""); setFMaterial(""); setFType("Ring");
+    setFTitle(""); setFSubtitle(""); setFSku(""); setFMaterial(""); setFType("Ring");
     setFPrice(0); setFOriginalPrice(0); setFLayoutStyle("2x2");
     setFImage(""); setFImages([]); setFDescription("");
     setFCollection(""); setFStock(999); setFVisible(true);
     setFVrixPlusExclusive(false); setFVrixPlusPrice(0);
     setFEngravingEnabled(false); setFEngravingLimit(25); setFEngravingPrice(0);
     setFGiftNoteEnabled(false); setFGiftNoteLimit(120); setFGiftNotePrice(0);
-    setFAlt(""); setFWeight(""); setFDimensions(""); setFAvailableSizes([]); setFTags([]);
+    setFAlt(""); setFWeight(""); setFDimensions(""); setFAvailableSizes([]); setFTags([]); setFVariants([]);
     setFWorthIndex(5); setFHardness(5); setFShine(5); setFStyleRating(5);
     setFGiftWrappingPrice(0); setFGiftShowCustomBox(false); setFGiftPackagingNote("");
     setActiveFormTab("Core"); setDeleteConfirm(false);
@@ -225,7 +241,7 @@ function AdminProductsContent() {
   const selectProduct = (p: Product) => {
     setSelectedProduct(p);
     setIsNew(false);
-    setFTitle(p.title || ""); setFSku(p.sku || ""); setFMaterial(p.material || "");
+    setFTitle(p.title || ""); setFSubtitle(p.subtitle || ""); setFSku(p.sku || ""); setFMaterial(p.material || "");
     setFType(p.type || "Ring"); setFPrice(p.price || 0);
     setFOriginalPrice(p.originalPrice || 0);
     setFLayoutStyle(p.layoutStyle === "asymmetric" ? "asymmetric" : "2x2");
@@ -244,6 +260,7 @@ function AdminProductsContent() {
     setFGiftNotePrice(p.giftNoteOptions?.price || 0);
     setFAlt(p.alt || ""); setFWeight(p.weight || ""); setFDimensions(p.dimensions || "");
     setFAvailableSizes(p.availableSizes || []); setFTags(p.tags || []);
+    setFVariants(Array.isArray(p.variants) ? p.variants : []);
     setFWorthIndex(p.comparisonOptions?.worthIndex ?? 5);
     setFHardness(p.comparisonOptions?.hardness ?? 5);
     setFShine(p.comparisonOptions?.shine ?? 5);
@@ -592,7 +609,7 @@ function AdminProductsContent() {
     }
     setSaveLoading(true);
     const prodData = {
-      title: fTitle, sku: fSku || generateSKU(fType, fCollection),
+      title: fTitle, subtitle: fSubtitle, sku: fSku || generateSKU(fType, fCollection),
       material: fMaterial, type: fType,
       price: Number(fPrice),
       originalPrice: fOriginalPrice ? Number(fOriginalPrice) : undefined,
@@ -609,6 +626,7 @@ function AdminProductsContent() {
       alt: fAlt || `A minimalist architectural ${fType} by VRIX from the ${collectionLabels[fCollection] || fCollection} collection.`,
       weight: fWeight, dimensions: fDimensions,
       availableSizes: fAvailableSizes,
+      variants: fVariants,
       tags: fTags,
     };
 
@@ -965,6 +983,13 @@ function AdminProductsContent() {
                         />
                       </div>
 
+                      {/* Subtitle */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Product Subtitle</label>
+                        <input type="text" value={fSubtitle} onChange={(e) => setFSubtitle(e.target.value.slice(0, 120))} placeholder="e.g. A sculptural everyday essential" className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent placeholder:text-slate-grey/40" />
+                        <p className="text-[9px] text-slate-grey/60">Shown on storefront product cards and the product page.</p>
+                      </div>
+
                       {/* PC Image Layout Selector */}
                       <div className="flex flex-col gap-1.5">
                         <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
@@ -1171,6 +1196,26 @@ function AdminProductsContent() {
                   )}
 
                   {/* ── MEDIA TAB ──────────────────────────────────────────── */}
+                  {activeFormTab === "Variants" && (
+                    <div className="space-y-4">
+                      <div className="p-3 border border-deep-navy/15 bg-deep-navy/[0.03] text-xs text-slate-grey leading-relaxed">Each variant can override material, price, stock, and image. Leave price empty to use the product price.</div>
+                      <button type="button" onClick={() => setFVariants((current) => [...current, { id: `variant-${Date.now()}`, material: "", label: "", price: null, stock: 999, image: "", isAvailable: true }])} className="px-3 py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase tracking-wider cursor-pointer">+ Add material variant</button>
+                      {fVariants.length === 0 ? <p className="text-sm text-slate-grey py-8 text-center border border-dashed border-slate-grey/30">No variants yet. This product uses its default material and gallery.</p> : fVariants.map((variant, index) => (
+                        <div key={variant.id} className="border border-slate-grey/20 p-4 space-y-3 bg-pure-white">
+                          <div className="flex justify-between items-center"><span className="font-label-caps text-[10px] text-deep-navy uppercase tracking-widest">Variant {index + 1}</span><button type="button" onClick={() => setFVariants((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="text-[10px] text-red-600 uppercase font-label-caps cursor-pointer">Remove</button></div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <input value={variant.material} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, material: e.target.value } : item))} placeholder="Material *" className="border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
+                            <input value={variant.label || ""} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, label: e.target.value } : item))} placeholder="Display label" className="border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
+                            <input type="number" value={variant.price ?? ""} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, price: e.target.value === "" ? null : Number(e.target.value) } : item))} placeholder="Price (optional)" className="border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
+                            <input type="number" min="0" value={variant.stock ?? 999} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, stock: Number(e.target.value) } : item))} placeholder="Stock" className="border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
+                          </div>
+                          <input value={variant.image || ""} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, image: e.target.value, images: e.target.value ? [e.target.value] : [] } : item))} placeholder="Variant image URL (optional)" className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
+                          <label className="flex items-center gap-2 text-xs text-slate-grey cursor-pointer"><input type="checkbox" checked={variant.isAvailable !== false} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, isAvailable: e.target.checked } : item))} /> Available for purchase</label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {activeFormTab === "Media" && (
                     <div className="space-y-5">
                       {/* URL input */}

@@ -34,6 +34,7 @@ function ProductContent() {
 
   const [products, setProducts] = useState<any[]>([]);
   const [selectedMetal, setSelectedMetal] = useState("18K Gold Vermeil & White Sapphire");
+  const [selectedVariantId, setSelectedVariantId] = useState("");
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [size, setSize] = useState("");
   const [engraving, setEngraving] = useState("");
@@ -58,6 +59,19 @@ function ProductContent() {
     return found || null;
   }, [products, productId, loading]);
 
+  const variants = useMemo(() => Array.isArray(product?.variants)
+    ? product.variants.filter((variant: any) => variant?.material && variant.isAvailable !== false)
+    : [], [product]);
+  const selectedVariant = variants.find((variant: any) => variant.id === selectedVariantId) || variants[0];
+  const activePrice = selectedVariant?.price ?? product?.price ?? 0;
+  const activeOriginalPrice = selectedVariant?.originalPrice ?? product?.originalPrice;
+  const activeStock = selectedVariant?.stock ?? product?.stock ?? 999;
+
+  useEffect(() => {
+    setSelectedVariantId(variants[0]?.id || "");
+    setSelectedMetal(variants[0]?.material || product?.material || "");
+  }, [product?.id, variants]);
+
   useEffect(() => {
     try {
       const key = getWishlistKey(user?.email);
@@ -71,7 +85,7 @@ function ProductContent() {
 
   const galleryImages = useMemo(() => {
     if (!product) return [];
-    const urls = [product.image, ...(Array.isArray(product.images) ? product.images : [])]
+    const urls = [selectedVariant?.image || product.image, ...(Array.isArray(selectedVariant?.images) ? selectedVariant.images : []), ...(Array.isArray(product.images) ? product.images : [])]
       .filter((url): url is string => typeof url === "string")
       .filter(Boolean)
       .filter((url, index, arr) => arr.indexOf(url) === index);
@@ -80,7 +94,7 @@ function ProductContent() {
       src,
       alt: index === 0 ? `Main view of ${product.title}` : `Gallery view ${index + 1} of ${product.title}`,
     }));
-  }, [product]);
+  }, [product, selectedVariant]);
 
   const relatedProducts = useMemo(() => {
     if (!product || products.length <= 1) return [];
@@ -108,7 +122,7 @@ function ProductContent() {
 
   const handleAddToBag = () => {
     if (!product) return;
-    if (Number(product.stock ?? 999) <= 0) {
+    if (Number(activeStock) <= 0) {
       showToast("This piece is currently out of stock. Add it to your wishlist to be notified when it returns.");
       return;
     }
@@ -124,7 +138,7 @@ function ProductContent() {
 
     setBagLoading(true);
     setTimeout(() => {
-      const basePrice = (product.isVrixPlusExclusive && product.vrixPlusPrice) ? product.vrixPlusPrice : product.price;
+      const basePrice = (product.isVrixPlusExclusive && product.vrixPlusPrice) ? product.vrixPlusPrice : activePrice;
 
       let customizationPrice = 0;
       if (engraving && product.engravingOptions?.enabled) customizationPrice += (product.engravingOptions.price || 0);
@@ -134,12 +148,12 @@ function ProductContent() {
         id: product.id,
         title: product.title,
         price: basePrice + customizationPrice,
-        image: product.image,
-        material: selectedMetal || product.material || "18K Gold Vermeil",
+        image: selectedVariant?.image || product.image,
+        material: selectedVariant?.material || selectedMetal || product.material || "18K Gold Vermeil",
         size: finalSize,
         engraving,
         giftNote,
-        stock: Number(product.stock ?? 999),
+        stock: Number(activeStock),
       });
       setBagLoading(false);
       showToast(`✓ "${product.title}" has been successfully added to your bag.`);
@@ -185,7 +199,7 @@ function ProductContent() {
   if (loading) {
     return (
       <div className="relative w-full">
-        <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-section-gap">
+        <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 md:pt-32 lg:pt-36 pb-8 md:pb-section-gap">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter md:gap-[80px]">
             {/* Left Column: Image Gallery Skeletons */}
             <div className="md:col-span-7 flex flex-col gap-4 md:gap-8 relative">
@@ -259,7 +273,7 @@ function ProductContent() {
         </div>
       )}
 
-      <main className="max-w-container-max mx-auto px-4 md:px-8 py-6 md:py-10">
+      <main className="max-w-container-max mx-auto px-4 md:px-8 pt-6 md:pt-32 lg:pt-36 pb-6 md:pb-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
           {/* Left Column: Image Grid (PC Layout: 2x2 or Asymmetric) */}
           <div className="md:col-span-7 relative">
@@ -280,7 +294,7 @@ function ProductContent() {
                   {product.title}
                 </h1>
                 <p className="font-body-md text-slate-grey text-xs uppercase tracking-widest font-label-caps flex items-center gap-2 flex-wrap">
-                  <span>From VRIX {product.type || "Jewelry"} Collection</span>
+                  <span>{product.subtitle || product.type || "Fine Jewelry"}</span>
                   {product.isVrixPlusExclusive && (
                     <span className="bg-amber-100 text-amber-900 border border-amber-300 font-label-caps text-[9px] uppercase tracking-widest px-2 py-0.5 font-bold flex items-center gap-1">
                       <span className="material-symbols-outlined text-[12px]">stars</span>
@@ -295,22 +309,22 @@ function ProductContent() {
                     <>
                       <span className="font-headline-md text-deep-navy text-2xl font-semibold">{formatPrice(product.vrixPlusPrice)}</span>
                       <span className="font-label-caps text-[10px] text-amber-700 uppercase font-bold tracking-wider">Member Price</span>
-                      <span className="font-body-md text-slate-grey/60 line-through text-sm">{formatPrice(product.price)}</span>
+                      <span className="font-body-md text-slate-grey/60 line-through text-sm">{formatPrice(activePrice)}</span>
                     </>
-                  ) : product.originalPrice && product.originalPrice > product.price ? (
+                  ) : activeOriginalPrice && activeOriginalPrice > activePrice ? (
                     <>
-                      <span className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(product.price)}</span>
-                      <span className="font-body-md text-slate-grey/60 line-through text-base">{formatPrice(product.originalPrice)}</span>
+                      <span className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(activePrice)}</span>
+                      <span className="font-body-md text-slate-grey/60 line-through text-base">{formatPrice(activeOriginalPrice)}</span>
                       <span className="bg-emerald-700 text-white font-label-caps text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
-                        {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                        {Math.round(((activeOriginalPrice - activePrice) / activeOriginalPrice) * 100)}% OFF
                       </span>
                     </>
                   ) : (
-                    <p className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(product.price)}</p>
+                    <p className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(activePrice)}</p>
                   )}
                 </div>
-                <p className={`font-label-caps text-[10px] uppercase tracking-widest mt-1 ${Number(product.stock ?? 999) <= 0 ? "text-red-700" : Number(product.stock ?? 999) <= 3 ? "text-amber-700" : "text-emerald-700"}`}>
-                  {Number(product.stock ?? 999) <= 0 ? "Out of stock" : Number(product.stock ?? 999) <= 3 ? `Only ${product.stock} left in stock` : "In stock — ready to ship"}
+                <p className={`font-label-caps text-[10px] uppercase tracking-widest mt-1 ${Number(activeStock) <= 0 ? "text-red-700" : Number(activeStock) <= 3 ? "text-amber-700" : "text-emerald-700"}`}>
+                  {Number(activeStock) <= 0 ? "Out of stock" : Number(activeStock) <= 3 ? `Only ${activeStock} left in stock` : "In stock — ready to ship"}
                 </p>
 
                 {/* Description (hide container spacing if empty) */}
@@ -320,6 +334,19 @@ function ProductContent() {
                   </p>
                 ) : null}
               </div>
+
+              {variants.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <span className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]">Material: {selectedVariant?.label || selectedVariant?.material}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {variants.map((variant: any) => (
+                      <button key={variant.id} type="button" onClick={() => { setSelectedVariantId(variant.id); setSelectedMetal(variant.material); setActiveImageIndex(0); }} className={`border px-3 py-2 text-xs font-label-caps uppercase tracking-wider transition-colors cursor-pointer ${selectedVariant?.id === variant.id ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/30 text-ink-black hover:border-deep-navy"}`}>
+                        {variant.label || variant.material}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Metal / Material Finish Swatches (Only render if defined in Admin) */}
               {((product.availableMetals && product.availableMetals.length > 0) || (product.metals && product.metals.length > 0)) && (
@@ -404,10 +431,10 @@ function ProductContent() {
 
               {/* Add to Bag and Wishlist Actions */}
               <div className="flex flex-row gap-2 mt-0.5 w-full">
-                {Number(product.stock ?? 999) <= 0 && <p className="w-full text-center font-label-caps text-[10px] text-red-700 uppercase tracking-widest py-2 border border-red-200 bg-red-50">Out of stock — save to wishlist for a restock alert</p>}
+                {Number(activeStock) <= 0 && <p className="w-full text-center font-label-caps text-[10px] text-red-700 uppercase tracking-widest py-2 border border-red-200 bg-red-50">Out of stock — save to wishlist for a restock alert</p>}
                 <button
                   onClick={handleAddToBag}
-                  disabled={bagLoading || Number(product.stock ?? 999) <= 0}
+                  disabled={bagLoading || Number(activeStock) <= 0}
                   className="flex-1 bg-deep-navy text-pure-white py-3 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
                 >
                   {bagLoading ? (
@@ -416,7 +443,7 @@ function ProductContent() {
                       <span className="truncate">Adding...</span>
                     </>
                   ) : (
-                    <span className="truncate">{Number(product.stock ?? 999) <= 0 ? "Out of Stock" : "Add to Bag"}</span>
+                    <span className="truncate">{Number(activeStock) <= 0 ? "Out of Stock" : "Add to Bag"}</span>
                   )}
                 </button>
                 <button
@@ -655,7 +682,7 @@ function ProductContent() {
                       {rel.title}
                     </h4>
                     <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">
-                      {rel.material || rel.type}
+                      {rel.subtitle || rel.type}
                     </p>
                     <p className="font-body-md text-xs font-semibold mt-1">
                       {formatPrice(rel.price)}

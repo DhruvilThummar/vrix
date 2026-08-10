@@ -98,7 +98,7 @@ export async function ensureTablesExist() {
   try {
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "users" ("email" TEXT PRIMARY KEY, "name" TEXT, "phone" TEXT, "password" TEXT, "is_vrix_plus_member" BOOLEAN DEFAULT false, "vrix_plus_joined_date" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(e => console.warn("Notice: users table creation issue:", e.message));
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "cms_settings" ("key" TEXT PRIMARY KEY, "value" JSONB NOT NULL, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "original_price" DOUBLE PRECISION, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "sku" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "layout_style" TEXT DEFAULT '2x2', "engraving_options" JSONB, "gift_note_options" JSONB, "weight" TEXT, "dimensions" TEXT, "available_sizes" JSONB, "tags" JSONB, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "subtitle" TEXT, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "original_price" DOUBLE PRECISION, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "sku" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "layout_style" TEXT DEFAULT '2x2', "engraving_options" JSONB, "gift_note_options" JSONB, "weight" TEXT, "dimensions" TEXT, "available_sizes" JSONB, "variants" JSONB, "tags" JSONB, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "journal" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "excerpt" TEXT, "content" TEXT NOT NULL, "image" TEXT NOT NULL, "date" TEXT, "read_time" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "delivery_staff" ("email" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "role" TEXT NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "redeem_codes" ("code" TEXT PRIMARY KEY, "discount" DOUBLE PRECISION NOT NULL, "type" TEXT DEFAULT 'percentage', "is_active" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "description" TEXT, "min_subtotal" DOUBLE PRECISION, "usage_limit" INTEGER, "used_count" INTEGER DEFAULT 0, "expiry_date" TEXT);`).catch(() => { });
@@ -119,10 +119,14 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "weight" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "dimensions" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "available_sizes" JSONB;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "subtitle" TEXT;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "variants" JSONB;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "original_price" DOUBLE PRECISION;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sku" TEXT;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "layout_style" TEXT DEFAULT \'2x2\';').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "tags" JSONB;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "subtitle" TEXT;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "variants" JSONB;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "comparison_options" JSONB;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "gift_options" JSONB;').catch(() => { });
 
@@ -196,6 +200,7 @@ export async function ensureTablesExist() {
 const productSelect = {
   id: true,
   title: true,
+  subtitle: true,
   material: true,
   type: true,
   price: true,
@@ -216,6 +221,7 @@ const productSelect = {
   weight: true,
   dimensions: true,
   availableSizes: true,
+  variants: true,
   comparisonOptions: true,
   giftOptions: true,
   tags: true,
@@ -225,6 +231,7 @@ const productSelect = {
 const productSelectWithoutImages = {
   id: true,
   title: true,
+  subtitle: true,
   material: true,
   type: true,
   price: true,
@@ -252,6 +259,7 @@ const withProductDefaults = (product) => {
     weight: product.weight || "",
     dimensions: product.dimensions || "",
     availableSizes: Array.isArray(product.availableSizes) ? product.availableSizes : [],
+    variants: Array.isArray(product.variants) ? product.variants : [],
     comparisonOptions: product.comparisonOptions || { worthIndex: 5, hardness: 5, shine: 5, styleRating: 5 },
     giftOptions: product.giftOptions || { wrappingPrice: 0, showCustomBox: false, packagingNote: "" },
     tags: Array.isArray(product.tags) ? product.tags : [],

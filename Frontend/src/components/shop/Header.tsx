@@ -901,7 +901,7 @@ export default function Header() {
                         </div>
                         <div className="flex flex-col justify-center">
                           <h5 className="font-label-caps text-xs font-semibold uppercase text-deep-navy leading-none mb-1">{item.title}</h5>
-                          <span className="text-[10px] text-slate-grey uppercase tracking-wider">{item.material} • {item.type}</span>
+                          <span className="text-[10px] text-slate-grey uppercase tracking-wider">{item.subtitle || item.type}</span>
                           <span className="font-body-md text-xs font-semibold mt-1">${item.price}</span>
                         </div>
                       </Link>

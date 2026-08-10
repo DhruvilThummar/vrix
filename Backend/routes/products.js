@@ -19,9 +19,27 @@ const normalizeProductData = (body = {}) => {
   const image = typeof body.image === "string" && body.image.trim()
     ? body.image.trim()
     : images[0] || "";
+  const variants = Array.isArray(body.variants) ? body.variants.map((variant, index) => {
+    const variantImages = Array.isArray(variant?.images)
+      ? variant.images.filter((url) => typeof url === "string" && url.trim()).map((url) => url.trim())
+      : [];
+    const variantImage = typeof variant?.image === "string" && variant.image.trim() ? variant.image.trim() : variantImages[0] || "";
+    return {
+      id: typeof variant?.id === "string" && variant.id.trim() ? variant.id.trim() : `variant-${index + 1}`,
+      material: typeof variant?.material === "string" ? variant.material.trim() : "",
+      label: typeof variant?.label === "string" ? variant.label.trim() : "",
+      price: variant?.price === "" || variant?.price === undefined ? null : Number(variant.price),
+      originalPrice: variant?.originalPrice === "" || variant?.originalPrice === undefined ? null : Number(variant.originalPrice),
+      stock: variant?.stock === undefined || variant?.stock === "" ? 999 : Number(variant.stock),
+      image: variantImage,
+      images: Array.from(new Set([variantImage, ...variantImages].filter(Boolean))),
+      isAvailable: variant?.isAvailable !== false,
+    };
+  }).filter((variant) => variant.material && Number.isFinite(variant.stock) && (variant.price === null || Number.isFinite(variant.price))) : [];
 
   const data = {
     title: typeof body.title === "string" ? body.title.trim() : body.title || "",
+    subtitle: typeof body.subtitle === "string" ? body.subtitle.trim() : "",
     material: typeof body.material === "string" ? body.material.trim() : body.material || "",
     type: typeof body.type === "string" ? body.type.trim() : body.type || "Jewelry",
     price: Number(body.price) || 0,
@@ -40,6 +58,7 @@ const normalizeProductData = (body = {}) => {
     weight: typeof body.weight === "string" ? body.weight.trim() : "",
     dimensions: typeof body.dimensions === "string" ? body.dimensions.trim() : "",
     availableSizes: Array.isArray(body.availableSizes) ? body.availableSizes : [],
+    variants,
     engravingOptions: body.engravingOptions || { enabled: false, limit: 25, price: 0 },
     giftNoteOptions: body.giftNoteOptions || { enabled: false, limit: 150, price: 0 },
     comparisonOptions: body.comparisonOptions || { worthIndex: 5, hardness: 5, shine: 5, styleRating: 5 },
@@ -116,7 +135,10 @@ router.post("/validate-stock", async (req, res) => {
         outOfStockItems.push({ id: item.id, title: item.title, reason: "Product is currently unavailable" });
         continue;
       }
-      const availableStock = product.stock ?? 999;
+      const matchingVariant = Array.isArray(product.variants)
+        ? product.variants.find((variant) => variant?.isAvailable !== false && String(variant?.material || "").toLowerCase() === String(item.material || "").toLowerCase())
+        : null;
+      const availableStock = matchingVariant?.stock ?? product.stock ?? 999;
       if (availableStock < item.quantity) {
         outOfStockItems.push({
           id: item.id,

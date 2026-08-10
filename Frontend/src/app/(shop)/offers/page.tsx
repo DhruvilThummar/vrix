@@ -212,7 +212,7 @@ export default function OffersPage() {
                                   </div>
                                   <div>
                                     <h5 className="font-label-caps text-xs uppercase font-semibold text-deep-navy line-clamp-1">{p.title}</h5>
-                                    <p className="text-[10px] text-slate-grey uppercase">{p.material || p.type}</p>
+                                    <p className="text-[10px] text-slate-grey uppercase">{p.subtitle || p.type}</p>
                                     <div className="flex items-baseline gap-1.5 pt-1">
                                       <span className="font-body-md text-xs font-semibold text-deep-navy">{formatPrice(p.price)}</span>
                                       {origPrice > p.price && (
@@ -288,7 +288,7 @@ export default function OffersPage() {
                             {p.title}
                           </h3>
                           <p className="text-[10px] text-slate-grey uppercase tracking-wider">
-                            {p.material || p.type}
+                            {p.subtitle || p.type}
                           </p>
                           <div className="flex items-baseline gap-2 pt-1">
                             <span className="font-body-md text-sm font-semibold text-deep-navy">

@@ -12,6 +12,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 interface Product {
   id: string;
   title: string;
+  subtitle?: string;
   material: string;
   price: number;
   image: string;
@@ -143,7 +144,7 @@ export default function SearchPage() {
                         {p.title}
                       </h3>
                       <p className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
-                        {p.material}
+                        {p.subtitle || p.type}
                       </p>
                     </div>
                     <span className="font-body-md text-body-md text-ink-black font-semibold">
