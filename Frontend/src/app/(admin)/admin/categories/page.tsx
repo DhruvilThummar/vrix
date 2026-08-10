@@ -13,14 +13,11 @@ interface Category {
   isVisible?: boolean;
 }
 
-const DEFAULT_LINK_SUGGESTIONS = [
-  "/products?type=necklace",
-  "/products?type=earrings",
-  "/products?type=bracelet",
-  "/products?type=rings",
-  "/products?type=charms",
-  "/collections/silent-center",
-];
+const slugify = (value: string) => value
+  .toLowerCase()
+  .trim()
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/(^-|-$)/g, "");
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -37,7 +34,6 @@ export default function AdminCategoriesPage() {
   const [fTitle, setFTitle] = useState("");
   const [fTagline, setFTagline] = useState("");
   const [fImage, setFImage] = useState("");
-  const [fLink, setFLink] = useState("/products?type=necklace");
   const [fVisible, setFVisible] = useState(true);
 
   const showToast = (msg: string, type: "ok" | "err" = "ok") => {
@@ -68,7 +64,6 @@ export default function AdminCategoriesPage() {
     setFTitle(c.title);
     setFTagline(c.tagline || "");
     setFImage(c.image);
-    setFLink(c.link);
     setFVisible(c.isVisible !== false);
   };
 
@@ -79,7 +74,6 @@ export default function AdminCategoriesPage() {
     setFTitle("");
     setFTagline("");
     setFImage("");
-    setFLink("/products?type=necklace");
     setFVisible(true);
   };
 
@@ -118,13 +112,22 @@ export default function AdminCategoriesPage() {
       showToast("Title and image are required.", "err");
       return;
     }
-    const id = fId.trim() || fTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const id = slugify(fId || fTitle);
+    if (!id) {
+      showToast("Enter a valid title or URL slug.", "err");
+      return;
+    }
+    if (categories.some((c) => c.id === id && c.id !== selected?.id)) {
+      showToast("This URL slug already belongs to another category.", "err");
+      return;
+    }
     const updated: Category = {
       id,
       title: fTitle,
       tagline: fTagline,
       image: fImage,
-      link: fLink,
+      // URL and product assignment always use the category slug.
+      link: `/collections/${id}`,
       isVisible: fVisible,
     };
     let newList: Category[];
@@ -370,8 +373,10 @@ export default function AdminCategoriesPage() {
                         value={fId}
                         onChange={(e) => setFId(e.target.value)}
                         placeholder="necklaces"
-                        className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-slate-grey bg-transparent"
+                        readOnly={!isNew}
+                        className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-slate-grey bg-transparent read-only:opacity-60"
                       />
+                      {!isNew && <p className="text-[9px] text-slate-grey">Slug is locked after creation so products remain assigned to this category.</p>}
                     </div>
                   </div>
 
@@ -389,31 +394,18 @@ export default function AdminCategoriesPage() {
                     />
                   </div>
 
-                  {/* Link */}
+                  {/* Storefront URL */}
                   <div className="flex flex-col gap-1.5">
                     <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">
-                      Destination Link
+                      Storefront URL
                     </label>
                     <input
                       type="text"
-                      value={fLink}
-                      onChange={(e) => setFLink(e.target.value)}
-                      placeholder="/products?type=necklace"
-                      className="border-b border-slate-grey/30 py-1.5 focus:border-deep-navy outline-none font-body-md text-sm text-ink-black bg-transparent"
+                      value={`/collections/${slugify(fId || fTitle)}`}
+                      readOnly
+                      className="border-b border-slate-grey/30 py-1.5 outline-none font-body-md text-sm text-slate-grey bg-transparent"
                     />
-                    {/* Quick-fill suggestions */}
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {DEFAULT_LINK_SUGGESTIONS.map((l) => (
-                        <button
-                          key={l}
-                          type="button"
-                          onClick={() => setFLink(l)}
-                          className="text-[9px] font-label-caps px-2 py-0.5 border border-slate-grey/25 text-slate-grey hover:border-deep-navy hover:text-deep-navy cursor-pointer transition-colors"
-                        >
-                          {l}
-                        </button>
-                      ))}
-                    </div>
+                    <p className="text-[10px] text-slate-grey">Generated automatically from the URL slug. Assign this category to products in Product Manager.</p>
                   </div>
 
                   {/* Image */}

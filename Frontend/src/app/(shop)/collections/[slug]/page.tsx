@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, Suspense, useEffect } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { fetchCollections, fetchProducts, getWishlistKey } from "@/utils/api";
+import { fetchCategories, fetchCollections, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -28,6 +28,7 @@ function CollectionContent() {
 
   const [products, setProducts] = useState(DEFAULT_PRODUCTS);
   const [collections, setCollections] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [selectedMaterial, setSelectedMaterial] = useState(() => getParam("material", "All"));
   const [selectedType, setSelectedType] = useState(() => getParam("type", "All"));
   const [sortBy, setSortBy] = useState(() => getParam("sort", "Curated"));
@@ -101,12 +102,39 @@ function CollectionContent() {
       })
       .catch((err) => console.error("Error fetching collections from backend:", err));
 
-    Promise.allSettled([pFetch, cFetch]).finally(() => {
+    const categoryFetch = fetchCategories()
+      .then((res) => {
+        if (Array.isArray(res)) setCategories(res);
+      })
+      .catch((err) => console.error("Error fetching categories from backend:", err));
+
+    Promise.allSettled([pFetch, cFetch, categoryFetch]).finally(() => {
       setLoading(false);
     });
   }, []);
 
   const collectionInfo = useMemo(() => {
+    // Categories are storefront-managed in Admin > Categories. Their ID is the
+    // canonical URL slug and product category value, so a new category needs no
+    // new route or frontend deployment.
+    const selectedCategory = categories.find((category) => category.id === collectionQuery);
+    if (selectedCategory) {
+      return {
+        title: selectedCategory.title,
+        description: selectedCategory.description || selectedCategory.tagline || "",
+        tagline: selectedCategory.tagline || "",
+        image: selectedCategory.image || "",
+        bannerImage: selectedCategory.bannerImage || selectedCategory.image || "",
+        customHeadline: selectedCategory.customHeadline || "",
+        customParagraph: selectedCategory.customParagraph || "",
+        showProductCarousel: !!selectedCategory.showProductCarousel,
+        carouselAutoplay: !!selectedCategory.carouselAutoplay,
+        carouselSpeed: selectedCategory.carouselSpeed || 3000,
+        layoutStyle: selectedCategory.layoutStyle || "classic",
+        sections: selectedCategory.sections || [],
+        isCategory: true,
+      };
+    }
     const selectedCollection = collections.find((collection) => collection.id === (collectionQuery || "silent-center"));
     if (selectedCollection) {
       return {
@@ -155,7 +183,7 @@ function CollectionContent() {
           layoutStyle: "classic" as const,
         };
     }
-  }, [collectionQuery, collections]);
+  }, [collectionQuery, collections, categories]);
 
 
 
@@ -208,7 +236,9 @@ function CollectionContent() {
     let result = products.filter((p) => (
       p.isVisible !== false &&
       (p.stock ?? 999) > 0 &&
-      (p.collection || "silent-center") === activeCollection
+      // Admin Product Manager stores the selected category slug in `collection`.
+      // This exact comparison prevents products from unrelated categories showing up.
+      (p.collection || "") === activeCollection
     ));
 
     // Filter by Material

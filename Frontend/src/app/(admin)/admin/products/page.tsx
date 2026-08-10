@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   fetchProducts, createProduct, updateProduct, deleteProduct, uploadMediaMultiple,
-  updateProductStock, updateProductVisibility, fetchAllCollections,
+  updateProductStock, updateProductVisibility, fetchAllCollections, fetchAllCategories,
   fetchSiteConfig, saveSiteConfigKey
 } from "@/utils/api";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -202,19 +202,21 @@ function AdminProductsContent() {
   };
 
   const loadCollections = () => {
-    fetchAllCollections()
-      .then((collections) => {
-        if (collections.length === 0) return;
-        const ids = collections.map((c: any) => String(c.id || "").trim()).filter(Boolean);
-        const labels = collections.reduce((acc: Record<string, string>, c: any) => {
-          const id = String(c.id || "").trim();
-          if (id) acc[id] = c.title || id;
+    // Categories are the primary product grouping. Keep existing collections in
+    // the picker as well so historical products remain editable.
+    Promise.all([fetchAllCollections(), fetchAllCategories()])
+      .then(([collections, categories]) => {
+        const entries = [...(Array.isArray(collections) ? collections : []), ...(Array.isArray(categories) ? categories : [])];
+        const ids = entries.map((entry: any) => String(entry.id || "").trim()).filter(Boolean);
+        const labels = entries.reduce((acc: Record<string, string>, entry: any) => {
+          const id = String(entry.id || "").trim();
+          if (id) acc[id] = entry.title || id;
           return acc;
         }, {});
         setCollectionOptions(Array.from(new Set([...DEFAULT_COLLECTIONS, ...ids])));
         setCollectionLabels({ ...DEFAULT_COLLECTION_LABELS, ...labels });
       })
-      .catch(() => showToast("Error loading collections.", "err"));
+      .catch(() => showToast("Error loading categories.", "err"));
   };
 
   const normalizeImages = (image: string, images?: string[]) => {
@@ -1070,10 +1072,10 @@ function AdminProductsContent() {
                         <div className="flex flex-col gap-1.5">
                           <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
                             <span className="material-symbols-outlined text-[12px]">folder</span>
-                            Collection
+                            Category
                           </label>
                           <select value={fCollection} onChange={(e) => setFCollection(e.target.value)} className="border-b border-slate-grey/30 py-1.5 bg-transparent focus:border-deep-navy outline-none font-body-md text-sm cursor-pointer">
-                            <option value="">No Collection</option>
+                            <option value="">No Category</option>
                             {collectionOptions.map((c) => <option key={c} value={c}>{collectionLabels[c] || c}</option>)}
                           </select>
                         </div>

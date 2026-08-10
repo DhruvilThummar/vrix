@@ -11,7 +11,7 @@ const DEFAULT_CATEGORIES = [
     title: "Necklace",
     image:
       "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/z7ekw55bkfo527ivhzme.png",
-    link: "/collections/silent-center?type=necklace",
+    link: "/collections/necklace",
     isVisible: true,
   },
   {
@@ -19,7 +19,7 @@ const DEFAULT_CATEGORIES = [
     title: "Earrings",
     image:
       "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/apetikskyjypxmrcvdwe.png",
-    link: "/collections/silent-center?type=earrings",
+    link: "/collections/earrings",
     isVisible: true,
   },
   {
@@ -27,7 +27,7 @@ const DEFAULT_CATEGORIES = [
     title: "Bracelets",
     image:
       "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/cksu4mgtvw5iowjpe2h8.png",
-    link: "/collections/silent-center?type=bracelet",
+    link: "/collections/bracelets",
     isVisible: true,
   },
   {
@@ -35,7 +35,7 @@ const DEFAULT_CATEGORIES = [
     title: "Rings",
     image:
       "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734523/vrix/i3fkvzr4zlvqbnhzjixd.png",
-    link: "/collections/silent-center?type=rings",
+    link: "/collections/rings",
     isVisible: true,
   },
   {
@@ -43,7 +43,7 @@ const DEFAULT_CATEGORIES = [
     title: "Charms",
     image:
       "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734523/vrix/i0mfwsxjrxpdkdti4sp7.png",
-    link: "/collections/silent-center?type=charms",
+    link: "/collections/charms",
     isVisible: true,
   },
 ];
@@ -97,7 +97,7 @@ export default function CategoriesPage() {
             {categories.map((cat, idx) => (
               <Link
                 key={cat.id || idx}
-                href={cat.link || `/products?type=${cat.id}`}
+                href={`/collections/${encodeURIComponent(cat.id)}`}
                 className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block shadow-sm hover:shadow-md transition-shadow duration-500"
               >
                 {/* Image */}
