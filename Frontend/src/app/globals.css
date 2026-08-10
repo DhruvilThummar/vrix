@@ -11,7 +11,7 @@
   --header-muted: #6B7A99;
   --header-accent: #050575;
   --header-border: #F3F2F0;
-  --header-menu-background: #ffffff;
+  --header-menu-background: rgb(255 255 255 / 0.88);
   --header-menu-foreground: #000000;
   --header-font: var(--font-inter), sans-serif;
 }
@@ -111,8 +111,7 @@
   letter-spacing: 0.1em;
 }
 
-/* Desktop shop navigation. The dropdown is deliberately opaque so underlying
-   page content never appears through it. */
+/* Desktop shop navigation. The hover dropdown uses a readable glass surface. */
 .shop-desktop-header {
   background-color: var(--header-background);
   color: var(--header-foreground);
@@ -166,6 +165,10 @@
   color: var(--header-menu-foreground);
   background-color: var(--header-menu-background);
   border-color: var(--header-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom-left-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
 }
 
 .shop-shell {
