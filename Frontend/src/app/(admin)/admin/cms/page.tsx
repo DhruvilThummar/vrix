@@ -1805,51 +1805,48 @@ export default function AdminCMSPage() {
 
                 {/* Razorpay */}
                 <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-                    <h3 className="font-headline-md text-lg text-deep-navy uppercase">
-                      Razorpay Payment Gateway
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="razorpay-enabled"
-                        checked={razorpayEnabled}
-                        onChange={(e) => setRazorpayEnabled(e.target.checked)}
-                        className="w-4 h-4 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer"
-                      />
-                      <label htmlFor="razorpay-enabled" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest cursor-pointer">
-                        Enable
-                      </label>
+                  <div className="flex justify-between items-center border-b border-slate-grey/15 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${razorpayEnabled ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" : "bg-slate-grey/40"}`} />
+                      <div>
+                        <h3 className="font-headline-md text-lg text-deep-navy uppercase flex items-center gap-2">
+                          Razorpay Payment Gateway
+                          <span className={`text-[10px] font-label-caps uppercase px-2 py-0.5 rounded font-bold border ${razorpayEnabled ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-slate-100 text-slate-600 border-slate-300"}`}>
+                            {razorpayEnabled ? "LIVE ON STORE" : "OFF / DISABLED"}
+                          </span>
+                        </h3>
+                        <p className="text-xs text-slate-grey font-body-md mt-0.5">
+                          Toggle online Razorpay payments for customer checkouts.
+                        </p>
+                      </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setRazorpayEnabled(!razorpayEnabled)}
+                      className={`relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${razorpayEnabled ? "bg-emerald-600" : "bg-slate-300"}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${razorpayEnabled ? "translate-x-6" : "translate-x-0"}`} />
+                    </button>
                   </div>
-                  <p className="text-xs text-slate-grey font-body-md -mt-4">
-                    Enable or disable Razorpay payments across the store. When toggled OFF, Razorpay will be completely hidden from customer checkout options.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Razorpay Key ID</label>
-                      <input
-                        type="text"
-                        value={razorpayKeyId}
-                        onChange={(e) => setRazorpayKeyId(e.target.value)}
-                        disabled={!razorpayEnabled}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50"
-                        placeholder="rzp_test_..."
-                      />
+
+                  <div className={`p-4 border rounded space-y-2 transition-colors ${razorpayEnabled ? "bg-emerald-50/40 border-emerald-200 text-emerald-900" : "bg-slate-50 border-slate-200 text-slate-700"}`}>
+                    <div className="flex items-center gap-2 font-label-caps text-xs uppercase font-bold tracking-wider">
+                      <span className="material-symbols-outlined text-base">
+                        {razorpayEnabled ? "check_circle" : "do_not_disturb_on"}
+                      </span>
+                      <span>
+                        {razorpayEnabled ? "Razorpay Payment Method is Active" : "Razorpay Payment Method is Turned Off"}
+                      </span>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Razorpay Key Secret</label>
-                      <input
-                        type="password"
-                        value={razorpayKeySecret}
-                        onChange={(e) => setRazorpayKeySecret(e.target.value)}
-                        disabled={!razorpayEnabled}
-                        className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black disabled:opacity-50"
-                        placeholder="••••••••••••••••"
-                      />
-                    </div>
+                    <p className="text-xs font-body-md leading-relaxed opacity-90">
+                      {razorpayEnabled
+                        ? "Customers will see Razorpay at checkout and can pay via UPI, Credit/Debit Cards, Net Banking, and Wallets. Credentials are securely loaded from system settings."
+                        : "Razorpay is currently OFF. Online payment options will be completely hidden from customer checkout pages."}
+                    </p>
                   </div>
                 </section>
+
 
                 {/* SMTP Nodemailer */}
                 <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
