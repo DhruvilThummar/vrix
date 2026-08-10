@@ -256,6 +256,12 @@
 .shop-typography .font-chancery,
 .shop-typography .font-highlight { font-family: var(--typography-highlight); }
 
+/* A semantic heading always uses the Primary font, even if an older component
+   also carries a body utility class. Highlight headings remain intentional. */
+.shop-typography :is(h1, h2, h3, h4, h5, h6):not(.font-accent):not(.font-chancery):not(.font-highlight) {
+  font-family: var(--typography-primary) !important;
+}
+
 .text-display-lg {
   font-size: 48px;
   line-height: 1.1;
