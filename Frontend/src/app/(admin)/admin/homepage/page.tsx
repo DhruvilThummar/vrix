@@ -267,45 +267,6 @@ export default function AdminHomepageLayoutPage() {
           </div>
         </div>
 
-        {/* Hero Settings Section */}
-        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
-          <h3 className="font-headline-md text-lg text-deep-navy uppercase border-b border-slate-grey/15 pb-2">
-            Homepage Hero Banner Settings
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Subtitle</label>
-              <input
-                type="text"
-                value={heroSubtitle}
-                onChange={(e) => setHeroSubtitle(e.target.value)}
-                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black bg-transparent"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Title</label>
-              <input
-                type="text"
-                value={heroTitle}
-                onChange={(e) => setHeroTitle(e.target.value)}
-                className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black bg-transparent"
-                required
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-2 pt-2">
-            <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">Hero Image URL</label>
-            <input
-              type="url"
-              value={heroImage}
-              onChange={(e) => setHeroImage(e.target.value)}
-              className="border-b border-slate-grey/30 py-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
-              required
-            />
-            <VisualImagePreview src={heroImage} alt="Hero banner preview" />
-          </div>
-        </section>
-
         {/* Hero Carousel Slides Manager */}
         <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
           <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
@@ -503,7 +464,7 @@ export default function AdminHomepageLayoutPage() {
               </h3>
               <p className="text-xs text-slate-grey">Featured collections appearing directly below the Hero banner.</p>
             </div>
-            
+
             <select
               onChange={(e) => {
                 const val = e.target.value;
