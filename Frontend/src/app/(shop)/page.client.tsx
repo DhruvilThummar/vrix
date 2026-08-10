@@ -127,7 +127,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
     const ids = store.homepage.featuredCollections || [];
     if (ids.length === 0) return [];
     return ids
-      .map((id: string) => store.collections.find((c: any) => c.id === id))
+      .map((id: string) => store.collections.find((c: any) => String(c.id) === String(id)))
       .filter(Boolean);
   }, [store.homepage.featuredCollections, store.collections]);
 
@@ -135,7 +135,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
     const ids = store.homepage.newArrivals || [];
     if (ids.length === 0) return [];
     return ids
-      .map((id: string) => allProducts.find((p: any) => p.id === id))
+      .map((id: string) => allProducts.find((p: any) => String(p.id) === String(id)))
       .filter(Boolean);
   }, [store.homepage.newArrivals, allProducts]);
 
@@ -143,7 +143,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
     const ids = store.homepage.featuredProducts || [];
     if (ids.length === 0) return [];
     return ids
-      .map((id: string) => allProducts.find((p: any) => p.id === id))
+      .map((id: string) => allProducts.find((p: any) => String(p.id) === String(id)))
       .filter(Boolean);
   }, [store.homepage.featuredProducts, allProducts]);
 
