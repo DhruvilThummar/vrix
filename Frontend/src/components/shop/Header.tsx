@@ -45,24 +45,11 @@ export default function Header() {
   const [collections, setCollections] = useState<any[]>([]);
   const [allProducts, setAllProducts] = useState<any[]>([]);
 
-  // Derived style states for transparent vs solid header
-  const isTransparent = !scrolled;
-  const isHome = isHomePage;
-
-  const headerBg = isTransparent
-    ? `bg-transparent ${isHome ? "text-pure-white" : "text-ink-black"} border-transparent shadow-none`
-    : "bg-pure-white text-ink-black border-soft-linen shadow-sm";
-  const iconColor = isTransparent
-    ? (isHome ? "text-pure-white hover:text-pure-white/80" : "text-ink-black hover:text-ink-black/80")
-    : "hover:text-deep-navy";
-  const navLinkColor = isTransparent
-    ? (isHome ? "text-pure-white/90 hover:text-pure-white" : "text-ink-black/90 hover:text-ink-black")
-    : "text-ink-black/70 hover:text-ink-black";
-  const navLinkActiveColor = isTransparent
-    ? (isHome ? "text-pure-white font-semibold border-pure-white" : "text-ink-black border-ink-black font-semibold")
-    : "text-ink-black border-ink-black font-semibold";
+  // Transparent styling is intentionally desktop/home-only. All other pages get
+  // an opaque header so page content cannot show through the navigation.
+  const isTransparent = isHomePage && !scrolled;
   const displayLogo = isTransparent
-    ? (isHome ? "/logos/white.png" : (logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl))
+    ? "/logos/white.png"
     : (logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl);
 
   // Announcement Bar State
@@ -266,14 +253,14 @@ export default function Header() {
       )}
 
       {/* ─── DESKTOP NAVIGATION ─── */}
-      <header className={`hidden md:block fixed ${announcementBar?.isEnabled ? "top-8" : "top-0"} left-0 right-0 z-40 border-b transition-all duration-500 ease-out ${headerBg}`}>
+      <header className={`shop-desktop-header hidden md:block fixed ${announcementBar?.isEnabled ? "top-8" : "top-0"} left-0 right-0 z-40 transition-all duration-500 ease-out ${isTransparent ? "shop-desktop-header--transparent" : ""}`}>
         {/* Brand Banner Row */}
         <div className="w-full max-w-container-max mx-auto px-margin-desktop py-4 grid grid-cols-3 items-center">
           {/* Left space */}
-          <div className={`flex justify-start text-xs font-label-caps ${isTransparent ? 'text-pure-white/70' : 'text-slate-grey'}`}>
+          <div className="header-member-info flex justify-start text-xs font-label-caps">
             {isLoggedIn && user?.isVrixPlusMember && (
-              <Link href="/vrix-plus" className={`flex items-center gap-1.5 font-semibold hover:opacity-85 transition-opacity ${isTransparent ? 'text-pure-white' : 'text-deep-navy'}`}>
-                <span className={`material-symbols-outlined text-[15px] font-bold animate-pulse ${isTransparent ? 'text-pure-white' : 'text-deep-navy'}`}>stars</span>
+              <Link href="/vrix-plus" className="header-member-link flex items-center gap-1.5 font-semibold hover:opacity-85 transition-opacity">
+                <span className="material-symbols-outlined text-[15px] font-bold animate-pulse">stars</span>
                 VRIX+ ACTIVE MEMBER
               </Link>
             )}
@@ -294,7 +281,7 @@ export default function Header() {
                   />
                 </div>
               ) : (
-                <span className={`font-display-lg text-3xl font-light tracking-[0.25em] uppercase select-none hover:opacity-80 transition-opacity ${isTransparent ? 'text-pure-white' : 'text-ink-black'}`}>
+                <span className="header-brand-text font-display-lg text-3xl font-light tracking-[0.25em] uppercase select-none hover:opacity-80 transition-opacity">
                   {brandName}
                 </span>
               )}
@@ -306,8 +293,7 @@ export default function Header() {
             <select
               value={currency}
               onChange={(e) => changeCurrency(e.target.value as any)}
-              className={`bg-transparent text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2 ${isTransparent ? (isHome ? 'text-pure-white bg-[#000]' : 'text-ink-black') : 'text-ink-black'
-                }`}
+              className="header-currency text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2"
             >
               <option value="INR" style={{ color: "#000" }}>INR (₹)</option>
               <option value="USD" style={{ color: "#000" }}>USD ($)</option>
@@ -315,38 +301,38 @@ export default function Header() {
             </select>
             <button
               onClick={() => setIsSearchOpen(true)}
-              className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center ${iconColor}`}
+              className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center"
               aria-label="Search Catalog"
             >
               <i className="fa-solid fa-magnifying-glass text-[18px]"></i>
             </button>
             <button
               onClick={() => setIsWishlistOpen(true)}
-              className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative ${iconColor}`}
+              className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
               aria-label="View Wishlist"
             >
               <i className="fa-regular fa-heart text-[19px]"></i>
               {wishlist.length > 0 && (
-                <span className={`absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isTransparent ? 'bg-pure-white text-ink-black' : 'bg-black text-white'}`}>
+                <span className="header-count absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                   {wishlist.length}
                 </span>
               )}
             </button>
             <button
               onClick={() => setIsAuthOpen(true)}
-              className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center ${iconColor}`}
+              className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center"
               aria-label="User Account"
             >
               <i className="fa-regular fa-user text-[19px]"></i>
             </button>
             <button
               onClick={() => setIsCartOpen(true)}
-              className={`p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative ${iconColor}`}
+              className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
               aria-label="Open Shopping Bag"
             >
               <i className="fa-solid fa-bag-shopping text-[19px]"></i>
               {totalItems > 0 && (
-                <span className={`absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm ${isTransparent ? 'bg-pure-white text-ink-black' : 'bg-black text-white'}`}>
+                <span className="header-count absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                   {totalItems}
                 </span>
               )}
@@ -356,7 +342,7 @@ export default function Header() {
 
         {/* Links Navigation Row */}
         <div
-          className={`w-full border-t py-3 transition-all duration-500 relative ${isTransparent ? 'border-pure-white/15 bg-transparent' : 'border-soft-linen bg-pure-white'}`}
+          className="header-nav-row w-full py-3 transition-all duration-500 relative"
           onMouseLeave={() => setActiveMegaMenu(null)}
         >
           <nav className="flex justify-center gap-8 items-center max-w-container-max mx-auto px-margin-desktop">
@@ -372,10 +358,7 @@ export default function Header() {
                 >
                   <Link
                     href={link.path}
-                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link ${isActive(link.path)
-                        ? navLinkActiveColor
-                        : `${navLinkColor}`
-                      }`}
+                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link ${isActive(link.path) ? "header-nav-link--active" : ""}`}
                   >
                     {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
                   </Link>
@@ -387,7 +370,7 @@ export default function Header() {
           {/* Premium Glassmorphic Mega Menu */}
           {activeMegaMenu && (
             <div
-              className="absolute top-full left-0 right-0 bg-pure-white/80 backdrop-blur-md border-b border-soft-linen shadow-lg animate-fade-in z-30"
+              className="header-mega-menu absolute top-full left-0 right-0 border-b shadow-lg animate-fade-in z-50"
               onMouseEnter={() => setActiveMegaMenu(activeMegaMenu)}
               onMouseLeave={() => setActiveMegaMenu(null)}
             >

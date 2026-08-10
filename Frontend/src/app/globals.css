@@ -4,6 +4,16 @@
 :root {
   --spacing-section-gap-val: 50px;
   --spacing-product-gap-val: 20px;
+
+  /* Shop header tokens */
+  --header-background: #ffffff;
+  --header-foreground: #000000;
+  --header-muted: #6B7A99;
+  --header-accent: #050575;
+  --header-border: #F3F2F0;
+  --header-menu-background: #ffffff;
+  --header-menu-foreground: #000000;
+  --header-font: var(--font-inter), sans-serif;
 }
 
 @media (min-width: 1024px) {
@@ -99,6 +109,63 @@
   font-family: var(--font-inter), sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+
+/* Desktop shop navigation. The dropdown is deliberately opaque so underlying
+   page content never appears through it. */
+.shop-desktop-header {
+  background-color: var(--header-background);
+  color: var(--header-foreground);
+  border-bottom: 1px solid var(--header-border);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  font-family: var(--header-font);
+}
+
+.shop-desktop-header--transparent {
+  --header-background: transparent;
+  --header-foreground: #ffffff;
+  --header-muted: rgb(255 255 255 / 0.7);
+  --header-accent: #ffffff;
+  --header-border: rgb(255 255 255 / 0.15);
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.header-member-info { color: var(--header-muted); }
+.header-member-link,
+.header-member-link .material-symbols-outlined,
+.header-brand-text,
+.header-action { color: var(--header-foreground); }
+.header-action:hover { color: var(--header-accent); }
+.header-currency {
+  color: var(--header-foreground);
+  background-color: transparent;
+  font-family: var(--header-font);
+}
+.header-count {
+  color: var(--header-menu-foreground);
+  background-color: var(--header-menu-background);
+}
+.shop-desktop-header:not(.shop-desktop-header--transparent) .header-count {
+  color: #ffffff;
+  background-color: #000000;
+}
+.header-nav-row { border-top: 1px solid var(--header-border); }
+.header-nav-link {
+  color: color-mix(in srgb, var(--header-foreground) 75%, transparent);
+  border-bottom: 1px solid transparent;
+  font-family: var(--header-font);
+}
+.header-nav-link:hover { color: var(--header-foreground); }
+.header-nav-link--active {
+  color: var(--header-foreground);
+  border-bottom-color: var(--header-foreground);
+  font-weight: 600;
+}
+.header-mega-menu {
+  color: var(--header-menu-foreground);
+  background-color: var(--header-menu-background);
+  border-color: var(--header-border);
 }
 
 .shop-shell {
