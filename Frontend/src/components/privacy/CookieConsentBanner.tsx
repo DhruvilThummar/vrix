@@ -146,39 +146,42 @@ export default function CookieConsentBanner() {
     <>
       {/* ── Floating Banner Component ── */}
       {isOpen && !showPreferencesModal && (
-        <div className="fixed bottom-0 inset-x-0 z-50 p-4 md:p-6 bg-pure-white/95 backdrop-blur-md border-t border-slate-grey/20 shadow-2xl transition-all font-body-md">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-sm text-ink-black">
-            <div className="space-y-1 max-w-3xl">
-              <h3 className="font-headline-md text-sm font-semibold uppercase tracking-widest text-deep-navy">
-                Privacy &amp; Data Preferences
+        <div className="fixed bottom-4 right-4 left-4 md:left-auto md:max-w-md z-50 p-6 bg-pure-white/90 backdrop-blur-md border border-slate-grey/15 shadow-[0_20px_50px_rgba(0,0,0,0.12)] transition-all duration-300 font-body-md animate-fade-in-up">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="font-headline-md text-xs font-bold uppercase tracking-[0.2em] text-deep-navy flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold-accent"></span>
+                Privacy Preferences
               </h3>
               <p className="text-xs text-slate-grey leading-relaxed">
-                We use cookies to enhance browsing, analyze traffic, and deliver personalized recommendations. Under GDPR, CCPA, and India DPDP Act, you control your choices.
+                We use cookies to optimize your experience, analyze traffic, and display personalized announcements. Choose your level of privacy.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handleRejectNonEssential}
-                className="px-4 py-2.5 border border-slate-grey/30 hover:border-ink-black text-ink-black text-[11px] font-button uppercase tracking-widest transition-colors cursor-pointer"
-              >
-                Reject Non-Essential
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowPreferencesModal(true)}
-                className="px-4 py-2.5 border border-slate-grey/30 hover:border-ink-black text-ink-black text-[11px] font-button uppercase tracking-widest transition-colors cursor-pointer"
-              >
-                Manage Preferences
-              </button>
+            <div className="flex flex-col gap-2 pt-2">
               <button
                 type="button"
                 onClick={handleAcceptAll}
-                className="px-5 py-2.5 bg-deep-navy text-pure-white text-[11px] font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer"
+                className="w-full px-5 py-2.5 bg-deep-navy text-pure-white text-[10px] font-button uppercase tracking-widest hover:bg-ink-black hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 cursor-pointer"
               >
                 Accept All
               </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPreferencesModal(true)}
+                  className="px-3 py-2 border border-slate-grey/20 hover:border-ink-black text-ink-black text-[10px] font-button uppercase tracking-widest transition-colors cursor-pointer text-center"
+                >
+                  Manage
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRejectNonEssential}
+                  className="px-3 py-2 border border-slate-grey/20 hover:border-ink-black text-ink-black text-[10px] font-button uppercase tracking-widest transition-colors cursor-pointer text-center"
+                >
+                  Reject Extra
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -186,77 +189,103 @@ export default function CookieConsentBanner() {
 
       {/* ── Preferences Modal ── */}
       {showPreferencesModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 font-body-md">
-          <div className="bg-pure-white border border-slate-grey/20 max-w-xl w-full p-6 space-y-6 shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center border-b border-slate-grey/20 pb-3">
-              <h3 className="font-headline-md text-base text-ink-black font-semibold uppercase tracking-wider">
-                Manage Cookie Preferences
-              </h3>
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 font-body-md animate-fade-in">
+          <div className="bg-pure-white border border-slate-grey/15 max-w-lg w-full p-6 md:p-8 space-y-6 shadow-[0_30px_70px_rgba(0,0,0,0.2)] animate-scale-up transition-all duration-300">
+            <div className="flex justify-between items-center border-b border-slate-grey/10 pb-4">
+              <div className="space-y-1">
+                <h3 className="font-headline-md text-sm text-ink-black font-bold uppercase tracking-wider">
+                  Cookie Settings
+                </h3>
+                <p className="text-[10px] text-slate-grey leading-none">Customize your digital footprint</p>
+              </div>
               <button
                 onClick={() => setShowPreferencesModal(false)}
-                className="text-slate-grey hover:text-ink-black text-lg font-bold p-1 cursor-pointer"
+                className="text-slate-grey hover:text-ink-black text-sm p-1.5 hover:bg-soft-linen transition-colors rounded-full cursor-pointer"
+                aria-label="Close modal"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
               {/* Strictly Necessary (Always ON) */}
-              <div className="p-4 bg-soft-linen/30 border border-slate-grey/15 rounded-xs flex items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-medium text-xs text-ink-black uppercase tracking-wider">Strictly Necessary Cookies</h4>
-                  <p className="text-[11px] text-slate-grey mt-0.5">Essential for website navigation, security, and shopping cart functionality.</p>
+              <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 bg-soft-linen/10">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-deep-navy/5 text-deep-navy rounded mt-0.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Strictly Essential</h4>
+                    <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Required for core functions like security, checkout sessions, and preferences memory.</p>
+                  </div>
                 </div>
-                <span className="font-label-caps text-[9px] text-deep-navy uppercase font-semibold px-2.5 py-1 bg-deep-navy/10 shrink-0">
-                  Always Active
+                <span className="font-label-caps text-[9px] text-deep-navy uppercase font-semibold px-2 py-0.5 bg-deep-navy/5 border border-deep-navy/10 shrink-0">
+                  Always On
                 </span>
               </div>
 
               {/* Analytics Cookies */}
-              <div className="p-4 bg-soft-linen/30 border border-slate-grey/15 rounded-xs flex items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-medium text-xs text-ink-black uppercase tracking-wider">Analytics &amp; Performance</h4>
-                  <p className="text-[11px] text-slate-grey mt-0.5">Helps us understand visitor traffic and usage patterns (e.g. Google Analytics).</p>
+              <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 hover:border-slate-grey/25 transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gold-accent/5 text-gold-accent rounded mt-0.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Analytics &amp; Performance</h4>
+                    <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Aggregated visitor metrics and diagnostic details to refine store performance.</p>
+                  </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input
                     type="checkbox"
                     checked={preferences.analytics}
                     onChange={(e) => setPreferences({ ...preferences, analytics: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-grey/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-deep-navy"></div>
+                  <div className="w-9 h-5 bg-slate-grey/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-deep-navy"></div>
                 </label>
               </div>
 
               {/* Marketing Cookies */}
-              <div className="p-4 bg-soft-linen/30 border border-slate-grey/15 rounded-xs flex items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-medium text-xs text-ink-black uppercase tracking-wider">Marketing &amp; Targeting</h4>
-                  <p className="text-[11px] text-slate-grey mt-0.5">Used to deliver tailored announcements and measure campaign performance (e.g. Meta Pixel).</p>
+              <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 hover:border-slate-grey/25 transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-emerald-600/5 text-emerald-700 rounded mt-0.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Marketing &amp; Campaigns</h4>
+                    <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Delivers tailored announcements and tracks return on promotional campaigns.</p>
+                  </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
                   <input
                     type="checkbox"
                     checked={preferences.marketing}
                     onChange={(e) => setPreferences({ ...preferences, marketing: e.target.checked })}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-grey/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-deep-navy"></div>
+                  <div className="w-9 h-5 bg-slate-grey/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-deep-navy"></div>
                 </label>
               </div>
             </div>
 
-            <div className="flex justify-between items-center border-t border-slate-grey/20 pt-4">
-              <span className="text-[10px] text-slate-grey font-label-caps uppercase tracking-widest">
-                Region: {preferences.region}
+            <div className="flex justify-between items-center border-t border-slate-grey/10 pt-5">
+              <span className="text-[9px] text-slate-grey font-label-caps uppercase tracking-wider flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Compliance: {preferences.region}
               </span>
               <button
                 type="button"
                 onClick={() => saveConsent(preferences, "preferences_modal")}
-                className="px-6 py-2.5 bg-deep-navy text-pure-white text-[11px] font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer"
+                className="px-6 py-2.5 bg-deep-navy text-pure-white text-[10px] font-button uppercase tracking-widest hover:bg-ink-black hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
-                Save Preferences
+                Save Settings
               </button>
             </div>
           </div>
@@ -264,4 +293,5 @@ export default function CookieConsentBanner() {
       )}
     </>
   );
+}
 }
