@@ -551,6 +551,15 @@ router.get("/invoice/:orderId", async (req, res) => {
     const taxAmount = subtotal * (taxRate / (1 + taxRate)); // inclusive tax calculation
     const baseAmount = subtotal - taxAmount;
 
+    // Currency formatting helper
+    const formatCurrency = (amt) => {
+      const code = String(payment.currency || "INR").toUpperCase();
+      if (code === "USD") {
+        return `$${Number(amt).toFixed(2)} USD`;
+      }
+      return `₹${Number(amt).toLocaleString("en-IN")}`;
+    };
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -698,8 +707,8 @@ router.get("/invoice/:orderId", async (req, res) => {
                           ${options ? `<div style="font-size: 11px; color: #555; margin-top: 5px; font-family: sans-serif; line-height: 1.4;">${options}</div>` : ""}
                         </td>
                         <td style="text-align: center;">${qtyVal}</td>
-                        <td style="text-align: right;">${payment.currency || "INR"} ${priceVal.toLocaleString()}</td>
-                        <td style="text-align: right; font-weight: bold;">${payment.currency || "INR"} ${(priceVal * qtyVal).toLocaleString()}</td>
+                        <td style="text-align: right;">${formatCurrency(priceVal)}</td>
+                        <td style="text-align: right; font-weight: bold;">${formatCurrency(priceVal * qtyVal)}</td>
                       </tr>
                     `;
                   });
@@ -714,8 +723,8 @@ router.get("/invoice/:orderId", async (req, res) => {
                         <div style="font-size: 11px; color: #666; margin-top: 3px;">Order Receipt: ${payment.orderId}</div>
                       </td>
                       <td style="text-align: center;">1</td>
-                      <td style="text-align: right;">${payment.currency || "INR"} ${baseAmount.toLocaleString()}</td>
-                      <td style="text-align: right; font-weight: bold;">${payment.currency || "INR"} ${baseAmount.toLocaleString()}</td>
+                      <td style="text-align: right;">${formatCurrency(baseAmount)}</td>
+                      <td style="text-align: right; font-weight: bold;">${formatCurrency(baseAmount)}</td>
                     </tr>
                   `;
                 }
@@ -730,8 +739,8 @@ router.get("/invoice/:orderId", async (req, res) => {
                         ${payment.giftMessage ? `<div style="font-size: 11px; color: #666; margin-top: 3px; font-style: italic;">Note: "${payment.giftMessage}"</div>` : ""}
                       </td>
                       <td style="text-align: center;">1</td>
-                      <td style="text-align: right;">${payment.currency || "INR"} ${wrapPrice.toLocaleString()}</td>
-                      <td style="text-align: right; font-weight: bold;">${payment.currency || "INR"} ${wrapPrice.toLocaleString()}</td>
+                      <td style="text-align: right;">${formatCurrency(wrapPrice)}</td>
+                      <td style="text-align: right; font-weight: bold;">${formatCurrency(wrapPrice)}</td>
                     </tr>
                   `;
                 }
@@ -742,32 +751,32 @@ router.get("/invoice/:orderId", async (req, res) => {
               <tr style="border-top: 2px solid #e5e3df;">
                 <td colspan="2" style="border: none;"></td>
                 <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">Subtotal (excl. tax)</td>
-                <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${payment.currency || "INR"} ${baseAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${formatCurrency(baseAmount)}</td>
               </tr>
               
               ${isIndia ? `
                 <tr>
                   <td colspan="2" style="border: none;"></td>
                   <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">CGST (9%)</td>
-                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${payment.currency || "INR"} ${(taxAmount / 2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${formatCurrency(taxAmount / 2)}</td>
                 </tr>
                 <tr>
                   <td colspan="2" style="border: none;"></td>
                   <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">SGST (9%)</td>
-                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${payment.currency || "INR"} ${(taxAmount / 2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${formatCurrency(taxAmount / 2)}</td>
                 </tr>
               ` : `
                 <tr>
                   <td colspan="2" style="border: none;"></td>
                   <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">VAT / Tax (${Math.round(taxRate * 100)}%)</td>
-                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${payment.currency || "INR"} ${taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${formatCurrency(taxAmount)}</td>
                 </tr>
               `}
 
               <tr class="total-row">
                 <td colspan="2" style="border: none; background: transparent;"></td>
                 <td style="text-align: right;">Grand Total</td>
-                <td style="text-align: right; color: ${cfg.themeColor};">${payment.currency || "INR"} ${subtotal.toLocaleString()}</td>
+                <td style="text-align: right; color: ${cfg.themeColor};">${formatCurrency(subtotal)}</td>
               </tr>
             </tbody>
           </table>
