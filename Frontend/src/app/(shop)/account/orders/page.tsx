@@ -29,7 +29,7 @@ export default function CustomerOrdersPage() {
 
   const [orders, setOrders] = useState<ExtendedOrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
@@ -223,35 +223,35 @@ export default function CustomerOrdersPage() {
   return (
     <div className="w-full min-h-screen bg-soft-linen/30 text-ink-black pb-24">
       {/* ─── Top Header & Breadcrumb ────────────────────────────────────────── */}
-      <div className="bg-pure-white border-b border-slate-grey/15 py-10 px-4 sm:px-8">
+      <div className="bg-ink-black text-pure-white border-b border-white/10 py-10 px-4 sm:px-8">
         <div className="max-w-5xl mx-auto space-y-4">
           <div className="flex items-center gap-2">
             <Link
               href="/account"
-              className="font-label-caps text-[10px] text-slate-grey hover:text-deep-navy uppercase tracking-widest transition-colors flex items-center gap-1"
+              className="font-label-caps text-[10px] text-pure-white/75 hover:text-pure-white uppercase tracking-widest transition-colors flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-[14px]">arrow_back</span>
               Account Dashboard
             </Link>
-            <span className="text-slate-grey/40 text-xs">/</span>
-            <span className="font-label-caps text-[10px] text-deep-navy uppercase tracking-widest font-bold">
+            <span className="text-pure-white/40 text-xs">/</span>
+            <span className="font-label-caps text-[10px] text-[#D9C08A] uppercase tracking-widest font-bold">
               Orders & Tracking
             </span>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h1 className="font-display-lg text-2xl md:text-3xl text-deep-navy uppercase tracking-widest">
+              <h1 className="font-display-lg text-2xl md:text-3xl text-pure-white uppercase tracking-widest">
                 Orders & Real-Time Tracking
               </h1>
-              <p className="font-body-md text-slate-grey text-sm mt-1 max-w-xl">
+              <p className="font-body-md text-pure-white/80 text-sm mt-1 max-w-xl">
                 Track live fulfillment timelines, review doorstep OTP status, and download tax invoices for your VRIX pieces.
               </p>
             </div>
             {isLoggedIn && (
-              <div className="bg-soft-linen/50 border border-slate-grey/20 px-4 py-2.5 rounded text-right">
-                <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">Account Holder</span>
-                <span className="font-body-md text-xs font-semibold text-deep-navy">{user?.name || user?.email}</span>
+              <div className="bg-pure-white/10 border border-pure-white/15 px-4 py-2.5 rounded text-right">
+                <span className="font-label-caps text-[9px] text-pure-white/70 uppercase tracking-widest block">Account Holder</span>
+                <span className="font-body-md text-xs font-semibold text-pure-white">{user?.name || user?.email}</span>
               </div>
             )}
           </div>
@@ -378,13 +378,12 @@ export default function CustomerOrdersPage() {
                     return (
                       <div key={stepItem.id} className="flex flex-col items-center text-center gap-2">
                         <div
-                          className={`w-9 h-9 rounded-full flex items-center justify-center font-label-caps text-xs transition-all ${
-                            isCurrent
+                          className={`w-9 h-9 rounded-full flex items-center justify-center font-label-caps text-xs transition-all ${isCurrent
                               ? "bg-deep-navy text-pure-white ring-4 ring-deep-navy/20 font-bold scale-110 shadow-md"
                               : isDone
-                              ? "bg-emerald-600 text-pure-white"
-                              : "bg-pure-white border-2 border-slate-grey/30 text-slate-grey"
-                          }`}
+                                ? "bg-emerald-600 text-pure-white"
+                                : "bg-pure-white border-2 border-slate-grey/30 text-slate-grey"
+                            }`}
                         >
                           {isDone ? <span className="material-symbols-outlined text-[16px]">check</span> : stepItem.id}
                         </div>
@@ -518,7 +517,7 @@ export default function CustomerOrdersPage() {
 
                         <div className="flex items-center gap-4">
                           <span className="font-headline-md text-lg font-bold text-ink-black">{formatPrice(ord.amount)}</span>
-                          
+
                           <button
                             onClick={() => toggleExpandOrder(ord.id)}
                             className="border border-slate-grey/30 hover:border-deep-navy px-3 py-1.5 text-[10px] font-label-caps uppercase tracking-widest text-deep-navy transition-colors flex items-center gap-1 cursor-pointer"

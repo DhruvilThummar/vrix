@@ -505,16 +505,16 @@ export default function UserAccountPage() {
       )}
 
       {/* FULL-WIDTH BRAND HEADER BANNER (Full Side Edge-to-Edge) */}
-      <section className="w-full bg-deep-navy text-pure-white py-8 md:py-12 border-b border-slate-grey/20 shadow-md">
+      <section className="w-full bg-ink-black text-pure-white py-8 md:py-12 border-b border-gold-accent/20 shadow-md">
         <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="font-label-caps text-[10px] text-[#B59D7C] uppercase tracking-[0.25em] font-semibold">
+            <span className="font-label-caps text-[10px] text-[#D9C08A] uppercase tracking-[0.25em] font-semibold">
               VRIX PRIVATE MEMBER PORTAL
             </span>
             <h1 className="font-display-lg text-2xl md:text-3xl uppercase tracking-tight">
               {profile.firstName ? `Hello, ${profile.firstName}` : "Welcome to Your Account"}
             </h1>
-            <p className="font-body-md text-xs text-pure-white/70">
+            <p className="font-body-md text-xs text-pure-white/80">
               Manage your orders, saved wishlist items, and member privileges.
             </p>
           </div>
@@ -536,11 +536,10 @@ export default function UserAccountPage() {
                 key={item.key}
                 type="button"
                 onClick={() => setActiveTab(item.key)}
-                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-label-caps uppercase tracking-wider transition-all duration-200 shrink-0 border cursor-pointer ${
-                  isActive
+                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-label-caps uppercase tracking-wider transition-all duration-200 shrink-0 border cursor-pointer ${isActive
                     ? "border-deep-navy bg-deep-navy text-pure-white shadow-xs font-semibold"
                     : "border-slate-grey/15 bg-pure-white text-slate-grey hover:text-ink-black hover:border-slate-grey/30"
-                }`}
+                  }`}
               >
                 <span className="material-symbols-outlined text-[15px]">{item.icon}</span>
                 <span>{item.label}</span>
@@ -551,10 +550,10 @@ export default function UserAccountPage() {
       </div>
 
       <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-6 md:py-section-gap">
-        
+
         {/* DESKTOP RESPONSIVE GRID LAYOUT (>= 768px): Sidebar (1 col) + Content (3 cols) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12 items-start w-full">
-          
+
           {/* DESKTOP MINIMALIST LEFT SIDEBAR (STICKY) */}
           <aside className="hidden md:block col-span-1 sticky top-28 bg-pure-white p-6 border border-slate-grey/15 shadow-xs space-y-6 w-full">
             <div className="border-b border-slate-grey/15 pb-4 space-y-1">
@@ -571,11 +570,10 @@ export default function UserAccountPage() {
                     key={item.key}
                     type="button"
                     onClick={() => setActiveTab(item.key)}
-                    className={`flex items-center gap-3 w-full text-left font-label-caps text-xs tracking-wider uppercase py-3 px-4 border-l-2 transition-all duration-200 cursor-pointer ${
-                      isActive
+                    className={`flex items-center gap-3 w-full text-left font-label-caps text-xs tracking-wider uppercase py-3 px-4 border-l-2 transition-all duration-200 cursor-pointer ${isActive
                         ? "border-deep-navy text-deep-navy bg-soft-linen/50 font-bold"
                         : "border-transparent text-slate-grey hover:text-ink-black hover:bg-soft-linen/20"
-                    }`}
+                      }`}
                   >
                     <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
                     <span>{item.label}</span>
@@ -587,7 +585,7 @@ export default function UserAccountPage() {
 
           {/* SPACIOUS RIGHT PANE FOR TAB CONTENT */}
           <section className="col-span-1 md:col-span-3 bg-pure-white border border-slate-grey/15 p-6 md:p-10 shadow-xs min-h-[550px] relative w-full">
-            
+
             {/* 1. DASHBOARD TAB */}
             {activeTab === "dashboard" && (
               <div className="space-y-8 animate-fade-in transition-opacity duration-500 ease-out">
@@ -646,9 +644,8 @@ export default function UserAccountPage() {
                             </div>
                             <div className="flex items-center justify-between sm:justify-end gap-4">
                               <span className="font-body-md text-xs font-semibold text-ink-black">{formatPrice(Number(order.amount))}</span>
-                              <span className={`px-2.5 py-0.5 text-[9px] font-label-caps uppercase tracking-wider font-bold border rounded-full ${
-                                isDelivered ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-800 border-amber-200"
-                              }`}>
+                              <span className={`px-2.5 py-0.5 text-[9px] font-label-caps uppercase tracking-wider font-bold border rounded-full ${isDelivered ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-amber-50 text-amber-800 border-amber-200"
+                                }`}>
                                 {status === "SUCCESS" ? "Delivered" : status}
                               </span>
                             </div>
@@ -683,7 +680,7 @@ export default function UserAccountPage() {
                       const status = order.status || "Processing";
                       const isDelivered = status === "Delivered" || status === "SUCCESS" || status === "Completed";
                       const isProcessing = status === "Processing" || status === "Pending";
-                      
+
                       return (
                         <div key={order.orderId} className="border border-slate-grey/15 bg-pure-white p-5 md:p-6 space-y-4 hover:border-slate-grey/30 transition-colors shadow-2xs">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-grey/15 pb-3">
@@ -691,15 +688,14 @@ export default function UserAccountPage() {
                               <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">Order ID</span>
                               <p className="font-body-md text-sm font-semibold text-deep-navy">{order.orderId}</p>
                             </div>
-                            
+
                             <div className="flex items-center gap-3">
-                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-label-caps uppercase tracking-wider font-bold border rounded-full ${
-                                isDelivered
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-[10px] font-label-caps uppercase tracking-wider font-bold border rounded-full ${isDelivered
                                   ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                                   : isProcessing
-                                  ? "bg-amber-50 text-amber-800 border-amber-200"
-                                  : "bg-indigo-50 text-indigo-800 border-indigo-200"
-                              }`}>
+                                    ? "bg-amber-50 text-amber-800 border-amber-200"
+                                    : "bg-indigo-50 text-indigo-800 border-indigo-200"
+                                }`}>
                                 <span className="w-1.5 h-1.5 rounded-full bg-current" />
                                 {status === "SUCCESS" ? "Delivered" : status}
                               </span>
