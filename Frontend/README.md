@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Typography switchboard
+
+Storefront typography is centrally configured in `src/app/globals.css`. To change fonts across all customer-facing pages, update only these variables:
+
+```css
+--typography-logo: ...;
+--typography-primary: ...;
+--typography-body: ...;
+--typography-highlight: ...;
+```
+
+These settings apply to the storefront only; the Admin and Delivery panels are excluded.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
