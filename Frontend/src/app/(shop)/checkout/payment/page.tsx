@@ -21,7 +21,7 @@ declare global {
 export default function PaymentPage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, formatPriceRaw, currency, supportedCurrencies, setCurrency } = useCurrency();
   const { items, subtotal, discount, promoCode, promoType, clearCart, isGiftWrapped, giftMessage, giftWrapPrice } = useCart();
   const { shipping, setOrder, isLoaded } = useCheckoutStorage();
 
@@ -47,6 +47,7 @@ export default function PaymentPage() {
   const grandTotal = useMemo(() => {
     return shipping?.grandTotal ?? Math.max(0, subtotal - discountAmount);
   }, [shipping, subtotal, discountAmount]);
+  const paymentAmount = useMemo(() => formatPriceRaw(grandTotal), [formatPriceRaw, grandTotal]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -143,8 +144,8 @@ export default function PaymentPage() {
     setErrorMsg("");
 
     console.log("[Razorpay Debug] Initiating Pay Now process...", {
-      grandTotal,
-      currency: shipping.currency || "INR",
+      grandTotal: paymentAmount,
+      currency,
       customer: shipping.fullName,
       email: shipping.email,
     });
@@ -152,8 +153,8 @@ export default function PaymentPage() {
     try {
       // 1. Create Razorpay Order via Backend
       const orderRes = await createPaymentOrder({
-        amount: Number(grandTotal.toFixed(2)),
-        currency: shipping.currency || "INR",
+        amount: paymentAmount,
+        currency,
         receipt: `vrix_${Date.now()}`,
         customerName: shipping.fullName,
         customerPhone: shipping.phone,
@@ -195,7 +196,7 @@ export default function PaymentPage() {
           setOrder({
             orderId: order.id,
             paymentId: fakePaymentId,
-            amount: grandTotal,
+            amount: paymentAmount,
             email: shipping.email,
             name: shipping.fullName,
           });
@@ -267,7 +268,7 @@ export default function PaymentPage() {
             setOrder({
               orderId: response.razorpay_order_id,
               paymentId: response.razorpay_payment_id,
-              amount: grandTotal,
+              amount: paymentAmount,
               email: shipping.email,
               name: shipping.fullName,
             });
@@ -335,6 +336,26 @@ export default function PaymentPage() {
 
           <h1 className="font-headline-md text-headline-md mb-8 uppercase tracking-wider">Payment</h1>
 
+          <div className="border border-slate-grey/20 bg-soft-linen/30 p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="font-label-caps text-[10px] uppercase tracking-widest text-slate-grey">Payment currency</p>
+              <p className="font-body-md text-xs text-ink-black mt-1">Your order total updates instantly when you change currency.</p>
+            </div>
+            <label className="relative shrink-0">
+              <span className="sr-only">Select payment currency</span>
+              <select
+                value={currency}
+                onChange={(event) => setCurrency(event.target.value)}
+                className="appearance-none w-full sm:w-44 border border-deep-navy/30 bg-pure-white px-3 py-2.5 pr-9 text-xs font-label-caps tracking-wider text-deep-navy outline-none focus:border-deep-navy cursor-pointer"
+              >
+                {supportedCurrencies.map((option) => (
+                  <option key={option.code} value={option.code}>{option.symbol} {option.code}</option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[17px] text-deep-navy">expand_more</span>
+            </label>
+          </div>
+
           {/* Shipping Summary Box */}
           <div className="bg-soft-linen/40 border border-slate-grey/20 p-5 mb-6 space-y-3">
             <div className="flex justify-between items-center">
@@ -363,7 +384,6 @@ export default function PaymentPage() {
 
           {/* Modular Razorpay Section */}
           <RazorpayPaymentSection
-            shipping={shipping}
             grandTotal={grandTotal}
             promoCode={promoCode || undefined}
             status={status}

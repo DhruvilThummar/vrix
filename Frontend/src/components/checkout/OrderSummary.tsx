@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { ShippingData, TaxBreakdown } from "@/types/checkout";
 import { CartItem } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface OrderSummaryProps {
   items: CartItem[];
@@ -23,7 +24,7 @@ export default function OrderSummary({
   isGiftWrapped,
   giftWrapPrice,
 }: OrderSummaryProps) {
-  const currency = shipping?.currency || "INR";
+  const { currency, formatPrice } = useCurrency();
 
   // Memoized Tax Calculation (CGST/SGST 9% each for IN, 5% VAT for Global)
   const taxInfo: TaxBreakdown = useMemo(() => {
@@ -70,7 +71,7 @@ export default function OrderSummary({
               {item.size && <p className="text-[10px] text-slate-grey">Size: {item.size}</p>}
             </div>
             <p className="text-xs font-semibold text-deep-navy shrink-0">
-              {currency} {Number(item.price * item.quantity).toLocaleString()}
+              {formatPrice(item.price * item.quantity)}
             </p>
           </div>
         ))}
@@ -81,7 +82,7 @@ export default function OrderSummary({
         <div className="flex justify-between">
           <span className="text-slate-grey font-medium">Checkout Subtotal</span>
           <span>
-            {currency} {Number(subtotal - discountAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatPrice(subtotal - discountAmount)}
           </span>
         </div>
 
@@ -91,7 +92,7 @@ export default function OrderSummary({
               <i className="fa-solid fa-gift text-xs"></i>
               Signature Packaging
             </span>
-            <span className="font-bold">+{currency} {(giftWrapPrice || 250).toLocaleString()}</span>
+            <span className="font-bold">+{formatPrice(giftWrapPrice || 250)}</span>
           </div>
         )}
 
@@ -100,7 +101,7 @@ export default function OrderSummary({
           <div className="flex justify-between text-[11px] text-slate-grey">
             <span>Base Amount (excl. tax)</span>
             <span>
-              {taxInfo.currency} {taxInfo.baseAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatPrice(taxInfo.baseAmount)}
             </span>
           </div>
           {taxInfo.isIndia ? (
@@ -108,13 +109,13 @@ export default function OrderSummary({
               <div className="flex justify-between text-[11px] text-slate-grey">
                 <span>CGST (9%)</span>
                 <span>
-                  {taxInfo.currency} {taxInfo.cgst.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatPrice(taxInfo.cgst)}
                 </span>
               </div>
               <div className="flex justify-between text-[11px] text-slate-grey">
                 <span>SGST (9%)</span>
                 <span>
-                  {taxInfo.currency} {taxInfo.sgst.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatPrice(taxInfo.sgst)}
                 </span>
               </div>
             </>
@@ -122,7 +123,7 @@ export default function OrderSummary({
             <div className="flex justify-between text-[11px] text-slate-grey">
               <span>Regional Tax / VAT ({taxInfo.vatRate}%)</span>
               <span>
-                {taxInfo.currency} {taxInfo.taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {formatPrice(taxInfo.taxAmount)}
               </span>
             </div>
           )}
@@ -131,7 +132,7 @@ export default function OrderSummary({
         {/* Total Due */}
         <div className="flex justify-between font-headline-md text-lg border-t border-slate-grey/20 pt-3 mt-2">
           <span className="font-bold text-deep-navy">Total Due</span>
-          <span className="font-bold text-deep-navy">{currency} {grandTotal.toFixed(2)}</span>
+          <span className="font-bold text-deep-navy">{formatPrice(grandTotal)}</span>
         </div>
       </div>
 

@@ -1,10 +1,8 @@
 "use client";
 
 import React from "react";
-import { ShippingData } from "@/types/checkout";
 
 interface RazorpayPaymentSectionProps {
-  shipping: ShippingData;
   grandTotal: number;
   promoCode?: string;
   status: "idle" | "processing" | "verifying" | "success" | "error";
@@ -23,7 +21,6 @@ interface RazorpayPaymentSectionProps {
 }
 
 export default function RazorpayPaymentSection({
-  shipping,
   grandTotal,
   promoCode,
   status,
@@ -137,7 +134,7 @@ export default function RazorpayPaymentSection({
           ) : (
             <>
               <span className="material-symbols-outlined text-[18px]">lock</span>
-              <span>Pay {shipping.currency || "INR"} {grandTotal.toFixed(2)} Securely</span>
+              <span>Pay {formatPrice(grandTotal)} Securely</span>
             </>
           )}
         </button>
