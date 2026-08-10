@@ -71,16 +71,11 @@ router.post("/cms", adminAuth, async (req, res) => {
 });
 
 // GET /api/config — Fetch all CMS settings as key-value map
+// db.cmsSettings.findMany() already returns a {key: value} plain object — return it directly.
 router.get("/config", adminAuth, async (req, res) => {
   try {
     const all = await db.cmsSettings.findMany();
-    const configMap = {};
-    all.forEach((item) => {
-      if (item && item.key) {
-        configMap[item.key] = item.value;
-      }
-    });
-    res.json(configMap);
+    res.json(all);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
