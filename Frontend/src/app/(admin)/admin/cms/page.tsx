@@ -5,8 +5,6 @@ import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournal
 
 type TabType = "story" | "legal" | "journal" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "custom-pages" | "invoice-customizer" | "currency-settings" | "offers-showcase" | "footer";
 
-
-
 // Preset standard pages
 const STANDARD_PAGES = [
   { label: "Home Page", path: "/" },
@@ -810,7 +808,6 @@ export default function AdminCMSPage() {
     { id: "gift-wrapping", label: "Gift Wrapping", icon: "card_giftcard", category: "Experience", description: "Signature packaging" },
     { id: "metal-types", label: "Metal Swatches", icon: "palette", category: "Experience", description: "Gold & platinum types" },
     { id: "legal", label: "Legal Policies", icon: "gavel", category: "System", description: "Privacy & terms docs" },
-    { id: "api-integrations", label: "API Configuration", icon: "api", category: "System", description: "Razorpay, Cloudinary, Auth" },
     { id: "invoice-customizer", label: "Invoice Theme", icon: "receipt", category: "System", description: "Customize invoice PDF styling" },
     { id: "currency-settings", label: "Currency & Taxes", icon: "currency_exchange", category: "System", description: "Exchange rates & tax structures" },
   ];
