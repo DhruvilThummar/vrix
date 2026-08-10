@@ -146,12 +146,17 @@ export default function Page() {
 
             {/* 3. Razorpay Payment Gateway */}
             <div className="border border-slate-grey/15 p-6 rounded bg-surface-container-low/30">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <i className="fa-solid fa-credit-card text-emerald-600 text-xl"></i>
                   <div>
-                    <h4 className="font-body-md font-semibold text-ink-black">Razorpay Payment Gateway</h4>
-                    <p className="text-xs text-slate-grey">Process payments via UPI, Cards, NetBanking, and International cards.</p>
+                    <h4 className="font-body-md font-semibold text-ink-black flex items-center gap-2">
+                      Razorpay Payment Gateway
+                      <span className={`text-[9px] font-label-caps uppercase px-2 py-0.5 rounded font-bold border ${apiSettings.razorpayEnabled ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-slate-100 text-slate-600 border-slate-300"}`}>
+                        {apiSettings.razorpayEnabled ? "LIVE ON STORE" : "OFF / DISABLED"}
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-grey">Process payments via UPI, Cards, NetBanking, and Wallets. Toggle OFF to disable online payments.</p>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -161,48 +166,30 @@ export default function Page() {
                     onChange={(e) => handleInputChange("razorpayEnabled", e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-deep-navy"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                 </label>
               </div>
 
-              {apiSettings.razorpayEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-grey/10">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      Razorpay Key ID
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="rzp_live_xxxxxxxxxxxx"
-                      value={apiSettings.razorpayKeyId}
-                      onChange={(e) => handleInputChange("razorpayKeyId", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      Razorpay Key Secret
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Key secret token"
-                      value={apiSettings.razorpayKeySecret}
-                      onChange={(e) => handleInputChange("razorpayKeySecret", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
-                  </div>
-                </div>
-              )}
+              <div className={`mt-4 p-3 border rounded text-xs leading-relaxed font-body-md ${apiSettings.razorpayEnabled ? "bg-emerald-50/50 border-emerald-200 text-emerald-900" : "bg-slate-100/60 border-slate-200 text-slate-600"}`}>
+                {apiSettings.razorpayEnabled
+                  ? "✓ Razorpay is ENABLED. Customers will see Razorpay at checkout and can pay securely."
+                  : "✕ Razorpay is OFF. Online payment options will be completely hidden from customer checkout."}
+              </div>
             </div>
 
-            {/* 3. Cloudinary Media Storage */}
 
+            {/* 3. Cloudinary Media Storage */}
             <div className="border border-slate-grey/15 p-6 rounded bg-surface-container-low/30">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <i className="fa-solid fa-cloud text-sky-600 text-xl"></i>
                   <div>
-                    <h4 className="font-body-md font-semibold text-ink-black">Cloudinary Image &amp; Media CDN</h4>
+                    <h4 className="font-body-md font-semibold text-ink-black flex items-center gap-2">
+                      Cloudinary Image &amp; Media CDN
+                      <span className={`text-[9px] font-label-caps uppercase px-2 py-0.5 rounded font-bold border ${apiSettings.cloudinaryEnabled ? "bg-sky-50 text-sky-700 border-sky-300" : "bg-slate-100 text-slate-600 border-slate-300"}`}>
+                        {apiSettings.cloudinaryEnabled ? "ACTIVE" : "OFF / DISABLED"}
+                      </span>
+                    </h4>
                     <p className="text-xs text-slate-grey">Dynamic image uploads, transformations, and media CDN delivery.</p>
                   </div>
                 </div>
@@ -213,60 +200,32 @@ export default function Page() {
                     onChange={(e) => handleInputChange("cloudinaryEnabled", e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-deep-navy"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
                 </label>
               </div>
 
-              {apiSettings.cloudinaryEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-grey/10">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      Cloud Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. vrix-jewels"
-                      value={apiSettings.cloudinaryCloudName}
-                      onChange={(e) => handleInputChange("cloudinaryCloudName", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      API Key
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 1234567890"
-                      value={apiSettings.cloudinaryApiKey}
-                      onChange={(e) => handleInputChange("cloudinaryApiKey", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                      API Secret
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Cloudinary API secret"
-                      value={apiSettings.cloudinaryApiSecret}
-                      onChange={(e) => handleInputChange("cloudinaryApiSecret", e.target.value)}
-                      className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                    />
-                  </div>
-                </div>
-              )}
+              <div className={`mt-4 p-3 border rounded text-xs leading-relaxed font-body-md ${apiSettings.cloudinaryEnabled ? "bg-sky-50/50 border-sky-200 text-sky-900" : "bg-slate-100/60 border-slate-200 text-slate-600"}`}>
+                {apiSettings.cloudinaryEnabled
+                  ? "✓ Cloudinary CDN is ACTIVE. Media uploaded in admin is optimized and delivered via global CDN."
+                  : "✕ Cloudinary CDN is OFF. System uses local server media storage and fallback URLs."}
+              </div>
+              
             </div>
+
 
             {/* 4. SMTP / Nodemailer */}
             <div className="border border-slate-grey/15 p-6 rounded bg-surface-container-low/30">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <i className="fa-solid fa-envelope text-amber-600 text-xl"></i>
                   <div>
-                    <h4 className="font-body-md font-semibold text-ink-black">SMTP Mail Server (Transactional Email)</h4>
-                    <p className="text-xs text-slate-grey">Send order notifications, verification OTPs, and invoices.</p>
+                    <h4 className="font-body-md font-semibold text-ink-black flex items-center gap-2">
+                      SMTP Mail Server (Transactional Email)
+                      <span className={`text-[9px] font-label-caps uppercase px-2 py-0.5 rounded font-bold border ${apiSettings.nodemailerEnabled ? "bg-amber-50 text-amber-800 border-amber-300" : "bg-slate-100 text-slate-600 border-slate-300"}`}>
+                        {apiSettings.nodemailerEnabled ? "ACTIVE" : "OFF / DISABLED"}
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-grey">Sends order notifications, OTP verification codes, and invoices.</p>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -276,89 +235,27 @@ export default function Page() {
                     onChange={(e) => handleInputChange("nodemailerEnabled", e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-deep-navy"></div>
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
                 </label>
               </div>
 
-              {apiSettings.nodemailerEnabled && (
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs text-slate-grey font-medium">Quick Presets:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleInputChange("nodemailerHost", "smtp.hostinger.com");
-                        handleInputChange("nodemailerPort", "465");
-                      }}
-                      className="px-2 py-1 text-[11px] bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded font-semibold cursor-pointer"
-                    >
-                      Hostinger Mail (smtp.hostinger.com:465)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleInputChange("nodemailerHost", "smtp.gmail.com");
-                        handleInputChange("nodemailerPort", "465");
-                      }}
-                      className="px-2 py-1 text-[11px] bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 rounded font-semibold cursor-pointer"
-                    >
-                      Gmail (smtp.gmail.com:465)
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 border-t border-slate-grey/10">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                        SMTP Host
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="smtp.hostinger.com"
-                        value={apiSettings.nodemailerHost}
-                        onChange={(e) => handleInputChange("nodemailerHost", e.target.value)}
-                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                        SMTP Port
-                      </label>
-                      <select
-                        value={apiSettings.nodemailerPort || "465"}
-                        onChange={(e) => handleInputChange("nodemailerPort", e.target.value)}
-                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none cursor-pointer"
-                      >
-                        <option value="465">465 (SSL - Recommended)</option>
-                        <option value="587">587 (TLS)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                        Sender Email / Username
-                      </label>
-                      <input
-                        type="email"
-                        placeholder="hello@vrix.in"
-                        value={apiSettings.nodemailerUser}
-                        onChange={(e) => handleInputChange("nodemailerUser", e.target.value)}
-                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-grey uppercase tracking-wider mb-1">
-                        Email Password
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="Hostinger / Email Password"
-                        value={apiSettings.nodemailerPass}
-                        onChange={(e) => handleInputChange("nodemailerPass", e.target.value)}
-                        className="w-full bg-pure-white border border-slate-grey/25 px-3 py-2 text-xs text-ink-black focus:border-deep-navy outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className={`mt-4 p-3 border rounded text-xs leading-relaxed font-body-md flex items-center justify-between ${apiSettings.nodemailerEnabled ? "bg-amber-50/50 border-amber-200 text-amber-900" : "bg-slate-100/60 border-slate-200 text-slate-600"}`}>
+                <span>
+                  {apiSettings.nodemailerEnabled
+                    ? "✓ SMTP Mail Server is ACTIVE. Order confirmation emails and OTPs are being dispatched."
+                    : "✕ SMTP Mail Server is OFF. Email dispatches are currently paused."}
+                </span>
+                {apiSettings.nodemailerEnabled && (
+                  <button
+                    type="button"
+                    onClick={handleTestEmail}
+                    disabled={testingMail}
+                    className="px-3 py-1 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase tracking-wider rounded hover:bg-ink-black transition-colors cursor-pointer shrink-0 ml-2"
+                  >
+                    {testingMail ? "Testing..." : "Send Test Mail"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
