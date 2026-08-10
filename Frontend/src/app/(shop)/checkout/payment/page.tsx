@@ -1,22 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { createPaymentOrder, fetchPaymentConfig, verifyPayment, validateStock } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useCheckoutStorage } from "@/hooks/useCheckoutStorage";
 import OrderSummary from "@/components/checkout/OrderSummary";
-import RazorpayPaymentSection from "@/components/checkout/RazorpayPaymentSection";
-import { RazorpayOptions, RazorpayResponse } from "@/types/checkout";
-
-declare global {
-  interface Window {
-    Razorpay: new (options: RazorpayOptions) => { open: () => void };
-  }
-}
+import PaymentGatewaysSection from "@/components/checkout/PaymentGatewaysSection";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -25,19 +17,6 @@ export default function PaymentPage() {
   const { items, subtotal, discount, promoCode, promoType, clearCart, isGiftWrapped, giftMessage, giftWrapPrice } = useCart();
   const { shipping, setOrder, isLoaded } = useCheckoutStorage();
 
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<"idle" | "processing" | "verifying" | "success" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [sdkReady, setSdkReady] = useState(false);
-  const [paymentConfig, setPaymentConfig] = useState<{
-    keyId: string | null;
-    currency: string;
-    enabled: boolean;
-    devMode: boolean;
-  } | null>(null);
-  const razorpayLoaded = useRef(false);
-
-  // Discount calculation
   const discountAmount = useMemo(() => {
     if (promoType === "percentage") return (subtotal * discount) / 100;
     if (promoType === "fixed") return Math.min(discount, subtotal);
@@ -47,6 +26,7 @@ export default function PaymentPage() {
   const grandTotal = useMemo(() => {
     return shipping?.grandTotal ?? Math.max(0, subtotal - discountAmount);
   }, [shipping, subtotal, discountAmount]);
+
   const paymentAmount = useMemo(() => formatPriceRaw(grandTotal), [formatPriceRaw, grandTotal]);
 
   useEffect(() => {
@@ -60,241 +40,22 @@ export default function PaymentPage() {
       return;
     }
 
-    if (items.length === 0) {
+    if (isLoaded && items.length === 0) {
       router.push("/cart");
       return;
     }
-
-    // Fetch Razorpay Payment Configuration
-    // Fetch Razorpay Payment Configuration
-    fetchPaymentConfig()
-      .then((cfg) => {
-        console.log("[Razorpay Debug] Fetched payment config:", cfg);
-        setPaymentConfig(cfg);
-      })
-      .catch((err) => {
-        console.error("[Razorpay Debug] Failed to load Razorpay config:", err);
-        setPaymentConfig({ keyId: null, currency: "INR", enabled: false, devMode: true });
-      });
-
-    // Load Razorpay SDK on mount
-    const existingScript = document.getElementById("razorpay-sdk") as HTMLScriptElement | null;
-    if (!razorpayLoaded.current && !existingScript) {
-      console.log("[Razorpay Debug] Injecting checkout.js script...");
-      const script = document.createElement("script");
-      script.id = "razorpay-sdk";
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.async = true;
-      script.onload = () => {
-        console.log("[Razorpay Debug] checkout.js script loaded.");
-        setSdkReady(true);
-      };
-      script.onerror = () => {
-        console.error("[Razorpay Debug] checkout.js script load error.");
-        setSdkReady(false);
-        setErrorMsg("Could not load Razorpay checkout SDK. Please check your network connection.");
-      };
-      document.head.appendChild(script);
-      razorpayLoaded.current = true;
-    } else if (typeof window !== "undefined" && window.Razorpay) {
-      console.log("[Razorpay Debug] window.Razorpay already defined.");
-      setSdkReady(true);
-    } else if (existingScript) {
-      existingScript.addEventListener("load", () => {
-        console.log("[Razorpay Debug] checkout.js existing script loaded.");
-        setSdkReady(true);
-      }, { once: true });
-    }
   }, [isLoggedIn, items.length, isLoaded, shipping, router]);
 
-  const ensureSdkLoaded = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (typeof window !== "undefined" && window.Razorpay) {
-        console.log("[Razorpay Debug] SDK confirmed on window.Razorpay");
-        setSdkReady(true);
-        return resolve(true);
-      }
-      const scriptId = "razorpay-sdk";
-      let script = document.getElementById(scriptId) as HTMLScriptElement | null;
-      if (!script) {
-        console.log("[Razorpay Debug] Injecting Razorpay SDK script dynamically...");
-        script = document.createElement("script");
-        script.id = scriptId;
-        script.src = "https://checkout.razorpay.com/v1/checkout.js";
-        script.async = true;
-        document.head.appendChild(script);
-      }
-      script.onload = () => {
-        console.log("[Razorpay Debug] Razorpay SDK dynamically loaded!");
-        setSdkReady(true);
-        resolve(true);
-      };
-      script.onerror = () => {
-        console.error("[Razorpay Debug] Dynamic SDK load failed!");
-        setSdkReady(false);
-        resolve(false);
-      };
+  const handlePaymentSuccess = (orderId: string, paymentId: string) => {
+    clearCart();
+    setOrder({
+      orderId,
+      paymentId,
+      amount: paymentAmount,
+      email: shipping?.email || "",
+      name: shipping?.fullName || "",
     });
-  };
-
-  const handlePayNow = async () => {
-    if (!shipping) return;
-    setLoading(true);
-    setStatus("processing");
-    setErrorMsg("");
-
-    console.log("[Razorpay Debug] Initiating Pay Now process...", {
-      grandTotal: paymentAmount,
-      currency,
-      customer: shipping.fullName,
-      email: shipping.email,
-    });
-
-    try {
-      await validateStock(items.map((item) => ({ id: item.id, title: item.title, quantity: item.quantity })));
-      // 1. Create Razorpay Order via Backend
-      const orderRes = await createPaymentOrder({
-        amount: paymentAmount,
-        currency,
-        receipt: `vrix_${Date.now()}`,
-        customerName: shipping.fullName,
-        customerPhone: shipping.phone,
-        email: shipping.email,
-        address: shipping.apartment ? `${shipping.address}, ${shipping.apartment}` : shipping.address,
-        city: shipping.city,
-        postalCode: shipping.postalCode,
-        notes: {
-          customerEmail: shipping.email,
-          customerName: shipping.fullName,
-          customerPhone: shipping.phone,
-          address: shipping.apartment ? `${shipping.address}, ${shipping.apartment}` : shipping.address,
-          city: shipping.city,
-          postalCode: shipping.postalCode,
-        },
-      });
-
-      console.log("[Razorpay Debug] Backend Order Response:", orderRes);
-      const { order, devMode } = orderRes;
-
-      // 2. Dev Mode Fallback Simulation
-      if (devMode) {
-        console.warn("[Razorpay Debug] Running in Dev Mode (No Razorpay Keys Configured). Auto-verifying test order...");
-        setStatus("verifying");
-        const fakePaymentId = `pay_dev_${Date.now()}`;
-        try {
-          await verifyPayment({
-            razorpay_order_id: order.id,
-            razorpay_payment_id: fakePaymentId,
-            razorpay_signature: "dev_signature",
-            items,
-            promoCode: promoCode || undefined,
-            isGiftWrapped,
-            giftMessage,
-            giftWrapPrice,
-          });
-
-          clearCart();
-          setOrder({
-            orderId: order.id,
-            paymentId: fakePaymentId,
-            amount: paymentAmount,
-            email: shipping.email,
-            name: shipping.fullName,
-          });
-
-          setStatus("success");
-          setTimeout(() => router.push("/checkout/confirmation"), 1200);
-        } catch (err: any) {
-          setStatus("error");
-          setErrorMsg(err.message || "Dev mode payment verification failed.");
-        }
-        return;
-      }
-
-      // 3. Strict Key & SDK Validation before Modal Open
-      const rzpKey = paymentConfig?.keyId || orderRes?.keyId;
-      console.log("[Razorpay Debug] Validating Razorpay key:", rzpKey);
-      if (!rzpKey) {
-        throw new Error("Razorpay Key is missing. Please check backend config or set RAZORPAY_KEY_ID.");
-      }
-
-      const sdkAvailable = await ensureSdkLoaded();
-      if (!sdkAvailable || !window.Razorpay) {
-        throw new Error("Razorpay Checkout SDK is not loaded. Please check your internet connection.");
-      }
-
-      setStatus("idle");
-      setLoading(false);
-
-      console.log("[Razorpay Debug] Initializing new window.Razorpay(options)...");
-      const rzpOptions: RazorpayOptions = {
-        key: rzpKey,
-        amount: order.amount,
-        currency: order.currency,
-        name: "VRIX",
-        description: `Order ${order.id}`,
-        image: "/logos/black.png",
-        order_id: order.id,
-        prefill: {
-          name: shipping.fullName,
-          email: shipping.email,
-          contact: shipping.phone,
-        },
-        notes: { address: `${shipping.address}, ${shipping.city}, ${shipping.postalCode}` },
-        theme: { color: "#0f1728" },
-        modal: {
-          ondismiss: () => {
-            console.log("[Razorpay Debug] Razorpay modal dismissed by user.");
-            setStatus("idle");
-            setLoading(false);
-          },
-        },
-        handler: async (response: RazorpayResponse) => {
-          console.log("[Razorpay Debug] Payment authorized by Razorpay modal:", response);
-          setStatus("verifying");
-          setLoading(true);
-          try {
-            await verifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              items,
-              promoCode: promoCode || undefined,
-              isGiftWrapped,
-              giftMessage,
-              giftWrapPrice,
-            });
-
-            clearCart();
-            setOrder({
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              amount: paymentAmount,
-              email: shipping.email,
-              name: shipping.fullName,
-            });
-
-            setStatus("success");
-            setTimeout(() => router.push("/checkout/confirmation"), 1200);
-          } catch (err: any) {
-            setStatus("error");
-            const text = err.message || "Payment verification failed.";
-            setErrorMsg(`${text} Please contact support if your money was deducted. Order ID: ${response.razorpay_order_id}`);
-          } finally {
-            setLoading(false);
-          }
-        },
-      };
-
-      const rzp = new window.Razorpay(rzpOptions);
-      console.log("[Razorpay Debug] Calling rzp.open()...");
-      rzp.open();
-    } catch (err: any) {
-      console.error("[Razorpay Debug] Payment initiation error:", err);
-      setStatus("error");
-      setErrorMsg(err.message || "Failed to initiate payment. Please try again.");
-      setLoading(false);
-    }
+    router.push("/checkout/confirmation");
   };
 
   if (!isLoaded || !shipping) {
@@ -383,18 +144,19 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* Modular Razorpay Section */}
-          <RazorpayPaymentSection
+          {/* Unified Payment Gateway Integration */}
+          <PaymentGatewaysSection
             grandTotal={grandTotal}
             promoCode={promoCode || undefined}
-            status={status}
-            loading={loading}
-            sdkReady={sdkReady}
-            paymentConfig={paymentConfig}
-            errorMsg={errorMsg}
+            currency={currency}
+            shipping={shipping}
+            items={items}
+            isGiftWrapped={isGiftWrapped}
+            giftMessage={giftMessage}
+            giftWrapPrice={giftWrapPrice}
             formatPrice={formatPrice}
-            onPayNow={handlePayNow}
-            onResetStatus={() => setStatus("idle")}
+            formatPriceRaw={formatPriceRaw}
+            onSuccess={handlePaymentSuccess}
           />
 
           <Link

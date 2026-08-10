@@ -470,14 +470,28 @@ export async function createPaymentOrder(data: {
   });
 }
 
+export interface PaymentGatewayConfig {
+  enabled: boolean;
+  keyId?: string | null; // Razorpay Key ID
+  clientId?: string | null; // PayPal Client ID
+  mode?: "sandbox" | "live" | null; // PayPal Mode
+  devMode?: boolean;
+  source: string;
+}
+
+export interface PaymentConfigResponse {
+  razorpay: PaymentGatewayConfig;
+  paypal: PaymentGatewayConfig;
+  currency: string;
+  // Fallbacks for legacy compatibility
+  keyId: string | null;
+  enabled: boolean;
+  devMode: boolean;
+  source: string;
+}
+
 export async function fetchPaymentConfig() {
-  return apiFetch<{
-    keyId: string | null;
-    currency: string;
-    enabled: boolean;
-    devMode: boolean;
-    source: "cms" | "env" | "dev";
-  }>("/payment/config");
+  return apiFetch<PaymentConfigResponse>("/payment/config");
 }
 
 export async function verifyPayment(data: {
@@ -491,6 +505,53 @@ export async function verifyPayment(data: {
   giftWrapPrice?: number;
 }) {
   return apiFetch<{ success: boolean; paymentId: string }>("/payment/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function createPayPalOrder(data: {
+  amount: number;
+  currency?: string;
+  customerName?: string;
+  customerPhone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  notes?: Record<string, any>;
+  isGiftWrapped?: boolean;
+  giftMessage?: string;
+  giftWrapPrice?: number;
+}) {
+  return apiFetch<{
+    success: boolean;
+    orderId: string;
+    internalOrderId: string;
+    approvalUrl: string | null;
+  }>("/payment/paypal/create-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function capturePayPalOrder(data: {
+  paypalOrderId: string;
+  items?: any[];
+  promoCode?: string;
+  isGiftWrapped?: boolean;
+  giftMessage?: string;
+  giftWrapPrice?: number;
+  email?: string;
+}) {
+  return apiFetch<{
+    success: boolean;
+    captureId: string;
+    orderId: string;
+    paymentId: string;
+  }>("/payment/paypal/capture-order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

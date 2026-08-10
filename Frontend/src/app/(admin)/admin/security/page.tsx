@@ -14,11 +14,16 @@ export default function Page() {
 
   // API Credentials State
   const [apiSettings, setApiSettings] = useState({
-
     // Razorpay
     razorpayEnabled: true,
     razorpayKeyId: "",
     razorpayKeySecret: "",
+
+    // PayPal
+    paypalEnabled: true,
+    paypalClientId: "",
+    paypalClientSecret: "",
+    paypalMode: "sandbox",
 
     // Cloudinary
     cloudinaryEnabled: true,
@@ -176,6 +181,41 @@ export default function Page() {
                   : "✕ Razorpay is OFF. Online payment options will be completely hidden from customer checkout."}
               </div>
             </div>
+
+
+            {/* PayPal Payment Gateway */}
+            <div className="border border-slate-grey/15 p-6 rounded bg-surface-container-low/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <i className="fa-brands fa-paypal text-blue-600 text-xl"></i>
+                  <div>
+                    <h4 className="font-body-md font-semibold text-ink-black flex items-center gap-2">
+                      PayPal Payment Gateway (Default)
+                      <span className={`text-[9px] font-label-caps uppercase px-2 py-0.5 rounded font-bold border ${apiSettings.paypalEnabled ? "bg-blue-50 text-blue-700 border-blue-300" : "bg-slate-100 text-slate-600 border-slate-300"}`}>
+                        {apiSettings.paypalEnabled ? "LIVE ON STORE" : "OFF / DISABLED"}
+                      </span>
+                    </h4>
+                    <p className="text-xs text-slate-grey">Primary global payment method. Process payments securely via PayPal Accounts, Credit or Debit cards.</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={apiSettings.paypalEnabled}
+                    onChange={(e) => handleInputChange("paypalEnabled", e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+
+              <div className={`mt-4 p-3 border rounded text-xs leading-relaxed font-body-md ${apiSettings.paypalEnabled ? "bg-blue-50/50 border-blue-200 text-blue-900" : "bg-slate-100/60 border-slate-200 text-slate-600"}`}>
+                {apiSettings.paypalEnabled
+                  ? "✓ PayPal is ENABLED. Customers will see PayPal at checkout as the default payment option."
+                  : "✕ PayPal is OFF. PayPal checkout buttons will be hidden from customer checkout."}
+              </div>
+            </div>
+
 
 
             {/* 3. Cloudinary Media Storage */}

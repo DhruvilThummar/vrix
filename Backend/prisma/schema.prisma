@@ -66,8 +66,9 @@ model SecurityLog {
   id        String   @id @default(uuid()) @db.Uuid
   timestamp DateTime @default(now())
   event     String
+  user      String?
   userEmail String?  @map("user_email")
-  status    String
+  status    String   @default("INFO")
 
   @@map("security_logs")
 }
@@ -79,7 +80,7 @@ model Payment {
   signature             String?
   amount                Float
   currency              String    @default("INR")
-  status                String    @default("created")
+  status                String    @default("CREATED")
   userEmail             String?   @map("user_email")
   createdAt             DateTime  @default(now()) @map("created_at")
   customerName          String?   @map("customer_name")
@@ -89,9 +90,16 @@ model Payment {
   postalCode            String?   @map("postal_code")
   assignedAgent         String?   @map("assigned_agent")
   estimatedDeliveryDate DateTime? @map("estimated_delivery_date")
+  cartItems             String?   @map("cart_items")
+  isGiftWrapped         Boolean   @default(false) @map("is_gift_wrapped")
+  giftMessage           String?   @map("gift_message")
+  giftWrapPrice         Float?    @map("gift_wrap_price")
+  paymentGateway        String?   @default("razorpay") @map("payment_gateway")
+  gatewayOrderId        String?   @map("gateway_order_id")
 
   @@map("payments")
 }
+
 
 model DeliveryStaff {
   email     String   @id

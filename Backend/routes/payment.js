@@ -54,30 +54,120 @@ const safeCompareHex = (actual, expected) => {
   return actualBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(actualBuffer, expectedBuffer);
 };
 
+// ──────────────────────────────────────────────────────────────────────────────
+// PayPal REST API credentials resolver
+// Priority: CMS api_settings → process.env
+// ──────────────────────────────────────────────────────────────────────────────
+const getPayPalCredentials = async () => {
+  const apiSettings = await getApiSettings();
+
+  // If explicitly disabled in Admin panel, return null
+  if (apiSettings && apiSettings.paypalEnabled === false) {
+    return null;
+  }
+
+  // CMS-managed credentials take priority
+  if (
+    apiSettings?.paypalEnabled &&
+    apiSettings.paypalClientId &&
+    apiSettings.paypalClientId !== "YOUR_PAYPAL_CLIENT_ID" &&
+    apiSettings.paypalClientSecret &&
+    apiSettings.paypalClientSecret !== "YOUR_PAYPAL_CLIENT_SECRET"
+  ) {
+    return {
+      clientId: apiSettings.paypalClientId,
+      clientSecret: apiSettings.paypalClientSecret,
+      mode: apiSettings.paypalMode || "sandbox", // "sandbox" | "live"
+      source: "cms",
+      enabled: true,
+    };
+  }
+
+  // Fall back to environment variables
+  if (
+    process.env.PAYPAL_CLIENT_ID &&
+    process.env.PAYPAL_CLIENT_ID !== "YOUR_PAYPAL_CLIENT_ID" &&
+    process.env.PAYPAL_CLIENT_SECRET &&
+    process.env.PAYPAL_CLIENT_SECRET !== "YOUR_PAYPAL_CLIENT_SECRET"
+  ) {
+    return {
+      clientId: process.env.PAYPAL_CLIENT_ID,
+      clientSecret: process.env.PAYPAL_CLIENT_SECRET,
+      mode: process.env.PAYPAL_MODE || "sandbox",
+      source: "env",
+      enabled: true,
+    };
+  }
+
+  return null;
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// PayPal REST API token exchange helper
+// Uses OAuth2 client_credentials to get a short-lived bearer token
+// ──────────────────────────────────────────────────────────────────────────────
+const getPayPalAccessToken = async (credentials) => {
+  const baseUrl = credentials.mode === "live"
+    ? "https://api-m.paypal.com"
+    : "https://api-m.sandbox.paypal.com";
+
+  const auth = Buffer.from(`${credentials.clientId}:${credentials.clientSecret}`).toString("base64");
+  const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Basic ${auth}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(`PayPal OAuth failed: ${err.error_description || response.statusText}`);
+  }
+
+  const data = await response.json();
+  return { token: data.access_token, baseUrl };
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// GET /api/payment/config — Returns both Razorpay + PayPal availability
+// ──────────────────────────────────────────────────────────────────────────────
 router.get("/config", async (req, res) => {
   try {
     const apiSettings = await getApiSettings();
-    const isExplicitlyDisabled = apiSettings && apiSettings.razorpayEnabled === false;
-    
-    if (isExplicitlyDisabled) {
-      return res.json({
-        keyId: null,
-        currency: "INR",
-        enabled: false,
-        devMode: false,
-        source: "disabled",
-      });
-    }
 
-    const credentials = await getRazorpayCredentials();
+    // Razorpay status
+    const razorpayDisabled = apiSettings && apiSettings.razorpayEnabled === false;
+    const rzpCredentials = razorpayDisabled ? null : await getRazorpayCredentials();
+    
+    // PayPal status
+    const paypalCredentials = await getPayPalCredentials();
+
     res.json({
-      keyId: credentials?.keyId || null,
+      // Razorpay
+      razorpay: {
+        enabled: !razorpayDisabled && !!rzpCredentials?.keyId,
+        keyId: rzpCredentials?.keyId || null,
+        devMode: !razorpayDisabled && !rzpCredentials?.keyId,
+        source: rzpCredentials?.source || (razorpayDisabled ? "disabled" : "dev"),
+      },
+      // PayPal
+      paypal: {
+        enabled: !!paypalCredentials,
+        clientId: paypalCredentials?.clientId || null,
+        mode: paypalCredentials?.mode || null,
+        source: paypalCredentials?.source || "disabled",
+      },
       currency: "INR",
-      enabled: !!credentials?.keyId,
-      devMode: !credentials?.keyId,
-      source: credentials?.source || "dev",
+      // Legacy compatibility — keep for old RazorpayPaymentSection
+      keyId: rzpCredentials?.keyId || null,
+      enabled: !razorpayDisabled && !!rzpCredentials?.keyId,
+      devMode: !razorpayDisabled && !rzpCredentials?.keyId,
+      source: rzpCredentials?.source || (razorpayDisabled ? "disabled" : "dev"),
     });
   } catch (err) {
+
     res.status(500).json({ error: err.message });
   }
 });
@@ -750,4 +840,332 @@ router.patch("/status/:orderId", async (req, res) => {
   }
 });
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PAYPAL — Create Order
+//  POST /api/payment/paypal/create-order
+// ══════════════════════════════════════════════════════════════════════════════
+router.post("/paypal/create-order", async (req, res) => {
+  const {
+    amount,
+    currency = "USD",
+    customerName,
+    customerPhone,
+    email,
+    address,
+    city,
+    postalCode,
+    notes,
+    isGiftWrapped,
+    giftMessage,
+    giftWrapPrice,
+  } = req.body;
+
+  if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+    return res.status(400).json({ error: "Invalid amount" });
+  }
+
+  try {
+    const credentials = await getPayPalCredentials();
+
+    if (!credentials) {
+      return res.status(503).json({
+        error: "PayPal is currently disabled or not configured",
+        code: "PAYPAL_DISABLED",
+      });
+    }
+
+    const { token, baseUrl } = await getPayPalAccessToken(credentials);
+
+    // PayPal requires 2 decimal places and specific currency codes
+    const normalizedCurrency = currency.toUpperCase();
+    const formattedAmount = Number(amount).toFixed(2);
+
+    // Create PayPal Order via REST v2
+    const ppResponse = await fetch(`${baseUrl}/v2/checkout/orders`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "PayPal-Request-Id": `vrix-${Date.now()}`, // idempotency key
+      },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            reference_id: `vrix_${Date.now()}`,
+            amount: {
+              currency_code: normalizedCurrency,
+              value: formattedAmount,
+            },
+            description: "VRIX Jewellery Order",
+            soft_descriptor: "VRIX",
+          },
+        ],
+        application_context: {
+          brand_name: "VRIX",
+          landing_page: "NO_PREFERENCE",
+          user_action: "PAY_NOW",
+          return_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/checkout/success`,
+          cancel_url: `${process.env.FRONTEND_URL || "http://localhost:3000"}/checkout/payment`,
+        },
+      }),
+    });
+
+    if (!ppResponse.ok) {
+      const ppError = await ppResponse.json().catch(() => ({}));
+      throw new Error(ppError.message || `PayPal order creation failed (${ppResponse.status})`);
+    }
+
+    const ppOrder = await ppResponse.json();
+
+    // Persist a PENDING payment record (same table as Razorpay)
+    const internalOrderId = `pp_${ppOrder.id}`;
+    await db.payments.create({
+      data: {
+        orderId: internalOrderId,
+        amount: Number(amount),
+        currency: normalizedCurrency,
+        status: "CREATED",
+        userEmail: email || null,
+        customerName: customerName || null,
+        customerPhone: customerPhone || null,
+        address: address || null,
+        city: city || null,
+        postalCode: postalCode || null,
+        isGiftWrapped: !!isGiftWrapped,
+        giftMessage: giftMessage || "",
+        giftWrapPrice: giftWrapPrice ? Number(giftWrapPrice) : 0,
+        paymentGateway: "paypal",
+        gatewayOrderId: ppOrder.id,
+      },
+    });
+
+    // Audit log
+    await db.securityLogs.create({
+      data: {
+        event: "PAYPAL_ORDER_CREATED",
+        user: ppOrder.id,
+        userEmail: email || null,
+        status: "INFO",
+      },
+    });
+
+    res.json({
+      success: true,
+      orderId: ppOrder.id,          // PayPal order ID — needed by frontend JS SDK
+      internalOrderId,              // Our DB reference
+      approvalUrl: ppOrder.links?.find((l) => l.rel === "approve")?.href || null,
+    });
+  } catch (err) {
+    console.error("[PayPal Create Order]", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PAYPAL — Capture Order (called after buyer approves in the popup)
+//  POST /api/payment/paypal/capture-order
+// ══════════════════════════════════════════════════════════════════════════════
+router.post("/paypal/capture-order", async (req, res) => {
+  const {
+    paypalOrderId,
+    items,
+    promoCode,
+    isGiftWrapped,
+    giftMessage,
+    giftWrapPrice,
+    email,
+  } = req.body;
+
+  if (!paypalOrderId) {
+    return res.status(400).json({ error: "Missing paypalOrderId" });
+  }
+
+  try {
+    const credentials = await getPayPalCredentials();
+    if (!credentials) {
+      return res.status(503).json({ error: "PayPal is disabled", code: "PAYPAL_DISABLED" });
+    }
+
+    const { token, baseUrl } = await getPayPalAccessToken(credentials);
+
+    // Capture the approved order
+    const captureResponse = await fetch(
+      `${baseUrl}/v2/checkout/orders/${paypalOrderId}/capture`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const captureData = await captureResponse.json();
+
+    if (!captureResponse.ok || captureData.status !== "COMPLETED") {
+      // Mark payment as FAILED in DB
+      const internalOrderId = `pp_${paypalOrderId}`;
+      await db.payments.updateMany({
+        where: { gatewayOrderId: paypalOrderId },
+        data: { status: "FAILED" },
+      });
+
+      await db.securityLogs.create({
+        data: {
+          event: "PAYPAL_CAPTURE_FAILED",
+          user: paypalOrderId,
+          userEmail: email || null,
+          status: "FAILED",
+        },
+      });
+
+      const declineReason =
+        captureData.details?.[0]?.description ||
+        captureData.message ||
+        "Payment was declined by PayPal";
+
+      return res.status(402).json({
+        error: declineReason,
+        code: captureData.details?.[0]?.issue || "CAPTURE_FAILED",
+      });
+    }
+
+    // Extract capture details
+    const capture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
+    const captureId = capture?.id;
+
+    // Atomic transaction: update payment + stock + promo + log
+    const paymentRecord = await db.$transaction(async (tx) => {
+      // 1. Update payment status to SUCCESS
+      const updated = await tx.payments.updateMany({
+        where: { gatewayOrderId: paypalOrderId },
+        data: {
+          status: "SUCCESS",
+          paymentId: captureId,
+          cartItems: items ? JSON.stringify(items) : "[]",
+          isGiftWrapped: !!isGiftWrapped,
+          giftMessage: giftMessage || "",
+          giftWrapPrice: giftWrapPrice ? Number(giftWrapPrice) : 0,
+        },
+      });
+
+      // 2. Security log
+      await tx.securityLogs.create({
+        data: {
+          event: "PAYPAL_CAPTURE_SUCCESS",
+          user: captureId,
+          userEmail: email || null,
+          status: "SUCCESS",
+        },
+      });
+
+      // 3. Promo code usage increment
+      if (promoCode) {
+        const promo = await tx.redeemCodes.findUnique({
+          where: { code: promoCode.toUpperCase() },
+        });
+        if (promo) {
+          await tx.redeemCodes.update({
+            where: { code: promo.code },
+            data: { usedCount: (promo.usedCount || 0) + 1 },
+          });
+        }
+      }
+
+      // 4. Decrement stock
+      if (items && Array.isArray(items)) {
+        for (const item of items) {
+          if (item.id && item.qty) {
+            await tx.products.updateMany({
+              where: { id: item.id },
+              data: { stock: { decrement: item.qty } },
+            });
+          }
+        }
+      }
+
+      return updated;
+    });
+
+    // Fetch the payment record for the response
+    const savedPayment = await db.payments.findFirst({
+      where: { gatewayOrderId: paypalOrderId },
+    });
+
+    // Admin notification (non-blocking)
+    createAdminNotification({
+      type: "payment",
+      title: "New PayPal Payment",
+      message: `PayPal payment captured: ${captureId} — ₹${savedPayment?.amount ?? ""}`,
+      userEmail: email || null,
+    }).catch(() => {});
+
+    res.json({
+      success: true,
+      captureId,
+      orderId: savedPayment?.orderId || `pp_${paypalOrderId}`,
+      paymentId: captureId,
+    });
+  } catch (err) {
+    console.error("[PayPal Capture Order]", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PAYPAL — Webhook verification
+//  POST /api/payment/paypal/webhook
+//  Handles: PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.DENIED
+// ══════════════════════════════════════════════════════════════════════════════
+router.post("/paypal/webhook", async (req, res) => {
+  // Acknowledge immediately to PayPal
+  res.sendStatus(200);
+
+  try {
+    const event = req.body;
+    const eventType = event?.event_type;
+    const resource = event?.resource;
+
+    if (!eventType || !resource) return;
+
+    if (eventType === "PAYMENT.CAPTURE.COMPLETED") {
+      const captureId = resource.id;
+      const supplementalData = resource.supplementary_data?.related_ids;
+      const ppOrderId = supplementalData?.order_id;
+
+      if (ppOrderId) {
+        await db.payments.updateMany({
+          where: { gatewayOrderId: ppOrderId },
+          data: { status: "SUCCESS", paymentId: captureId },
+        });
+        await db.securityLogs.create({
+          data: { event: "PAYPAL_WEBHOOK_CAPTURE_COMPLETED", user: captureId, status: "SUCCESS" },
+        });
+      }
+    } else if (
+      eventType === "PAYMENT.CAPTURE.DENIED" ||
+      eventType === "PAYMENT.CAPTURE.REFUNDED"
+    ) {
+      const supplementalData = resource.supplementary_data?.related_ids;
+      const ppOrderId = supplementalData?.order_id;
+
+      if (ppOrderId) {
+        const newStatus = eventType === "PAYMENT.CAPTURE.REFUNDED" ? "REFUNDED" : "FAILED";
+        await db.payments.updateMany({
+          where: { gatewayOrderId: ppOrderId },
+          data: { status: newStatus },
+        });
+        await db.securityLogs.create({
+          data: { event: `PAYPAL_WEBHOOK_${eventType.replace(/\./g, "_")}`, user: ppOrderId, status: newStatus },
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[PayPal Webhook]", err.message);
+  }
+});
+
 export default router;
+
