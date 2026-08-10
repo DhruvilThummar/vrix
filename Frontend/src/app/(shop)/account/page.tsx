@@ -495,8 +495,8 @@ export default function UserAccountPage() {
               Manage your orders, saved wishlist items, and member privileges.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="font-label-caps text-[10px] uppercase tracking-widest px-3.5 py-1.5 bg-pure-white/10 border border-pure-white/20 rounded-full">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="font-label-caps text-[clamp(0.55rem,2vw,0.625rem)] leading-tight uppercase tracking-[0.12em] sm:tracking-widest px-3 py-1.5 bg-pure-white/10 border border-pure-white/20 rounded-full whitespace-nowrap">
               {memberTier}
             </span>
           </div>
@@ -505,7 +505,7 @@ export default function UserAccountPage() {
 
       {/* MOBILE STICKY HORIZONTAL TAB BAR (< 768px - Full Width Edge-to-Edge) */}
       <div className="md:hidden sticky top-[64px] z-30 w-full bg-pure-white border-b border-slate-grey/20 py-2.5 px-4 shadow-xs">
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar whitespace-nowrap py-1 w-full">
+Member Tier Font Size: Reduce font size in account overview so text is fully visible.        <div className="flex gap-2 overflow-x-auto hide-scrollbar whitespace-nowrap py-1 w-full">
           {menuItems.map((item) => {
             const isActive = activeTab === item.key;
             return (
@@ -590,9 +590,12 @@ export default function UserAccountPage() {
                     { label: "Wishlist Items", value: wishlist.length },
                     { label: "Member Tier", value: memberTier },
                   ].map((stat) => (
-                    <div key={stat.label} className="bg-soft-linen/30 p-5 border border-slate-grey/15 flex flex-col justify-between h-28 hover:border-slate-grey/30 transition-colors">
+                    <div key={stat.label} className="bg-soft-linen/30 p-4 sm:p-5 border border-slate-grey/15 flex flex-col justify-between h-28 min-w-0 hover:border-slate-grey/30 transition-colors">
                       <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">{stat.label}</span>
-                      <span className="font-display-lg text-xl md:text-2xl text-deep-navy font-semibold truncate">{stat.value}</span>
+                      <span className={stat.label === "Member Tier"
+                        ? "font-display-lg text-[clamp(0.65rem,2.8vw,1rem)] sm:text-[clamp(0.8rem,1.6vw,1.25rem)] leading-tight text-deep-navy font-semibold break-words"
+                        : "font-display-lg text-xl md:text-2xl text-deep-navy font-semibold truncate"
+                      }>{stat.value}</span>
                     </div>
                   ))}
                 </div>
