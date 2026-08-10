@@ -35,7 +35,7 @@ export default function ConditionalScriptLoader() {
       {consent.analytics && (
         <>
           <Script
-            src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+            src="https://www.googletagmanager.com/gtag/js?id=G-4MHMGSMVEE"
             strategy="afterInteractive"
           />
           <Script id="google-analytics" strategy="afterInteractive">
@@ -43,7 +43,7 @@ export default function ConditionalScriptLoader() {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-XXXXXXXXXX', { page_path: window.location.pathname });
+              gtag('config', 'G-4MHMGSMVEE', { page_path: window.location.pathname });
             `}
           </Script>
         </>
