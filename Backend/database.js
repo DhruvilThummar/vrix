@@ -7,10 +7,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathDirect.dirname(__filename);
 const DB_PATH = pathDirect.join(__dirname, "data", "db.json");
 
-// Initialize Supabase JS Client if credentials are provided
+// Use service-role key so the backend Supabase client bypasses Row Level Security.
+// This is safe — database.js is server-only code, never sent to the browser.
 const supabaseUrl = process.env.SUPABASE_URL || "https://snvifoikeixkgrdkgyme.supabase.co";
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudmlmb2lrZWl4a2dyZGtneW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTA0NjIsImV4cCI6MjA5ODU2NjQ2Mn0.H-mxdmhjHGg0RVF35ifWIvYgGRBS3oMgq08dGE3bbTw";
-export const supabase = (supabaseUrl && supabaseAnonKey) ? createClient(supabaseUrl, supabaseAnonKey) : null;
+const supabaseServiceKey =
+  process.env.SUPABASE_SECRET_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudmlmb2lrZWl4a2dyZGtneW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTA0NjIsImV4cCI6MjA5ODU2NjQ2Mn0.H-mxdmhjHGg0RVF35ifWIvYgGRBS3oMgq08dGE3bbTw";
+export const supabase = (supabaseUrl && supabaseServiceKey)
+  ? createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } })
+  : null;
 
 const normalizePrismaDatabaseUrl = () => {
   const rawUrl = process.env.DATABASE_URL;

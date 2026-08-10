@@ -13,7 +13,36 @@ import AuthDrawer from "@/components/auth/AuthDrawer";
 import { useCurrency } from "@/context/CurrencyContext";
 
 
-const DEFAULT_LINKS: any[] = [];
+const DEFAULT_LINKS: any[] = [
+  {
+    label: "Rings",
+    path: "/rings",
+  },
+  {
+    label: "Necklaces",
+    path: "/necklaces",
+  },
+  {
+    label: "Earrings",
+    path: "/earrings",
+  },
+  {
+    label: "Bracelets",
+    path: "/bracelets",
+  },
+  {
+    label: "Collections",
+    path: "/collections",
+  },
+  {
+    label: "Categories",
+    path: "/categories",
+  },
+  {
+    label: "Bespoke",
+    path: "/bespoke",
+  },
+];
 
 
 export default function Header() {
@@ -124,6 +153,8 @@ export default function Header() {
             links.push({ label: "VRIX+", path: "/vrix-plus" });
           }
           setNavLinks(links);
+        } else {
+          setNavLinks(DEFAULT_LINKS);
         }
       })
       .catch((err) => console.error("Error loading header DB details:", err));
