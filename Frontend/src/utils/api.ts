@@ -161,6 +161,14 @@ export async function validateStock(items: Array<{ id: string; title: string; qu
   });
 }
 
+export async function setWishlistStockAlert(email: string, productId: string, enabled: boolean) {
+  return apiFetch<{ success: boolean; enabled: boolean }>("/products/wishlist-alerts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, productId, enabled }),
+  });
+}
+
 export async function createProduct(productData: any) {
   return adminFetch<any>("/products", {
     method: "POST",

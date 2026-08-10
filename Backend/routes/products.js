@@ -1,6 +1,7 @@
 import express from "express";
 import { db } from "../database.js";
 import { adminAuth } from "../middleware/auth.js";
+import { getTransporter, sendEmailWithTimeout } from "../config/apiResolvers.js";
 
 const router = express.Router();
 
@@ -62,6 +63,39 @@ const createUniqueProductId = async (title) => {
 
   return candidate;
 };
+
+const notifyWishlistedCustomers = async (product, alertType = "restocked") => {
+  const watchers = await db.$queryRawUnsafe('SELECT user_email FROM "wishlist_stock_alerts" WHERE product_id = $1', product.id);
+  if (!watchers.length) return;
+  const transporter = await getTransporter();
+  if (!transporter) return;
+  const productUrl = `${process.env.FRONTEND_URL || "https://vrixjewels.com"}/product/${encodeURIComponent(product.id)}`;
+  await Promise.allSettled(watchers.map(async ({ user_email }) => {
+    await sendEmailWithTimeout(transporter, {
+      from: `"VRIX" <${process.env.SMTP_USER || "info@vrixjewels.com"}>`,
+      to: user_email,
+      subject: alertType === "low" ? `${product.title} is almost sold out` : `${product.title} is back in stock`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#0f1728"><h2>${alertType === "low" ? "Your wishlist item is almost sold out" : "Your wishlist item is available"}</h2><img src="${product.image}" alt="${product.title}" style="width:100%;max-width:320px;max-height:360px;object-fit:cover"/><h3>${product.title}</h3><p>${product.material || "VRIX fine jewelry"}</p><p style="font-size:18px;font-weight:bold">₹${Number(product.price).toLocaleString("en-IN")}</p><p>${alertType === "low" ? `Only ${product.stock} left — secure your piece before it sells out.` : "Good news — this piece is back in stock. Availability is limited."}</p><a href="${productUrl}" style="display:inline-block;padding:12px 18px;background:#0f1728;color:#fff;text-decoration:none">Shop now</a></div>`,
+    }, 15000);
+  }));
+  await db.$executeRawUnsafe('UPDATE "wishlist_stock_alerts" SET last_notified_at = CURRENT_TIMESTAMP WHERE product_id = $1', product.id);
+};
+
+// Add or remove a product from the server-side wishlist watchlist.
+router.post("/wishlist-alerts", async (req, res) => {
+  const email = String(req.body.email || "").trim().toLowerCase();
+  const productId = String(req.body.productId || "").trim();
+  const enabled = req.body.enabled !== false;
+  if (!email || !productId) return res.status(400).json({ error: "Email and productId are required" });
+  try {
+    if (enabled) {
+      await db.$executeRawUnsafe('INSERT INTO "wishlist_stock_alerts" (user_email, product_id) VALUES ($1, $2) ON CONFLICT (user_email, product_id) DO NOTHING', email, productId);
+    } else {
+      await db.$executeRawUnsafe('DELETE FROM "wishlist_stock_alerts" WHERE user_email = $1 AND product_id = $2', email, productId);
+    }
+    res.json({ success: true, enabled });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
 // POST /api/products/validate-stock — Validate cart items against active stock
 router.post("/validate-stock", async (req, res) => {
@@ -153,6 +187,7 @@ router.post("/", adminAuth, async (req, res) => {
 // PUT /api/products/:id
 router.put("/:id", adminAuth, async (req, res) => {
   try {
+    const existing = await db.products.findUnique({ where: { id: req.params.id } });
     const data = normalizeProductData(req.body);
     if (!data.title) return res.status(400).json({ error: "Product title is required" });
     if (!data.image) return res.status(400).json({ error: "At least one product image is required" });
@@ -160,6 +195,8 @@ router.put("/:id", adminAuth, async (req, res) => {
 
     delete data.id;
     const updated = await db.products.update({ where: { id: req.params.id }, data });
+    if ((existing?.stock || 0) <= 0 && (updated.stock || 0) > 0) notifyWishlistedCustomers(updated).catch((err) => console.error("Restock notification failed:", err.message));
+    if ((existing?.stock || 0) > 3 && (updated.stock || 0) > 0 && (updated.stock || 0) <= 3) notifyWishlistedCustomers(updated, "low").catch((err) => console.error("Low-stock notification failed:", err.message));
     res.json(updated);
   } catch (err) {
     res.status(404).json({ error: err.message });
@@ -181,7 +218,10 @@ router.patch("/:id/stock", adminAuth, async (req, res) => {
   const { stock } = req.body;
   if (stock === undefined || isNaN(Number(stock))) return res.status(400).json({ error: "stock (number) is required" });
   try {
+    const existing = await db.products.findUnique({ where: { id: req.params.id } });
     const updated = await db.products.update({ where: { id: req.params.id }, data: { stock: Number(stock) } });
+    if ((existing?.stock || 0) <= 0 && updated.stock > 0) notifyWishlistedCustomers(updated).catch((err) => console.error("Restock notification failed:", err.message));
+    if ((existing?.stock || 0) > 3 && updated.stock > 0 && updated.stock <= 3) notifyWishlistedCustomers(updated, "low").catch((err) => console.error("Low-stock notification failed:", err.message));
     res.json(updated);
   } catch (err) {
     res.status(404).json({ error: err.message });

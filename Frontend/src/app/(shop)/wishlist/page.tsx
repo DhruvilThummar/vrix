@@ -73,6 +73,10 @@ export default function WishlistPage() {
       e.preventDefault();
       e.stopPropagation();
     }
+    if (Number(product.stock ?? 999) <= 0) {
+      showToast("This product is currently out of stock.");
+      return;
+    }
     try {
       addItem({
         id: product.id,
@@ -81,6 +85,7 @@ export default function WishlistPage() {
         image: product.image,
         material: product.material || "18K Gold Vermeil",
         size: "M",
+        stock: Number(product.stock ?? 999),
       });
       // Remove from wishlist
       const key = getWishlistKey(user?.email);

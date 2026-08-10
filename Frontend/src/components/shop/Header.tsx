@@ -190,13 +190,15 @@ export default function Header() {
 
   // Move wishlist item to cart
   const handleMoveToCart = (item: any) => {
+    if (Number(item.stock ?? 999) <= 0) return;
     addItem({
       id: item.id,
       title: item.title,
       price: item.price,
       image: item.image,
       material: item.material || "Silver",
-      size: "M"
+      size: "M",
+      stock: Number(item.stock ?? 999),
     });
     handleRemoveFromWishlist(item.id);
     setIsWishlistOpen(false);
@@ -644,17 +646,20 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => {
+                        if (Number(p.stock ?? 999) <= 0) return;
                         addItem({
                           id: p.id,
                           title: p.title,
                           price: p.price,
                           image: p.image,
                           material: p.material || "18K Gold Vermeil",
+                          stock: Number(p.stock ?? 999),
                         });
                       }}
-                      className="w-full py-1.5 bg-black text-white text-[9px] font-button uppercase tracking-wider hover:bg-black/90 transition-colors cursor-pointer"
+                      disabled={Number(p.stock ?? 999) <= 0}
+                      className="w-full py-1.5 bg-black text-white text-[9px] font-button uppercase tracking-wider hover:bg-black/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      + Add to Bag
+                      {Number(p.stock ?? 999) <= 0 ? "Out of Stock" : "+ Add to Bag"}
                     </button>
                   </div>
                 ))}

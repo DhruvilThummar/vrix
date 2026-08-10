@@ -105,6 +105,7 @@ export default function CartPage() {
                         {item.size && <p className="text-xs text-slate-grey font-body-md">Size: <span className="text-ink-black">{item.size}</span></p>}
                         {item.engraving && <p className="text-xs text-slate-grey font-body-md italic">Engraving: "{item.engraving}"</p>}
                         {item.giftNote && <p className="text-xs text-slate-grey font-body-md italic">Gift Note: "{item.giftNote}"</p>}
+                        {Number.isFinite(Number(item.stock)) && <p className={`text-[10px] font-label-caps uppercase tracking-wider mt-1 ${Number(item.stock) <= 0 ? "text-red-600" : Number(item.stock) <= 3 ? "text-amber-700" : "text-slate-grey"}`}>{Number(item.stock) <= 0 ? "Out of stock" : `${item.stock} available`}</p>}
                       </div>
                       <span className="font-body-md text-body-md text-primary font-semibold">{formatPrice(item.price * item.quantity)}</span>
                     </div>
@@ -121,7 +122,9 @@ export default function CartPage() {
                       <span className="font-body-md text-sm text-primary px-4">{item.quantity}</span>
                       <button
                         onClick={() => updateQty(item.id, item.quantity + 1)}
-                        className="w-9 h-full flex items-center justify-center text-slate-grey hover:text-deep-navy transition-colors cursor-pointer border-l border-slate-grey/25"
+                        disabled={Number.isFinite(Number(item.stock)) && item.quantity >= Number(item.stock)}
+                        aria-label={`Increase ${item.title} quantity`}
+                        className="w-9 h-full flex items-center justify-center text-slate-grey hover:text-deep-navy transition-colors cursor-pointer border-l border-slate-grey/25 disabled:opacity-35 disabled:cursor-not-allowed"
                       >
                         <span className="material-symbols-outlined text-[16px]">add</span>
                       </button>
@@ -225,7 +228,8 @@ export default function CartPage() {
                     showToast(err.message || "Some items are out of stock.");
                   }
                 }}
-                className="w-full bg-deep-navy text-pure-white font-button text-button uppercase tracking-widest py-4 hover:bg-ink-black transition-colors text-center block cursor-pointer"
+                disabled={items.some((item) => Number(item.stock) === 0)}
+                className="w-full bg-deep-navy text-pure-white font-button text-button uppercase tracking-widest py-4 hover:bg-ink-black transition-colors text-center block cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Proceed to Checkout
               </button>

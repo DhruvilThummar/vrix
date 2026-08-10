@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { createPaymentOrder, fetchPaymentConfig, verifyPayment } from "@/utils/api";
+import { createPaymentOrder, fetchPaymentConfig, verifyPayment, validateStock } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useCheckoutStorage } from "@/hooks/useCheckoutStorage";
@@ -151,6 +151,7 @@ export default function PaymentPage() {
     });
 
     try {
+      await validateStock(items.map((item) => ({ id: item.id, title: item.title, quantity: item.quantity })));
       // 1. Create Razorpay Order via Backend
       const orderRes = await createPaymentOrder({
         amount: paymentAmount,

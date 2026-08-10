@@ -12,6 +12,7 @@ export interface CartItem {
   size?: string;
   engraving?: string;
   giftNote?: string;
+  stock?: number;
 }
 
 export interface GiftOption {
@@ -140,6 +141,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addItem = useCallback((newItem: Omit<CartItem, "quantity"> & { quantity?: number }) => {
     setItems((prev) => {
       const qtyToAdd = newItem.quantity && newItem.quantity > 0 ? newItem.quantity : 1;
+      const maxStock = Number.isFinite(Number(newItem.stock)) ? Math.max(0, Math.floor(Number(newItem.stock))) : 999;
+      if (maxStock === 0) return prev;
 
       const matchIndex = prev.findIndex(
         (i) =>
@@ -153,12 +156,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (matchIndex > -1) {
         return prev.map((item, idx) =>
           idx === matchIndex
-            ? { ...item, quantity: item.quantity + qtyToAdd }
+            ? { ...item, quantity: Math.min(maxStock, item.quantity + qtyToAdd), stock: maxStock }
             : item
         );
       }
 
-      return [...prev, { ...newItem, quantity: qtyToAdd }];
+      return [...prev, { ...newItem, quantity: Math.min(maxStock, qtyToAdd) }];
     });
   }, []);
 
@@ -185,7 +188,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         i.id === id &&
         (size === undefined || (i.size || "") === (size || "")) &&
         (material === undefined || (i.material || "") === (material || ""))
-          ? { ...i, quantity: qty }
+          ? { ...i, quantity: Math.min(qty, Number.isFinite(Number(i.stock)) ? Math.max(0, Number(i.stock)) : qty) }
           : i
       )
     );

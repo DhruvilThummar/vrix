@@ -170,15 +170,20 @@ router.post("/verify", async (req, res) => {
           }
         }
 
-        // 4. Deduct stock for purchased items
+        // 4. Reserve stock atomically. Never clamp stock: a failed conditional update
+        // rolls the whole transaction back instead of allowing an oversell.
         if (Array.isArray(items)) {
+          const requested = new Map();
           for (const item of items) {
-            const product = await tx.products.findUnique({ where: { id: item.id } });
-            if (product) {
-              const currentStock = product.stock ?? 999;
-              const newStock = Math.max(0, currentStock - (item.quantity || 1));
-              await tx.products.update({ where: { id: item.id }, data: { stock: newStock } });
-            }
+            const quantity = Math.max(1, Number(item.quantity) || 1);
+            requested.set(item.id, (requested.get(item.id) || 0) + quantity);
+          }
+          for (const [productId, quantity] of requested) {
+            const result = await tx.products.updateMany({
+              where: { id: productId, isVisible: true, stock: { gte: quantity } },
+              data: { stock: { decrement: quantity } },
+            });
+            if (result.count !== 1) throw new Error(`Insufficient stock for product ${productId}`);
           }
         }
 
@@ -717,4 +722,3 @@ router.patch("/status/:orderId", async (req, res) => {
 });
 
 export default router;
-

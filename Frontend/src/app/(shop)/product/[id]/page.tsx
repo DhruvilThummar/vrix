@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
-import { fetchProducts, getWishlistKey } from "@/utils/api";
+import { fetchProducts, getWishlistKey, setWishlistStockAlert } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import ProductImageGrid2x2 from "@/components/pdp/ProductImageGrid2x2";
@@ -108,6 +108,10 @@ function ProductContent() {
 
   const handleAddToBag = () => {
     if (!product) return;
+    if (Number(product.stock ?? 999) <= 0) {
+      showToast("This piece is currently out of stock. Add it to your wishlist to be notified when it returns.");
+      return;
+    }
     if (!isLoggedIn) {
       showToast("Please sign in to add items to your bag.");
       setTimeout(() => router.push("/account"), 1000);
@@ -135,6 +139,7 @@ function ProductContent() {
         size: finalSize,
         engraving,
         giftNote,
+        stock: Number(product.stock ?? 999),
       });
       setBagLoading(false);
       showToast(`✓ "${product.title}" has been successfully added to your bag.`);
@@ -164,6 +169,7 @@ function ProductContent() {
       setWishlistActive(nextActive);
       localStorage.setItem(key, JSON.stringify(list));
       localStorage.setItem("vrix-wishlist", JSON.stringify(list));
+      if (user?.email) setWishlistStockAlert(user.email, product.id, nextActive).catch((error) => console.error("Wishlist stock alert update failed:", error));
     } catch (err) {
       console.error("Wishlist toggle error:", err);
     }
@@ -303,6 +309,9 @@ function ProductContent() {
                     <p className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(product.price)}</p>
                   )}
                 </div>
+                <p className={`font-label-caps text-[10px] uppercase tracking-widest mt-1 ${Number(product.stock ?? 999) <= 0 ? "text-red-700" : Number(product.stock ?? 999) <= 3 ? "text-amber-700" : "text-emerald-700"}`}>
+                  {Number(product.stock ?? 999) <= 0 ? "Out of stock" : Number(product.stock ?? 999) <= 3 ? `Only ${product.stock} left in stock` : "In stock — ready to ship"}
+                </p>
 
                 {/* Description (hide container spacing if empty) */}
                 {product.description && product.description.trim() ? (
@@ -395,9 +404,10 @@ function ProductContent() {
 
               {/* Add to Bag and Wishlist Actions */}
               <div className="flex flex-row gap-2 mt-0.5 w-full">
+                {Number(product.stock ?? 999) <= 0 && <p className="w-full text-center font-label-caps text-[10px] text-red-700 uppercase tracking-widest py-2 border border-red-200 bg-red-50">Out of stock — save to wishlist for a restock alert</p>}
                 <button
                   onClick={handleAddToBag}
-                  disabled={bagLoading}
+                  disabled={bagLoading || Number(product.stock ?? 999) <= 0}
                   className="flex-1 bg-deep-navy text-pure-white py-3 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
                 >
                   {bagLoading ? (
@@ -406,7 +416,7 @@ function ProductContent() {
                       <span className="truncate">Adding...</span>
                     </>
                   ) : (
-                    <span className="truncate">Add to Bag</span>
+                    <span className="truncate">{Number(product.stock ?? 999) <= 0 ? "Out of Stock" : "Add to Bag"}</span>
                   )}
                 </button>
                 <button
