@@ -89,6 +89,16 @@ export default function CookieConsentBanner() {
     // Ensure session ID exists for audit trail
     const sessionId = getSessionId();
 
+    // Update Google Consent Mode v2 parameters dynamically
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("consent", "update", {
+        ad_storage: updated.marketing ? "granted" : "denied",
+        ad_user_data: updated.marketing ? "granted" : "denied",
+        ad_personalization: updated.marketing ? "granted" : "denied",
+        analytics_storage: updated.analytics ? "granted" : "denied",
+      });
+    }
+
     // Dispatch custom event to dynamically reload third-party scripts
     window.dispatchEvent(new CustomEvent("cookieConsentUpdated", { detail: updated }));
 
