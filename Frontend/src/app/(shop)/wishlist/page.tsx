@@ -82,6 +82,7 @@ export default function WishlistPage() {
       addItem({
         id: product.id,
         title: product.title,
+        subtitle: product.subtitle || product.type,
         price: product.price,
         image: product.image,
         material: product.material || "18K Gold Vermeil",

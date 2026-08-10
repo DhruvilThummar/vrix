@@ -101,7 +101,8 @@ export default function CartPage() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h3 className="font-headline-md text-headline-md text-primary">{item.title}</h3>
-                        <p className="text-xs text-slate-grey font-body-md mt-0.5">{item.material}</p>
+                        <p className="text-xs text-slate-grey font-body-md mt-0.5">{item.subtitle || "Fine Jewelry"}</p>
+                        <p className="text-[10px] text-slate-grey/70 font-body-md">{item.material}</p>
                         {item.size && <p className="text-xs text-slate-grey font-body-md">Size: <span className="text-ink-black">{item.size}</span></p>}
                         {item.engraving && <p className="text-xs text-slate-grey font-body-md italic">Engraving: "{item.engraving}"</p>}
                         {item.giftNote && <p className="text-xs text-slate-grey font-body-md italic">Gift Note: "{item.giftNote}"</p>}

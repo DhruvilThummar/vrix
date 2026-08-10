@@ -67,7 +67,8 @@ export default function OrderSummary({
             </div>
             <div className="flex-grow min-w-0">
               <p className="text-xs font-body-md text-ink-black truncate font-medium">{item.title}</p>
-              <p className="text-[10px] text-slate-grey">{item.material}</p>
+              <p className="text-[10px] text-slate-grey">{item.subtitle || "Fine Jewelry"}</p>
+              <p className="text-[9px] text-slate-grey/70">{item.material}</p>
               {item.size && <p className="text-[10px] text-slate-grey">Size: {item.size}</p>}
             </div>
             <p className="text-xs font-semibold text-deep-navy shrink-0">

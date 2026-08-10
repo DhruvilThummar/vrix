@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 export interface CartItem {
   id: string;
   title: string;
+  subtitle?: string;
   price: number;
   image: string;
   material: string;

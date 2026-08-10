@@ -147,6 +147,7 @@ function ProductContent() {
       addItem({
         id: product.id,
         title: product.title,
+        subtitle: product.subtitle || product.type,
         price: basePrice + customizationPrice,
         image: selectedVariant?.image || product.image,
         material: selectedVariant?.material || selectedMetal || product.material || "18K Gold Vermeil",
@@ -199,7 +200,7 @@ function ProductContent() {
   if (loading) {
     return (
       <div className="relative w-full">
-        <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 md:pt-32 lg:pt-36 pb-8 md:pb-section-gap">
+        <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 md:pt-16 lg:pt-[4.5rem] pb-8 md:pb-section-gap">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter md:gap-[80px]">
             {/* Left Column: Image Gallery Skeletons */}
             <div className="md:col-span-7 flex flex-col gap-4 md:gap-8 relative">
@@ -273,7 +274,7 @@ function ProductContent() {
         </div>
       )}
 
-      <main className="max-w-container-max mx-auto px-4 md:px-8 pt-6 md:pt-32 lg:pt-36 pb-6 md:pb-10">
+      <main className="max-w-container-max mx-auto px-4 md:px-8 pt-6 md:pt-16 lg:pt-[4.5rem] pb-6 md:pb-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
           {/* Left Column: Image Grid (PC Layout: 2x2 or Asymmetric) */}
           <div className="md:col-span-7 relative">

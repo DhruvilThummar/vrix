@@ -38,6 +38,7 @@ interface Order {
 interface WishlistItem {
   id: string;
   title: string;
+  subtitle?: string;
   price: number;
   image: string;
   material: string;
@@ -766,7 +767,7 @@ Member Tier Font Size: Reduce font size in account overview so text is fully vis
                         </Link>
                         <div className="flex-grow flex flex-col justify-between">
                           <div className="space-y-1">
-                            <span className="text-[9px] font-label-caps text-slate-grey uppercase tracking-widest block truncate">{item.material || "Fine Jewelry"}</span>
+                            <span className="text-[9px] font-label-caps text-slate-grey uppercase tracking-widest block truncate">{item.subtitle || "Fine Jewelry"}</span>
                             <Link href={`/product/${item.id}`}>
                               <h4 className="font-body-md text-xs text-deep-navy uppercase font-semibold hover:underline line-clamp-1">{item.title}</h4>
                             </Link>

@@ -898,21 +898,23 @@ function AdminProductsContent() {
                 </div>
 
                 {/* Form Tabs */}
-                <div className="flex border-b border-slate-grey/15">
-                  {FORM_TABS.map((tab) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => setActiveFormTab(tab)}
-                      className={`flex-1 py-3 px-2 font-label-caps text-[10px] uppercase tracking-widest transition-all cursor-pointer ${
-                        activeFormTab === tab
-                          ? "text-deep-navy border-b-2 border-deep-navy bg-soft-linen/20"
-                          : "text-slate-grey hover:text-ink-black hover:bg-soft-linen/10"
-                      }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
+                <div className="overflow-x-auto hide-scrollbar border-b border-slate-grey/15">
+                  <div className="flex min-w-max">
+                    {FORM_TABS.map((tab) => (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setActiveFormTab(tab)}
+                        className={`shrink-0 whitespace-nowrap py-3 px-4 font-label-caps text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
+                          activeFormTab === tab
+                            ? "text-deep-navy border-b-2 border-deep-navy bg-soft-linen/20"
+                            : "text-slate-grey hover:text-ink-black hover:bg-soft-linen/10"
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Form Content */}

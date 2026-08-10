@@ -204,7 +204,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-body-md text-ink-black truncate font-medium hover:text-deep-navy">{p.title}</p>
-                    <p className="text-[10px] text-slate-grey font-label-caps uppercase tracking-wider">{p.collection || p.material}</p>
+                    <p className="text-[10px] text-slate-grey font-label-caps uppercase tracking-wider">{p.subtitle || p.type || "Fine Jewelry"}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs font-semibold text-deep-navy">₹{p.price}</p>

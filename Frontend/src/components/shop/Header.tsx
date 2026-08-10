@@ -182,6 +182,7 @@ export default function Header() {
     addItem({
       id: item.id,
       title: item.title,
+      subtitle: item.subtitle || item.type,
       price: item.price,
       image: item.image,
       material: item.material || "Silver",
@@ -556,7 +557,8 @@ export default function Header() {
                           <span className="material-symbols-outlined text-lg">delete</span>
                         </button>
                       </div>
-                      <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">{item.material}</p>
+                      <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">{item.subtitle || "Fine Jewelry"}</p>
+                      <p className="text-[9px] text-slate-grey/70">{item.material}</p>
                       {item.size && (
                         <p className="text-[10px] text-slate-grey uppercase tracking-wider">Size: {item.size}</p>
                       )}
@@ -627,6 +629,7 @@ export default function Header() {
                         addItem({
                           id: p.id,
                           title: p.title,
+                          subtitle: p.subtitle || p.type,
                           price: p.price,
                           image: p.image,
                           material: p.material || "18K Gold Vermeil",
@@ -749,7 +752,8 @@ export default function Header() {
                           <span className="material-symbols-outlined text-lg">close</span>
                         </button>
                       </div>
-                      <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">{item.material}</p>
+                      <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">{item.subtitle || "Fine Jewelry"}</p>
+                      <p className="text-[9px] text-slate-grey/70">{item.material}</p>
                       <p className="font-body-md text-sm font-semibold mt-1">{formatPrice(item.price)}</p>
                     </div>
                     <div className="pt-2">
