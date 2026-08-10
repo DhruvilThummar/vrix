@@ -17,6 +17,7 @@ export interface OrderDetails {
   amount: number;
   email: string;
   name: string;
+  currency?: string;
 }
 
 export interface RazorpayOptions {

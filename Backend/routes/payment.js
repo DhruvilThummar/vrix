@@ -1096,11 +1096,136 @@ router.post("/paypal/capture-order", async (req, res) => {
 
     // Admin notification (non-blocking)
     createAdminNotification({
-      type: "payment",
-      title: "New PayPal Payment",
-      message: `PayPal payment captured: ${captureId} — ₹${savedPayment?.amount ?? ""}`,
-      userEmail: email || null,
+      type: "NEW_ORDER",
+      title: "📦 New PayPal Order Placed",
+      message: `📦 New order #${savedPayment?.orderId} of $${savedPayment?.amount ?? ""} USD placed by ${savedPayment?.userEmail || "guest"}`,
+      userEmail: savedPayment?.userEmail || null,
     }).catch(() => {});
+
+    // Send order confirmation emails
+    try {
+      const activeTransporter = await getTransporter();
+      if (activeTransporter && savedPayment) {
+        const apiSettings = await getApiSettings();
+        const cmsBrand = await db.cmsSettings.findUnique({ where: { key: "brand" } }) || {};
+        const adminEmail = cmsBrand.email || process.env.ADMIN_EMAIL || "contact@vrix.com";
+        const senderEmail = apiSettings && apiSettings.nodemailerUser ? apiSettings.nodemailerUser : (process.env.SMTP_USER || "info@vrixjewels.com");
+
+        const itemsList = items || [];
+        let itemsHtml = "";
+        itemsList.forEach((item) => {
+          itemsHtml += `
+            <tr style="border-bottom: 1px solid #e5e3df;">
+              <td style="padding: 14px 0; font-size: 13px; color: #0f1728; line-height: 1.5;">
+                <strong style="text-transform: uppercase; letter-spacing: 0.5px;">${item.title}</strong><br/>
+                <span style="font-size: 11px; color: #666; text-transform: uppercase;">${item.material || "Fine Jewelry"} ${item.size ? `• Size: ${item.size}` : ""}</span>
+                ${item.engraving ? `<br/><span style="font-size: 11px; color: #854d0e; font-style: italic;">Engraving: "${item.engraving}"</span>` : ""}
+                ${item.giftNote ? `<br/><span style="font-size: 11px; color: #4338ca; font-style: italic;">Gift Message: "${item.giftNote}"</span>` : ""}
+              </td>
+              <td style="padding: 14px 0; font-size: 13px; color: #0f1728; text-align: center;">${item.quantity || 1}</td>
+              <td style="padding: 14px 0; font-size: 13px; font-weight: bold; color: #0f1728; text-align: right;">$${((item.price || 0) * (item.quantity || 1)).toFixed(2)} USD</td>
+            </tr>
+          `;
+        });
+
+        if (isGiftWrapped) {
+          itemsHtml += `
+            <tr style="border-bottom: 1px solid #e5e3df;">
+              <td style="padding: 14px 0; font-size: 13px; color: #0f1728;">
+                <strong style="text-transform: uppercase; letter-spacing: 0.5px;">VRIX Signature Gift Presentation Case</strong><br/>
+                ${giftMessage ? `<span style="font-size: 11px; color: #666; font-style: italic;">Ribbon Note: "${giftMessage}"</span>` : ""}
+              </td>
+              <td style="padding: 14px 0; font-size: 13px; color: #0f1728; text-align: center;">1</td>
+              <td style="padding: 14px 0; font-size: 13px; font-weight: bold; color: #0f1728; text-align: right;">$${(giftWrapPrice || 3.00).toFixed(2)} USD</td>
+            </tr>
+          `;
+        }
+
+        const etaLabel = savedPayment.estimatedDeliveryDate
+          ? new Date(savedPayment.estimatedDeliveryDate).toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' })
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", { weekday: 'long', month: 'short', day: 'numeric' });
+
+        const orderSummaryHtml = `
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: auto; padding: 36px; background: #f8f6f0; border: 1px solid #e5e3df; color: #0f1728;">
+            <div style="text-align: center; border-bottom: 2px solid #0f1728; padding-bottom: 20px; margin-bottom: 28px;">
+              <h1 style="font-size: 24px; letter-spacing: 6px; color: #0f1728; text-transform: uppercase; margin: 0 0 6px 0; font-weight: 700;">VRIX</h1>
+              <p style="font-size: 10px; letter-spacing: 3px; color: #666; text-transform: uppercase; margin: 0;">Architectural Fine Jewelry • Official Invoice</p>
+            </div>
+
+            <p style="color: #444; font-size: 14px; margin-bottom: 16px;">Dear <strong>${savedPayment.customerName || 'Valued Client'}</strong>,</p>
+            <p style="color: #666; font-size: 13px; line-height: 1.6; margin-bottom: 24px;">Thank you for selecting VRIX. Your piece has been recorded in our master ledger and is entering hand-craftsmanship inspection. Below is your official tax receipt and shipment schedule:</p>
+
+            <div style="margin-bottom: 24px; background: #ffffff; padding: 20px; border: 1px solid #e5e3df;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <tr>
+                  <td style="padding-bottom: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 10px;">Order Reference</td>
+                  <td style="padding-bottom: 10px; text-align: right; font-weight: bold; color: #0f1728;">${savedPayment.orderId}</td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 10px;">Payment Gateway</td>
+                  <td style="padding-bottom: 10px; text-align: right; font-weight: bold; color: #0f1728;">PayPal</td>
+                </tr>
+                <tr>
+                  <td style="padding-bottom: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 10px;">PayPal Transaction ID</td>
+                  <td style="padding-bottom: 10px; text-align: right; font-mono: true; color: #0f1728;">${savedPayment.paymentId || captureId}</td>
+                </tr>
+                <tr>
+                  <td style="color: #888; text-transform: uppercase; letter-spacing: 1px; font-size: 10px;">Estimated Delivery Arrival</td>
+                  <td style="text-align: right; font-weight: bold; color: #2563eb;">🚚 ${etaLabel}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="margin-bottom: 24px; background: #ffffff; padding: 20px; border: 1px solid #e5e3df;">
+              <p style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0;">Recipient &amp; Delivery Destination</p>
+              <p style="font-size: 13px; color: #0f1728; font-weight: bold; margin: 0;">${savedPayment.customerName || "VRIX Client"}</p>
+              <p style="font-size: 12px; color: #444; margin: 4px 0 0 0;">${savedPayment.address || ""}, ${savedPayment.city || ""} ${savedPayment.postalCode || ""}</p>
+              <p style="font-size: 12px; color: #666; margin: 4px 0 0 0;">Contact Phone: ${savedPayment.customerPhone || "N/A"}</p>
+            </div>
+
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+              <thead>
+                <tr style="border-bottom: 2px solid #e5e3df; font-size: 10px; text-transform: uppercase; color: #888; letter-spacing: 1.5px;">
+                  <th style="text-align: left; padding-bottom: 8px;">Jewelry Item</th>
+                  <th style="text-align: center; padding-bottom: 8px; width: 50px;">Qty</th>
+                  <th style="text-align: right; padding-bottom: 8px; width: 100px;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>${itemsHtml || `<tr><td colspan="3" style="padding: 12px 0; text-align: center; color: #666;">Standard Jewelry Piece</td></tr>`}</tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="2" style="padding: 16px 0 0 0; font-size: 13px; color: #666; text-align: right;">Total Amount Paid</td>
+                  <td style="padding: 16px 0 0 0; font-size: 18px; font-weight: bold; color: #0f1728; text-align: right;">$${savedPayment.amount.toFixed(2)} USD</td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div style="border-top: 1px solid #e5e3df; padding-top: 20px; text-align: center;">
+              <p style="color: #888; font-size: 11px; margin: 0 0 6px 0;">For inquiries or custom sizing support: <a href="mailto:${adminEmail}" style="color: #0f1728;">${adminEmail}</a></p>
+              <p style="color: #0f1728; font-size: 11px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin: 0;">VRIX FINE JEWELRY • ALL RIGHTS RESERVED</p>
+            </div>
+          </div>
+        `;
+
+        if (savedPayment.userEmail) {
+          await activeTransporter.sendMail({
+            from: `"VRIX Fine Jewelry" <${senderEmail}>`,
+            to: savedPayment.userEmail,
+            subject: `Order Invoice & Receipt #${savedPayment.orderId} - VRIX`,
+            html: orderSummaryHtml,
+          });
+        }
+
+        await activeTransporter.sendMail({
+          from: `"VRIX System" <${senderEmail}>`,
+          to: adminEmail,
+          subject: `New PayPal Order Verified - #${savedPayment.orderId}`,
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e3df;"><h3 style="color: #0f1728; border-bottom: 2px solid #e5e3df; padding-bottom: 10px;">PayPal Order Verified</h3>${orderSummaryHtml}</div>`,
+        });
+      }
+    } catch (mailErr) {
+      console.error("Failed to send order verification email:", mailErr.message);
+    }
 
     res.json({
       success: true,

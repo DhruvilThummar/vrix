@@ -54,6 +54,7 @@ export default function PaymentPage() {
       amount: paymentAmount,
       email: shipping?.email || "",
       name: shipping?.fullName || "",
+      currency,
     });
     router.push("/checkout/confirmation");
   };

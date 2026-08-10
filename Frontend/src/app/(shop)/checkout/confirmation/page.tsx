@@ -23,9 +23,7 @@ export default function ConfirmationPage() {
         {/* Animated Checkmark Badge */}
         <div className="flex justify-center">
           <div className="w-24 h-24 border border-slate-grey/20 flex items-center justify-center bg-soft-linen/50 animate-fade-in shadow-xs">
-            <span
-              className="material-symbols-outlined icon-weight-thin text-[52px] text-deep-navy"
-            >
+            <span className="material-symbols-outlined icon-weight-thin text-[52px] text-deep-navy">
               check_circle
             </span>
           </div>
@@ -55,7 +53,12 @@ export default function ConfirmationPage() {
               {[
                 { label: "Order ID", value: order.orderId },
                 ...(order.paymentId ? [{ label: "Payment ID", value: order.paymentId }] : []),
-                { label: "Amount Paid", value: `₹${order.amount.toFixed(2)}` },
+                {
+                  label: "Amount Paid",
+                  value: order.currency === "USD"
+                    ? `$${order.amount.toFixed(2)} USD`
+                    : `₹${order.amount.toLocaleString()}`,
+                },
                 { label: "Email", value: order.email },
               ].map((row) => (
                 <div key={row.label} className="flex justify-between items-center">
