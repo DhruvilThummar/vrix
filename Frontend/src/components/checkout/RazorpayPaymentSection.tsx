@@ -33,10 +33,27 @@ export default function RazorpayPaymentSection({
   onResetStatus,
 }: RazorpayPaymentSectionProps) {
   const isDevMode = paymentConfig?.devMode ?? false;
+  const isEnabled = paymentConfig?.enabled ?? true;
   const isButtonDisabled = loading || !paymentConfig || (!isDevMode && (!sdkReady || !paymentConfig.keyId));
+
+  // If Razorpay has been explicitly turned OFF from Admin panel, hide the entire section
+  if (paymentConfig && !paymentConfig.enabled && !paymentConfig.devMode) {
+    return (
+      <div className="border border-slate-grey/20 p-6 space-y-3 bg-soft-linen/30 text-center">
+        <span className="material-symbols-outlined text-slate-grey text-3xl">credit_card_off</span>
+        <h3 className="font-label-caps text-xs text-deep-navy font-bold uppercase tracking-wider">
+          Online Payment Unavailable
+        </h3>
+        <p className="text-xs text-slate-grey font-body-md max-w-sm mx-auto">
+          Online card and UPI payments via Razorpay are currently paused by the store administrator. Please check back later or contact customer support.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="border border-slate-grey/20 p-6 space-y-6 bg-pure-white">
+
       {/* Title Header */}
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 bg-deep-navy flex items-center justify-center shrink-0">

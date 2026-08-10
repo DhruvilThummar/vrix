@@ -49,6 +49,12 @@ export async function getCloudinary() {
 
 export async function getRazorpay() {
   const apiSettings = await getApiSettings();
+  
+  // If explicitly disabled in Admin panel settings, do not initialize
+  if (apiSettings && apiSettings.razorpayEnabled === false) {
+    return null;
+  }
+
   if (apiSettings && apiSettings.razorpayEnabled) {
     if (apiSettings.razorpayKeyId && apiSettings.razorpayKeySecret) {
       try {
@@ -60,7 +66,7 @@ export async function getRazorpay() {
     }
   }
 
-  // Fallback to process.env
+  // Fallback to process.env only if not explicitly disabled in CMS
   if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
     try {
       const { default: Razorpay } = await import("razorpay");
@@ -71,6 +77,7 @@ export async function getRazorpay() {
   }
   return null;
 }
+
 
 export async function getTransporter() {
   const user = String(process.env.SMTP_USER || "info@vrixjewels.com").trim();

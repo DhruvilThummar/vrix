@@ -1823,7 +1823,7 @@ export default function AdminCMSPage() {
                     </div>
                   </div>
                   <p className="text-xs text-slate-grey font-body-md -mt-4">
-                    Configure payment gateways for customer checkouts. If disabled, checkout functions in local dev/mock payment mode.
+                    Enable or disable Razorpay payments across the store. When toggled OFF, Razorpay will be completely hidden from customer checkout options.
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col gap-2">

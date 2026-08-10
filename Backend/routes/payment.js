@@ -9,6 +9,12 @@ const router = express.Router();
 
 const getRazorpayCredentials = async () => {
   const apiSettings = await getApiSettings();
+  
+  // If explicitly disabled in Admin panel, turn it OFF everywhere
+  if (apiSettings && apiSettings.razorpayEnabled === false) {
+    return null;
+  }
+
   if (
     apiSettings?.razorpayEnabled &&
     apiSettings.razorpayKeyId &&
@@ -20,6 +26,7 @@ const getRazorpayCredentials = async () => {
       keyId: apiSettings.razorpayKeyId,
       keySecret: apiSettings.razorpayKeySecret,
       source: "cms",
+      enabled: true,
     };
   }
 
@@ -33,11 +40,13 @@ const getRazorpayCredentials = async () => {
       keyId: process.env.RAZORPAY_KEY_ID,
       keySecret: process.env.RAZORPAY_KEY_SECRET,
       source: "env",
+      enabled: true,
     };
   }
 
   return null;
 };
+
 
 const safeCompareHex = (actual, expected) => {
   const actualBuffer = Buffer.from(String(actual || ""), "hex");
@@ -47,6 +56,19 @@ const safeCompareHex = (actual, expected) => {
 
 router.get("/config", async (req, res) => {
   try {
+    const apiSettings = await getApiSettings();
+    const isExplicitlyDisabled = apiSettings && apiSettings.razorpayEnabled === false;
+    
+    if (isExplicitlyDisabled) {
+      return res.json({
+        keyId: null,
+        currency: "INR",
+        enabled: false,
+        devMode: false,
+        source: "disabled",
+      });
+    }
+
     const credentials = await getRazorpayCredentials();
     res.json({
       keyId: credentials?.keyId || null,
@@ -59,6 +81,7 @@ router.get("/config", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // POST /api/payment/order — Create a Razorpay order
 router.post("/order", async (req, res) => {
@@ -78,6 +101,11 @@ router.post("/order", async (req, res) => {
   const normalizedReceipt = String(receipt || `vrix_${Date.now()}`).slice(0, 40);
 
   try {
+    const apiSettings = await getApiSettings();
+    if (apiSettings && apiSettings.razorpayEnabled === false) {
+      return res.status(400).json({ error: "Razorpay payments are currently disabled by administrator." });
+    }
+
     const activeRazorpay = await getRazorpay();
     if (activeRazorpay) {
       const order = await activeRazorpay.orders.create({
@@ -105,6 +133,7 @@ router.post("/order", async (req, res) => {
       });
     }
   } catch (err) {
+
     res.status(500).json({ error: err.message });
   }
 });
