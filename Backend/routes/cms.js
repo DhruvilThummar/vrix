@@ -202,4 +202,31 @@ router.get("/cms/homepage", async (req, res) => {
   }
 });
 
+// GET /api/cms/product-templates — Fetch saved product preset templates
+router.get("/cms/product-templates", async (req, res) => {
+  try {
+    const setting = await db.cmsSettings.findUnique({ where: { key: "product_templates" } });
+    res.json(Array.isArray(setting?.value) ? setting.value : []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/cms/product-templates — Admin endpoint to save/update product preset templates
+router.post("/cms/product-templates", adminAuth, async (req, res) => {
+  try {
+    const templates = Array.isArray(req.body.templates) ? req.body.templates : req.body;
+    if (!Array.isArray(templates)) return res.status(400).json({ error: "templates array required" });
+    await db.cmsSettings.upsert({
+      where: { key: "product_templates" },
+      update: { value: templates },
+      create: { key: "product_templates", value: templates }
+    });
+    res.json({ success: true, templates });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
+

@@ -394,6 +394,26 @@ function AdminProductsContent() {
     setFDimensions(tmpl.dimensions || "");
     setFStock(tmpl.stock !== undefined ? tmpl.stock : 999);
     setFVisible(tmpl.isVisible !== undefined ? tmpl.isVisible : true);
+
+    // Apply variants if defined in template
+    if (Array.isArray(tmpl.variants) && tmpl.variants.length > 0) {
+      setFVariants(tmpl.variants);
+    }
+
+    // Apply worth & comparison options
+    if (tmpl.comparisonOptions) {
+      setFWorthIndex(tmpl.comparisonOptions.worthIndex ?? 5);
+      setFHardness(tmpl.comparisonOptions.hardness ?? 5);
+      setFShine(tmpl.comparisonOptions.shine ?? 5);
+      setFStyleRating(tmpl.comparisonOptions.styleRating ?? 5);
+    }
+
+    // Apply gift packaging options
+    if (tmpl.giftOptions) {
+      setFGiftWrappingPrice(tmpl.giftOptions.wrappingPrice ?? 0);
+      setFGiftShowCustomBox(!!tmpl.giftOptions.showCustomBox);
+      setFGiftPackagingNote(tmpl.giftOptions.packagingNote ?? "");
+    }
     
     showToast(`Applied preset settings: "${tmpl.name}"`);
   };
@@ -419,12 +439,25 @@ function AdminProductsContent() {
       dimensions: fDimensions,
       stock: fStock,
       isVisible: fVisible,
+      variants: fVariants,
+      comparisonOptions: {
+        worthIndex: fWorthIndex,
+        hardness: fHardness,
+        shine: fShine,
+        styleRating: fStyleRating,
+      },
+      giftOptions: {
+        wrappingPrice: fGiftWrappingPrice,
+        showCustomBox: fGiftShowCustomBox,
+        packagingNote: fGiftPackagingNote,
+      },
       isCustom: true
     };
     const updated = [...customTemplates, newTmpl];
     syncCustomTemplates(updated);
     showToast(`Saved template "${name.trim()}"`);
   };
+
 
   const handleSaveTemplate = (e: React.FormEvent) => {
     e.preventDefault();
