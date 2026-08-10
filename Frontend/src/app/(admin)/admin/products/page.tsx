@@ -1199,26 +1199,244 @@ function AdminProductsContent() {
                     </div>
                   )}
 
-                  {/* ── MEDIA TAB ──────────────────────────────────────────── */}
+                  {/* ── VARIANTS TAB ──────────────────────────────────────────── */}
                   {activeFormTab === "Variants" && (
-                    <div className="space-y-4">
-                      <div className="p-3 border border-deep-navy/15 bg-deep-navy/[0.03] text-xs text-slate-grey leading-relaxed">Each variant can override material, price, stock, and image. Leave price empty to use the product price.</div>
-                      <button type="button" onClick={() => setFVariants((current) => [...current, { id: `variant-${Date.now()}`, material: "", label: "", price: null, stock: 999, image: "", isAvailable: true }])} className="px-3 py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase tracking-wider cursor-pointer">+ Add material variant</button>
-                      {fVariants.length === 0 ? <p className="text-sm text-slate-grey py-8 text-center border border-dashed border-slate-grey/30">No variants yet. This product uses its default material and gallery.</p> : fVariants.map((variant, index) => (
-                        <div key={variant.id} className="border border-slate-grey/20 p-4 space-y-3 bg-pure-white">
-                          <div className="flex justify-between items-center"><span className="font-label-caps text-[10px] text-deep-navy uppercase tracking-widest">Variant {index + 1}</span><button type="button" onClick={() => setFVariants((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="text-[10px] text-red-600 uppercase font-label-caps cursor-pointer">Remove</button></div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <input value={variant.material} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, material: e.target.value } : item))} placeholder="Material *" className="border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
-                            <input value={variant.label || ""} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, label: e.target.value } : item))} placeholder="Display label" className="border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
-                            <input type="number" value={variant.price ?? ""} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, price: e.target.value === "" ? null : Number(e.target.value) } : item))} placeholder="Price (optional)" className="border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
-                            <input type="number" min="0" value={variant.stock ?? 999} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, stock: Number(e.target.value) } : item))} placeholder="Stock" className="border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
-                          </div>
-                          <input value={variant.image || ""} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, image: e.target.value, images: e.target.value ? [e.target.value] : [] } : item))} placeholder="Variant image URL (optional)" className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none" />
-                          <label className="flex items-center gap-2 text-xs text-slate-grey cursor-pointer"><input type="checkbox" checked={variant.isAvailable !== false} onChange={(e) => setFVariants((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, isAvailable: e.target.checked } : item))} /> Available for purchase</label>
+                    <div className="space-y-5">
+                      <div className="p-3.5 border border-deep-navy/15 bg-deep-navy/[0.03] text-xs text-slate-grey leading-relaxed space-y-1 rounded-sm">
+                        <p className="font-semibold text-deep-navy font-label-caps uppercase tracking-wider text-[10px]">
+                          E-Commerce Material & Gemstone Variant Management
+                        </p>
+                        <p className="text-[11px] text-slate-grey">
+                          Add material variations (e.g., 18K Yellow Gold, Platinum, Sterling Silver) or Diamond/Gemstone options (e.g., VVS Lab Diamond, Natural Sapphire). Each variant can have custom pricing, stock level, image, and availability.
+                        </p>
+                      </div>
+
+                      {/* Preset Add Buttons */}
+                      <div className="space-y-2">
+                        <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">
+                          Quick Add Preset Variant:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { name: "18K Yellow Gold", type: "Metal" },
+                            { name: "18K White Gold", type: "Metal" },
+                            { name: "18K Rose Gold", type: "Metal" },
+                            { name: "Platinum", type: "Metal" },
+                            { name: "925 Sterling Silver", type: "Metal" },
+                            { name: "VVS Lab Diamond", type: "Diamond" },
+                            { name: "Natural Diamond", type: "Diamond" },
+                          ].map((preset) => (
+                            <button
+                              key={preset.name}
+                              type="button"
+                              onClick={() =>
+                                setFVariants((current) => [
+                                  ...current,
+                                  {
+                                    id: `variant-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
+                                    material: preset.name,
+                                    label: preset.name,
+                                    price: null,
+                                    originalPrice: null,
+                                    stock: 999,
+                                    image: "",
+                                    isAvailable: true,
+                                  },
+                                ])
+                              }
+                              className="px-2.5 py-1 text-[10px] font-label-caps uppercase tracking-wider border border-slate-grey/20 bg-pure-white hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer rounded-sm"
+                            >
+                              + {preset.name}
+                            </button>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFVariants((current) => [
+                              ...current,
+                              {
+                                id: `variant-${Date.now()}`,
+                                material: "",
+                                label: "",
+                                price: null,
+                                originalPrice: null,
+                                stock: 999,
+                                image: "",
+                                isAvailable: true,
+                              },
+                            ])
+                          }
+                          className="px-3 py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase tracking-wider cursor-pointer flex items-center gap-1 hover:bg-ink-black transition-colors rounded-sm"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">add</span>
+                          Add Custom Variant
+                        </button>
+
+                        {fVariants.length > 0 && (
+                          <span className="text-[10px] font-label-caps uppercase text-slate-grey tracking-wider">
+                            Total Variants: {fVariants.length}
+                          </span>
+                        )}
+                      </div>
+
+                      {fVariants.length === 0 ? (
+                        <div className="text-sm text-slate-grey py-12 text-center border-2 border-dashed border-slate-grey/20 rounded space-y-2">
+                          <span className="material-symbols-outlined text-3xl text-slate-grey/40">tune</span>
+                          <p className="font-label-caps text-xs uppercase tracking-widest">No variants configured</p>
+                          <p className="text-[11px] text-slate-grey/60 max-w-sm mx-auto">
+                            This product uses its default base material ("{fMaterial || "Standard"}") and single base price (₹{fPrice}).
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {fVariants.map((variant, index) => (
+                            <div key={variant.id} className="border border-slate-grey/25 p-4 space-y-3 bg-pure-white shadow-sm rounded-sm relative">
+                              <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-5 h-5 bg-deep-navy text-pure-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                                    {index + 1}
+                                  </span>
+                                  <span className="font-label-caps text-[11px] text-deep-navy font-semibold uppercase tracking-wider">
+                                    {variant.label || variant.material || `Variant ${index + 1}`}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setFVariants((current) => current.filter((_, itemIndex) => itemIndex !== index))}
+                                  className="text-[10px] text-red-600 hover:text-red-800 uppercase font-label-caps cursor-pointer flex items-center gap-1"
+                                >
+                                  <span className="material-symbols-outlined text-[14px]">delete</span>
+                                  Remove
+                                </button>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
+                                    Material / Gemstone Name *
+                                  </label>
+                                  <input
+                                    value={variant.material}
+                                    onChange={(e) =>
+                                      setFVariants((current) =>
+                                        current.map((item, itemIndex) => (itemIndex === index ? { ...item, material: e.target.value } : item))
+                                      )
+                                    }
+                                    placeholder="e.g. 18K Platinum & Diamond"
+                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
+                                    Display Label (Pill Button Text)
+                                  </label>
+                                  <input
+                                    value={variant.label || ""}
+                                    onChange={(e) =>
+                                      setFVariants((current) =>
+                                        current.map((item, itemIndex) => (itemIndex === index ? { ...item, label: e.target.value } : item))
+                                      )
+                                    }
+                                    placeholder="e.g. Platinum"
+                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
+                                    Variant Selling Price (INR ₹)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={variant.price ?? ""}
+                                    onChange={(e) =>
+                                      setFVariants((current) =>
+                                        current.map((item, itemIndex) =>
+                                          itemIndex === index ? { ...item, price: e.target.value === "" ? null : Number(e.target.value) } : item
+                                        )
+                                      )
+                                    }
+                                    placeholder={`Leave empty to use base price (₹${fPrice})`}
+                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
+                                    Variant Stock Units
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={variant.stock ?? 999}
+                                    onChange={(e) =>
+                                      setFVariants((current) =>
+                                        current.map((item, itemIndex) => (itemIndex === index ? { ...item, stock: Number(e.target.value) } : item))
+                                      )
+                                    }
+                                    placeholder="999 = Unlimited"
+                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Variant Image */}
+                              <div className="flex flex-col gap-1 pt-1">
+                                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
+                                  Variant Specific Image URL (swaps PDP gallery when selected)
+                                </label>
+                                <div className="flex gap-2 items-center">
+                                  <input
+                                    value={variant.image || ""}
+                                    onChange={(e) =>
+                                      setFVariants((current) =>
+                                        current.map((item, itemIndex) =>
+                                          itemIndex === index
+                                            ? { ...item, image: e.target.value, images: e.target.value ? [e.target.value] : [] }
+                                            : item
+                                        )
+                                      )
+                                    }
+                                    placeholder="https://... (Optional image override)"
+                                    className="flex-1 border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
+                                  />
+                                  {variant.image && (
+                                    <div className="w-8 h-8 relative rounded overflow-hidden border border-slate-grey/20 bg-soft-linen shrink-0">
+                                      <Image src={variant.image} alt="Preview" fill className="object-cover" />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="pt-2 flex items-center justify-between border-t border-slate-grey/10 text-xs text-slate-grey">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={variant.isAvailable !== false}
+                                    onChange={(e) =>
+                                      setFVariants((current) =>
+                                        current.map((item, itemIndex) =>
+                                          itemIndex === index ? { ...item, isAvailable: e.target.checked } : item
+                                        )
+                                      )
+                                    }
+                                    className="text-deep-navy"
+                                  />
+                                  <span className="font-label-caps text-[10px] uppercase tracking-wider">In Stock & Available on Store</span>
+                                </label>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
+
 
                   {activeFormTab === "Media" && (
                     <div className="space-y-5">

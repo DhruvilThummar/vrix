@@ -12,7 +12,6 @@ import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
 import { useCurrency } from "@/context/CurrencyContext";
 
-
 const DEFAULT_LINKS: any[] = [
   {
     label: "Rings",
