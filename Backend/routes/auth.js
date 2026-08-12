@@ -110,14 +110,15 @@ router.post("/register/confirm", async (req, res) => {
 
     const existingUser = await db.users.findUnique({ where: { email: cleanEmail } });
     let newUser;
+    const dob = req.body.birthDate || null;
     if (existingUser) {
       newUser = await db.users.update({
         where: { email: cleanEmail },
-        data: { password: hashedPassword, name, phone: phone || "" }
+        data: { password: hashedPassword, name, phone: phone || "", dateOfBirth: dob }
       });
     } else {
       newUser = await db.users.create({
-        data: { email: cleanEmail, password: hashedPassword, name, phone: phone || "", isVrixPlusMember: false, vrixPlusJoinedDate: null },
+        data: { email: cleanEmail, password: hashedPassword, name, phone: phone || "", isVrixPlusMember: false, vrixPlusJoinedDate: null, dateOfBirth: dob },
       });
     }
 
