@@ -1,6 +1,9 @@
 import { fetchCollections, fetchProducts } from "@/utils/api";
 import ProductsCatalogClient from "./ProductsCatalogClient";
 import { Metadata } from "next";
+import { Suspense } from "react";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Shop All Fine Jewelry Online | VRIX",
@@ -47,7 +50,9 @@ export default async function ProductsCatalogPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <ProductsCatalogClient initialProducts={products} initialCollections={collections} />
+      <Suspense fallback={<div className="min-h-screen bg-pure-white flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest">Loading Catalog...</div>}>
+        <ProductsCatalogClient initialProducts={products} initialCollections={collections} />
+      </Suspense>
     </>
   );
 }

@@ -2,6 +2,8 @@ import { fetchCollections } from "@/utils/api";
 import CollectionsClient from "./CollectionsClient";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Designer Jewelry Collections | VRIX",
   description: "Browse our signature jewelry collections. Architectural jewelry lines representing contemporary minimalism and luxury.",

@@ -1,6 +1,9 @@
 import { fetchCategories, fetchCollections, fetchProducts } from "@/utils/api";
 import CollectionDetailClient from "./CollectionDetailClient";
 import { Metadata } from "next";
+import { Suspense } from "react";
+
+export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -127,13 +130,15 @@ export default async function CollectionDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <CollectionDetailClient
-        slug={slug}
-        initialProducts={products}
-        initialCollections={collections}
-        initialCategories={categories}
-        collectionInfo={collectionInfo}
-      />
+      <Suspense fallback={<div className="min-h-screen bg-pure-white flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest">Loading Collection...</div>}>
+        <CollectionDetailClient
+          slug={slug}
+          initialProducts={products}
+          initialCollections={collections}
+          initialCategories={categories}
+          collectionInfo={collectionInfo}
+        />
+      </Suspense>
     </>
   );
 }

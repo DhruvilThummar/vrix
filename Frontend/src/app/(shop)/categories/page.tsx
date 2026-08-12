@@ -2,6 +2,8 @@ import { fetchCategories } from "@/utils/api";
 import CategoriesClient from "./CategoriesClient";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 const DEFAULT_CATEGORIES = [
   {
     id: "necklace",

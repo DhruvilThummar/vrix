@@ -2,6 +2,8 @@ import { fetchProduct, fetchProducts } from "@/utils/api";
 import ProductPageClient from "./ProductPageClient";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
