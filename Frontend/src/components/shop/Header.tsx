@@ -499,35 +499,50 @@ export default function Header() {
       </header>
 
       {/* ─── MOBILE NAVIGATION ─── */}
-      <header className={`md:hidden sticky ${announcementBar?.isEnabled ? "top-8" : "top-0"} z-40 bg-pure-white text-ink-black border-b border-soft-linen px-margin-mobile py-4 flex justify-between items-center shadow-sm`}>
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="cursor-pointer flex items-center justify-center w-8 h-8"
-          aria-label="Open Menu Drawer"
-        >
-          <i className="fa-solid fa-bars text-[20px]"></i>
-        </button>
+      <header 
+        className={`md:hidden fixed ${
+          announcementBar?.isEnabled ? "top-8" : "top-0"
+        } left-0 right-0 z-40 transition-all duration-500 ease-out border-b px-margin-mobile py-4 grid grid-cols-3 items-center ${
+          isTransparent 
+            ? "bg-transparent text-white border-white/15" 
+            : "bg-pure-white text-ink-black border-soft-linen shadow-sm"
+        }`}
+      >
+        {/* Left: Hamburger menu */}
+        <div className="flex justify-start">
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="cursor-pointer flex items-center justify-center w-8 h-8"
+            aria-label="Open Menu Drawer"
+          >
+            <i className="fa-solid fa-bars text-[20px]"></i>
+          </button>
+        </div>
 
-        <Link href="/" className="flex items-center">
-          {logoUrl && logoUrl !== "" ? (
-            <div className="relative h-6 w-24">
-              <Image
-                src={logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl}
-                alt={brandName}
-                fill
-                className="object-contain"
-                sizes="96px"
-                priority
-              />
-            </div>
-          ) : (
-            <span className="font-logo text-xl tracking-[0.2em] uppercase text-ink-black select-none">
-              {brandName}
-            </span>
-          )}
-        </Link>
+        {/* Center: Brand Logo */}
+        <div className="flex justify-center">
+          <Link href="/" className="flex items-center">
+            {logoUrl && logoUrl !== "" ? (
+              <div className="relative h-6 w-24">
+                <Image
+                  src={isTransparent ? "/logos/white.png" : (logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl)}
+                  alt={brandName}
+                  fill
+                  className="object-contain"
+                  sizes="96px"
+                  priority
+                />
+              </div>
+            ) : (
+              <span className="font-logo text-xl tracking-[0.2em] uppercase select-none">
+                {brandName}
+              </span>
+            )}
+          </Link>
+        </div>
 
-        <div className="flex gap-4 items-center">
+        {/* Right: Actions */}
+        <div className="flex justify-end gap-3 items-center">
           <button
             onClick={() => setIsSearchOpen(true)}
             className="cursor-pointer flex items-center justify-center w-8 h-8"
@@ -542,7 +557,7 @@ export default function Header() {
           >
             <i className="fa-solid fa-bag-shopping text-[18px]"></i>
             {totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span className={`absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isTransparent ? "bg-white text-black" : "bg-black text-white"}`}>
                 {totalItems}
               </span>
             )}
