@@ -195,7 +195,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
 
   // 1. Categories Carousel
   const [categoryRef, categoryApi] = useEmblaCarousel(
-    { loop: true, align: "start" },
+    { loop: true, align: "start", dragFree: true, containScroll: "trimSnaps" },
     [Autoplay({ delay: 3500, stopOnMouseEnter: true, stopOnInteraction: false })]
   );
 
@@ -207,7 +207,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
   }, [carouselSettings.collectionsAutoScroll, carouselSettings.collectionsInterval]);
 
   const [collectionsRef, collectionsApi] = useEmblaCarousel(
-    { loop: true, align: "start" },
+    { loop: true, align: "start", dragFree: true, containScroll: "trimSnaps" },
     collectionsPlugins
   );
 
@@ -219,7 +219,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
   }, [carouselSettings.newArrivalsAutoScroll, carouselSettings.newArrivalsInterval]);
 
   const [newArrivalsRef, newArrivalsApi] = useEmblaCarousel(
-    { loop: true, align: "start" },
+    { loop: true, align: "start", dragFree: true, containScroll: "trimSnaps" },
     newArrivalsPlugins
   );
 
@@ -231,7 +231,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
   }, [carouselSettings.featuredAutoScroll, carouselSettings.featuredInterval]);
 
   const [featuredRef, featuredApi] = useEmblaCarousel(
-    { loop: true, align: "start" },
+    { loop: true, align: "start", dragFree: true, containScroll: "trimSnaps" },
     featuredPlugins
   );
 
@@ -554,10 +554,10 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div ref={newArrivalsRef} className="overflow-hidden w-full">
-              <div className="flex gap-product-gap">
+            <div ref={newArrivalsRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
+              <div className="flex gap-product-gap embla__container">
                 {newArrivalsList.map((p: any) => (
-                  <div key={p.id} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start flex flex-col">
+                  <div key={p.id} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start flex flex-col embla__slide">
                     <ProductCard
                       product={p}
                       formatPrice={formatPrice}
@@ -621,10 +621,10 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div ref={featuredRef} className="overflow-hidden w-full">
-              <div className="flex gap-product-gap">
+            <div ref={featuredRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
+              <div className="flex gap-product-gap embla__container">
                 {featuredProductsList.map((p: any) => (
-                  <div key={p.id} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start flex flex-col">
+                  <div key={p.id} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start flex flex-col embla__slide">
                     <ProductCard
                       product={p}
                       formatPrice={formatPrice}
