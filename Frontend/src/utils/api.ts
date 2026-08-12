@@ -397,6 +397,10 @@ export async function loginWithGoogle(payload: { credential?: string; email?: st
   });
 }
 
+export async function fetchUserProfile(email: string) {
+  return apiFetch<{ success: boolean; user: { email: string; name: string; phone: string; dateOfBirth?: string | null; isVrixPlusMember?: boolean } }>(`/auth/me?email=${encodeURIComponent(email)}`);
+}
+
 
 export async function adminLogin(payload: { email: string; password: string }) {
   return apiFetch<{ success: boolean; admin: { email: string; name: string; role: string } }>("/auth/admin-login", {
