@@ -494,7 +494,6 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        required
                         placeholder=" "
                         className="w-full py-1.5 pr-8 text-sm text-ink-black outline-none bg-transparent peer"
                       />
