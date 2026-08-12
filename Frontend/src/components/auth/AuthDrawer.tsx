@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin, getApiBaseUrl, fetchUserProfile } from "@/utils/api";
+import { fetchDb, loginUserDirect, registerUser, confirmRegistration, confirmLogin, loginUser, getApiBaseUrl, fetchUserProfile } from "@/utils/api";
 import SkeletonImage from "@/components/shop/SkeletonImage";
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import { Dialog } from "@base-ui/react/dialog";
@@ -152,6 +152,23 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     }
   };
 
+  // Triggers passwordless OTP login (sends OTP for login)
+  const handleSendLoginOtp = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      await loginUser({ email: cleanEmail });
+      setOtpInput(["", "", "", "", "", ""]);
+      triggerToast("Verification code sent to your email!");
+      setCurrentStep("otp_verification");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to send verification code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Sign up details submission (Triggers OTP)
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,13 +243,17 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     setLoading(true);
     setErrorMsg(null);
     try {
-      await registerUser({ 
-        email: cleanEmail, 
-        password, 
-        name: name.trim(), 
-        phone: phone.trim(),
-        birthDate: birthDate || undefined
-      });
+      if (userExists) {
+        await loginUser({ email: cleanEmail });
+      } else {
+        await registerUser({ 
+          email: cleanEmail, 
+          password, 
+          name: name.trim(), 
+          phone: phone.trim(),
+          birthDate: birthDate || undefined
+        });
+      }
       setOtpInput(["", "", "", "", "", ""]);
       triggerToast("A new verification code has been sent to your email.");
     } catch (err: any) {
@@ -253,17 +274,24 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
     setErrorMsg(null);
     try {
       const cleanEmail = email.trim().toLowerCase();
-      const res = await confirmRegistration({ 
-        email: cleanEmail, 
-        otp: code, 
-        password, 
-        name: name.trim(), 
-        phone: phone.trim(),
-        birthDate: birthDate || undefined
-      });
+      let res;
+      if (userExists) {
+        // Confirm Login OTP
+        res = await confirmLogin({ email: cleanEmail, otp: code });
+      } else {
+        // Confirm Registration OTP
+        res = await confirmRegistration({ 
+          email: cleanEmail, 
+          otp: code, 
+          password, 
+          name: name.trim(), 
+          phone: phone.trim(),
+          birthDate: birthDate || undefined
+        });
+      }
       let isVrixMember = res.user?.isVrixPlusMember ?? false;
 
-      if (joinVrixPlus) {
+      if (joinVrixPlus && !userExists) {
         try {
           const apiBaseUrl = getApiBaseUrl();
           await fetch(`${apiBaseUrl}/auth/join-vrix-plus`, {
@@ -278,7 +306,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
       }
 
       login(cleanEmail, { name: res.user.name, phone: res.user.phone, isVrixPlusMember: isVrixMember });
-      triggerToast(isVrixMember ? "Welcome to VRIX+ Circle!" : "Account created successfully!");
+      triggerToast(isVrixMember ? "Welcome to VRIX+ Circle!" : (userExists ? "Welcome back to VRIX!" : "Account created successfully!"));
       onClose();
     } catch (err: any) {
       setErrorMsg(err.message || "Invalid or expired OTP code.");
@@ -496,17 +524,41 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
 
                     {errorMsg && <p className="text-xs text-red-600 font-body-md">{errorMsg}</p>}
 
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full py-4 bg-black text-white uppercase tracking-widest text-xs font-button hover:bg-black/90 transition-colors flex items-center justify-center gap-2 cursor-pointer mt-4"
-                    >
-                      {loading ? (
-                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <span>Sign In</span>
-                      )}
-                    </button>
+                    <div className="flex flex-col gap-3 mt-4">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-4 bg-black text-white uppercase tracking-widest text-xs font-button hover:bg-black/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {loading ? (
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <span>Sign In with Password</span>
+                        )}
+                      </button>
+
+                      <div className="flex items-center gap-3 my-1">
+                        <div className="flex-1 h-[1px] bg-slate-grey/20" />
+                        <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Or</span>
+                        <div className="flex-1 h-[1px] bg-slate-grey/20" />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSendLoginOtp}
+                        disabled={loading}
+                        className="w-full py-3.5 border border-black text-black uppercase tracking-widest text-xs font-button hover:bg-black hover:text-white transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        {loading ? (
+                          <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-[16px]">mail</span>
+                            <span>Sign In with Email OTP</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </form>
                 )}
 
