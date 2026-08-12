@@ -524,37 +524,31 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
 
                     {errorMsg && <p className="text-xs text-red-600 font-body-md">{errorMsg}</p>}
 
-                    <div className="flex flex-col gap-3 mt-4">
+                    <div className="grid grid-cols-2 gap-3 mt-4">
                       <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-4 bg-black text-white uppercase tracking-widest text-xs font-button hover:bg-black/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        className="py-4 bg-black text-white uppercase tracking-widest text-[10px] font-button hover:bg-black/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer leading-none text-center"
                       >
                         {loading ? (
                           <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         ) : (
-                          <span>Sign In with Password</span>
+                          <span>Sign In (Password)</span>
                         )}
                       </button>
-
-                      <div className="flex items-center gap-3 my-1">
-                        <div className="flex-1 h-[1px] bg-slate-grey/20" />
-                        <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Or</span>
-                        <div className="flex-1 h-[1px] bg-slate-grey/20" />
-                      </div>
 
                       <button
                         type="button"
                         onClick={handleSendLoginOtp}
                         disabled={loading}
-                        className="w-full py-3.5 border border-black text-black uppercase tracking-widest text-xs font-button hover:bg-black hover:text-white transition-all cursor-pointer flex items-center justify-center gap-2"
+                        className="py-4 border border-black text-black uppercase tracking-widest text-[10px] font-button hover:bg-black hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 leading-none text-center bg-transparent"
                       >
                         {loading ? (
                           <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                         ) : (
                           <>
-                            <span className="material-symbols-outlined text-[16px]">mail</span>
-                            <span>Sign In with Email OTP</span>
+                            <span className="material-symbols-outlined text-[14px]">mail</span>
+                            <span>Sign In (Email OTP)</span>
                           </>
                         )}
                       </button>
