@@ -409,3 +409,15 @@ textarea:focus {
   transform: scaleX(1);
   transform-origin: left;
 }
+
+/* Embla Carousel Base Layouts */
+.embla__container {
+  backface-visibility: hidden;
+  display: flex;
+  touch-action: pan-y pinch-zoom;
+}
+
+.embla__slide {
+  flex: 0 0 auto;
+  min-width: 0;
+}
