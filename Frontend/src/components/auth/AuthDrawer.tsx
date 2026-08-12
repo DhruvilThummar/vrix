@@ -164,6 +164,38 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
       return;
     }
 
+    // Phone number verification: Digits only, 10 to 15 digits
+    const cleanPhoneDigits = cleanPhone.replace(/\D/g, "");
+    if (cleanPhoneDigits.length < 10 || cleanPhoneDigits.length > 15) {
+      setErrorMsg("Please enter a valid phone number (10 to 15 digits).");
+      return;
+    }
+
+    // Birth date verification: must be a valid date, age between 13 and 120 years old
+    if (!birthDate) {
+      setErrorMsg("Birth date is required.");
+      return;
+    }
+    const dob = new Date(birthDate);
+    if (isNaN(dob.getTime())) {
+      setErrorMsg("Please enter a valid birth date.");
+      return;
+    }
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    if (age < 13) {
+      setErrorMsg("You must be at least 13 years old to register.");
+      return;
+    }
+    if (age > 120) {
+      setErrorMsg("Please select a realistic date of birth.");
+      return;
+    }
+
     if (password.length < 6) {
       setErrorMsg("Password must be at least 6 characters long.");
       return;
@@ -176,7 +208,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
         email: cleanEmail, 
         password, 
         name: cleanName, 
-        phone: cleanPhone,
+        phone: cleanPhoneDigits,
         birthDate: birthDate || undefined
       });
       setOtpInput(["", "", "", "", "", ""]);
