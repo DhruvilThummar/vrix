@@ -136,12 +136,12 @@ export default function ProductCard({
             
             {/* Secondary Image (Desktop Hover Only) */}
             {secondaryImage && secondaryImage !== primaryImage && (
-              <div className="hidden md:block absolute inset-0 md:col-start-1 md:row-start-1 w-full h-full overflow-hidden opacity-0 blur-[2px] transition-[opacity,filter] duration-300 ease-in-out group-hover/product-card-images:opacity-100 group-hover/product-card-images:blur-0 group-hover/product-card:opacity-100 group-hover:opacity-100">
+              <div className={`hidden md:block absolute inset-0 md:col-start-1 md:row-start-1 w-full h-full overflow-hidden transition-opacity duration-500 ease-in-out ${isHovered ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                 <Image
                   alt={`${product.title} Alternate View`}
                   fill
                   sizes="25vw"
-                  src={isHovered ? secondaryImage : primaryImage}
+                  src={secondaryImage}
                   className="object-cover w-full h-full mix-blend-multiply opacity-90"
                 />
               </div>
