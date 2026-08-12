@@ -133,6 +133,8 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
+    
+    // Validate password only if we are signing in with password
     if (!password) {
       setErrorMsg("Password is required.");
       return;
@@ -525,11 +527,11 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
 
                     <div className="grid grid-cols-2 gap-3 mt-4">
                       <button
-                        type="submit"
+                        type="button"
                         disabled={loading}
-                        onClick={() => {
-                          // Prevent form action if already loading
+                        onClick={(e) => {
                           if (loading) return;
+                          handleLoginSubmit(e);
                         }}
                         className="py-4 bg-black text-white uppercase tracking-widest text-[10px] font-button hover:bg-black/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer leading-none text-center"
                       >
