@@ -412,16 +412,13 @@ export default function Header() {
             {navLinks.map((link, idx) => {
               const megaMenuData = link.megaMenu;
               return (
-                <div
-                  key={idx}
-                  onMouseEnter={() => {
-                    if (megaMenuData) setActiveMegaMenu(megaMenuData);
-                  }}
-                  className="py-1"
-                >
+                <div key={idx} className="py-1">
                   <Link
                     href={link.path}
-                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link ${isActive(link.path) ? "header-nav-link--active" : ""}`}
+                    onMouseEnter={() => {
+                      if (megaMenuData) setActiveMegaMenu(megaMenuData);
+                    }}
+                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link inline-block relative ${isActive(link.path) ? "header-nav-link--active" : ""}`}
                   >
                     {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
                   </Link>
