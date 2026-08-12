@@ -1,5 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /delivery/
+Disallow: /auth/
+Disallow: /search
+Disallow: /*?*sort=
+Disallow: /*?*material=
+Disallow: /*?*type=
 
 Sitemap: https://vrixjewels.com/sitemap.xml
-Sitemap: https://vrix.vercel.app/sitemap.xml

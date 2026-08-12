@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { fetchProducts } from "@/utils/api";
+import { fetchProducts, fetchCollections, fetchCategories } from "@/utils/api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://vrixjewels.com";
@@ -34,16 +34,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
 
-    // Dynamic collections
-    const collections = ["silent-center", "architectural-gold", "unisex", "minimal-silver"]; // static list or dynamic if available
-    const collectionRoutes = collections.map((slug) => ({
-      url: `${baseUrl}/collections/${slug}`,
+    // Dynamic collections and categories
+    const [collections, categories] = await Promise.all([
+      fetchCollections().catch(() => []),
+      fetchCategories().catch(() => []),
+    ]);
+
+    const collectionRoutes = collections.map((col: any) => ({
+      url: `${baseUrl}/collections/${col.id}`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
 
-    return [...staticRoutes, ...productRoutes, ...collectionRoutes];
+    const categoryRoutes = categories.map((cat: any) => ({
+      url: `${baseUrl}/collections/${cat.id}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    }));
+
+    return [...staticRoutes, ...productRoutes, ...collectionRoutes, ...categoryRoutes];
   } catch (error) {
     console.error("Error generating sitemap:", error);
     return staticRoutes;

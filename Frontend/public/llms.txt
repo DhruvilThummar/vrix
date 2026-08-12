@@ -1,0 +1,23 @@
+# VRIX — Minimalist Luxury Jewellery e-Commerce
+
+VRIX is a high-performance minimalist luxury jewelry e-commerce application built on Next.js 16 (App Router), React 19, Tailwind CSS 4, and Prisma ORM with PostgreSQL.
+
+## Core Features
+- **Dynamic Catalog**: Browse Rings, Necklaces, Earrings, and Bracelets.
+- **Variant Explosion**: Flattened variant listings on catalog grids with interactive hover image previews.
+- **Dynamic PDP Options**: Base UI-powered square radio size swatches and GSAP product gallery/price transition animations.
+- **Authentication**: Base UI Dialog-powered Auth Drawer slider with floating labels, direct email verification OTPs, and password toggles.
+- **VRIX+ Circle**: Exclusive membership program providing premium perks, private collections, and custom pricing tiers.
+- **Multi-currency**: Dynamic country selectors supporting INR, USD, EUR, and GBP.
+- **Admin Dashboard**: Control over homepage banner rotations, content sliders, product variants, and order fulfillment states.
+
+## Key Sitemap Slugs
+- Homepage: `/`
+- Categories Listing: `/categories`
+- Catalog Search: `/products`
+- Collections / Subcategories: `/collections/[slug]`
+- Product Detail Pages: `/product/[id]`
+- Wishlist: `/wishlist`
+- VRIX+ Circle portal: `/vrix-plus`
+- Account Dashboard: `/account`
+- Admin Dashboard Panel: `/admin`
