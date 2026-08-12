@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense, useRef } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { fetchProducts, getWishlistKey, setWishlistStockAlert } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
@@ -12,6 +12,13 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useCurrency } from "@/context/CurrencyContext";
 import Link from "next/link";
+import { Radio } from "@base-ui/react/radio";
+import { RadioGroup } from "@base-ui/react/radio-group";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "@/lib/gsap";
+import { getDisplayPrice } from "@/lib/pricing";
+import { useVariantAnimations } from "@/hooks/useVariantAnimations";
+import ProductCard from "@/components/shop/ProductCard";
 
 const DEFAULT_PRODUCT = {
   id: "silent-center-ring",
@@ -95,6 +102,12 @@ function ProductContent() {
       alt: index === 0 ? `Main view of ${product.title}` : `Gallery view ${index + 1} of ${product.title}`,
     }));
   }, [product, selectedVariant]);
+
+  const priceRef = useRef<HTMLParagraphElement>(null);
+  const imageGridRef = useRef<HTMLDivElement>(null);
+
+  // Apply variant switch animations (GSAP)
+  useVariantAnimations(imageGridRef, priceRef, selectedVariant);
 
   const relatedProducts = useMemo(() => {
     if (!product || products.length <= 1) return [];
@@ -277,7 +290,7 @@ function ProductContent() {
       <main className="max-w-container-max mx-auto px-4 md:px-8 pt-6 md:pt-16 lg:pt-[4.5rem] pb-6 md:pb-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
           {/* Left Column: Image Grid (PC Layout: 2x2 or Asymmetric) */}
-          <div className="md:col-span-7 relative">
+          <div ref={imageGridRef} className="md:col-span-7 relative">
             <ProductImageGrid2x2
               images={galleryImages}
               title={product.title}
@@ -305,7 +318,7 @@ function ProductContent() {
                 </p>
 
                 {/* Price Display */}
-                <div className="flex items-baseline gap-2.5 mt-1.5 flex-wrap">
+                <div ref={priceRef} className="flex items-baseline gap-2.5 mt-1.5 flex-wrap">
                   {product.isVrixPlusExclusive && product.vrixPlusPrice ? (
                     <>
                       <span className="font-headline-md text-deep-navy text-2xl font-semibold">{formatPrice(product.vrixPlusPrice)}</span>
@@ -314,14 +327,14 @@ function ProductContent() {
                     </>
                   ) : activeOriginalPrice && activeOriginalPrice > activePrice ? (
                     <>
-                      <span className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(activePrice)}</span>
+                      <span className="font-headline-md text-ink-black text-2xl font-semibold">{getDisplayPrice(activePrice, formatPrice)}</span>
                       <span className="font-body-md text-slate-grey/60 line-through text-base">{formatPrice(activeOriginalPrice)}</span>
                       <span className="bg-emerald-700 text-white font-label-caps text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
                         {Math.round(((activeOriginalPrice - activePrice) / activeOriginalPrice) * 100)}% OFF
                       </span>
                     </>
                   ) : (
-                    <p className="font-headline-md text-ink-black text-2xl font-semibold">{formatPrice(activePrice)}</p>
+                    <p className="font-headline-md text-ink-black text-2xl font-semibold">{getDisplayPrice(activePrice, formatPrice)}</p>
                   )}
                 </div>
                 <p className={`font-label-caps text-[10px] uppercase tracking-widest mt-1 ${Number(activeStock) <= 0 ? "text-red-700" : Number(activeStock) <= 3 ? "text-amber-700" : "text-emerald-700"}`}>
@@ -363,30 +376,34 @@ function ProductContent() {
 
                   {/* Size Selection (Only render if availableSizes added in Admin) */}
                   {product.availableSizes && product.availableSizes.length > 0 && (
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-col gap-2">
                       <div className="flex justify-between items-center">
-                        <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]" htmlFor="size">
-                          Size
+                        <label className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]">
+                          Size: {size || "Select size"}
                         </label>
                         <button className="font-label-caps uppercase text-slate-grey hover:text-ink-black underline decoration-1 underline-offset-4 text-[10px] transition-colors cursor-pointer">
                           Size Guide
                         </button>
                       </div>
-                      <div className="relative">
-                        <select
-                          className="w-full appearance-none bg-transparent border-0 border-b border-slate-grey/30 py-3 pl-0 pr-8 font-body-md text-ink-black cursor-pointer rounded-none transition-colors hover:border-slate-grey focus:ring-0"
-                          id="size"
-                          value={size}
-                          onChange={(e) => setSize(e.target.value)}
-                        >
-                          {product.availableSizes.map((sz: string) => (
-                            <option key={sz} value={sz}>{sz}</option>
-                          ))}
-                        </select>
-                        <span className="material-symbols-outlined absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-slate-grey">
-                          expand_more
-                        </span>
-                      </div>
+                      <RadioGroup
+                        value={size}
+                        onValueChange={setSize}
+                        className="flex flex-wrap gap-2"
+                      >
+                        {product.availableSizes.map((sz: string) => (
+                          <Radio.Root
+                            key={sz}
+                            value={sz}
+                            className={`w-10 h-10 border text-xs font-semibold flex items-center justify-center cursor-pointer transition-colors focus:outline-none ${
+                              size === sz
+                                ? "border-deep-navy bg-deep-navy text-pure-white"
+                                : "border-slate-grey/30 text-ink-black hover:border-deep-navy"
+                            }`}
+                          >
+                            {sz}
+                          </Radio.Root>
+                        ))}
+                      </RadioGroup>
                     </div>
                   )}
 
@@ -432,32 +449,48 @@ function ProductContent() {
 
               {/* Add to Bag and Wishlist Actions */}
               <div className="flex flex-row gap-2 mt-0.5 w-full">
-                {Number(activeStock) <= 0 && <p className="w-full text-center font-label-caps text-[10px] text-red-700 uppercase tracking-widest py-2 border border-red-200 bg-red-50">Out of stock — save to wishlist for a restock alert</p>}
-                <button
-                  onClick={handleAddToBag}
-                  disabled={bagLoading || Number(activeStock) <= 0}
-                  className="flex-1 bg-deep-navy text-pure-white py-3 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
-                >
-                  {bagLoading ? (
-                    <>
-                      <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin shrink-0" />
-                      <span className="truncate">Adding...</span>
-                    </>
-                  ) : (
-                    <span className="truncate">{Number(activeStock) <= 0 ? "Out of Stock" : "Add to Bag"}</span>
-                  )}
-                </button>
-                <button
-                  onClick={handleAddToWishlist}
-                  className="flex-grow flex-1 border border-slate-grey/30 py-3 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm text-ink-black bg-transparent"
-                >
-                  <span className={`material-symbols-outlined text-[18px] shrink-0 ${wishlistActive ? "text-red-600 fill-red-600" : ""}`}>
-                    {wishlistActive ? "favorite" : "favorite_border"}
-                  </span>
-                  <span className="truncate">
-                    {wishlistActive ? "In Wishlist" : "Wishlist"}
-                  </span>
-                </button>
+                {Number(activeStock) <= 0 ? (
+                  <div className="flex flex-col gap-2 w-full">
+                    <p className="w-full text-center font-label-caps text-[10px] text-slate-grey uppercase tracking-widest py-2 border border-slate-grey/20 bg-[#F9F9F9]">
+                      Out of stock
+                    </p>
+                    <button
+                      onClick={handleAddToWishlist}
+                      className="w-full bg-deep-navy text-pure-white py-3 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">notifications</span>
+                      <span>Notify Me When Available</span>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleAddToBag}
+                      disabled={bagLoading}
+                      className="flex-1 bg-deep-navy text-pure-white py-3 font-button uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
+                    >
+                      {bagLoading ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-pure-white border-t-transparent rounded-full animate-spin shrink-0" />
+                          <span className="truncate">Adding...</span>
+                        </>
+                      ) : (
+                        <span className="truncate">Add to Bag</span>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleAddToWishlist}
+                      className="flex-grow flex-1 border border-slate-grey/30 py-3 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm text-ink-black bg-transparent"
+                    >
+                      <span className={`material-symbols-outlined text-[18px] shrink-0 ${wishlistActive ? "text-red-600 fill-red-600" : ""}`}>
+                        {wishlistActive ? "favorite" : "favorite_border"}
+                      </span>
+                      <span className="truncate">
+                        {wishlistActive ? "In Wishlist" : "Wishlist"}
+                      </span>
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Product Info Accordions */}

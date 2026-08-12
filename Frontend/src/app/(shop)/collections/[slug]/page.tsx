@@ -2,13 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useMemo, Suspense, useEffect } from "react";
+import { useState, useMemo, Suspense, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { fetchCategories, fetchCollections, fetchProducts, getWishlistKey } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useCurrency } from "@/context/CurrencyContext";
+import ProductCard from "@/components/shop/ProductCard";
+import { useCart } from "@/context/CartContext";
+import { useGSAP } from "@gsap/react";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 const DEFAULT_PRODUCTS: any[] = [];
 
@@ -18,6 +22,8 @@ function CollectionContent() {
   const router = useRouter();
   const { user, isLoggedIn } = useAuth();
   const { formatPrice } = useCurrency();
+  const { addItem } = useCart();
+  const gridContainerRef = useRef<HTMLDivElement>(null);
 
   // Use slug from URL if available, otherwise fall back to 'collection' search param, or default to 'silent-center'
   const collectionSlug = (params.slug as string) || searchParams.get("collection") || "silent-center";
@@ -230,14 +236,12 @@ function CollectionContent() {
     showToast("Filters reset successfully.");
   };
 
-  // Filtered and Sorted Products
-  const processedProducts = useMemo(() => {
+  // Filtered and Sorted Base Products
+  const processedBaseProducts = useMemo(() => {
     const activeCollection = collectionQuery || "silent-center";
     let result = products.filter((p) => (
       p.isVisible !== false &&
       (p.stock ?? 999) > 0 &&
-      // Admin Product Manager stores the selected category slug in `collection`.
-      // This exact comparison prevents products from unrelated categories showing up.
       (p.collection || "") === activeCollection
     ));
 
@@ -263,49 +267,109 @@ function CollectionContent() {
       result = result.filter((p) => p.type.toLowerCase() === selectedType.toLowerCase());
     }
 
-    // Sort by selection
+    return result;
+  }, [products, collectionQuery, selectedMaterial, selectedType]);
+
+  // Explode variants into individual cards
+  const explodedProducts = useMemo(() => {
+    const list = processedBaseProducts.flatMap((p) => {
+      if (Array.isArray(p.variants) && p.variants.length > 0) {
+        return p.variants
+          .filter((v: any) => v.isAvailable !== false)
+          .map((v: any) => ({
+            ...p,
+            _variantCardId: `${p.id}-${v.id}`,
+            image: v.image || p.image,
+            images: v.images || p.images,
+            price: v.price ?? p.price,
+            originalPrice: v.originalPrice ?? p.originalPrice,
+            material: v.material || p.material,
+            stock: v.stock ?? p.stock,
+            variants: [], // prevent recursive explosion
+          }));
+      }
+      return [{ ...p, _variantCardId: p.id }];
+    });
+
     if (sortBy === "PriceLowHigh") {
-      result.sort((a, b) => a.price - b.price);
+      list.sort((a, b) => a.price - b.price);
     } else if (sortBy === "PriceHighLow") {
-      result.sort((a, b) => b.price - a.price);
+      list.sort((a, b) => b.price - a.price);
     }
 
-    return result;
-  }, [products, collectionQuery, selectedMaterial, selectedType, sortBy]);
+    return list;
+  }, [processedBaseProducts, sortBy]);
 
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   useEffect(() => {
     if (!collectionInfo.showProductCarousel || !collectionInfo.carouselAutoplay) return;
-    if (processedProducts.length <= 1) return;
+    if (explodedProducts.length <= 1) return;
     const interval = setInterval(() => {
-      setCarouselIndex((prev) => (prev + 1) % processedProducts.length);
+      setCarouselIndex((prev) => (prev + 1) % explodedProducts.length);
     }, collectionInfo.carouselSpeed || 3000);
     return () => clearInterval(interval);
-  }, [collectionInfo, processedProducts.length]);
+  }, [collectionInfo, explodedProducts.length]);
 
   useEffect(() => {
     setCarouselIndex(0);
-  }, [processedProducts]);
+  }, [explodedProducts]);
 
   const handlePrevSlide = () => {
-    setCarouselIndex((prev) => (prev - 1 + processedProducts.length) % processedProducts.length);
+    if (explodedProducts.length === 0) return;
+    setCarouselIndex((prev) => (prev - 1 + explodedProducts.length) % explodedProducts.length);
   };
+  
   const handleNextSlide = () => {
-    setCarouselIndex((prev) => (prev + 1) % processedProducts.length);
+    if (explodedProducts.length === 0) return;
+    setCarouselIndex((prev) => (prev + 1) % explodedProducts.length);
   };
 
   const visibleProducts = useMemo(() => {
-    if (!collectionInfo.showProductCarousel) return processedProducts;
-    const subset = [];
-    const len = processedProducts.length;
-    if (len === 0) return [];
-    for (let i = 0; i < Math.min(3, len); i++) {
-      const idx = (carouselIndex + i) % len;
-      subset.push(processedProducts[idx]);
+    if (explodedProducts.length === 0) return [];
+    const size = Math.min(3, explodedProducts.length);
+    const result = [];
+    for (let i = 0; i < size; i++) {
+      result.push(explodedProducts[(carouselIndex + i) % explodedProducts.length]);
     }
-    return subset;
-  }, [processedProducts, collectionInfo.showProductCarousel, carouselIndex]);
+    return result;
+  }, [explodedProducts, carouselIndex]);
+
+  // Feature 9: GSAP Scroll Reveal System
+  useGSAP(() => {
+    if (loading || explodedProducts.length === 0) return;
+
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      ScrollTrigger.batch(".product-card-reveal", {
+        start: "top 88%",
+        onEnter: (batch) => {
+          gsap.fromTo(
+            batch,
+            { opacity: 0, y: 24 },
+            { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: "power2.out", overwrite: true }
+          );
+        },
+      });
+    });
+
+    return () => {
+      mm.revert();
+    };
+  }, { dependencies: [loading, explodedProducts], scope: gridContainerRef });
+
+  const handleQuickAdd = (p: any, variant: any) => {
+    addItem({
+      id: p.id,
+      title: p.title,
+      subtitle: p.subtitle || p.type,
+      price: variant?.price ?? p.price,
+      image: variant?.image ?? p.image,
+      material: variant?.material ?? p.material ?? "18K Gold Vermeil",
+      stock: Number(variant?.stock ?? p.stock ?? 999),
+    });
+    showToast(`Added "${p.title}" to Bag!`);
+  };
 
 
 
@@ -326,7 +390,7 @@ function CollectionContent() {
         </div>
       )}
 
-      <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pb-section-gap">
+      <main ref={gridContainerRef} className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pb-section-gap">
         {collectionInfo.sections && collectionInfo.sections.length > 0 ? (
           <div className="space-y-12 py-8">
             {collectionInfo.sections.map((sec: any) => {
@@ -393,7 +457,7 @@ function CollectionContent() {
               }
 
               if (sec.type === "product_slider") {
-                const sliderProducts = processedProducts.filter(p => {
+                const sliderProducts = explodedProducts.filter((p: any) => {
                   if (!sec.skus || sec.skus.length === 0) return true;
                   return sec.skus.includes(p.id) || sec.skus.includes(p.sku);
                 });
@@ -404,7 +468,7 @@ function CollectionContent() {
                       <h3 className="font-label-caps text-xs text-deep-navy uppercase tracking-widest font-bold">Featured Products</h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {sliderProducts.slice(0, 3).map((p) => {
+                      {sliderProducts.slice(0, 3).map((p: any) => {
                         const isWishlisted = wishlist.includes(p.id);
                         return (
                           <Link key={p.id} href={`/product/${p.id}`} className="flex flex-col group cursor-pointer">
@@ -512,7 +576,7 @@ function CollectionContent() {
                 </button>
 
                 <span className="hidden md:inline font-label-caps text-xs text-slate-grey uppercase tracking-widest">
-                  Faceted Search / {processedProducts.length} Items
+                  Faceted Search / {explodedProducts.length} Items
                 </span>
 
                 {/* Quick Status indicators */}
@@ -700,7 +764,7 @@ function CollectionContent() {
                       </div>
                     ))}
                   </div>
-                ) : processedProducts.length === 0 ? (
+                ) : explodedProducts.length === 0 ? (
                   <div className="text-center py-section-gap flex flex-col items-center justify-center space-y-4">
                     <span className="material-symbols-outlined text-slate-grey text-4xl">inventory_2</span>
                     <p className="font-headline-md text-slate-grey">No products found matching your active filters.</p>
@@ -714,7 +778,7 @@ function CollectionContent() {
                 ) : collectionInfo.showProductCarousel ? (
                   /* Product Carousel */
                   <div className="relative w-full py-4 px-8 border border-slate-grey/10 bg-soft-linen/5 rounded shadow-sm">
-                    {processedProducts.length > 3 && (
+                    {explodedProducts.length > 3 && (
                       <>
                         <button onClick={handlePrevSlide} className="absolute left-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full border border-slate-grey/30 bg-pure-white flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-colors cursor-pointer z-10 shadow-sm">
                           <span className="material-symbols-outlined text-[18px]">chevron_left</span>
@@ -726,7 +790,7 @@ function CollectionContent() {
                     )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500">
-                      {visibleProducts.map((p) => {
+                      {visibleProducts.map((p: any) => {
                         const isWishlisted = wishlist.includes(p.id);
                         return (
                           <Link
@@ -771,9 +835,9 @@ function CollectionContent() {
                     </div>
 
                     {/* Dots */}
-                    {processedProducts.length > 3 && (
+                    {explodedProducts.length > 3 && (
                       <div className="flex justify-center gap-1.5 mt-6">
-                        {processedProducts.map((_, i) => (
+                        {explodedProducts.map((_: any, i: number) => (
                           <button
                             key={i}
                             onClick={() => setCarouselIndex(i)}
@@ -787,7 +851,7 @@ function CollectionContent() {
                 ) : (
                   /* Product Grid */
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-gutter">
-                    {processedProducts.map((p) => {
+                    {explodedProducts.map((p: any) => {
                       const isWishlisted = wishlist.includes(p.id);
                       return (
                         <Link

@@ -11,6 +11,8 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
 import { useCurrency } from "@/context/CurrencyContext";
+import { Select, SelectRootChangeEventDetails } from "@base-ui/react/select";
+import "flag-icons/css/flag-icons.min.css";
 
 const DEFAULT_LINKS: any[] = [
   {
@@ -321,15 +323,45 @@ export default function Header() {
 
           {/* Right Action Icons */}
           <div className="flex justify-end items-center gap-6">
-            <select
+            <Select.Root
               value={currency}
-              onChange={(e) => changeCurrency(e.target.value as any)}
-              className="header-currency text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2"
+              onValueChange={(val: string | null) => {
+                if (val) changeCurrency(val as any);
+              }}
             >
-              <option value="INR" style={{ color: "#000" }}>INR (₹)</option>
-              <option value="USD" style={{ color: "#000" }}>USD ($)</option>
-              <option value="EUR" style={{ color: "#000" }}>EUR (€)</option>
-            </select>
+              <Select.Trigger className="header-currency text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2 bg-transparent flex items-center gap-1.5 focus:outline-none">
+                <Select.Value>
+                  {currency === "INR" && <span className="fi fi-in" />}
+                  {currency === "USD" && <span className="fi fi-us" />}
+                  {currency === "EUR" && <span className="fi fi-eu" />}
+                  {currency === "GBP" && <span className="fi fi-gb" />}
+                  <span className="ml-1">{currency}</span>
+                </Select.Value>
+                <Select.Icon className="material-symbols-outlined text-[14px]">expand_more</Select.Icon>
+              </Select.Trigger>
+              <Select.Portal>
+                <Select.Positioner className="z-50 mt-1">
+                  <Select.Popup className="bg-pure-white border border-slate-grey/20 shadow-xl py-1 flex flex-col min-w-[100px] outline-none">
+                    <Select.Item value="INR" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
+                      <span className="fi fi-in" />
+                      <span>INR (₹)</span>
+                    </Select.Item>
+                    <Select.Item value="USD" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
+                      <span className="fi fi-us" />
+                      <span>USD ($)</span>
+                    </Select.Item>
+                    <Select.Item value="EUR" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
+                      <span className="fi fi-eu" />
+                      <span>EUR (€)</span>
+                    </Select.Item>
+                    <Select.Item value="GBP" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
+                      <span className="fi fi-gb" />
+                      <span>GBP (£)</span>
+                    </Select.Item>
+                  </Select.Popup>
+                </Select.Positioner>
+              </Select.Portal>
+            </Select.Root>
             <button
               onClick={() => setIsSearchOpen(true)}
               className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center"

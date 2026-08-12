@@ -54,6 +54,14 @@ export default function AdminHomepageLayoutPage() {
   const [philosophyTitle, setPhilosophyTitle] = useState("");
   const [philosophyCards, setPhilosophyCards] = useState<any[]>([]);
 
+  // --- Carousel Settings State ---
+  const [collectionsAutoScroll, setCollectionsAutoScroll] = useState(true);
+  const [collectionsInterval, setCollectionsInterval] = useState(3.5);
+  const [newArrivalsAutoScroll, setNewArrivalsAutoScroll] = useState(true);
+  const [newArrivalsInterval, setNewArrivalsInterval] = useState(4.0);
+  const [featuredAutoScroll, setFeaturedAutoScroll] = useState(true);
+  const [featuredInterval, setFeaturedInterval] = useState(4.5);
+
   // --- Categories State ---
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [editCategoryIdx, setEditCategoryIdx] = useState<number | null>(null);
@@ -84,6 +92,14 @@ export default function AdminHomepageLayoutPage() {
           setHeroSlides(res.homepage.heroSlides || []);
           setHomepageTagline(res.homepage.tagline || "");
           setPhilosophyTitle(res.homepage.philosophyTitle || "");
+
+          const cSettings = res.homepage.carouselSettings || {};
+          setCollectionsAutoScroll(cSettings.collectionsAutoScroll ?? true);
+          setCollectionsInterval((cSettings.collectionsInterval ?? 3500) / 1000);
+          setNewArrivalsAutoScroll(cSettings.newArrivalsAutoScroll ?? true);
+          setNewArrivalsInterval((cSettings.newArrivalsInterval ?? 4000) / 1000);
+          setFeaturedAutoScroll(cSettings.featuredAutoScroll ?? true);
+          setFeaturedInterval((cSettings.featuredInterval ?? 4500) / 1000);
           
           const defaultPhilosophy = [
             { icon: "flare", title: "Intentional Design", description: "Every piece has\na deeper meaning." },
@@ -131,6 +147,14 @@ export default function AdminHomepageLayoutPage() {
           newArrivals,
           featuredProducts,
           categories,
+          carouselSettings: {
+            collectionsAutoScroll,
+            collectionsInterval: Math.round(collectionsInterval * 1000),
+            newArrivalsAutoScroll,
+            newArrivalsInterval: Math.round(newArrivalsInterval * 1000),
+            featuredAutoScroll,
+            featuredInterval: Math.round(featuredInterval * 1000),
+          }
         },
       });
       showToast("Homepage layout and settings updated successfully.");
@@ -511,6 +535,101 @@ export default function AdminHomepageLayoutPage() {
                 rows={2}
                 required
               />
+            </div>
+          </div>
+
+          {/* Carousel Settings Configuration Panel */}
+          <div className="space-y-4 pt-6 border-t border-slate-grey/15">
+            <h4 className="font-label-caps text-xs font-bold text-deep-navy uppercase">
+              Homepage Carousel Settings
+            </h4>
+            <p className="text-xs text-slate-grey font-body-md leading-relaxed">
+              Enable/Disable automatic sliding and manage timing intervals (in seconds) for each carousel showcase section on the store landing page.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+              {/* Collections Carousel Settings */}
+              <div className="border border-slate-grey/20 p-4 bg-soft-linen/5 rounded space-y-3">
+                <span className="text-[10px] font-label-caps bg-deep-navy/10 text-deep-navy px-1.5 py-0.5 rounded font-bold">
+                  Collections Showcase
+                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-grey">Auto Scroll</span>
+                  <input
+                    type="checkbox"
+                    checked={collectionsAutoScroll}
+                    onChange={(e) => setCollectionsAutoScroll(e.target.checked)}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-label-caps text-slate-grey">Interval (seconds)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={collectionsInterval}
+                    onChange={(e) => setCollectionsInterval(parseFloat(e.target.value) || 3.5)}
+                    disabled={!collectionsAutoScroll}
+                    className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-xs bg-transparent rounded disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              {/* New Arrivals Carousel Settings */}
+              <div className="border border-slate-grey/20 p-4 bg-soft-linen/5 rounded space-y-3">
+                <span className="text-[10px] font-label-caps bg-deep-navy/10 text-deep-navy px-1.5 py-0.5 rounded font-bold">
+                  New Arrivals
+                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-grey">Auto Scroll</span>
+                  <input
+                    type="checkbox"
+                    checked={newArrivalsAutoScroll}
+                    onChange={(e) => setNewArrivalsAutoScroll(e.target.checked)}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-label-caps text-slate-grey">Interval (seconds)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={newArrivalsInterval}
+                    onChange={(e) => setNewArrivalsInterval(parseFloat(e.target.value) || 4.0)}
+                    disabled={!newArrivalsAutoScroll}
+                    className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-xs bg-transparent rounded disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              {/* Featured Products Carousel Settings */}
+              <div className="border border-slate-grey/20 p-4 bg-soft-linen/5 rounded space-y-3">
+                <span className="text-[10px] font-label-caps bg-deep-navy/10 text-deep-navy px-1.5 py-0.5 rounded font-bold">
+                  Featured Products
+                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-grey">Auto Scroll</span>
+                  <input
+                    type="checkbox"
+                    checked={featuredAutoScroll}
+                    onChange={(e) => setFeaturedAutoScroll(e.target.checked)}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-label-caps text-slate-grey">Interval (seconds)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="1"
+                    value={featuredInterval}
+                    onChange={(e) => setFeaturedInterval(parseFloat(e.target.value) || 4.5)}
+                    disabled={!featuredAutoScroll}
+                    className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-xs bg-transparent rounded disabled:opacity-50"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
