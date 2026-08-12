@@ -528,9 +528,13 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
                       <button
                         type="submit"
                         disabled={loading}
+                        onClick={() => {
+                          // Prevent form action if already loading
+                          if (loading) return;
+                        }}
                         className="py-4 bg-black text-white uppercase tracking-widest text-[10px] font-button hover:bg-black/90 transition-colors flex items-center justify-center gap-1.5 cursor-pointer leading-none text-center"
                       >
-                        {loading ? (
+                        {loading && !otpInput[0] && password ? (
                           <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         ) : (
                           <span>Sign In (Password)</span>
@@ -543,7 +547,7 @@ export default function AuthDrawer({ isOpen, onClose }: AuthDrawerProps) {
                         disabled={loading}
                         className="py-4 border border-black text-black uppercase tracking-widest text-[10px] font-button hover:bg-black hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 leading-none text-center bg-transparent"
                       >
-                        {loading ? (
+                        {loading && !password ? (
                           <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                         ) : (
                           <>
