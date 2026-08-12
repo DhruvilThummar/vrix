@@ -145,21 +145,23 @@ router.post("/register/confirm", async (req, res) => {
 // POST /api/auth/login — Verify password, send OTP to log in
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required." });
+  if (!email) {
+    return res.status(400).json({ error: "Email is required." });
   }
 
   try {
     const cleanEmail = email.trim().toLowerCase();
-    const cleanPass = password.trim();
     const user = await db.users.findUnique({ where: { email: cleanEmail } });
     if (!user) return res.status(401).json({ error: "Incorrect email or password." });
 
-    const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
-    const isPasswordValid = user.password === hashedPassword || user.password === cleanPass;
+    if (password) {
+      const cleanPass = password.trim();
+      const hashedPassword = crypto.createHash("sha256").update(cleanPass).digest("hex");
+      const isPasswordValid = user.password === hashedPassword || user.password === cleanPass;
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: "Incorrect email or password." });
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "Incorrect email or password." });
+      }
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
