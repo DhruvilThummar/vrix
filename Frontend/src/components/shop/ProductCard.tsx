@@ -121,31 +121,17 @@ export default function ProductCard({
           className="absolute inset-0 block"
         >
           {/* Desktop Dual Image Hover Grid */}
-          <div ref={imageRef} className="relative w-full h-full md:grid md:grid-cols-1 md:grid-rows-1 flex overflow-hidden">
-            {/* Primary Image */}
-            <div className="relative w-full h-full flex-shrink-0 md:col-start-1 md:row-start-1">
+          <div ref={imageRef} className="relative w-full h-full flex overflow-hidden">
+            <div className="relative w-full h-full flex-shrink-0">
               <Image
                 alt={product.title}
                 fill
                 sizes="(max-width: 768px) 50vw, 25vw"
-                src={activeMobileImageIdx === 1 ? secondaryImage : primaryImage}
+                src={isHovered ? secondaryImage : (activeMobileImageIdx === 1 ? secondaryImage : primaryImage)}
                 className="object-cover w-full h-full mix-blend-multiply opacity-90 transition-transform duration-700 ease-out"
                 priority
               />
             </div>
-            
-            {/* Secondary Image (Desktop Hover Only) */}
-            {secondaryImage && secondaryImage !== primaryImage && (
-              <div className={`hidden md:block absolute inset-0 md:col-start-1 md:row-start-1 w-full h-full overflow-hidden transition-opacity duration-500 ease-in-out ${isHovered ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-                <Image
-                  alt={`${product.title} Alternate View`}
-                  fill
-                  sizes="25vw"
-                  src={secondaryImage}
-                  className="object-cover w-full h-full mix-blend-multiply opacity-90"
-                />
-              </div>
-            )}
           </div>
         </Link>
 
