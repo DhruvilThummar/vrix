@@ -1028,100 +1028,163 @@ export default function Header() {
             <span className="material-symbols-outlined text-2xl font-light">close</span>
           </button>
         </div>
-
         {/* Scrollable Navigation Body */}
-        <div className="flex-grow overflow-y-auto px-4 py-3 space-y-1.5">
-          <nav className="flex flex-col font-label-caps text-sm uppercase tracking-widest divide-y divide-soft-linen/60">
-            {navLinks.map((link, idx) => {
-              const hasSubmenu = Boolean(
-                link.megaMenu?.categories ||
-                link.label.toLowerCase().includes("collection") ||
-                link.path.includes("collection")
-              );
-              const isExpanded = expandedMobileIndices.includes(idx);
+        <div className="flex-grow overflow-hidden relative">
+          {/* Main Menu Panel */}
+          <div 
+            className={`absolute inset-0 overflow-y-auto px-4 py-3 space-y-1.5 transition-transform duration-300 ease-out ${
+              activeMegaMenu ? "-translate-x-full" : "translate-x-0"
+            }`}
+          >
+            <nav className="flex flex-col font-label-caps text-sm uppercase tracking-widest divide-y divide-soft-linen/60">
+              {navLinks.map((link, idx) => {
+                const hasSubmenu = Boolean(
+                  link.megaMenu?.categories ||
+                  link.label.toLowerCase().includes("collection") ||
+                  link.path.includes("collection")
+                );
 
-              return (
-                <div key={idx} className="py-2.5">
-                  <div className="flex justify-between items-center">
-                    {hasSubmenu ? (
-                      <button
-                        type="button"
-                        onClick={() => toggleMobileAccordion(idx)}
-                        className="flex-grow text-left font-label-caps text-sm uppercase tracking-wider text-ink-black hover:text-deep-navy font-medium flex items-center justify-between py-1 cursor-pointer"
-                      >
-                        <span>
+                return (
+                  <div key={idx} className="py-2.5">
+                    <div className="flex justify-between items-center">
+                      {hasSubmenu ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (link.megaMenu) {
+                              setActiveMegaMenu({
+                                title: link.label,
+                                ...link.megaMenu
+                              });
+                            } else {
+                              // Default collections submenu mock
+                              setActiveMegaMenu({
+                                title: link.label,
+                                categories: [
+                                  {
+                                    title: "Shop By Category",
+                                    links: [
+                                      { label: "All Rings", path: "/collections/silent-center?type=ring" },
+                                      { label: "Necklaces & Pendants", path: "/collections/silent-center?type=necklace" },
+                                      { label: "Earrings", path: "/collections/silent-center?type=earring" },
+                                      { label: "Bracelets & Cuffs", path: "/collections/silent-center?type=bracelet" },
+                                      { label: "Special Offers & Deals ★", path: "/offers" }
+                                    ]
+                                  }
+                                ]
+                              });
+                            }
+                          }}
+                          className="flex-grow text-left font-label-caps text-sm uppercase tracking-wider text-ink-black hover:text-deep-navy font-medium flex items-center justify-between py-1 cursor-pointer"
+                        >
+                          <span>
+                            {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled
+                              ? `${link.label} (Waitlist)`
+                              : link.label}
+                          </span>
+                          <span className="material-symbols-outlined text-xl text-slate-grey">
+                            chevron_right
+                          </span>
+                        </button>
+                      ) : (
+                        <Link
+                          href={link.path}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={`block w-full py-1 font-label-caps text-sm uppercase tracking-wider transition-colors ${isActive(link.path)
+                              ? "text-deep-navy font-semibold"
+                              : "text-ink-black/80 hover:text-ink-black"
+                            }`}
+                        >
                           {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled
                             ? `${link.label} (Waitlist)`
                             : link.label}
-                        </span>
-                        <span
-                          className={`material-symbols-outlined text-xl text-slate-grey transition-transform duration-300 ${isExpanded ? "rotate-180 text-deep-navy" : ""
-                            }`}
-                        >
-                          expand_more
-                        </span>
-                      </button>
-                    ) : (
-                      <Link
-                        href={link.path}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={`block w-full py-1 font-label-caps text-sm uppercase tracking-wider transition-colors ${isActive(link.path)
-                            ? "text-deep-navy font-semibold"
-                            : "text-ink-black/80 hover:text-ink-black"
-                          }`}
-                      >
-                        {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled
-                          ? `${link.label} (Waitlist)`
-                          : link.label}
-                      </Link>
-                    )}
-                  </div>
-
-                  {/* Accordion Submenu Panel */}
-                  {hasSubmenu && isExpanded && (
-                    <div className="mt-2.5 pl-3 space-y-2.5 font-label-caps text-xs text-slate-grey border-l-2 border-deep-navy/30 animate-fade-in">
-                      {link.megaMenu?.categories ? (
-                        link.megaMenu.categories.map((cat: any, cIdx: number) => (
-                          <div key={cIdx} className="space-y-1 pt-1">
-                            <span className="text-[10px] text-deep-navy font-bold uppercase tracking-widest block">
-                              {cat.title}
-                            </span>
-                            {cat.links.map((lnk: any, lIdx: number) => (
-                              <Link
-                                key={lIdx}
-                                href={lnk.path}
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className="block py-1 text-slate-grey hover:text-ink-black transition-colors uppercase tracking-wider text-[11px]"
-                              >
-                                {lnk.label}
-                              </Link>
-                            ))}
-                          </div>
-                        ))
-                      ) : (
-                        [
-                          { name: "All Rings", path: "/collections/silent-center?type=ring" },
-                          { name: "Necklaces & Pendants", path: "/collections/silent-center?type=necklace" },
-                          { name: "Earrings", path: "/collections/silent-center?type=earring" },
-                          { name: "Bracelets & Cuffs", path: "/collections/silent-center?type=bracelet" },
-                          { name: "Special Offers & Deals ★", path: "/offers" },
-                        ].map((cat) => (
-                          <Link
-                            key={cat.name}
-                            href={cat.path}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="block py-1 hover:text-deep-navy uppercase tracking-wider text-[11px] font-semibold"
-                          >
-                            {cat.name}
-                          </Link>
-                        ))
+                        </Link>
                       )}
                     </div>
-                  )}
+                  </div>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Submenu Slide-in Panel */}
+          <div 
+            className={`absolute inset-0 bg-pure-white overflow-y-auto px-4 py-3 space-y-4 transition-transform duration-300 ease-out flex flex-col ${
+              activeMegaMenu ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            {/* Back Button */}
+            <div className="flex items-center border-b border-soft-linen pb-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveMegaMenu(null)}
+                className="flex items-center gap-1 text-xs font-label-caps text-deep-navy hover:text-black cursor-pointer font-semibold"
+              >
+                <span className="material-symbols-outlined text-base">arrow_back</span>
+                <span>Back to Menu</span>
+              </button>
+              <span className="ml-auto font-label-caps text-xs font-bold text-ink-black tracking-widest uppercase">
+                {activeMegaMenu?.title}
+              </span>
+            </div>
+
+            {/* Submenu Links List */}
+            <div className="flex-grow space-y-5">
+              {activeMegaMenu?.categories?.map((cat: any, cIdx: number) => (
+                <div key={cIdx} className="space-y-2">
+                  <h4 className="font-label-caps text-[10px] text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-1">
+                    {cat.title}
+                  </h4>
+                  <ul className="space-y-1.5 pl-1.5">
+                    {cat.links?.map((lnk: any, lIdx: number) => (
+                      <li key={lIdx}>
+                        <Link
+                          href={lnk.path}
+                          onClick={() => {
+                            setActiveMegaMenu(null);
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className="font-body-md text-xs text-slate-grey hover:text-ink-black transition-colors block py-0.5"
+                        >
+                          {lnk.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              );
-            })}
-          </nav>
+              ))}
+
+              {/* Submenu Featured Block */}
+              {activeMegaMenu?.featured && (
+                <div className="border-t border-slate-grey/15 pt-4 space-y-2">
+                  <h5 className="font-label-caps text-[9px] text-slate-grey tracking-widest uppercase">Featured</h5>
+                  <Link
+                    href={activeMegaMenu.featured.link}
+                    onClick={() => {
+                      setActiveMegaMenu(null);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="block space-y-2 group"
+                  >
+                    <div className="relative aspect-video w-full bg-soft-linen overflow-hidden">
+                      <Image
+                        src={activeMegaMenu.featured.image}
+                        alt={activeMegaMenu.featured.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-caps text-xs text-ink-black font-semibold tracking-wider">
+                        {activeMegaMenu.featured.title}
+                      </span>
+                      <span className="material-symbols-outlined text-sm text-slate-grey">arrow_forward</span>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Pinned Bottom Action Bar */}
