@@ -30,6 +30,7 @@ Thumbs.db
 desktop.ini
 
 # IDEs and Editors
+.agents/
 .github/
 .vscode/
 .idea/
