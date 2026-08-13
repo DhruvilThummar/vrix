@@ -1,12 +1,47 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { fetchDbPublic as fetchDb } from "@/utils/api";
 
-export default function Page() {
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { fetchDbPublic as fetchDb } from "@/utils/api";
+import FormattedText from "@/components/FormattedText";
+
+const FAQ_ITEMS = [
+  {
+    q: "How soon will I receive a response to my enquiry?",
+    a: "Our dedicated VRIX Client Concierge team responds to all email and message enquiries within 24 hours (Monday through Friday, 9:00 AM – 6:00 PM EST)."
+  },
+  {
+    q: "Can I book a private bespoke jewelry consultation?",
+    a: "Yes. VRIX offers one-on-one virtual or atelier consultations for lab-grown diamond custom rings and bespoke fine jewelry. You can also submit custom requirements directly via our Bespoke Configurator."
+  },
+  {
+    q: "How do I check the status of an existing order?",
+    a: "You can track your order status in real time by logging into your VRIX Account or by providing your Order ID when calling or emailing Client Services."
+  },
+  {
+    q: "What is the VRIX lifetime craftsmanship warranty?",
+    a: "Every piece of VRIX fine jewellery is covered under our lifetime craftsmanship warranty against manufacturing defects, including complimentary stone inspection and professional cleaning."
+  }
+];
+
+export default function ContactPage() {
   const [brandName, setBrandName] = useState("VRIX");
   const [email, setEmail] = useState("vrixjewels@gmail.com");
   const [phone, setPhone] = useState("905-428-5693");
   const [address, setAddress] = useState("");
+
+  // Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "General Inquiry",
+    order: "",
+    message: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
     fetchDb()
@@ -21,63 +56,312 @@ export default function Page() {
       .catch((err) => console.error("Error loading contact brand info:", err));
   }, []);
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.message) return;
+    setLoading(true);
+
+    setTimeout(() => {
+      setLoading(false);
+      setSubmitted(true);
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "General Inquiry",
+        order: "",
+        message: ""
+      });
+    }, 1200);
+  };
+
   return (
-    <div className="w-full">
-      <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap flex flex-col md:flex-row gap-gutter">
+    <div className="w-full bg-pure-white text-ink-black min-h-screen">
+      {/* ─── Hero Header Banner ─── */}
+      <section className="bg-soft-linen/30 border-b border-slate-grey/15 py-16 md:py-24 px-margin-mobile md:px-margin-desktop">
+        <div className="max-w-4xl mx-auto text-center space-y-4">
+          <span className="font-label-caps text-xs tracking-[0.3em] uppercase text-[#B59D7C] font-semibold block">
+            ★ VRIX CLIENT SERVICES &amp; CONCIERGE
+          </span>
+          <h1 className="font-headline-md text-3xl md:text-5xl text-deep-navy font-light uppercase tracking-wider leading-tight">
+            We are here to <FormattedText text="*assist you.*" highlightClass="font-chancery normal-case text-deep-navy font-normal italic text-4xl md:text-6xl px-1" />
+          </h1>
+          <p className="font-body-md text-xs md:text-sm text-slate-grey max-w-2xl mx-auto leading-relaxed">
+            Our client advisors are available to answer any questions regarding your {brandName} experience, 
+            from lab-grown diamond styling advice to bespoke orders and delivery inquiries.
+          </p>
+        </div>
+      </section>
 
-<section className="w-full md:w-1/2 pr-0 md:pr-12 lg:pr-24 flex flex-col justify-center bg-pure-white">
-<h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-deep-navy mb-stack-md">We are here to assist you.</h1>
-<p className="font-body-lg text-body-lg text-on-surface-variant mb-stack-lg max-w-md">
-                Our client advisors are available to answer any questions regarding your {brandName} experience, from styling advice to order inquiries.
+      <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-20">
+        {/* ─── Direct Contact Channels Grid ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          {/* Email Card */}
+          <div className="p-8 border border-slate-grey/20 bg-pure-white rounded-xs shadow-xs space-y-4 hover:border-deep-navy/40 transition-all">
+            <div className="w-10 h-10 rounded-full bg-soft-linen flex items-center justify-center text-deep-navy">
+              <span className="material-symbols-outlined text-lg">mail</span>
+            </div>
+            <div>
+              <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest block mb-1">
+                Email Enquiries
+              </span>
+              <a
+                href={`mailto:${email}`}
+                className="font-body-md text-sm md:text-base font-semibold text-deep-navy hover:underline break-all"
+              >
+                {email}
+              </a>
+            </div>
+            <p className="text-xs text-slate-grey/80 leading-relaxed">
+              24-hour response pledge from our private atelier concierge advisors.
             </p>
-<div className="space-y-stack-md mt-stack-lg border-t border-slate-grey/30 pt-stack-lg">
-<div className="flex flex-col">
-<span className="font-label-caps text-label-caps text-slate-grey mb-2 uppercase">Email Enquiries</span>
-<a className="font-body-md text-body-md text-deep-navy hover:underline decoration-1 underline-offset-4 transition-all" href={`mailto:${email}`}>{email}</a>
-</div>
-<div className="flex flex-col mt-stack-md">
-<span className="font-label-caps text-label-caps text-slate-grey mb-2 uppercase">Client Services</span>
-<a className="font-body-md text-body-md text-deep-navy hover:underline decoration-1 underline-offset-4 transition-all" href={`tel:${phone}`}>{phone}</a>
-<span className="font-body-md text-body-md text-on-surface-variant mt-1 text-sm">Mon - Fri: 9am - 6pm EST</span>
-</div>
-{address && (
-<div className="flex flex-col mt-stack-md">
-<span className="font-label-caps text-label-caps text-slate-grey mb-2 uppercase">Headquarters</span>
-<p className="font-body-md text-body-md text-deep-navy">{address}</p>
-</div>
-)}
-</div>
+          </div>
 
-<div className="mt-section-gap h-64 w-full bg-soft-linen relative overflow-hidden" data-alt="A macro close-up of a sophisticated, minimalist diamond ring resting delicately on a softly textured, pure white linen cloth. The lighting is high-key, bright, and natural, casting very soft, diffused shadows. The aesthetic is clean, modern, and luxurious, emphasizing the pristine quality of the jewelry against the pure white and soft linen background. Deep navy accents are barely hinted at in the out-of-focus reflections.">
+          {/* Phone / Client Services Card */}
+          <div className="p-8 border border-slate-grey/20 bg-pure-white rounded-xs shadow-xs space-y-4 hover:border-deep-navy/40 transition-all">
+            <div className="w-10 h-10 rounded-full bg-soft-linen flex items-center justify-center text-deep-navy">
+              <span className="material-symbols-outlined text-lg">call</span>
+            </div>
+            <div>
+              <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest block mb-1">
+                Client Services Line
+              </span>
+              <a
+                href={`tel:${phone}`}
+                className="font-body-md text-sm md:text-base font-semibold text-deep-navy hover:underline"
+              >
+                {phone}
+              </a>
+            </div>
+            <p className="text-xs text-slate-grey/80 leading-relaxed">
+              Mon - Fri: 9:00 AM – 6:00 PM EST. Direct telephone support.
+            </p>
+          </div>
 
-</div>
-</section>
+          {/* Bespoke Custom Orders Card */}
+          <div className="p-8 border border-slate-grey/20 bg-pure-white rounded-xs shadow-xs space-y-4 hover:border-deep-navy/40 transition-all">
+            <div className="w-10 h-10 rounded-full bg-soft-linen flex items-center justify-center text-deep-navy">
+              <span className="material-symbols-outlined text-lg">auto_awesome</span>
+            </div>
+            <div>
+              <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest block mb-1">
+                Bespoke Design Studio
+              </span>
+              <Link
+                href="/bespoke"
+                className="font-body-md text-sm md:text-base font-semibold text-deep-navy hover:underline flex items-center gap-1"
+              >
+                <span>Request Custom Piece</span>
+                <span className="material-symbols-outlined text-xs">arrow_forward</span>
+              </Link>
+            </div>
+            <p className="text-xs text-slate-grey/80 leading-relaxed">
+              Design a custom lab-grown diamond ring or personalized fine jewellery piece.
+            </p>
+          </div>
+        </div>
 
-<section className="w-full md:w-1/2 mt-section-gap md:mt-0 bg-soft-linen p-8 md:p-12 lg:p-16 flex flex-col justify-center">
-<h2 className="font-headline-md text-headline-md text-deep-navy mb-stack-lg">Send a Message</h2>
-<form action="#" className="space-y-stack-lg" method="POST">
-<div className="floating-label">
-<input className="minimal-input w-full font-body-md text-body-md text-on-surface py-2 bg-transparent" id="name" name="name" placeholder="Name" required={true} type="text" />
-<label className="font-body-md text-body-md" htmlFor="name">Full Name</label>
-</div>
-<div className="floating-label">
-<input className="minimal-input w-full font-body-md text-body-md text-on-surface py-2 bg-transparent" id="email" name="email" placeholder="Email" required={true} type="email" />
-<label className="font-body-md text-body-md" htmlFor="email">Email Address</label>
-</div>
-<div className="floating-label">
-<input className="minimal-input w-full font-body-md text-body-md text-on-surface py-2 bg-transparent" id="order" name="order" placeholder="Order Number" type="text" />
-<label className="font-body-md text-body-md" htmlFor="order">Order Number (Optional)</label>
-</div>
-<div className="floating-label pt-4">
-<textarea className="minimal-input w-full font-body-md text-body-md text-on-surface py-2 resize-none bg-transparent" id="message" name="message" placeholder="Message" required={true} rows={4}></textarea>
-<label className="font-body-md text-body-md" htmlFor="message">How can we help you?</label>
-</div>
-<button className="mt-stack-lg w-full md:w-auto bg-deep-navy text-pure-white font-button text-button uppercase py-4 px-12 tracking-widest hover:bg-on-primary-fixed-variant transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deep-navy rounded-none" type="submit">
-                    Send Message
+        {/* ─── Contact Form & Location Section ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          {/* Left Column: Form */}
+          <div className="lg:col-span-7 bg-soft-linen/20 border border-slate-grey/20 p-8 md:p-12 rounded-xs shadow-xs space-y-6">
+            <div>
+              <span className="font-label-caps text-[10px] text-[#B59D7C] uppercase tracking-widest font-semibold block mb-1">
+                GET IN TOUCH
+              </span>
+              <h2 className="font-headline-md text-2xl text-deep-navy font-light uppercase tracking-wider">
+                Send a Message
+              </h2>
+            </div>
+
+            {submitted ? (
+              <div className="p-6 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded space-y-3 animate-fade-in">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-700">check_circle</span>
+                  <h4 className="font-label-caps text-xs uppercase font-bold tracking-wider">Message Sent Successfully</h4>
+                </div>
+                <p className="text-xs leading-relaxed text-emerald-800">
+                  Thank you for contacting VRIX. Your inquiry has been routed to our dedicated client advisor. We will be in touch within 24 hours.
+                </p>
+                <button
+                  onClick={() => setSubmitted(false)}
+                  className="font-button text-[10px] uppercase tracking-widest text-emerald-900 underline cursor-pointer pt-2"
+                >
+                  Send another message
                 </button>
-</form>
-</section>
-</main>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g. Eleanor Vance"
+                      className="border border-slate-grey/30 bg-pure-white p-3 text-xs outline-none focus:border-deep-navy rounded-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="e.g. eleanor@vrixjewels.com"
+                      className="border border-slate-grey/30 bg-pure-white p-3 text-xs outline-none focus:border-deep-navy rounded-none transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                      Phone Number (Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="e.g. +1 (905) 428-5693"
+                      className="border border-slate-grey/30 bg-pure-white p-3 text-xs outline-none focus:border-deep-navy rounded-none transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                      Subject Matter
+                    </label>
+                    <select
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      className="border border-slate-grey/30 bg-pure-white p-3 text-xs outline-none focus:border-deep-navy rounded-none transition-colors cursor-pointer"
+                    >
+                      <option value="General Inquiry">General Product Inquiry</option>
+                      <option value="Bespoke Order">Bespoke Custom Jewelry</option>
+                      <option value="Order Status">Order Status & Shipping</option>
+                      <option value="VRIX+ Membership">VRIX+ Circle Membership</option>
+                      <option value="Care & Repair">Care, Cleaning & Warranty</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                    Order Number (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.order}
+                    onChange={(e) => setFormData({ ...formData, order: e.target.value })}
+                    placeholder="e.g. VRIX-9402"
+                    className="border border-slate-grey/30 bg-pure-white p-3 text-xs outline-none focus:border-deep-navy rounded-none transition-colors"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold">
+                    How can we help you? *
+                  </label>
+                  <textarea
+                    required
+                    rows={5}
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    placeholder="Please describe your enquiry in detail..."
+                    className="border border-slate-grey/30 bg-pure-white p-3 text-xs outline-none focus:border-deep-navy rounded-none transition-colors resize-none leading-relaxed"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-deep-navy text-pure-white py-4 font-button text-xs uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Sending Message...</span>
+                    </>
+                  ) : (
+                    <span>Send Message</span>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+
+          {/* Right Column: Atelier Info & FAQ Accordion */}
+          <div className="lg:col-span-5 space-y-8">
+            {/* Atelier Headquarters Block */}
+            <div className="p-8 border border-slate-grey/20 bg-pure-white rounded-xs space-y-4">
+              <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold block">
+                FLAGSHIP ATELIER
+              </span>
+              <h3 className="font-headline-md text-xl text-deep-navy font-light uppercase tracking-wider">
+                VRIX Headquarters
+              </h3>
+              <p className="text-xs text-slate-grey/90 leading-relaxed font-body-md">
+                {address || "Architectural Atelier & Design Studio. Private consultations available by appointment."}
+              </p>
+              <div className="pt-2 border-t border-slate-grey/15 flex items-center justify-between text-xs">
+                <span className="font-label-caps text-[9px] uppercase tracking-widest text-[#B59D7C] font-semibold">
+                  Private Appointments
+                </span>
+                <Link
+                  href="/bespoke"
+                  className="font-button text-[10px] text-deep-navy hover:underline uppercase tracking-wider font-semibold"
+                >
+                  Book Visit →
+                </Link>
+              </div>
+            </div>
+
+            {/* Concierge FAQ Accordion */}
+            <div className="border border-slate-grey/20 bg-pure-white p-8 rounded-xs space-y-4">
+              <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold block">
+                FREQUENTLY ASKED QUESTIONS
+              </span>
+              <div className="divide-y divide-slate-grey/15">
+                {FAQ_ITEMS.map((faq, idx) => (
+                  <div key={idx} className="py-3.5">
+                    <button
+                      onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                      className="w-full flex justify-between items-center text-left font-label-caps text-xs text-deep-navy font-semibold uppercase tracking-wider cursor-pointer"
+                    >
+                      <span>{faq.q}</span>
+                      <span className={`material-symbols-outlined text-base transition-transform duration-300 ${openFaq === idx ? "rotate-180" : ""}`}>
+                        expand_more
+                      </span>
+                    </button>
+                    {openFaq === idx && (
+                      <p className="mt-2 text-xs text-slate-grey leading-relaxed font-body-md animate-fade-in">
+                        {faq.a}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Brand Quote Card */}
+            <div className="p-6 bg-soft-linen/40 border border-slate-grey/20 rounded-xs text-center space-y-2">
+              <p className="font-chancery text-2xl text-deep-navy italic">
+                "A luxury that feels like you."
+              </p>
+              <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">
+                VRIX Atelier Guarantee
+              </span>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

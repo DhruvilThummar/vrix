@@ -18,6 +18,8 @@ import Autoplay from "embla-carousel-autoplay";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
+import FormattedText from "@/components/FormattedText";
+
 const DEFAULT_CATEGORIES = [
   { title: "Necklace", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/z7ekw55bkfo527ivhzme.png", link: "/collections/silent-center?type=necklace" },
   { title: "Earrings", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/apetikskyjypxmrcvdwe.png", link: "/collections/silent-center?type=earrings" },
@@ -308,10 +310,13 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
                   <div className="max-w-xl text-pure-white">
                     <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-90">
-                      {slide.subtitle}
+                      <FormattedText text={slide.subtitle} />
                     </p>
                     <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
-                      {slide.title}
+                      <FormattedText
+                        text={slide.title}
+                        highlightClass="font-chancery normal-case font-normal italic text-amber-200 text-3xl md:text-5xl lg:text-6xl px-1 tracking-wide"
+                      />
                     </h1>
                     <Link
                       href={slide.link || "/collections/silent-center"}

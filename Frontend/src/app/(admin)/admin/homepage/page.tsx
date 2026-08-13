@@ -476,14 +476,20 @@ export default function AdminHomepageLayoutPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Slide Title</label>
+                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold flex justify-between">
+                  <span>Slide Title</span>
+                  <span className="text-[9px] text-amber-700 font-normal">Use *word* to highlight in Chancery font</span>
+                </label>
                 <input
                   type="text"
                   value={slideTitle}
                   onChange={(e) => setSlideTitle(e.target.value)}
-                  placeholder="e.g. PIECES THAT SPEAK IN SILENCE"
+                  placeholder="e.g. the *moments* that belong only to you."
                   className="border border-slate-grey/30 p-2 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent"
                 />
+                <p className="text-[10px] text-slate-grey italic">
+                  Preview: <span className="font-chancery text-deep-navy text-sm font-normal">{slideTitle || "the *moments* that belong only to you."}</span>
+                </p>
               </div>
               <div className="flex flex-col gap-2 col-span-2">
                 <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">Slide Image URL</label>
