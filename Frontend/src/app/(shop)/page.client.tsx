@@ -354,25 +354,6 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 {loading ? <Skeleton width={280} /> : store.homepage.tagline}
               </h2>
             </div>
-            {/* Embla controls */}
-            {!loading && featuredCollectionsList.length > 0 && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => collectionsApi && collectionsApi.scrollPrev()}
-                  className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs bg-white"
-                  aria-label="Previous collections"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_left</span>
-                </button>
-                <button
-                  onClick={() => collectionsApi && collectionsApi.scrollNext()}
-                  className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs bg-white"
-                  aria-label="Next collections"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_right</span>
-                </button>
-              </div>
-            )}
           </div>
 
           {loading ? (
@@ -390,35 +371,56 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div ref={collectionsRef} className="overflow-hidden w-full">
-              <div className="flex gap-product-gap">
-                {featuredCollectionsList.map((col: any) => (
-                  <div key={col.id} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start flex flex-col">
-                    <Link
-                      href={col.link || `/collections/silent-center?collection=${col.id}`}
-                      className="group cursor-pointer flex flex-col h-full"
-                    >
-                      <div className="aspect-[4/5] bg-soft-linen mb-stack-md overflow-hidden relative border border-slate-grey/10 rounded-xs">
-                        <SkeletonImage
-                          alt={`${col.title} Collection`}
-                          fill
-                          className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-700"
-                          src={col.image}
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        />
-                      </div>
-                      <div className="text-center mt-1">
-                        <h3 className="font-label-caps text-label-caps text-deep-navy uppercase mb-1 font-semibold">
-                          {col.title}
-                        </h3>
-                        <p className="font-body-md text-slate-grey text-sm">
-                          {col.tagline}
-                        </p>
-                      </div>
-                    </Link>
-                  </div>
-                ))}
+            <div className="relative group/carousel">
+              <div ref={collectionsRef} className="overflow-hidden w-full">
+                <div className="flex gap-product-gap">
+                  {featuredCollectionsList.map((col: any) => (
+                    <div key={col.id} className="w-[calc(50%-10px)] lg:w-[calc(25%-19.5px)] shrink-0 snap-start flex flex-col">
+                      <Link
+                        href={col.link || `/collections/silent-center?collection=${col.id}`}
+                        className="group cursor-pointer flex flex-col h-full"
+                      >
+                        <div className="aspect-[4/5] bg-soft-linen mb-stack-md overflow-hidden relative border border-slate-grey/10 rounded-xs">
+                          <SkeletonImage
+                            alt={`${col.title} Collection`}
+                            fill
+                            className="object-cover object-center group-hover:scale-[1.03] transition-transform duration-700"
+                            src={col.image}
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          />
+                        </div>
+                        <div className="text-center mt-1">
+                          <h3 className="font-label-caps text-label-caps text-deep-navy uppercase mb-1 font-semibold">
+                            {col.title}
+                          </h3>
+                          <p className="font-body-md text-slate-grey text-sm">
+                            {col.tagline}
+                          </p>
+                        </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {featuredCollectionsList.length > 0 && (
+                <>
+                  <button
+                    onClick={() => collectionsApi && collectionsApi.scrollPrev()}
+                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Previous collections"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_left</span>
+                  </button>
+                  <button
+                    onClick={() => collectionsApi && collectionsApi.scrollNext()}
+                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Next collections"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_right</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -449,25 +451,6 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 Shop by Category
               </h2>
             </div>
-            {/* Carousel Arrows */}
-            {!loading && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => categoryApi && categoryApi.scrollPrev()}
-                  className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs bg-white"
-                  aria-label="Previous categories"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_left</span>
-                </button>
-                <button
-                  onClick={() => categoryApi && categoryApi.scrollNext()}
-                  className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs bg-white"
-                  aria-label="Next categories"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_right</span>
-                </button>
-              </div>
-            )}
           </div>
 
           {loading ? (
@@ -479,28 +462,49 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div ref={categoryRef} className="overflow-hidden w-full">
-              <div className="flex gap-product-gap">
-                {(store.homepage.categories || []).map((cat: any, idx: number) => (
-                  <div key={idx} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start">
-                    <Link href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block rounded shadow-xs">
-                      <SkeletonImage
-                        alt={cat.title}
-                        fill
-                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                        src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
-                        sizes="(max-width: 640px) 50vw, 25vw"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-5 transition-opacity duration-300 group-hover:opacity-95">
-                        <div className="w-full flex justify-between items-center text-pure-white">
-                          <span className="font-label-caps text-sm tracking-widest uppercase font-semibold">{cat.title}</span>
-                          <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+            <div className="relative group/carousel">
+              <div ref={categoryRef} className="overflow-hidden w-full">
+                <div className="flex gap-product-gap">
+                  {(store.homepage.categories || []).map((cat: any, idx: number) => (
+                    <div key={idx} className="w-[calc(50%-10px)] lg:w-[calc(25%-19.5px)] shrink-0 snap-start">
+                      <Link href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block rounded shadow-xs">
+                        <SkeletonImage
+                          alt={cat.title}
+                          fill
+                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                          src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
+                          sizes="(max-width: 640px) 50vw, 25vw"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-5 transition-opacity duration-300 group-hover:opacity-95">
+                          <div className="w-full flex justify-between items-center text-pure-white">
+                            <span className="font-label-caps text-sm tracking-widest uppercase font-semibold">{cat.title}</span>
+                            <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                  </div>
-                ))}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {(store.homepage.categories || []).length > 0 && (
+                <>
+                  <button
+                    onClick={() => categoryApi && categoryApi.scrollPrev()}
+                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Previous categories"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_left</span>
+                  </button>
+                  <button
+                    onClick={() => categoryApi && categoryApi.scrollNext()}
+                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Next categories"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_right</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </section>
@@ -518,25 +522,6 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 New Arrivals
               </h2>
             </div>
-            {/* Carousel Arrows */}
-            {!loading && newArrivalsList.length > 0 && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => newArrivalsApi && newArrivalsApi.scrollPrev()}
-                  className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs bg-white"
-                  aria-label="Previous new arrivals"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_left</span>
-                </button>
-                <button
-                  onClick={() => newArrivalsApi && newArrivalsApi.scrollNext()}
-                  className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs bg-white"
-                  aria-label="Next new arrivals"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_right</span>
-                </button>
-              </div>
-            )}
           </div>
 
           {loading ? (
@@ -554,20 +539,41 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div ref={newArrivalsRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
-              <div className="flex gap-product-gap embla__container">
-                {newArrivalsList.map((p: any) => (
-                  <div key={p.id} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start flex flex-col embla__slide">
-                    <ProductCard
-                      product={p}
-                      formatPrice={formatPrice}
-                      isWishlisted={wishlist.includes(p.id)}
-                      onWishlistToggle={toggleWishlist}
-                      onQuickAdd={handleQuickAdd}
-                    />
-                  </div>
-                ))}
+            <div className="relative group/carousel">
+              <div ref={newArrivalsRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
+                <div className="flex gap-product-gap embla__container">
+                  {newArrivalsList.map((p: any) => (
+                    <div key={p.id} className="w-[calc(50%-10px)] lg:w-[calc(25%-19.5px)] shrink-0 snap-start flex flex-col embla__slide">
+                      <ProductCard
+                        product={p}
+                        formatPrice={formatPrice}
+                        isWishlisted={wishlist.includes(p.id)}
+                        onWishlistToggle={toggleWishlist}
+                        onQuickAdd={handleQuickAdd}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {newArrivalsList.length > 0 && (
+                <>
+                  <button
+                    onClick={() => newArrivalsApi && newArrivalsApi.scrollPrev()}
+                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Previous new arrivals"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_left</span>
+                  </button>
+                  <button
+                    onClick={() => newArrivalsApi && newArrivalsApi.scrollNext()}
+                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Next new arrivals"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_right</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </section>
@@ -585,25 +591,6 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 Featured Products
               </h2>
             </div>
-            {/* Carousel Arrows */}
-            {!loading && featuredProductsList.length > 0 && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => featuredApi && featuredApi.scrollPrev()}
-                  className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs bg-white"
-                  aria-label="Previous featured products"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_left</span>
-                </button>
-                <button
-                  onClick={() => featuredApi && featuredApi.scrollNext()}
-                  className="w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-xs bg-white"
-                  aria-label="Next featured products"
-                >
-                  <span className="material-symbols-outlined text-lg">chevron_right</span>
-                </button>
-              </div>
-            )}
           </div>
 
           {loading ? (
@@ -621,20 +608,41 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div ref={featuredRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
-              <div className="flex gap-product-gap embla__container">
-                {featuredProductsList.map((p: any) => (
-                  <div key={p.id} className="w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 snap-start flex flex-col embla__slide">
-                    <ProductCard
-                      product={p}
-                      formatPrice={formatPrice}
-                      isWishlisted={wishlist.includes(p.id)}
-                      onWishlistToggle={toggleWishlist}
-                      onQuickAdd={handleQuickAdd}
-                    />
-                  </div>
-                ))}
+            <div className="relative group/carousel">
+              <div ref={featuredRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
+                <div className="flex gap-product-gap embla__container">
+                  {featuredProductsList.map((p: any) => (
+                    <div key={p.id} className="w-[calc(50%-10px)] lg:w-[calc(25%-19.5px)] shrink-0 snap-start flex flex-col embla__slide">
+                      <ProductCard
+                        product={p}
+                        formatPrice={formatPrice}
+                        isWishlisted={wishlist.includes(p.id)}
+                        onWishlistToggle={toggleWishlist}
+                        onQuickAdd={handleQuickAdd}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {featuredProductsList.length > 0 && (
+                <>
+                  <button
+                    onClick={() => featuredApi && featuredApi.scrollPrev()}
+                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Previous featured products"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_left</span>
+                  </button>
+                  <button
+                    onClick={() => featuredApi && featuredApi.scrollNext()}
+                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Next featured products"
+                  >
+                    <span className="material-symbols-outlined text-lg">chevron_right</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </section>
