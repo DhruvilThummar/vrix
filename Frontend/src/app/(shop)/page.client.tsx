@@ -462,49 +462,26 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div className="relative group/carousel">
-              <div ref={categoryRef} className="overflow-hidden w-full">
-                <div className="flex -ml-product-gap embla__container">
-                  {(store.homepage.categories || []).map((cat: any, idx: number) => (
-                    <div key={idx} className="w-1/2 lg:w-1/4 pl-product-gap shrink-0 snap-start embla__slide">
-                      <Link href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block rounded shadow-xs">
-                        <SkeletonImage
-                          alt={cat.title}
-                          fill
-                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                          src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
-                          sizes="(max-width: 640px) 50vw, 25vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-5 transition-opacity duration-300 group-hover:opacity-95">
-                          <div className="w-full flex justify-between items-center text-pure-white">
-                            <span className="font-label-caps text-sm tracking-widest uppercase font-semibold">{cat.title}</span>
-                            <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                          </div>
-                        </div>
-                      </Link>
+            <div className="flex gap-3 overflow-x-auto py-2.5 hide-scrollbar w-full">
+              {(store.homepage.categories || []).map((cat: any, idx: number) => (
+                <div key={idx} className="w-[180px] md:w-[240px] shrink-0">
+                  <Link href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block rounded shadow-xs">
+                    <SkeletonImage
+                      alt={cat.title}
+                      fill
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
+                      sizes="(max-width: 640px) 50vw, 25vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-4 transition-opacity duration-300 group-hover:opacity-95">
+                      <div className="w-full flex justify-between items-center text-pure-white">
+                        <span className="font-label-caps text-xs tracking-widest uppercase font-semibold">{cat.title}</span>
+                        <span className="material-symbols-outlined text-xs transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                      </div>
                     </div>
-                  ))}
+                  </Link>
                 </div>
-              </div>
-
-              {(store.homepage.categories || []).length > 0 && (
-                <>
-                  <button
-                    onClick={() => categoryApi && categoryApi.scrollPrev()}
-                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
-                    aria-label="Previous categories"
-                  >
-                    <span className="material-symbols-outlined text-lg">chevron_left</span>
-                  </button>
-                  <button
-                    onClick={() => categoryApi && categoryApi.scrollNext()}
-                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
-                    aria-label="Next categories"
-                  >
-                    <span className="material-symbols-outlined text-lg">chevron_right</span>
-                  </button>
-                </>
-              )}
+              ))}
             </div>
           )}
         </section>
@@ -539,41 +516,18 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div className="relative group/carousel">
-              <div ref={newArrivalsRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
-                <div className="flex -ml-product-gap embla__container">
-                  {newArrivalsList.map((p: any) => (
-                    <div key={p.id} className="w-1/2 lg:w-1/4 pl-product-gap shrink-0 snap-start flex flex-col embla__slide">
-                      <ProductCard
-                        product={p}
-                        formatPrice={formatPrice}
-                        isWishlisted={wishlist.includes(p.id)}
-                        onWishlistToggle={toggleWishlist}
-                        onQuickAdd={handleQuickAdd}
-                      />
-                    </div>
-                  ))}
+            <div className="flex gap-3 overflow-x-auto py-2.5 hide-scrollbar w-full">
+              {newArrivalsList.map((p: any) => (
+                <div key={p.id} className="w-[200px] md:w-[260px] shrink-0 flex flex-col">
+                  <ProductCard
+                    product={p}
+                    formatPrice={formatPrice}
+                    isWishlisted={wishlist.includes(p.id)}
+                    onWishlistToggle={toggleWishlist}
+                    onQuickAdd={handleQuickAdd}
+                  />
                 </div>
-              </div>
-
-              {newArrivalsList.length > 0 && (
-                <>
-                  <button
-                    onClick={() => newArrivalsApi && newArrivalsApi.scrollPrev()}
-                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
-                    aria-label="Previous new arrivals"
-                  >
-                    <span className="material-symbols-outlined text-lg">chevron_left</span>
-                  </button>
-                  <button
-                    onClick={() => newArrivalsApi && newArrivalsApi.scrollNext()}
-                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
-                    aria-label="Next new arrivals"
-                  >
-                    <span className="material-symbols-outlined text-lg">chevron_right</span>
-                  </button>
-                </>
-              )}
+              ))}
             </div>
           )}
         </section>
@@ -608,41 +562,18 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div className="relative group/carousel">
-              <div ref={featuredRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
-                <div className="flex -ml-product-gap embla__container">
-                  {featuredProductsList.map((p: any) => (
-                    <div key={p.id} className="w-1/2 lg:w-1/4 pl-product-gap shrink-0 snap-start flex flex-col embla__slide">
-                      <ProductCard
-                        product={p}
-                        formatPrice={formatPrice}
-                        isWishlisted={wishlist.includes(p.id)}
-                        onWishlistToggle={toggleWishlist}
-                        onQuickAdd={handleQuickAdd}
-                      />
-                    </div>
-                  ))}
+            <div className="flex gap-3 overflow-x-auto py-2.5 hide-scrollbar w-full">
+              {featuredProductsList.map((p: any) => (
+                <div key={p.id} className="w-[200px] md:w-[260px] shrink-0 flex flex-col">
+                  <ProductCard
+                    product={p}
+                    formatPrice={formatPrice}
+                    isWishlisted={wishlist.includes(p.id)}
+                    onWishlistToggle={toggleWishlist}
+                    onQuickAdd={handleQuickAdd}
+                  />
                 </div>
-              </div>
-
-              {featuredProductsList.length > 0 && (
-                <>
-                  <button
-                    onClick={() => featuredApi && featuredApi.scrollPrev()}
-                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
-                    aria-label="Previous featured products"
-                  >
-                    <span className="material-symbols-outlined text-lg">chevron_left</span>
-                  </button>
-                  <button
-                    onClick={() => featuredApi && featuredApi.scrollNext()}
-                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
-                    aria-label="Next featured products"
-                  >
-                    <span className="material-symbols-outlined text-lg">chevron_right</span>
-                  </button>
-                </>
-              )}
+              ))}
             </div>
           )}
         </section>
