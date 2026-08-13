@@ -101,17 +101,30 @@ router.post("/message", async (req, res) => {
     let session = null;
 
     // Retrieve or create DB session
-    if (sessionId) {
-      session = await db.chatSession?.findUnique({ where: { id: sessionId } }).catch(() => null);
+    if (sessionId && db.chatSession) {
+      try {
+        session = await db.chatSession.findUnique({ where: { id: sessionId } });
+      } catch (e) {
+        session = null;
+      }
     }
 
-    if (!session) {
-      session = await db.chatSession?.create({
-        data: {
-          userId: userId || undefined,
-          status: "ACTIVE"
-        }
-      }).catch(() => ({ id: `sess-${Date.now()}`, lastInteractionId: null }));
+    if (!session && db.chatSession) {
+      try {
+        session = await db.chatSession.create({
+          data: {
+            userId: userId || undefined,
+            status: "ACTIVE"
+          }
+        });
+      } catch (e) {
+        session = null;
+      }
+    }
+
+    // Guaranteed fallback if DB operation failed or table/model missing
+    if (!session || !session.id) {
+      session = { id: sessionId || `sess-${Date.now()}`, lastInteractionId: null };
     }
 
     sessionId = session.id;
@@ -140,22 +153,28 @@ router.post("/message", async (req, res) => {
     const result = await Promise.race([chatPromise, timeoutPromise]);
 
     // Update session last_interaction_id
-    if (result.lastInteractionId) {
-      await db.chatSession?.update({
-        where: { id: session.id },
-        data: { lastInteractionId: result.lastInteractionId }
-      }).catch(() => { });
+    if (result.lastInteractionId && db.chatSession) {
+      try {
+        await db.chatSession.update({
+          where: { id: session.id },
+          data: { lastInteractionId: result.lastInteractionId }
+        });
+      } catch (e) { }
     }
 
     // Record assistant message in DB
-    await db.chatMessage?.create({
-      data: {
-        sessionId: session.id,
-        role: "assistant",
-        content: result.reply,
-        toolCalls: result.toolsUsed
-      }
-    }).catch(() => { });
+    if (db.chatMessage) {
+      try {
+        await db.chatMessage.create({
+          data: {
+            sessionId: session.id,
+            role: "assistant",
+            content: result.reply,
+            toolCalls: result.toolsUsed
+          }
+        });
+      } catch (e) { }
+    }
 
     const isoTimestamp = new Date().toISOString();
 

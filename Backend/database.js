@@ -1559,6 +1559,18 @@ export const db = {
         writeLocalDb(localData);
         return { email };
       }
+    },
+    get chatSession() {
+      return prisma?.chatSession;
+    },
+    get chatMessage() {
+      return prisma?.chatMessage;
+    },
+    get repairRequest() {
+      return prisma?.repairRequest;
+    },
+    get diamondEducation() {
+      return prisma?.diamondEducation;
     }
   }
 };
