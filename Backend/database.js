@@ -136,6 +136,8 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "variants" JSONB;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "comparison_options" JSONB;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "gift_options" JSONB;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "delivery_policy" TEXT;').catch(() => { });
+    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "care_guide" TEXT;').catch(() => { });
 
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
     await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
