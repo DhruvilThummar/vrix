@@ -5,8 +5,8 @@ import { db } from "../database.js";
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 export const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-// Recommended stable Flash model for cost-effective high-volume chat
-export const MODEL_NAME = "gemini-3.5-flash-lite";
+// gemini-2.0-flash — free Gemini API tier compatible, supports function calling
+export const MODEL_NAME = "gemini-2.0-flash";
 
 // ── VRIX Brand Identity System Instruction ─────────────────────────────────
 export const VRIX_SYSTEM_INSTRUCTION = `You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
