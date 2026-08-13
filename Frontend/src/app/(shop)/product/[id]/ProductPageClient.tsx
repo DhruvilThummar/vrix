@@ -302,6 +302,15 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
                   <div className="flex flex-wrap gap-2">
                     {variants.map((variant: any) => {
                       const isSelected = selectedVariant?.id === variant.id;
+                      const matName = (variant.material || "").toLowerCase();
+                      let circleColor = "#B59D7C";
+                      if (matName.includes("rose")) circleColor = "#E5A995";
+                      else if (matName.includes("yellow") || matName.includes("gold")) circleColor = "#E5C158";
+                      else if (matName.includes("white")) circleColor = "#E2E8F0";
+                      else if (matName.includes("platinum")) circleColor = "#CBD5E1";
+                      else if (matName.includes("silver")) circleColor = "#D8D8D8";
+                      else if (matName.includes("diamond")) circleColor = "#38BDF8";
+
                       return (
                         <button
                           key={variant.id}
@@ -310,13 +319,17 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
                             setSelectedVariantId(variant.id);
                             setSelectedMetal(variant.material);
                           }}
-                          className={`border px-3 py-2 text-xs font-label-caps uppercase tracking-wider transition-colors cursor-pointer ${
+                          className={`border px-3.5 py-2 text-xs font-label-caps uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-2 ${
                             isSelected
                               ? "border-deep-navy bg-deep-navy text-pure-white"
                               : "border-slate-grey/30 text-ink-black hover:border-deep-navy"
                           }`}
                         >
-                          {variant.label || variant.material}
+                          <span
+                            className="w-4 h-4 rounded-full border border-black/20 shrink-0 block"
+                            style={{ backgroundColor: circleColor }}
+                          />
+                          <span>{variant.label || variant.material}</span>
                         </button>
                       );
                     })}
@@ -461,10 +474,24 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
                   </button>
                   <div className={`overflow-hidden transition-all duration-300 ${activeAccordion === "details" ? "max-h-96 pb-4 opacity-100" : "max-h-0 opacity-0"}`}>
                     <div className="font-body-md text-on-surface-variant text-sm leading-relaxed space-y-1.5">
-                      {product.description && <p>{product.description}</p>}
-                      {product.sku && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">SKU:</span> {product.sku}</p>}
-                      {product.weight && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">Weight:</span> {product.weight}</p>}
-                      {product.dimensions && <p className="text-[11px] text-slate-grey"><span className="font-semibold uppercase tracking-wider">Dimensions:</span> {product.dimensions}</p>}
+                      {(selectedVariant?.description || product.description) && (
+                        <p>{selectedVariant?.description || product.description}</p>
+                      )}
+                      {(selectedVariant?.sku || product.sku) && (
+                        <p className="text-[11px] text-slate-grey">
+                          <span className="font-semibold uppercase tracking-wider">SKU:</span> {selectedVariant?.sku || product.sku}
+                        </p>
+                      )}
+                      {(selectedVariant?.weight || product.weight) && (
+                        <p className="text-[11px] text-slate-grey">
+                          <span className="font-semibold uppercase tracking-wider font-label-caps">Material Weight:</span> {selectedVariant?.weight || product.weight}
+                        </p>
+                      )}
+                      {(selectedVariant?.dimensions || product.dimensions) && (
+                        <p className="text-[11px] text-slate-grey">
+                          <span className="font-semibold uppercase tracking-wider font-label-caps">Dimensions:</span> {selectedVariant?.dimensions || product.dimensions}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

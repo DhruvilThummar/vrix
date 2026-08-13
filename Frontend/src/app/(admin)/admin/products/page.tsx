@@ -1255,15 +1255,74 @@ function AdminProductsContent() {
                         </p>
                       </div>
 
-                      {/* Quick Add Presets Bar */}
-                      <div className="p-4 border border-slate-grey/20 bg-soft-linen/20 rounded space-y-3">
-                        <div className="flex justify-between items-center">
+                      {/* Quick Add Presets & Suite Templates Bar */}
+                      <div className="p-4 border border-slate-grey/20 bg-soft-linen/20 rounded space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                           <span className="font-label-caps text-[10px] text-deep-navy uppercase tracking-widest font-bold flex items-center gap-1">
                             <span className="material-symbols-outlined text-xs">bolt</span>
-                            Quick Add Material Presets
+                            Quick Add Presets &amp; Suite Templates
                           </span>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const template = [
+                                  { name: "18K Yellow Gold", label: "18K Gold" },
+                                  { name: "18K Rose Gold", label: "Rose Gold" },
+                                  { name: "18K White Gold", label: "White Gold" },
+                                  { name: "Platinum & Diamond", label: "Platinum" },
+                                ];
+                                setFVariants(
+                                  template.map((t, idx) => ({
+                                    id: `v-tmpl-${Date.now()}-${idx}`,
+                                    material: t.name,
+                                    label: t.label,
+                                    price: null,
+                                    originalPrice: null,
+                                    stock: 999,
+                                    sku: fSku ? `${fSku}-${t.label.replace(/\s+/g, "").toUpperCase()}` : "",
+                                    weight: fWeight || "",
+                                    image: "",
+                                    images: [],
+                                    isAvailable: true,
+                                  }))
+                                );
+                              }}
+                              className="px-2.5 py-1 bg-deep-navy text-white text-[9px] font-label-caps uppercase tracking-wider rounded font-bold hover:bg-ink-black transition-colors cursor-pointer"
+                            >
+                              ⚡ Apply Full 4-Metals Suite Template
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const template = [
+                                  { name: "18K Yellow Gold", label: "18K Gold" },
+                                  { name: "925 Sterling Silver", label: "Silver" },
+                                ];
+                                setFVariants(
+                                  template.map((t, idx) => ({
+                                    id: `v-tmpl-duo-${Date.now()}-${idx}`,
+                                    material: t.name,
+                                    label: t.label,
+                                    price: null,
+                                    originalPrice: null,
+                                    stock: 999,
+                                    sku: fSku ? `${fSku}-${t.label.toUpperCase()}` : "",
+                                    weight: fWeight || "",
+                                    image: "",
+                                    images: [],
+                                    isAvailable: true,
+                                  }))
+                                );
+                              }}
+                              className="px-2.5 py-1 bg-slate-800 text-white text-[9px] font-label-caps uppercase tracking-wider rounded font-bold hover:bg-black transition-colors cursor-pointer"
+                            >
+                              ⚡ Apply Gold &amp; Silver Duo Template
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+
+                        <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-grey/15">
                           {[
                             { name: "18K Yellow Gold", label: "18K Gold", color: "#E5C158" },
                             { name: "18K Rose Gold", label: "Rose Gold", color: "#E5A995" },
@@ -1286,6 +1345,8 @@ function AdminProductsContent() {
                                     price: null,
                                     originalPrice: null,
                                     stock: 999,
+                                    sku: fSku ? `${fSku}-${preset.label.replace(/\s+/g, "").toUpperCase()}` : "",
+                                    weight: fWeight || "",
                                     image: "",
                                     images: [],
                                     isAvailable: true,
@@ -1311,14 +1372,29 @@ function AdminProductsContent() {
                             Storefront Swatch Preview:
                           </span>
                           <div className="flex flex-wrap gap-1.5">
-                            {fVariants.map((v, vIdx) => (
-                              <span
-                                key={vIdx}
-                                className="px-2.5 py-1 border border-deep-navy/40 text-deep-navy text-[10px] font-label-caps uppercase tracking-wider font-semibold rounded bg-soft-linen/50"
-                              >
-                                {v.label || v.material || `Variant ${vIdx + 1}`}
-                              </span>
-                            ))}
+                            {fVariants.map((v, vIdx) => {
+                              const matName = (v.material || "").toLowerCase();
+                              let dotColor = "#B59D7C";
+                              if (matName.includes("rose")) dotColor = "#E5A995";
+                              else if (matName.includes("yellow") || matName.includes("gold")) dotColor = "#E5C158";
+                              else if (matName.includes("white")) dotColor = "#E2E8F0";
+                              else if (matName.includes("platinum")) dotColor = "#CBD5E1";
+                              else if (matName.includes("silver")) dotColor = "#D8D8D8";
+                              else if (matName.includes("diamond")) dotColor = "#38BDF8";
+
+                              return (
+                                <span
+                                  key={vIdx}
+                                  className="px-2.5 py-1 border border-deep-navy/40 text-deep-navy text-[10px] font-label-caps uppercase tracking-wider font-semibold rounded bg-soft-linen/50 inline-flex items-center gap-1.5"
+                                >
+                                  <span
+                                    className="w-3 h-3 rounded-full border border-black/20 shrink-0 block"
+                                    style={{ backgroundColor: dotColor }}
+                                  />
+                                  <span>{v.label || v.material || `Variant ${vIdx + 1}`}</span>
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -1337,6 +1413,8 @@ function AdminProductsContent() {
                                 price: null,
                                 originalPrice: null,
                                 stock: 999,
+                                sku: "",
+                                weight: "",
                                 image: "",
                                 images: [],
                                 isAvailable: true,
@@ -1359,7 +1437,7 @@ function AdminProductsContent() {
                               No Material Variants Configured
                             </p>
                             <p className="text-[11px] text-slate-grey/70 max-w-md mx-auto mt-1">
-                              This product currently uses its base material ("{fMaterial || "Standard"}") and single base price (₹{fPrice}). Click any quick add preset above to configure material options!
+                              This product currently uses its base material ("{fMaterial || "Standard"}") and single base price (₹{fPrice}). Click any quick add preset or template suite above to configure material options!
                             </p>
                           </div>
                         </div>
@@ -1434,7 +1512,7 @@ function AdminProductsContent() {
                                 </div>
 
                                 {/* Form Fields Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                   <div className="flex flex-col gap-1.5">
                                     <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">
                                       Material / Gemstone Name *
@@ -1488,6 +1566,42 @@ function AdminProductsContent() {
                                         )
                                       }
                                       placeholder={`Base Price: ₹${fPrice}`}
+                                      className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-transparent rounded"
+                                    />
+                                  </div>
+
+                                  <div className="flex flex-col gap-1.5">
+                                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">
+                                      Variant Specific SKU
+                                    </label>
+                                    <input
+                                      value={variant.sku || ""}
+                                      onChange={(e) =>
+                                        setFVariants((current) =>
+                                          current.map((item, itemIndex) =>
+                                            itemIndex === index ? { ...item, sku: e.target.value } : item
+                                          )
+                                        )
+                                      }
+                                      placeholder={`e.g. ${fSku || "VRX"}-18KG`}
+                                      className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-transparent rounded"
+                                    />
+                                  </div>
+
+                                  <div className="flex flex-col gap-1.5">
+                                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">
+                                      Variant Material Weight (g)
+                                    </label>
+                                    <input
+                                      value={variant.weight || ""}
+                                      onChange={(e) =>
+                                        setFVariants((current) =>
+                                          current.map((item, itemIndex) =>
+                                            itemIndex === index ? { ...item, weight: e.target.value } : item
+                                          )
+                                        )
+                                      }
+                                      placeholder="e.g. 4.2g 18k Solid Gold"
                                       className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-transparent rounded"
                                     />
                                   </div>

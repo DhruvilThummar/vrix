@@ -217,16 +217,15 @@ export default function ProductCard({
                     key={mat}
                     type="button"
                     onClick={() => setSelectedMaterial(mat)}
-                    className="group/swatch relative w-3.5 h-3.5 flex items-center justify-center p-0 cursor-pointer"
+                    className={`group/swatch relative w-4 h-4 rounded-full flex items-center justify-center p-0 cursor-pointer transition-transform ${
+                      isSelected ? "ring-1 ring-deep-navy ring-offset-1 scale-110" : "hover:scale-105"
+                    }`}
                     aria-label={`Select ${mat}`}
                   >
-                    <div
-                      className="w-2.5 h-2.5 transition-transform duration-200 group-hover/swatch:scale-110"
+                    <span
+                      className="w-4 h-4 rounded-full border border-black/20 shrink-0 block"
                       style={{ backgroundColor: getSwatchColor(mat) }}
                     />
-                    {isSelected && (
-                      <span className="absolute bottom-[-2px] left-0 right-0 h-[1.5px] bg-black" />
-                    )}
                     {/* Tooltip */}
                     <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover/swatch:block bg-black text-white text-[9px] px-1.5 py-0.5 whitespace-nowrap z-50 rounded-xs">
                       {mat}

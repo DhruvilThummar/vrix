@@ -35,6 +35,10 @@ const normalizeProductData = (body = {}) => {
         ? Number(variant.originalPrice)
         : (Number(body.originalPrice) > 0 ? Number(body.originalPrice) : null),
       stock: variant?.stock === undefined || variant?.stock === "" ? 999 : Number(variant.stock),
+      sku: typeof variant?.sku === "string" ? variant.sku.trim() : "",
+      weight: typeof variant?.weight === "string" ? variant.weight.trim() : "",
+      dimensions: typeof variant?.dimensions === "string" ? variant.dimensions.trim() : "",
+      description: typeof variant?.description === "string" ? variant.description.trim() : "",
       image: variantImage,
       images: Array.from(new Set([variantImage, ...variantImages].filter(Boolean))),
       isAvailable: variant?.isAvailable !== false,
