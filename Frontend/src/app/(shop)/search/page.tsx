@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchProducts } from "@/utils/api";
 import { searchProducts } from "@/utils/productSearch";
+import { getDisplayPrice } from "@/lib/pricing";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -23,6 +24,7 @@ export default function SearchPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { formatPrice } = useCurrency();
 
   useEffect(() => {
@@ -32,6 +34,11 @@ export default function SearchPage() {
       })
       .catch((err) => console.error("Error loading products:", err))
       .finally(() => setLoading(false));
+
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 60);
+    return () => clearTimeout(timer);
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -56,6 +63,7 @@ export default function SearchPage() {
         <div className="w-full max-w-3xl relative mb-stack-lg animate-fade-in-up">
           <span className="material-symbols-outlined absolute left-0 top-1/2 transform -translate-y-1/2 text-slate-grey text-[28px]">search</span>
           <input
+            ref={searchInputRef}
             autoFocus
             className="search-input w-full bg-transparent border-0 border-b border-slate-grey/30 py-4 pl-12 pr-12 text-display-lg-mobile md:text-display-lg font-display-lg placeholder:text-slate-grey/30 transition-colors duration-300 outline-none focus:border-deep-navy focus:ring-0"
             placeholder="Search VRIX..."
@@ -148,7 +156,7 @@ export default function SearchPage() {
                       </p>
                     </div>
                     <span className="font-body-md text-body-md text-ink-black font-semibold">
-                      {formatPrice(p.price)}
+                      {getDisplayPrice(p.price, formatPrice)}
                     </span>
                   </div>
                 </Link>

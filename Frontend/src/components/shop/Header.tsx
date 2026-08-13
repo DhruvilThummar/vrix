@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import SkeletonImage from "@/components/shop/SkeletonImage";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { fetchDb, fetchProducts, getWishlistKey } from "@/utils/api";
 import { searchProducts } from "@/utils/productSearch";
@@ -124,8 +124,18 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  // Search state
+  // Search state & auto-focus ref
   const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isSearchOpen) {
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [isSearchOpen]);
 
   // Wishlist state
   const [wishlist, setWishlist] = useState<any[]>([]);
@@ -879,6 +889,7 @@ export default function Header() {
           <div className="relative flex items-center border-b border-slate-grey/30 focus-within:border-deep-navy pb-1">
             <span className="material-symbols-outlined text-slate-grey mr-2 text-[20px]">search</span>
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -991,7 +1002,7 @@ export default function Header() {
                         <div className="flex flex-col justify-center">
                           <h5 className="font-label-caps text-xs font-semibold uppercase text-deep-navy leading-none mb-1">{item.title}</h5>
                           <span className="text-[10px] text-slate-grey uppercase tracking-wider">{item.subtitle || item.type}</span>
-                          <span className="font-body-md text-xs font-semibold mt-1">${item.price}</span>
+                          <span className="font-body-md text-xs font-semibold mt-1">{formatPrice(item.price)}</span>
                         </div>
                       </Link>
                     ))}
