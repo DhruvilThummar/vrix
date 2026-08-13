@@ -296,13 +296,30 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
 
               {variants.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]">Material: {selectedVariant?.label || selectedVariant?.material}</span>
+                  <span className="font-label-caps uppercase text-ink-black tracking-widest text-[10px]">
+                    MATERIAL: <span className="text-deep-navy font-semibold">{selectedVariant?.label || selectedVariant?.material}</span>
+                  </span>
                   <div className="flex flex-wrap gap-2">
-                    {variants.map((variant: any) => (
-                      <button key={variant.id} type="button" onClick={() => { setSelectedVariantId(variant.id); setSelectedMetal(variant.material); }} className={`border px-3 py-2 text-xs font-label-caps uppercase tracking-wider transition-colors cursor-pointer ${selectedVariant?.id === variant.id ? "border-deep-navy bg-deep-navy text-pure-white" : "border-slate-grey/30 text-ink-black hover:border-deep-navy"}`}>
-                        {variant.label || variant.material}
-                      </button>
-                    ))}
+                    {variants.map((variant: any) => {
+                      const isSelected = selectedVariant?.id === variant.id;
+                      return (
+                        <button
+                          key={variant.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedVariantId(variant.id);
+                            setSelectedMetal(variant.material);
+                          }}
+                          className={`border px-3 py-2 text-xs font-label-caps uppercase tracking-wider transition-colors cursor-pointer ${
+                            isSelected
+                              ? "border-deep-navy bg-deep-navy text-pure-white"
+                              : "border-slate-grey/30 text-ink-black hover:border-deep-navy"
+                          }`}
+                        >
+                          {variant.label || variant.material}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
