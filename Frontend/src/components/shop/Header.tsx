@@ -255,7 +255,11 @@ export default function Header() {
     };
   }, [searchQuery, allProducts, collections]);
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) => {
+    if (!path || path === "#") return false;
+    if (path === "/") return pathname === "/";
+    return pathname === path || pathname.startsWith(path + "/");
+  };
 
   return (
     <>
@@ -416,7 +420,11 @@ export default function Header() {
                   <Link
                     href={link.path}
                     onMouseEnter={() => {
-                      if (megaMenuData) setActiveMegaMenu(megaMenuData);
+                      if (megaMenuData) {
+                        setActiveMegaMenu(megaMenuData);
+                      } else {
+                        setActiveMegaMenu(null);
+                      }
                     }}
                     className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link inline-block relative ${isActive(link.path) ? "header-nav-link--active" : ""}`}
                   >

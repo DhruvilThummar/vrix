@@ -373,9 +373,9 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
           ) : (
             <div className="relative group/carousel">
               <div ref={collectionsRef} className="overflow-hidden w-full">
-                <div className="flex gap-product-gap">
+                <div className="flex -ml-product-gap embla__container">
                   {featuredCollectionsList.map((col: any) => (
-                    <div key={col.id} className="w-[calc(50%-10px)] lg:w-[calc(25%-19.5px)] shrink-0 snap-start flex flex-col">
+                    <div key={col.id} className="w-1/2 lg:w-1/4 pl-product-gap shrink-0 snap-start flex flex-col embla__slide">
                       <Link
                         href={col.link || `/collections/silent-center?collection=${col.id}`}
                         className="group cursor-pointer flex flex-col h-full"
@@ -464,9 +464,9 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
           ) : (
             <div className="relative group/carousel">
               <div ref={categoryRef} className="overflow-hidden w-full">
-                <div className="flex gap-product-gap">
+                <div className="flex -ml-product-gap embla__container">
                   {(store.homepage.categories || []).map((cat: any, idx: number) => (
-                    <div key={idx} className="w-[calc(50%-10px)] lg:w-[calc(25%-19.5px)] shrink-0 snap-start">
+                    <div key={idx} className="w-1/2 lg:w-1/4 pl-product-gap shrink-0 snap-start embla__slide">
                       <Link href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block rounded shadow-xs">
                         <SkeletonImage
                           alt={cat.title}
@@ -541,9 +541,9 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
           ) : (
             <div className="relative group/carousel">
               <div ref={newArrivalsRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
-                <div className="flex gap-product-gap embla__container">
+                <div className="flex -ml-product-gap embla__container">
                   {newArrivalsList.map((p: any) => (
-                    <div key={p.id} className="w-[calc(50%-10px)] lg:w-[calc(25%-19.5px)] shrink-0 snap-start flex flex-col embla__slide">
+                    <div key={p.id} className="w-1/2 lg:w-1/4 pl-product-gap shrink-0 snap-start flex flex-col embla__slide">
                       <ProductCard
                         product={p}
                         formatPrice={formatPrice}
@@ -610,9 +610,9 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
           ) : (
             <div className="relative group/carousel">
               <div ref={featuredRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
-                <div className="flex gap-product-gap embla__container">
+                <div className="flex -ml-product-gap embla__container">
                   {featuredProductsList.map((p: any) => (
-                    <div key={p.id} className="w-[calc(50%-10px)] lg:w-[calc(25%-19.5px)] shrink-0 snap-start flex flex-col embla__slide">
+                    <div key={p.id} className="w-1/2 lg:w-1/4 pl-product-gap shrink-0 snap-start flex flex-col embla__slide">
                       <ProductCard
                         product={p}
                         formatPrice={formatPrice}
