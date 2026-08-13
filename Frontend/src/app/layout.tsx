@@ -24,14 +24,15 @@ const jost = Jost({
 
 const aquavit = Cormorant_Garamond({
   variable: "--font-aquavit",
-  subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  preload: false,
 });
 
 const chancery = localFont({
   src: "../../public/fonts/black-chancery/black-chancery.ttf",
   variable: "--font-chancery",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -172,7 +173,7 @@ export default function RootLayout({
         />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
         />
       </head>
 
