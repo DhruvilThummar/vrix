@@ -36,14 +36,9 @@ const normalizePrismaDatabaseUrl = () => {
       url.searchParams.set("pgbouncer", "true");
       changed = true;
     }
-    if (!url.searchParams.has("connection_limit")) {
-      url.searchParams.set("connection_limit", "5");
-      changed = true;
-    }
-    if (!url.searchParams.has("pool_timeout")) {
-      url.searchParams.set("pool_timeout", "30");
-      changed = true;
-    }
+    url.searchParams.set("connection_limit", "15");
+    url.searchParams.set("pool_timeout", "5");
+    changed = true;
 
     if (changed) {
       process.env.DATABASE_URL = url.toString();
@@ -426,7 +421,7 @@ export const db = {
     findMany: async () => {
       if (db.isConnected()) {
         try {
-          const rows = await prisma.cmsSetting.findMany();
+          const rows = await withTimeout(prisma.cmsSetting.findMany(), 5000);
           return rows.reduce((acc, row) => {
             acc[row.key] = row.value;
             return acc;
@@ -658,15 +653,26 @@ export const db = {
     findMany: async () => {
       if (db.isConnected()) {
         try {
-          return await prisma.journal.findMany({
-            orderBy: { createdAt: "desc" }
-          });
+          return await withTimeout(
+            prisma.journal.findMany({
+              orderBy: { createdAt: "desc" }
+            }),
+            5000
+          );
         } catch (err) {
           console.error("Prisma journal.findMany failed:", err.message);
+          if (supabase) {
+            const { data, error } = await supabase.from("journal").select("*").order("created_at", { ascending: false });
+            if (!error && data) return data;
+          }
           const localData = readLocalDb();
           return localData.journal || [];
         }
       } else {
+        if (supabase) {
+          const { data, error } = await supabase.from("journal").select("*").order("created_at", { ascending: false });
+          if (!error && data) return data;
+        }
         const localData = readLocalDb();
         return localData.journal || [];
       }

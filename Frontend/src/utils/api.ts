@@ -1,4 +1,22 @@
 
+import { getClientCache, setClientCache, precacheImages } from "./cacheStorage";
+
+export async function apiFetchCached<T>(endpoint: string, ttlSeconds: number = 1800): Promise<T> {
+  const cacheKey = `api_${endpoint.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+  const cached = await getClientCache<T>(cacheKey);
+  if (cached !== null) {
+    // Revalidate in background so IndexedDB cache is updated asynchronously
+    apiFetch<T>(endpoint).then((freshData) => {
+      setClientCache(cacheKey, freshData, ttlSeconds);
+    }).catch(() => {});
+    return cached;
+  }
+
+  const fresh = await apiFetch<T>(endpoint);
+  setClientCache(cacheKey, fresh, ttlSeconds);
+  return fresh;
+}
+
 export function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
@@ -102,7 +120,7 @@ export async function fetchDb() {
 
 // Public variant — safe for shop-facing pages (strips api_settings secrets)
 export async function fetchDbPublic() {
-  return apiFetch<any>("/db/public");
+  return apiFetchCached<any>("/db/public", 3600);
 }
 
 export async function updateCMS(data: {
@@ -133,15 +151,15 @@ export async function updateCMS(data: {
 }
 
 export async function fetchGiftWrappingAPI() {
-  return apiFetch<any>("/cms/gift-wrapping");
+  return apiFetchCached<any>("/cms/gift-wrapping", 3600);
 }
 
 export async function fetchAnnouncementBarAPI() {
-  return apiFetch<any>("/cms/announcement-bar");
+  return apiFetchCached<any>("/cms/announcement-bar", 3600);
 }
 
 export async function fetchHomepageCMSAPI() {
-  return apiFetch<any>("/cms/homepage");
+  return apiFetchCached<any>("/cms/homepage", 3600);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -149,11 +167,19 @@ export async function fetchHomepageCMSAPI() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchProducts() {
-  return apiFetch<any[]>("/products");
+  const products = await apiFetchCached<any[]>("/products", 1800);
+  if (Array.isArray(products)) {
+    precacheImages(products.map((p: any) => p.image || p.images?.[0]).filter(Boolean));
+  }
+  return products;
 }
 
 export async function fetchProduct(id: string) {
-  return apiFetch<any>(`/products/${id}`);
+  const product = await apiFetchCached<any>(`/products/${id}`, 1800);
+  if (product && (product.image || Array.isArray(product.images))) {
+    precacheImages([product.image, ...(product.images || [])].filter(Boolean));
+  }
+  return product;
 }
 
 export async function validateStock(items: Array<{ id: string; title: string; quantity: number }>) {
