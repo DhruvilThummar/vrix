@@ -13,8 +13,7 @@ const supabaseUrl = process.env.SUPABASE_URL || "https://snvifoikeixkgrdkgyme.su
 const supabaseServiceKey =
   process.env.SUPABASE_SECRET_KEY ||
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNudmlmb2lrZWl4a2dyZGtneW1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI5OTA0NjIsImV4cCI6MjA5ODU2NjQ2Mn0.H-mxdmhjHGg0RVF35ifWIvYgGRBS3oMgq08dGE3bbTw";
+  process.env.SUPABASE_ANON_KEY;
 export const supabase = (supabaseUrl && supabaseServiceKey)
   ? createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } })
   : null;
@@ -157,6 +156,12 @@ export async function ensureTablesExist() {
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_is_read" ON "notifications" ("is_read");').catch(() => { });
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_addresses_user_email" ON "addresses" ("user_email");').catch(() => { });
     await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_wishlist_stock_alerts_product" ON "wishlist_stock_alerts" ("product_id");').catch(() => { });
+
+    // Chat, Repair Requests & Diamond Education tables
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "chat_sessions" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "user_id" TEXT, "last_interaction_id" TEXT, "status" TEXT DEFAULT 'ACTIVE', "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "chat_messages" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "session_id" UUID NOT NULL REFERENCES "chat_sessions"("id") ON DELETE CASCADE, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "tool_calls" JSONB, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "repair_requests" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "session_id" TEXT, "user_id" TEXT, "order_number" TEXT NOT NULL, "issue_description" TEXT NOT NULL, "contact_email" TEXT NOT NULL, "status" TEXT DEFAULT 'PENDING', "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "diamond_education" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "title" TEXT NOT NULL, "slug" TEXT UNIQUE NOT NULL, "category" TEXT DEFAULT '4Cs', "content" TEXT NOT NULL, "summary" TEXT, "tags" JSONB, "is_published" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
 
     // Bespoke Atelier tables
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_settings" (

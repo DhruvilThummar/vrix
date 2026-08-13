@@ -94,18 +94,20 @@ export default function VrixChatWidget() {
       ]);
 
       try {
-        // Attempt RAG Backend API call first with currency context payload
+        // Attempt Backend Gemini Interactions API call first
         const baseUrl = getApiBaseUrl();
-        const res = await fetch(`${baseUrl}/chat/query`, {
+        const savedSessionId = typeof window !== "undefined" ? localStorage.getItem("vrix-chat-session-id") : null;
+        const res = await fetch(`${baseUrl}/chat/message`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            sessionId: savedSessionId || undefined,
             actionValue,
             userLabel,
+            userMessage: userLabel || actionValue,
             currentFlow: engineState.currentFlow,
             step: engineState.step,
             data: engineState.data,
-            query: userLabel || actionValue,
             currency: currency || "INR",
             symbol: symbol || "₹",
             rate: rate || 1,
@@ -116,6 +118,9 @@ export default function VrixChatWidget() {
 
         if (res.ok) {
           const apiData = await res.json();
+          if (apiData.sessionId && typeof window !== "undefined") {
+            localStorage.setItem("vrix-chat-session-id", apiData.sessionId);
+          }
           if (apiData.success && apiData.messages) {
             setMessages((prev) => [
               ...prev.filter((m) => m.id !== typingId),

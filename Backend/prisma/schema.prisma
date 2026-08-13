@@ -253,6 +253,60 @@ model BespokeVariant {
   @@map("bespoke_variants")
 }
 
+model ChatSession {
+  id                String        @id @default(uuid()) @db.Uuid
+  userId            String?       @map("user_id")
+  lastInteractionId String?       @map("last_interaction_id")
+  status            String        @default("ACTIVE")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  messages          ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid()) @db.Uuid
+  sessionId String      @map("session_id") @db.Uuid
+  role      String
+  content   String
+  toolCalls Json?       @map("tool_calls")
+  createdAt DateTime    @default(now()) @map("created_at")
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("chat_messages")
+}
+
+model RepairRequest {
+  id               String   @id @default(uuid()) @db.Uuid
+  sessionId        String?  @map("session_id")
+  userId           String?  @map("user_id")
+  orderNumber      String   @map("order_number")
+  issueDescription String   @map("issue_description")
+  contactEmail     String   @map("contact_email")
+  status           String   @default("PENDING")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@map("repair_requests")
+}
+
+model DiamondEducation {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  slug        String   @unique
+  category    String   @default("4Cs")
+  content     String
+  summary     String?
+  tags        Json?
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("diamond_education")
+}
+
+
 
 
 

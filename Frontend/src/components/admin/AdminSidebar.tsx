@@ -16,7 +16,9 @@ const navItems = [
 
   { name: "CMS", href: "/admin/cms", icon: "article" },
   { name: "Homepage Layout", href: "/admin/homepage", icon: "view_quilt" },
+  { name: "Diamond Education", href: "/admin/diamond-education", icon: "school" },
   { name: "Navigation", href: "/admin/navigation", icon: "navigation" },
+
   { name: "Bespoke Configurator", href: "/admin/bespoke", icon: "diamond" },
   { name: "Delivery Staff", href: "/admin/delivery", icon: "local_shipping" },
   { name: "Security & Logs", href: "/admin/security", icon: "security" },

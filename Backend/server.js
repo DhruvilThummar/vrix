@@ -27,6 +27,7 @@ import chatRouter from "./routes/chat.js";
 import consentRouter from "./routes/consent.js";
 import bespokeRouter from "./routes/bespoke.js";
 import categoriesRouter from "./routes/categories.js";
+import diamondEducationRouter from "./routes/diamondEducation.js";
 
 
 
@@ -165,6 +166,8 @@ const registerRoutes = (prefix = "") => {
   app.use(p("/consent"), consentRouter);
   app.use(p("/bespoke"), bespokeRouter);
   app.use(p("/categories"), categoriesRouter);
+  app.use(p("/diamond-education"), diamondEducationRouter);
+
 
 
 };
