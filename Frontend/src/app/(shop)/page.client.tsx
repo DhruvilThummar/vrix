@@ -315,7 +315,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                     <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
                       <FormattedText
                         text={slide.title}
-                        highlightClass="font-chancery normal-case font-normal italic text-amber-200 text-3xl md:text-5xl lg:text-6xl px-1 tracking-wide"
+                        highlightClass="font-chancery normal-case font-normal italic text-blue-800 text-3xl md:text-5xl lg:text-6xl px-1 tracking-wide"
                       />
                     </h1>
                     <Link
