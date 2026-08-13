@@ -29,42 +29,52 @@ const PathSelector = ({
   allProducts?: any[];
   allCollections?: any[];
 }) => {
-  let type = "custom";
-  let selectedIdOrSlug = "";
-  const valStr = value || "/";
+  const valStr = value ?? "";
 
-  if (valStr === "/" || STANDARD_PAGES.some(p => p.path === valStr)) {
-    type = "page";
-    selectedIdOrSlug = valStr;
-  } else if (valStr.startsWith("/product/")) {
-    type = "product";
-    selectedIdOrSlug = valStr.replace("/product/", "");
-  } else if (valStr.startsWith("/collections/") && valStr !== "/collections") {
-    type = "collection";
-    selectedIdOrSlug = valStr.replace("/collections/", "");
-  } else {
-    type = "custom";
-    selectedIdOrSlug = valStr;
+  const getAutoType = (v: string) => {
+    if (v.startsWith("/product/")) return "product";
+    if (v.startsWith("/collections/") && v !== "/collections") return "collection";
+    if (v === "/" || STANDARD_PAGES.some(p => p.path === v)) return "page";
+    return "custom";
+  };
+
+  const [mode, setMode] = React.useState<string>(() => getAutoType(valStr));
+
+  React.useEffect(() => {
+    const auto = getAutoType(valStr);
+    if (auto !== "custom" || mode !== "custom") {
+      setMode(auto);
+    }
+  }, [valStr]);
+
+  let selectedIdOrSlug = valStr;
+  if (mode === "product") {
+    selectedIdOrSlug = valStr.startsWith("/product/") ? valStr.replace("/product/", "") : (allProducts[0]?.id || "");
+  } else if (mode === "collection") {
+    selectedIdOrSlug = valStr.startsWith("/collections/") ? valStr.replace("/collections/", "") : (allCollections[0]?.id || allCollections[0]?.slug || "all");
   }
 
   const handleTypeChange = (newType: string) => {
+    setMode(newType);
     if (newType === "page") {
       onChange("/");
     } else if (newType === "product") {
       const firstProd = allProducts[0]?.id || "";
-      onChange(firstProd ? `/product/${firstProd}` : "/");
+      onChange(firstProd ? `/product/${firstProd}` : "/product/");
     } else if (newType === "collection") {
       const firstColl = allCollections[0]?.id || allCollections[0]?.slug || "all";
       onChange(`/collections/${firstColl}`);
-    } else {
-      onChange("/");
+    } else if (newType === "custom") {
+      const isStandard = valStr === "/" || STANDARD_PAGES.some(p => p.path === valStr) || valStr.startsWith("/product/") || valStr.startsWith("/collections/");
+      const defaultCustom = isStandard ? "/custom-link" : (valStr || "/custom-link");
+      onChange(defaultCustom);
     }
   };
 
   const handleSelectionChange = (newVal: string) => {
-    if (type === "product") {
+    if (mode === "product") {
       onChange(`/product/${newVal}`);
-    } else if (type === "collection") {
+    } else if (mode === "collection") {
       onChange(`/collections/${newVal}`);
     } else {
       onChange(newVal);
@@ -74,7 +84,7 @@ const PathSelector = ({
   return (
     <div className="flex flex-col md:flex-row gap-2 mt-1 w-full max-w-full overflow-hidden">
       <select
-        value={type}
+        value={mode}
         onChange={(e) => handleTypeChange(e.target.value)}
         className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none font-semibold text-deep-navy cursor-pointer shrink-0 max-w-full truncate rounded"
       >
@@ -84,7 +94,7 @@ const PathSelector = ({
         <option value="custom">Custom Web Link</option>
       </select>
 
-      {type === "page" && (
+      {mode === "page" && (
         <select
           value={selectedIdOrSlug}
           onChange={(e) => handleSelectionChange(e.target.value)}
@@ -98,7 +108,7 @@ const PathSelector = ({
         </select>
       )}
 
-      {type === "collection" && (
+      {mode === "collection" && (
         <select
           value={selectedIdOrSlug}
           onChange={(e) => handleSelectionChange(e.target.value)}
@@ -116,7 +126,7 @@ const PathSelector = ({
         </select>
       )}
 
-      {type === "product" && (
+      {mode === "product" && (
         <select
           value={selectedIdOrSlug}
           onChange={(e) => handleSelectionChange(e.target.value)}
@@ -130,13 +140,13 @@ const PathSelector = ({
         </select>
       )}
 
-      {type === "custom" && (
+      {mode === "custom" && (
         <input
           type="text"
           value={selectedIdOrSlug}
           onChange={(e) => onChange(e.target.value)}
           className="border border-slate-grey/30 px-3 py-1.5 text-xs outline-none text-ink-black flex-1 min-w-0 max-w-full rounded"
-          placeholder="e.g. /custom-url"
+          placeholder="e.g. /custom-url or https://..."
         />
       )}
     </div>
