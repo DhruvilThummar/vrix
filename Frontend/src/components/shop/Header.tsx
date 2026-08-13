@@ -428,6 +428,7 @@ export default function Header() {
                     }}
                     className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link inline-block relative ${isActive(link.path) ? "header-nav-link--active" : ""}`}
                   >
+                    {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
                   </Link>
                 </div>
               );
