@@ -404,6 +404,23 @@ export async function runInteractionsChatLoop({
   let currentPreviousId = previousInteractionId;
   let finalReply = "";
 
+  // ── Helper: extract function call steps from interaction.outputs ──────────
+  function extractFunctionCalls(interaction) {
+    const outputs = interaction.outputs || [];
+    const calls = [];
+    for (const step of outputs) {
+      // Step types: "model_output", "function_call", "thought", etc.
+      if (step.type === "function_call" || step.functionCall) {
+        const fc = step.functionCall || step;
+        if (fc.name) {
+          calls.push({ name: fc.name, args: fc.args || {} });
+        }
+      }
+    }
+    return calls;
+  }
+
+  // ── Initial turn ──────────────────────────────────────────────────────────
   let interaction = await ai.interactions.create({
     model: MODEL_NAME,
     input: userMessage,
@@ -419,13 +436,18 @@ export async function runInteractionsChatLoop({
     turns++;
     currentPreviousId = interaction.id || currentPreviousId;
 
-    const functionCalls = interaction.functionCalls || [];
+    // Prefer output_text from SDK convenience accessor
+    const textOut = interaction.output_text ?? interaction.outputText ?? interaction.text ?? interaction.output ?? "";
+
+    const functionCalls = extractFunctionCalls(interaction);
+
+    // No tool calls → model has produced its final text response
     if (!functionCalls || functionCalls.length === 0) {
-      finalReply = interaction.text || interaction.output || "";
+      finalReply = textOut;
       break;
     }
 
-    // Process all function calls requested by model turn
+    // ── Agentic loop: execute each requested tool call ───────────────────────
     for (const call of functionCalls) {
       toolsUsed.add(call.name);
       const toolResult = await handleToolExecution(call.name, call.args, sessionId);
@@ -447,26 +469,27 @@ export async function runInteractionsChatLoop({
         structuredData.repairRequest = toolResult;
       }
 
-      // Send tool response back to Gemini Interactions API turn
+      // ── Feed tool result back to Gemini as next interaction turn ───────────
       interaction = await ai.interactions.create({
         model: MODEL_NAME,
-        input: [
-          {
-            functionResponse: {
-              name: call.name,
-              response: toolResult
-            }
-          }
-        ],
+        input: JSON.stringify(toolResult),  // plain-text tool result as next input
         tools: CHATBOT_TOOLS,
         system_instruction: VRIX_SYSTEM_INSTRUCTION,
         previous_interaction_id: currentPreviousId
       });
+
+      // Update state id after each sub-turn
+      currentPreviousId = interaction.id || currentPreviousId;
     }
   }
 
+  // Safety fallback only if model returned truly empty text after all turns
+  if (!finalReply) {
+    finalReply = interaction.output_text ?? interaction.outputText ?? interaction.text ?? interaction.output ?? "I'd be happy to help you find the right piece. Could you tell me a little more about what you're looking for?";
+  }
+
   return {
-    reply: finalReply || "I am available to assist you with our architectural fine jewelry collections.",
+    reply: finalReply,
     lastInteractionId: currentPreviousId,
     toolsUsed: Array.from(toolsUsed),
     structuredData
