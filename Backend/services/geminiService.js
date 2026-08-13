@@ -6,7 +6,7 @@ const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 export const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 // Recommended stable Flash model for cost-effective high-volume chat
-export const MODEL_NAME = "gemini-2.5-flash";
+export const MODEL_NAME = "gemini-2.0-flash";
 
 // ── VRIX Brand Identity System Instruction ─────────────────────────────────
 export const VRIX_SYSTEM_INSTRUCTION = `You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
@@ -41,74 +41,74 @@ If the user seems frustrated, asks for a human, requests a complex custom bespok
 export const CHATBOT_TOOLS = [
   {
     type: "function",
-    functionDeclarations: [
-      {
-        name: "search_products",
-        description: "Search and filter VRIX jewelry catalog by category, price range, metal type, gemstone type, style, or intent.",
-        parameters: {
-          type: "object",
-          properties: {
-            category: { type: "string", description: "Category name e.g. Rings, Necklaces, Earrings, Bracelets, Bespoke" },
-            priceMin: { type: "number", description: "Minimum price threshold" },
-            priceMax: { type: "number", description: "Maximum price threshold" },
-            metalType: { type: "string", description: "Metal type e.g. 18K Yellow Gold, 18K White Gold, 950 Platinum, 925 Sterling Silver" },
-            gemstoneType: { type: "string", description: "Gemstone or stone description e.g. Diamond, Pearl, Solitaire" },
-            style: { type: "string", description: "Style or aesthetic e.g. Minimal, Bold, Architectural, Everyday" },
-            intent: { type: "string", enum: ["self", "gift", "browse"], description: "User shopping intent: 'self' (myself), 'gift' (gifting), or 'browse' (discovery)" },
-            limit: { type: "number", description: "Maximum number of products to return (default 4, max 6)" }
-          }
-        }
-      },
-      {
-        name: "get_collections",
-        description: "Browse VRIX signature collections and category themes.",
-        parameters: {
-          type: "object",
-          properties: {
-            theme: { type: "string", description: "Collection theme or category e.g. Solitaire, Atelier Bespoke, Minimalist, Bridal" }
-          }
-        }
-      },
-      {
-        name: "compare_products",
-        description: "Compare specifications, metals, stones, and pricing side-by-side for 2 to 3 products.",
-        parameters: {
-          type: "object",
-          properties: {
-            productIds: {
-              type: "array",
-              items: { type: "string" },
-              description: "List of 2 to 3 product IDs to compare"
-            }
-          },
-          required: ["productIds"]
-        }
-      },
-      {
-        name: "get_diamond_education",
-        description: "Fetch articles and guidance on Diamond 4Cs, lab certifications, shapes, ethical sourcing, metals, and jewelry care.",
-        parameters: {
-          type: "object",
-          properties: {
-            topic: { type: "string", description: "Educational topic or question e.g. 4Cs, clarity, cut, color, carat, certification, shapes, care, sourcing" }
-          },
-          required: ["topic"]
-        }
-      },
-      {
-        name: "create_repair_request",
-        description: "Submit a repair or warranty service request for an existing VRIX order.",
-        parameters: {
-          type: "object",
-          properties: {
-            orderNumber: { type: "string", description: "Order ID or Number (e.g. VRIX-1002)" },
-            issueDescription: { type: "string", description: "Detailed description of the issue or repair requested" },
-            contactEmail: { type: "string", description: "Customer contact email address" }
-          },
-          required: ["orderNumber", "issueDescription", "contactEmail"]
-        }
+    name: "search_products",
+    description: "Search and filter VRIX jewelry catalog by category, price range, metal type, gemstone type, style, or intent.",
+    parameters: {
+      type: "object",
+      properties: {
+        category: { type: "string", description: "Category name e.g. Rings, Necklaces, Earrings, Bracelets, Bespoke" },
+        priceMin: { type: "number", description: "Minimum price threshold" },
+        priceMax: { type: "number", description: "Maximum price threshold" },
+        metalType: { type: "string", description: "Metal type e.g. 18K Yellow Gold, 18K White Gold, 950 Platinum, 925 Sterling Silver" },
+        gemstoneType: { type: "string", description: "Gemstone or stone description e.g. Diamond, Pearl, Solitaire" },
+        style: { type: "string", description: "Style or aesthetic e.g. Minimal, Bold, Architectural, Everyday" },
+        intent: { type: "string", enum: ["self", "gift", "browse"], description: "User shopping intent: 'self' (myself), 'gift' (gifting), or 'browse' (discovery)" },
+        limit: { type: "number", description: "Maximum number of products to return (default 4, max 6)" }
       }
-    ]
+    }
+  },
+  {
+    type: "function",
+    name: "get_collections",
+    description: "Browse VRIX signature collections and category themes.",
+    parameters: {
+      type: "object",
+      properties: {
+        theme: { type: "string", description: "Collection theme or category e.g. Solitaire, Atelier Bespoke, Minimalist, Bridal" }
+      }
+    }
+  },
+  {
+    type: "function",
+    name: "compare_products",
+    description: "Compare specifications, metals, stones, and pricing side-by-side for 2 to 3 products.",
+    parameters: {
+      type: "object",
+      properties: {
+        productIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "List of 2 to 3 product IDs to compare"
+        }
+      },
+      required: ["productIds"]
+    }
+  },
+  {
+    type: "function",
+    name: "get_diamond_education",
+    description: "Fetch articles and guidance on Diamond 4Cs, lab certifications, shapes, ethical sourcing, metals, and jewelry care.",
+    parameters: {
+      type: "object",
+      properties: {
+        topic: { type: "string", description: "Educational topic or question e.g. 4Cs, clarity, cut, color, carat, certification, shapes, care, sourcing" }
+      },
+      required: ["topic"]
+    }
+  },
+  {
+    type: "function",
+    name: "create_repair_request",
+    description: "Submit a repair or warranty service request for an existing VRIX order.",
+    parameters: {
+      type: "object",
+      properties: {
+        orderNumber: { type: "string", description: "Order ID or Number (e.g. VRIX-1002)" },
+        issueDescription: { type: "string", description: "Detailed description of the issue or repair requested" },
+        contactEmail: { type: "string", description: "Customer contact email address" }
+      },
+      required: ["orderNumber", "issueDescription", "contactEmail"]
+    }
   }
 ];
 
