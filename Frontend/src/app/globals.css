@@ -111,6 +111,10 @@
   font-family: var(--typography-primary);
 }
 
+.font-chancery {
+  font-family: var(--typography-highlight);
+}
+
 .font-label-caps {
   font-family: var(--typography-primary);
   text-transform: uppercase;

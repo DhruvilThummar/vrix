@@ -685,6 +685,24 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
           </div>
         </section>
       )}
+
+      {/* ─── SEO Editorial Section (Chancery Font & Minimalist Luxury Styling) ─── */}
+      <section className="bg-soft-linen/20 py-16 md:py-20 border-t border-slate-grey/15">
+        <div className="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop text-center space-y-4">
+          <p className="font-label-caps text-xs text-slate-grey uppercase tracking-widest flex items-center justify-center gap-3">
+            <span className="w-8 h-[1px] bg-slate-grey/30 inline-block" />
+            <span>{store.homepage.seoSubheading || "Luxury Minimalist Jewellery & Design"}</span>
+            <span className="w-8 h-[1px] bg-slate-grey/30 inline-block" />
+          </p>
+          <h2 className="font-chancery text-2xl md:text-3xl lg:text-4xl text-deep-navy font-normal tracking-wide">
+            {store.homepage.seoHeading || "Quiet Luxury & Architectural Form"}
+          </h2>
+          <p className="font-body-md text-xs md:text-sm text-slate-grey/90 leading-relaxed text-justify md:text-center max-w-3xl mx-auto tracking-wide">
+            {store.homepage.seoText ||
+              "Welcome to VRIX, the ultimate destination for minimalist luxury jewelry and fine jewellery. Our design philosophy centers around quiet luxury, bringing you architectural, clean forms crafted from premium materials. Whether you are looking for premium gold vermeil rings, daily-wear minimalist necklaces, or elegant silver earrings and bracelets, our curated collections offer timeless pieces that speak in silence. By blending modern aesthetics with ethical, sustainable craftsmanship, VRIX redefines what fine jewelry online means for the conscious shopper. We cater to seekers of luxury jewelry worldwide, capturing the perfect balance of luxury minimalism and everyday durability. Experience the artistry of master goldsmiths and elevate your style with premium jewellery designed for the moments that belong only to you."}
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

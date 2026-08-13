@@ -54,6 +54,13 @@ export default function AdminHomepageLayoutPage() {
   const [philosophyTitle, setPhilosophyTitle] = useState("");
   const [philosophyCards, setPhilosophyCards] = useState<any[]>([]);
 
+  // --- SEO & Brand Philosophy Section State ---
+  const [seoSubheading, setSeoSubheading] = useState("Luxury Minimalist Jewellery & Design");
+  const [seoHeading, setSeoHeading] = useState("Quiet Luxury & Architectural Form");
+  const [seoText, setSeoText] = useState(
+    "Welcome to VRIX, the ultimate destination for minimalist luxury jewelry and fine jewellery. Our design philosophy centers around quiet luxury, bringing you architectural, clean forms crafted from premium materials. Whether you are looking for premium gold vermeil rings, daily-wear minimalist necklaces, or elegant silver earrings and bracelets, our curated collections offer timeless pieces that speak in silence. By blending modern aesthetics with ethical, sustainable craftsmanship, VRIX redefines what fine jewelry online means for the conscious shopper. We cater to seekers of luxury jewelry worldwide, capturing the perfect balance of luxury minimalism and everyday durability. Experience the artistry of master goldsmiths and elevate your style with premium jewellery designed for the moments that belong only to you."
+  );
+
   // --- Carousel Settings State ---
   const [collectionsAutoScroll, setCollectionsAutoScroll] = useState(true);
   const [collectionsInterval, setCollectionsInterval] = useState(3.5);
@@ -99,6 +106,13 @@ export default function AdminHomepageLayoutPage() {
           setHeroSlides(res.homepage.heroSlides || []);
           setHomepageTagline(res.homepage.tagline || "");
           setPhilosophyTitle(res.homepage.philosophyTitle || "");
+
+          setSeoSubheading(res.homepage.seoSubheading || "Luxury Minimalist Jewellery & Design");
+          setSeoHeading(res.homepage.seoHeading || "Quiet Luxury & Architectural Form");
+          setSeoText(
+            res.homepage.seoText ||
+              "Welcome to VRIX, the ultimate destination for minimalist luxury jewelry and fine jewellery. Our design philosophy centers around quiet luxury, bringing you architectural, clean forms crafted from premium materials. Whether you are looking for premium gold vermeil rings, daily-wear minimalist necklaces, or elegant silver earrings and bracelets, our curated collections offer timeless pieces that speak in silence. By blending modern aesthetics with ethical, sustainable craftsmanship, VRIX redefines what fine jewelry online means for the conscious shopper. We cater to seekers of luxury jewelry worldwide, capturing the perfect balance of luxury minimalism and everyday durability. Experience the artistry of master goldsmiths and elevate your style with premium jewellery designed for the moments that belong only to you."
+          );
 
           const cSettings = res.homepage.carouselSettings || {};
           setCollectionsAutoScroll(cSettings.collectionsAutoScroll ?? true);
@@ -161,6 +175,9 @@ export default function AdminHomepageLayoutPage() {
           newArrivals,
           featuredProducts,
           categories,
+          seoSubheading,
+          seoHeading,
+          seoText,
           carouselSettings: {
             collectionsAutoScroll,
             collectionsInterval: Math.round(collectionsInterval * 1000),
@@ -717,6 +734,58 @@ export default function AdminHomepageLayoutPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SEO & Minimalist Luxury Brand Intro Section */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+          <div className="border-b border-slate-grey/10 pb-4">
+            <h3 className="font-headline-md text-base text-deep-navy uppercase tracking-wider font-semibold">
+              SEO &amp; Brand Philosophy Section
+            </h3>
+            <p className="text-xs text-slate-grey">Configure the homepage luxury SEO editorial section and Chancery font heading.</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">
+                Section Subheading (Uppercase Label)
+              </label>
+              <input
+                type="text"
+                value={seoSubheading}
+                onChange={(e) => setSeoSubheading(e.target.value)}
+                placeholder="e.g. Luxury Minimalist Jewellery & Design"
+                className="border border-slate-grey/30 p-2.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-xs bg-transparent rounded"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">
+                Main Headline (Rendered in Chancery Highlight Font)
+              </label>
+              <input
+                type="text"
+                value={seoHeading}
+                onChange={(e) => setSeoHeading(e.target.value)}
+                placeholder="e.g. Quiet Luxury & Architectural Form"
+                className="border border-slate-grey/30 p-2.5 focus:border-deep-navy outline-none font-body-md text-ink-black text-sm bg-transparent rounded"
+              />
+              <p className="text-[10px] text-slate-grey italic">Preview: <span className="font-chancery text-base text-deep-navy">{seoHeading || "Quiet Luxury & Architectural Form"}</span></p>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">
+                Detailed Brand Description &amp; SEO Text (150+ words)
+              </label>
+              <textarea
+                value={seoText}
+                onChange={(e) => setSeoText(e.target.value)}
+                rows={6}
+                placeholder="Welcome to VRIX, the ultimate destination for minimalist luxury jewelry..."
+                className="border border-slate-grey/30 p-3 focus:border-deep-navy outline-none font-body-md text-ink-black text-xs bg-transparent leading-relaxed rounded"
+              />
             </div>
           </div>
         </section>
