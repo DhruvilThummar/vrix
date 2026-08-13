@@ -17,7 +17,7 @@
   --header-muted: #6B7A99;
   --header-accent: #050575;
   --header-border: #F3F2F0;
-  --header-menu-background: rgb(255 255 255 / 0.72);
+  --header-menu-background: #ffffff;
   --header-menu-foreground: #000000;
   --header-font: var(--typography-primary);
 }
@@ -140,6 +140,21 @@
   box-shadow: none;
 }
 
+/* When the mega menu is open on the transparent (home hero) header,
+   instantly flip the whole header bar to solid white so all text
+   and the dropdown panel are readable. Reverts immediately on mouse-leave
+   because there is intentionally no transition on this override. */
+.shop-desktop-header--transparent:has(.header-mega-menu) {
+  --header-background: #ffffff;
+  --header-foreground: #000000;
+  --header-muted: #6B7A99;
+  --header-accent: #050575;
+  --header-border: #F3F2F0;
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08) !important;
+  transition-duration: 0s !important;
+}
+
 .header-member-info {
   color: var(--header-muted);
 }
@@ -193,10 +208,8 @@
 
 .header-mega-menu {
   color: var(--header-menu-foreground);
-  background-color: var(--header-menu-background);
-  border-color: var(--header-border);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background-color: #ffffff;
+  border-color: #F3F2F0;
   box-shadow: 0 12px 28px rgb(0 0 0 / 0.10);
   border-bottom-left-radius: 0.25rem;
   border-bottom-right-radius: 0.25rem;

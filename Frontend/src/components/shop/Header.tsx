@@ -77,8 +77,9 @@ export default function Header() {
 
   // Transparent styling is intentionally desktop/home-only. All other pages get
   // an opaque header so page content cannot show through the navigation.
+  const megaMenuOpen = !!activeMegaMenu;
   const isTransparent = isHomePage && !scrolled;
-  const displayLogo = isTransparent
+  const displayLogo = (isTransparent && !megaMenuOpen)
     ? "/logos/white.png"
     : (logoUrl.includes("white.png") ? "/logos/black.png" : logoUrl);
 
