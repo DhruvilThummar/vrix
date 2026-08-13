@@ -40,21 +40,22 @@ If the user seems frustrated, asks for a human, requests a complex custom bespok
 // ── 5 Gemini Tool / Function Declarations (JSON Schema) ───────────────────
 export const CHATBOT_TOOLS = [
   {
+    type: "function",
     functionDeclarations: [
       {
         name: "search_products",
         description: "Search and filter VRIX jewelry catalog by category, price range, metal type, gemstone type, style, or intent.",
         parameters: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            category: { type: Type.STRING, description: "Category name e.g. Rings, Necklaces, Earrings, Bracelets, Bespoke" },
-            priceMin: { type: Type.NUMBER, description: "Minimum price threshold" },
-            priceMax: { type: Type.NUMBER, description: "Maximum price threshold" },
-            metalType: { type: Type.STRING, description: "Metal type e.g. 18K Yellow Gold, 18K White Gold, 950 Platinum, 925 Sterling Silver" },
-            gemstoneType: { type: Type.STRING, description: "Gemstone or stone description e.g. Diamond, Pearl, Solitaire" },
-            style: { type: Type.STRING, description: "Style or aesthetic e.g. Minimal, Bold, Architectural, Everyday" },
-            intent: { type: Type.STRING, enum: ["self", "gift", "browse"], description: "User shopping intent: 'self' (myself), 'gift' (gifting), or 'browse' (discovery)" },
-            limit: { type: Type.NUMBER, description: "Maximum number of products to return (default 4, max 6)" }
+            category: { type: "string", description: "Category name e.g. Rings, Necklaces, Earrings, Bracelets, Bespoke" },
+            priceMin: { type: "number", description: "Minimum price threshold" },
+            priceMax: { type: "number", description: "Maximum price threshold" },
+            metalType: { type: "string", description: "Metal type e.g. 18K Yellow Gold, 18K White Gold, 950 Platinum, 925 Sterling Silver" },
+            gemstoneType: { type: "string", description: "Gemstone or stone description e.g. Diamond, Pearl, Solitaire" },
+            style: { type: "string", description: "Style or aesthetic e.g. Minimal, Bold, Architectural, Everyday" },
+            intent: { type: "string", enum: ["self", "gift", "browse"], description: "User shopping intent: 'self' (myself), 'gift' (gifting), or 'browse' (discovery)" },
+            limit: { type: "number", description: "Maximum number of products to return (default 4, max 6)" }
           }
         }
       },
@@ -62,9 +63,9 @@ export const CHATBOT_TOOLS = [
         name: "get_collections",
         description: "Browse VRIX signature collections and category themes.",
         parameters: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            theme: { type: Type.STRING, description: "Collection theme or category e.g. Solitaire, Atelier Bespoke, Minimalist, Bridal" }
+            theme: { type: "string", description: "Collection theme or category e.g. Solitaire, Atelier Bespoke, Minimalist, Bridal" }
           }
         }
       },
@@ -72,11 +73,11 @@ export const CHATBOT_TOOLS = [
         name: "compare_products",
         description: "Compare specifications, metals, stones, and pricing side-by-side for 2 to 3 products.",
         parameters: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
             productIds: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
+              type: "array",
+              items: { type: "string" },
               description: "List of 2 to 3 product IDs to compare"
             }
           },
@@ -87,9 +88,9 @@ export const CHATBOT_TOOLS = [
         name: "get_diamond_education",
         description: "Fetch articles and guidance on Diamond 4Cs, lab certifications, shapes, ethical sourcing, metals, and jewelry care.",
         parameters: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            topic: { type: Type.STRING, description: "Educational topic or question e.g. 4Cs, clarity, cut, color, carat, certification, shapes, care, sourcing" }
+            topic: { type: "string", description: "Educational topic or question e.g. 4Cs, clarity, cut, color, carat, certification, shapes, care, sourcing" }
           },
           required: ["topic"]
         }
@@ -98,11 +99,11 @@ export const CHATBOT_TOOLS = [
         name: "create_repair_request",
         description: "Submit a repair or warranty service request for an existing VRIX order.",
         parameters: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            orderNumber: { type: Type.STRING, description: "Order ID or Number (e.g. VRIX-1002)" },
-            issueDescription: { type: Type.STRING, description: "Detailed description of the issue or repair requested" },
-            contactEmail: { type: Type.STRING, description: "Customer contact email address" }
+            orderNumber: { type: "string", description: "Order ID or Number (e.g. VRIX-1002)" },
+            issueDescription: { type: "string", description: "Detailed description of the issue or repair requested" },
+            contactEmail: { type: "string", description: "Customer contact email address" }
           },
           required: ["orderNumber", "issueDescription", "contactEmail"]
         }
