@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { verifyPromo } from "@/utils/api";
+import { verifyPromo, fetchProducts } from "@/utils/api";
 import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
 import { useCurrency } from "@/context/CurrencyContext";
+import ProductCard from "@/components/shop/ProductCard";
 
 export default function CartPage() {
   const router = useRouter();
@@ -19,6 +20,23 @@ export default function CartPage() {
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchProducts().then((all: any[]) => {
+      const cartIds = new Set(items.map((i) => String(i.id)));
+      const inStock = all.filter((p: any) => {
+        if (cartIds.has(String(p.id))) return false;
+        if (Array.isArray(p.variants) && p.variants.length > 0) {
+          return p.variants.some((v: any) => Number(v.stock ?? 999) > 0);
+        }
+        return Number(p.stock ?? 999) > 0;
+      });
+      // deterministic light shuffle by id char code
+      const shuffled = [...inStock].sort((a, b) => String(a.id).charCodeAt(2) - String(b.id).charCodeAt(2));
+      setSuggestions(shuffled.slice(0, 4));
+    }).catch(() => {});
+  }, [items]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -258,6 +276,31 @@ export default function CartPage() {
             </div>
           ))}
         </div>
+
+        {/* You May Also Like */}
+        {suggestions.length > 0 && (
+          <section className="mt-section-gap pt-stack-lg border-t border-slate-grey/20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-3">
+              <div>
+                <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">While You're Here</span>
+                <h2 className="font-display-lg text-xl text-deep-navy uppercase tracking-wider">You May Also Like</h2>
+              </div>
+              <Link href="/collections" className="font-label-caps text-xs text-ink-black uppercase tracking-widest underline underline-offset-4 hover:text-slate-grey">
+                View All Jewelry →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {suggestions.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  formatPrice={formatPrice}
+                  showQuickAdd={false}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

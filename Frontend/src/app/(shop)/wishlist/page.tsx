@@ -7,6 +7,7 @@ import { fetchProducts, getWishlistKey } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import ProductCard from "@/components/shop/ProductCard";
 
 interface Product {
   id: string;
@@ -27,6 +28,7 @@ export default function WishlistPage() {
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -50,6 +52,22 @@ export default function WishlistPage() {
     }
     loadWishlist();
   }, [user?.email]);
+
+  // Load suggestion products (in-stock, not already wishlisted)
+  useEffect(() => {
+    fetchProducts().then((all: any[]) => {
+      const wlIds = new Set(wishlist.map((w) => String(w.id)));
+      const inStock = all.filter((p: any) => {
+        if (wlIds.has(String(p.id))) return false;
+        if (Array.isArray(p.variants) && p.variants.length > 0) {
+          return p.variants.some((v: any) => Number(v.stock ?? 999) > 0);
+        }
+        return Number(p.stock ?? 999) > 0;
+      });
+      const shuffled = [...inStock].sort((a, b) => String(a.id).charCodeAt(1) - String(b.id).charCodeAt(1));
+      setSuggestions(shuffled.slice(0, 4));
+    }).catch(() => {});
+  }, [wishlist]);
 
   const handleRemove = (id: string, title: string, e?: React.MouseEvent) => {
     if (e) {
@@ -152,70 +170,46 @@ export default function WishlistPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-gutter">
-            {wishlist.map((item) => (
-              <div
-                key={item.id}
-                className="group flex flex-col bg-pure-white border border-slate-grey/15 hover:border-slate-grey/40 transition-all duration-300 relative"
-              >
-                {/* Image Container */}
-                <Link href={`/product/${item.id}`} className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden block">
-                  <Image
-                    alt={item.title}
-                    fill
-                    src={item.image}
-                    className="object-cover object-center mix-blend-multiply opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
-                  {/* Remove Heart Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => handleRemove(item.id, item.title, e)}
-                    aria-label="Remove from Wishlist"
-                    className="absolute top-2 right-2 md:top-3 md:right-3 p-1.5 rounded-full bg-pure-white/80 backdrop-blur-xs text-red-600 hover:scale-110 transition-transform cursor-pointer shadow-xs z-10"
-                  >
-                    <span className="material-symbols-outlined icon-favorite-filled text-lg">
-                      favorite
-                    </span>
-                  </button>
-                </Link>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-gutter">
+              {wishlist.map((item) => (
+                <ProductCard
+                  key={item.id}
+                  product={item}
+                  formatPrice={formatPrice}
+                  isWishlisted={true}
+                  onWishlistToggle={(id, title, e) => handleRemove(id, title, e)}
+                  onQuickAdd={(p, v) => handleMoveToBag(p as Product)}
+                  showQuickAdd={true}
+                />
+              ))}
+            </div>
 
-                {/* Content Details */}
-                <div className="p-3 md:p-4 flex flex-col flex-grow justify-between space-y-3">
+            {/* You May Also Like */}
+            {suggestions.length > 0 && (
+              <section className="mt-section-gap pt-stack-lg border-t border-slate-grey/20">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-3">
                   <div>
-                    <span className="font-label-caps text-[9px] md:text-[10px] text-slate-grey uppercase tracking-widest block truncate">
-                      {item.subtitle || item.type || "Fine Jewelry"}
-                    </span>
-                    <Link href={`/product/${item.id}`} className="block">
-                      <h2 className="font-body-md text-xs md:text-body-md text-ink-black font-medium line-clamp-1 hover:text-deep-navy transition-colors mt-0.5">
-                        {item.title}
-                      </h2>
-                    </Link>
-                    <p className="font-body-md text-xs md:text-body-md text-deep-navy font-semibold mt-1">
-                      {formatPrice(item.price)}
-                    </p>
+                    <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">Curated Pairings</span>
+                    <h2 className="font-display-lg text-xl text-deep-navy uppercase tracking-wider">You May Also Like</h2>
                   </div>
-
-                  <div className="space-y-2 pt-2 border-t border-slate-grey/15">
-                    <button
-                      type="button"
-                      onClick={(e) => handleMoveToBag(item, e)}
-                      className="w-full bg-deep-navy text-pure-white font-button text-[10px] md:text-xs py-2.5 uppercase tracking-widest hover:bg-ink-black transition-colors cursor-pointer"
-                    >
-                      Move to Bag
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleRemove(item.id, item.title, e)}
-                      className="w-full text-center font-label-caps text-[9px] text-slate-grey hover:text-red-600 uppercase tracking-widest transition-colors cursor-pointer"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  <Link href="/collections" className="font-label-caps text-xs text-ink-black uppercase tracking-widest underline underline-offset-4 hover:text-slate-grey">
+                    View All Jewelry →
+                  </Link>
                 </div>
-              </div>
-            ))}
-          </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  {suggestions.map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      formatPrice={formatPrice}
+                      showQuickAdd={false}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
       </main>
     </div>

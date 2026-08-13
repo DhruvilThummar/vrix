@@ -91,16 +91,96 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
   // Apply variant switch animations (GSAP)
   useVariantAnimations(imageGridRef, priceRef, selectedVariant);
 
-  const relatedProducts = useMemo(() => {
+  // Helper: check if a product has any in-stock variant or base stock > 0
+  const isInStock = (p: any) => {
+    if (Array.isArray(p.variants) && p.variants.length > 0) {
+      return p.variants.some((v: any) => Number(v.stock ?? 999) > 0);
+    }
+    return Number(p.stock ?? 999) > 0;
+  };
+
+  // Row 1 — Same category
+  const sameCategoryProducts = useMemo(() => {
     if (!product || allProducts.length <= 1) return [];
-    const filtered = allProducts.filter((p) => {
-      if (String(p.id) === String(product.id)) return false;
-      const sameType = p.type && product.type && p.type.toLowerCase() === product.type.toLowerCase();
-      const sameCol = p.collection && product.collection && p.collection.toLowerCase() === product.collection.toLowerCase();
-      return sameType || sameCol;
-    });
-    return (filtered.length > 0 ? filtered : allProducts.filter((p) => String(p.id) !== String(product.id))).slice(0, 4);
+    return allProducts
+      .filter((p) => {
+        if (String(p.id) === String(product.id)) return false;
+        if (!isInStock(p)) return false;
+        return p.type && product.type && p.type.toLowerCase() === product.type.toLowerCase();
+      })
+      .slice(0, 4);
   }, [allProducts, product]);
+
+  // Row 2 — Same collection
+  const sameCollectionProducts = useMemo(() => {
+    if (!product || allProducts.length <= 1) return [];
+    return allProducts
+      .filter((p) => {
+        if (String(p.id) === String(product.id)) return false;
+        if (!isInStock(p)) return false;
+        return p.collection && product.collection && p.collection.toLowerCase() === product.collection.toLowerCase();
+      })
+      .slice(0, 4);
+  }, [allProducts, product]);
+
+  // Row 3 — Random picks (exclude current + already shown above)
+  const randomProducts = useMemo(() => {
+    if (!product || allProducts.length <= 1) return [];
+    const shownIds = new Set([
+      String(product.id),
+      ...sameCategoryProducts.map((p) => String(p.id)),
+      ...sameCollectionProducts.map((p) => String(p.id)),
+    ]);
+    const pool = allProducts.filter((p) => !shownIds.has(String(p.id)) && isInStock(p));
+    // Deterministic shuffle via id hash so SSR and client match
+    const shuffled = [...pool].sort((a, b) =>
+      String(a.id).charCodeAt(0) - String(b.id).charCodeAt(0)
+    );
+    return shuffled.slice(0, 4);
+  }, [allProducts, product, sameCategoryProducts, sameCollectionProducts]);
+
+  const [wishlistedIds, setWishlistedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    try {
+      const key = getWishlistKey(user?.email);
+      const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
+      setWishlistedIds(new Set(saved ? JSON.parse(saved) : []));
+    } catch {}
+  }, [user?.email]);
+
+  const handleSuggestionWishlist = (id: string, title: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn) { showToast("Please sign in to save items."); return; }
+    try {
+      const key = getWishlistKey(user?.email);
+      const saved = localStorage.getItem(key) || localStorage.getItem("vrix-wishlist");
+      let list: string[] = saved ? JSON.parse(saved) : [];
+      const isWl = list.includes(id);
+      list = isWl ? list.filter((x) => x !== id) : [...list, id];
+      localStorage.setItem(key, JSON.stringify(list));
+      localStorage.setItem("vrix-wishlist", JSON.stringify(list));
+      setWishlistedIds(new Set(list));
+      showToast(isWl ? `Removed "${title}" from Wishlist.` : `Added "${title}" to Wishlist.`);
+    } catch {}
+  };
+
+  const handleSuggestionQuickAdd = (p: any, v?: any) => {
+    const stock = Number(v?.stock ?? p?.stock ?? 999);
+    if (stock <= 0) { showToast("This piece is currently out of stock."); return; }
+    if (!isLoggedIn) { showToast("Please sign in to add items to your bag."); return; }
+    addItem({
+      id: p.id,
+      title: p.title,
+      subtitle: p.subtitle || p.type,
+      price: Number(v?.price ?? p?.price ?? 0),
+      image: v?.image || p?.image || "",
+      material: v?.material || p?.material || "18K Gold Vermeil",
+      size: "Standard",
+      stock,
+    });
+    showToast(`"${p.title}" added to your bag.`);
+  };
 
   const toggleAccordion = (name: string) => {
     setActiveAccordion(activeAccordion === name ? null : name);
@@ -622,54 +702,93 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
           </div>
         </div>
 
-        {relatedProducts.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-slate-grey/20">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-3">
-              <div>
-                <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">
-                  Curated Pairings
-                </span>
-                <h3 className="font-display-lg text-2xl text-deep-navy uppercase tracking-wider">
-                  You May Also Like
-                </h3>
-              </div>
-              <Link href="/collections" className="font-label-caps text-xs text-ink-black uppercase tracking-widest underline underline-offset-4 hover:text-slate-grey">
-                View All Jewelry →
-              </Link>
-            </div>
+        {/* ── Suggestion Rows ────────────────────────────────────── */}
+        <div className="mt-8 space-y-12 border-t border-slate-grey/20 pt-8">
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {relatedProducts.map((rel) => (
-                <Link
-                  key={rel.id}
-                  href={`/product/${rel.id}`}
-                  className="group flex flex-col space-y-3 bg-soft-linen/20 border border-soft-linen p-3 hover:border-black/30 transition-all duration-300"
-                >
-                  <div className="relative aspect-[4/5] bg-soft-linen overflow-hidden">
-                    <Image
-                      src={rel.image}
-                      alt={rel.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-label-caps text-xs uppercase font-semibold text-deep-navy group-hover:text-black line-clamp-1">
-                      {rel.title}
-                    </h4>
-                    <p className="text-[10px] text-slate-grey uppercase tracking-wider mt-0.5">
-                      {rel.subtitle || rel.type}
-                    </p>
-                    <p className="font-body-md text-xs font-semibold mt-1">
-                      {formatPrice(rel.price)}
-                    </p>
-                  </div>
+          {/* Row 1: Same Category */}
+          {sameCategoryProducts.length > 0 && (
+            <section>
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-3">
+                <div>
+                  <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">More in {product.type}</span>
+                  <h3 className="font-display-lg text-xl text-deep-navy uppercase tracking-wider">Same Style</h3>
+                </div>
+                <Link href={`/products?type=${encodeURIComponent(product.type || "")}`} className="font-label-caps text-xs text-ink-black uppercase tracking-widest underline underline-offset-4 hover:text-slate-grey">
+                  View All →
                 </Link>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {sameCategoryProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    formatPrice={formatPrice}
+                    onWishlistToggle={handleSuggestionWishlist}
+                    isWishlisted={wishlistedIds.has(p.id)}
+                    onQuickAdd={handleSuggestionQuickAdd}
+                    showQuickAdd
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Row 2: Same Collection */}
+          {sameCollectionProducts.length > 0 && (
+            <section>
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-3">
+                <div>
+                  <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">From the {product.collection} collection</span>
+                  <h3 className="font-display-lg text-xl text-deep-navy uppercase tracking-wider">Same Collection</h3>
+                </div>
+                <Link href={`/collections/${(product.collection || "").toLowerCase().replace(/\s+/g, "-")}`} className="font-label-caps text-xs text-ink-black uppercase tracking-widest underline underline-offset-4 hover:text-slate-grey">
+                  View Collection →
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {sameCollectionProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    formatPrice={formatPrice}
+                    onWishlistToggle={handleSuggestionWishlist}
+                    isWishlisted={wishlistedIds.has(p.id)}
+                    onQuickAdd={handleSuggestionQuickAdd}
+                    showQuickAdd
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Row 3: Random Picks */}
+          {randomProducts.length > 0 && (
+            <section>
+              <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-3">
+                <div>
+                  <span className="font-label-caps text-xs text-slate-grey uppercase tracking-widest block mb-1">Curated Pairings</span>
+                  <h3 className="font-display-lg text-xl text-deep-navy uppercase tracking-wider">You May Also Like</h3>
+                </div>
+                <Link href="/collections" className="font-label-caps text-xs text-ink-black uppercase tracking-widest underline underline-offset-4 hover:text-slate-grey">
+                  View All Jewelry →
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {randomProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    formatPrice={formatPrice}
+                    onWishlistToggle={handleSuggestionWishlist}
+                    isWishlisted={wishlistedIds.has(p.id)}
+                    onQuickAdd={handleSuggestionQuickAdd}
+                    showQuickAdd
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </main>
     </div>
   );
