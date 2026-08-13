@@ -1418,32 +1418,147 @@ function AdminProductsContent() {
                                 </div>
                               </div>
 
-                              {/* Variant Image */}
-                              <div className="flex flex-col gap-1 pt-1">
-                                <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
-                                  Variant Specific Image URL (swaps PDP gallery when selected)
-                                </label>
+                              {/* Variant Specific Images (Multiple) */}
+                              <div className="flex flex-col gap-2 pt-2 border-t border-slate-grey/10">
+                                <div className="flex items-center justify-between">
+                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
+                                    Variant Specific Images (Swaps PDP gallery when selected)
+                                  </label>
+                                  <label className="text-[10px] font-label-caps uppercase text-deep-navy hover:underline cursor-pointer flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[13px]">upload_file</span>
+                                    Upload Variant Images
+                                    <input
+                                      type="file"
+                                      multiple
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={async (e) => {
+                                        const files = Array.from(e.target.files || []);
+                                        if (files.length === 0) return;
+                                        try {
+                                          const result = await uploadMediaMultiple(files);
+                                          const uploadedUrls = result.results
+                                            .filter((item) => item.success && item.url)
+                                            .map((item) => item.url as string);
+                                          if (uploadedUrls.length > 0) {
+                                            setFVariants((current) =>
+                                              current.map((item, itemIndex) => {
+                                                if (itemIndex !== index) return item;
+                                                const existingImgs = Array.isArray(item.images) ? item.images : (item.image ? [item.image] : []);
+                                                const newImgs = Array.from(new Set([...existingImgs, ...uploadedUrls]));
+                                                return {
+                                                  ...item,
+                                                  image: item.image || newImgs[0] || "",
+                                                  images: newImgs,
+                                                };
+                                              })
+                                            );
+                                            showToast(`Uploaded ${uploadedUrls.length} images for ${variant.material || "variant"}`);
+                                          }
+                                        } catch (err: any) {
+                                          showToast("Upload failed: " + err.message, "err");
+                                        }
+                                      }}
+                                    />
+                                  </label>
+                                </div>
+
+                                {/* Main Cover Image input */}
                                 <div className="flex gap-2 items-center">
                                   <input
                                     value={variant.image || ""}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
+                                      const url = e.target.value;
                                       setFVariants((current) =>
-                                        current.map((item, itemIndex) =>
-                                          itemIndex === index
-                                            ? { ...item, image: e.target.value, images: e.target.value ? [e.target.value] : [] }
-                                            : item
-                                        )
-                                      )
-                                    }
-                                    placeholder="https://... (Optional image override)"
+                                        current.map((item, itemIndex) => {
+                                          if (itemIndex !== index) return item;
+                                          const curImgs = Array.isArray(item.images) ? item.images : [];
+                                          const nextImgs = url ? Array.from(new Set([url, ...curImgs])) : curImgs;
+                                          return { ...item, image: url, images: nextImgs };
+                                        })
+                                      );
+                                    }}
+                                    placeholder="Cover Image URL (https://...)"
                                     className="flex-1 border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
                                   />
-                                  {variant.image && (
-                                    <div className="w-8 h-8 relative rounded overflow-hidden border border-slate-grey/20 bg-soft-linen shrink-0">
-                                      <Image src={variant.image} alt="Preview" fill className="object-cover" />
-                                    </div>
-                                  )}
                                 </div>
+
+                                {/* Multi-Image Gallery Input (comma separated or previews) */}
+                                <div className="flex flex-col gap-1">
+                                  <input
+                                    value={Array.isArray(variant.images) ? variant.images.join(", ") : (variant.image || "")}
+                                    onChange={(e) => {
+                                      const urls = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                                      setFVariants((current) =>
+                                        current.map((item, itemIndex) => {
+                                          if (itemIndex !== index) return item;
+                                          return {
+                                            ...item,
+                                            image: urls[0] || item.image || "",
+                                            images: urls,
+                                          };
+                                        })
+                                      );
+                                    }}
+                                    placeholder="Additional Image URLs (comma-separated: https://img1.jpg, https://img2.jpg)"
+                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md text-slate-grey/80"
+                                  />
+                                </div>
+
+                                {/* Image Thumbnails Preview Grid */}
+                                {Array.isArray(variant.images) && variant.images.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 pt-1">
+                                    {variant.images.map((imgUrl, imgIdx) => {
+                                      const isCover = variant.image === imgUrl;
+                                      return (
+                                        <div key={imgIdx} className={`relative w-12 h-14 border rounded overflow-hidden group/vimg bg-soft-linen shrink-0 ${isCover ? "ring-2 ring-deep-navy border-deep-navy" : "border-slate-grey/20"}`}>
+                                          <Image src={imgUrl} alt="Variant view" fill className="object-cover" />
+                                          {isCover && (
+                                            <span className="absolute top-0 left-0 bg-deep-navy text-white text-[8px] px-1 font-bold">
+                                              Cover
+                                            </span>
+                                          )}
+                                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/vimg:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-0.5">
+                                            {!isCover && (
+                                              <button
+                                                type="button"
+                                                title="Set as variant cover"
+                                                onClick={() => {
+                                                  setFVariants((current) =>
+                                                    current.map((item, itemIndex) => (itemIndex === index ? { ...item, image: imgUrl } : item))
+                                                  );
+                                                }}
+                                                className="text-[8px] bg-white text-black px-1 py-0.5 font-bold uppercase rounded"
+                                              >
+                                                Cover
+                                              </button>
+                                            )}
+                                            <button
+                                              type="button"
+                                              title="Remove image"
+                                              onClick={() => {
+                                                setFVariants((current) =>
+                                                  current.map((item, itemIndex) => {
+                                                    if (itemIndex !== index) return item;
+                                                    const nextImgs = item.images?.filter((u) => u !== imgUrl) || [];
+                                                    return {
+                                                      ...item,
+                                                      image: item.image === imgUrl ? (nextImgs[0] || "") : item.image,
+                                                      images: nextImgs,
+                                                    };
+                                                  })
+                                                );
+                                              }}
+                                              className="text-[8px] bg-red-600 text-white px-1 py-0.5 font-bold uppercase rounded"
+                                            >
+                                              ×
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
 
                               <div className="pt-2 flex items-center justify-between border-t border-slate-grey/10 text-xs text-slate-grey">
