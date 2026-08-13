@@ -45,83 +45,7 @@ export const VRIX_ENTRY_POINTS: EntryPoint[] = [
   },
 ];
 
-export const VRIX_CATALOG: ChatProduct[] = [
-  {
-    id: "vrx-p-01",
-    title: "Solitude Solitaire Diamond Ring",
-    category: "Rings",
-    material: "18K Yellow Gold",
-    price: 45000,
-    originalPrice: 52000,
-    stone: "0.5ct Conflict-Free Diamond",
-    warranty: "Lifetime Craftsmanship Warranty",
-    image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&auto=format&fit=crop&q=80",
-    whyFits: "Architectural minimal form, perfect for everyday refinement.",
-    slug: "solitude-solitaire-diamond-ring",
-  },
-  {
-    id: "vrx-p-02",
-    title: "Silent Center Platinum Pendant",
-    category: "Necklaces",
-    material: "950 Platinum",
-    price: 38000,
-    originalPrice: 42000,
-    stone: "Brilliant-Cut Solitaire Diamond",
-    warranty: "Lifetime Craftsmanship Warranty",
-    image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80",
-    whyFits: "Quiet elegance designed for subtle everyday layering.",
-    slug: "silent-center-platinum-pendant",
-  },
-  {
-    id: "vrx-p-03",
-    title: "Presence Recycled Gold Cuff",
-    category: "Bracelets",
-    material: "18K Recycled Gold",
-    price: 62000,
-    stone: "Solid Gold (No Stone)",
-    warranty: "Lifetime Craftsmanship Warranty",
-    image: "https://images.unsplash.com/photo-1611591475777-233ca732222e?w=600&auto=format&fit=crop&q=80",
-    whyFits: "A bolder statement cuff with sleek, architectural curvature.",
-    slug: "presence-recycled-gold-cuff",
-  },
-  {
-    id: "vrx-p-04",
-    title: "Luminous Drop Silver Earrings",
-    category: "Earrings",
-    material: "925 Sterling Silver",
-    price: 12500,
-    originalPrice: 15000,
-    stone: "Ethical Freshwater Pearl",
-    warranty: "2-Year Finish Guarantee",
-    image: "https://images.unsplash.com/photo-1630019852942-f89202989a59?w=600&auto=format&fit=crop&q=80",
-    whyFits: "Subtle drop silhouette suitable for both day and evening wear.",
-    slug: "luminous-drop-silver-earrings",
-  },
-  {
-    id: "vrx-p-05",
-    title: "Architectural Band Ring",
-    category: "Rings",
-    material: "18K White Gold",
-    price: 28000,
-    stone: "Micro-Pave Diamonds",
-    warranty: "Lifetime Craftsmanship Warranty",
-    image: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=600&auto=format&fit=crop&q=80",
-    whyFits: "Clean geometric profile crafted for modern stacking.",
-    slug: "architectural-band-ring",
-  },
-  {
-    id: "vrx-p-06",
-    title: "Bespoke Sculptural Choker",
-    category: "Bespoke",
-    material: "Custom 18K Gold or Platinum",
-    price: 110000,
-    stone: "Hand-selected ethically sourced stone",
-    warranty: "Bespoke Concierge Warranty",
-    image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&auto=format&fit=crop&q=80",
-    whyFits: "Made-to-order masterpiece handcrafted specifically for you.",
-    slug: "bespoke-sculptural-choker",
-  },
-];
+export const VRIX_CATALOG: ChatProduct[] = [];
 
 export interface EngineState {
   currentFlow: EntryPointId | null;
@@ -422,18 +346,32 @@ export function handleUserAction(
   } else if (nextFlow === "compare" || actionValue === "trigger-compare") {
     nextFlow = null;
     nextStep = 0;
-    const compareList = surfaced.length >= 2 ? surfaced.slice(0, 3) : VRIX_CATALOG.slice(0, 3);
-    messages.push({
-      id: `msg-${Date.now()}-comp`,
-      sender: "bot",
-      text: "Side-by-side comparison of your selected pieces:",
-      comparison: { products: compareList },
-      options: [
-        { label: "Find another piece", value: "myself" },
-        { label: "Talk to concierge", value: "trigger-handoff" },
-      ],
-      timestamp: time,
-    });
+    const compareList = surfaced.length >= 2 ? surfaced.slice(0, 3) : [];
+    if (compareList.length >= 2) {
+      messages.push({
+        id: `msg-${Date.now()}-comp`,
+        sender: "bot",
+        text: "Side-by-side comparison of your selected pieces:",
+        comparison: { products: compareList },
+        options: [
+          { label: "Find another piece", value: "myself" },
+          { label: "Talk to concierge", value: "trigger-handoff" },
+        ],
+        timestamp: time,
+      });
+    } else {
+      messages.push({
+        id: `msg-${Date.now()}-comp-empty`,
+        sender: "bot",
+        text: "Which pieces would you like to compare? Please search for or select 2 to 3 items to compare side-by-side.",
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Explore collections", value: "collections" },
+          { label: "Talk to concierge", value: "trigger-handoff" },
+        ],
+        timestamp: time,
+      });
+    }
   } else if (nextFlow === "education") {
     if (actionValue === "4Cs") {
       messages.push({

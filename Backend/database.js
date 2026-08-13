@@ -749,6 +749,85 @@ export const db = {
     }
   },
 
+  // Chat Session & Message Store
+  chatSession: {
+    findUnique: async ({ where, include }) => {
+      if (db.isConnected()) {
+        try {
+          return await prisma.chatSession.findUnique({ where, include });
+        } catch (err) {
+          console.error("Prisma chatSession.findUnique failed:", err.message);
+          return null;
+        }
+      }
+      return null;
+    },
+    create: async ({ data }) => {
+      if (db.isConnected()) {
+        try {
+          return await prisma.chatSession.create({ data });
+        } catch (err) {
+          console.error("Prisma chatSession.create failed:", err.message);
+          return { id: data.id || `sess-${Date.now()}`, lastInteractionId: null };
+        }
+      }
+      return { id: `sess-${Date.now()}`, lastInteractionId: null };
+    },
+    update: async ({ where, data }) => {
+      if (db.isConnected()) {
+        try {
+          return await prisma.chatSession.update({ where, data });
+        } catch (err) {
+          console.error("Prisma chatSession.update failed:", err.message);
+          return null;
+        }
+      }
+      return null;
+    }
+  },
+
+  chatMessage: {
+    create: async ({ data }) => {
+      if (db.isConnected()) {
+        try {
+          return await prisma.chatMessage.create({ data });
+        } catch (err) {
+          console.error("Prisma chatMessage.create failed:", err.message);
+          return null;
+        }
+      }
+      return null;
+    }
+  },
+
+  repairRequest: {
+    create: async ({ data }) => {
+      if (db.isConnected()) {
+        try {
+          return await prisma.repairRequest.create({ data });
+        } catch (err) {
+          console.error("Prisma repairRequest.create failed:", err.message);
+          return null;
+        }
+      }
+      return null;
+    }
+  },
+
+  diamondEducation: {
+    findMany: async ({ where } = {}) => {
+      if (db.isConnected()) {
+        try {
+          return await prisma.diamondEducation.findMany({ where });
+        } catch (err) {
+          console.error("Prisma diamondEducation.findMany failed:", err.message);
+          return [];
+        }
+      }
+      return [];
+    }
+  },
+
   // Security Logs
   securityLogs: {
     findMany: async () => {

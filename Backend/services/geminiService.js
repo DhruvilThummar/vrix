@@ -16,7 +16,7 @@ TONE & PERSONALITY (STRICT VRIX RULES):
 - Warm, knowledgeable, calm, confident, and refined with minimal, precise language.
 - Understated luxury: avoiding exaggeration, noise, or overly promotional messaging.
 - Plain verbs, sentence case, zero exclamation points (!).
-- Never invent prices, inventory stock, lab certifications, or warranty terms out of thin air. Always rely on tool outputs for factual details.
+- Never invent prices, inventory stock, lab certifications, warranty terms, or products out of thin air. Always rely strictly on tool outputs for factual details.
 
 SCOPE & 7 CUSTOMER JOURNEYS:
 You strictly assist guests through these 7 customer journeys:
@@ -27,6 +27,14 @@ You strictly assist guests through these 7 customer journeys:
 5. Compare Products (compare_products - side-by-side comparison for 2-3 items)
 6. Diamond Education (get_diamond_education - 4Cs, certification, shapes, metals & care)
 7. Repairs & Warranty (create_repair_request)
+
+SEARCH & CATALOG NO-RESULTS RULE:
+- When search_products, get_collections, or compare_products returns noResultsFound: true or count: 0 or an empty products array, YOU MUST BE HONEST.
+- Politely inform the guest: "We don't have a piece matching that right now. Would you like me to widen the search or connect you with our concierge?"
+- NEVER invent substitute products, fake prices, or fake collection items to fill empty results.
+
+COMPARE PRODUCTS SELECTION RULE:
+- When compare_products returns needsSelection: true, or if the guest asks to compare products without naming/selecting specific items, ask the guest which 2 to 3 pieces from our collection they would like to compare side-by-side. Do NOT randomly select or invent items on your own.
 
 SPECIAL INSTRUCTIONS FOR DIAMOND EDUCATION (get_diamond_education):
 - When get_diamond_education returns "noMatchFound: true" (meaning no custom VRIX article exists in our database for that exact topic):
@@ -173,14 +181,14 @@ export async function executeSearchProducts(rawArgs) {
   const { category, priceMin, priceMax, metalType, gemstoneType, intent, limit } = validateSearchArgs(rawArgs);
 
   try {
-    const products = await db.products.findMany({ where: { isVisible: true } });
-    let list = Array.isArray(products) ? products : [];
+    const products = await db.products.findMany();
+    let list = Array.isArray(products) ? products.filter((p) => p.isVisible !== false) : [];
 
     if (category && category !== "All") {
-      list = list.filter((p) => p.type?.toLowerCase() === category.toLowerCase() || p.collection?.toLowerCase() === category.toLowerCase());
+      list = list.filter((p) => (p.type || "").toLowerCase() === category.toLowerCase() || (p.collection || "").toLowerCase() === category.toLowerCase());
     }
     if (metalType) {
-      list = list.filter((p) => p.material?.toLowerCase().includes(metalType.toLowerCase()));
+      list = list.filter((p) => (p.material || "").toLowerCase().includes(metalType.toLowerCase()));
     }
     if (gemstoneType) {
       list = list.filter((p) => (p.description || "").toLowerCase().includes(gemstoneType.toLowerCase()) || (p.title || "").toLowerCase().includes(gemstoneType.toLowerCase()));
@@ -207,11 +215,12 @@ export async function executeSearchProducts(rawArgs) {
     return {
       intent,
       count: results.length,
-      products: results
+      products: results,
+      noResultsFound: results.length === 0
     };
   } catch (err) {
     console.error("executeSearchProducts DB error:", err);
-    return { intent, count: 0, products: [] };
+    return { intent, count: 0, products: [], noResultsFound: true };
   }
 }
 
@@ -219,28 +228,32 @@ export async function executeGetCollections(rawArgs) {
   const { theme } = validateCollectionsArgs(rawArgs);
 
   try {
-    const products = await db.products.findMany({ where: { isVisible: true } });
-    const categories = Array.from(new Set((products || []).map((p) => p.type || p.collection).filter(Boolean)));
+    const products = await db.products.findMany();
+    const visibleProducts = (products || []).filter((p) => p.isVisible !== false);
+    const categories = Array.from(new Set(visibleProducts.map((p) => p.type || p.collection).filter(Boolean)));
 
-    let filtered = products;
+    let filtered = visibleProducts;
     if (theme) {
-      filtered = products.filter((p) => (p.type || p.collection || "").toLowerCase().includes(theme.toLowerCase()));
+      filtered = visibleProducts.filter((p) => (p.type || p.collection || "").toLowerCase().includes(theme.toLowerCase()));
     }
+
+    const sampleProducts = filtered.slice(0, 3).map((p) => ({
+      id: p.id,
+      title: p.title,
+      category: p.type || p.collection,
+      price: Number(p.price),
+      image: p.image
+    }));
 
     return {
       theme: theme || "All Collections",
       availableCategories: categories,
-      sampleProducts: (filtered || []).slice(0, 3).map((p) => ({
-        id: p.id,
-        title: p.title,
-        category: p.type || p.collection,
-        price: Number(p.price),
-        image: p.image
-      }))
+      sampleProducts,
+      noResultsFound: sampleProducts.length === 0
     };
   } catch (err) {
     console.error("executeGetCollections DB error:", err);
-    return { theme: theme || "All Collections", availableCategories: ["Rings", "Necklaces", "Earrings", "Bracelets", "Bespoke"], sampleProducts: [] };
+    return { theme: theme || "All Collections", availableCategories: [], sampleProducts: [], noResultsFound: true };
   }
 }
 
@@ -248,12 +261,18 @@ export async function executeCompareProducts(rawArgs) {
   const { productIds } = validateCompareArgs(rawArgs);
 
   if (productIds.length === 0) {
-    return { error: "No valid product IDs provided for comparison." };
+    return {
+      comparedCount: 0,
+      products: [],
+      needsSelection: true,
+      message: "Please tell me which 2 or 3 pieces from our collection you would like to compare side-by-side."
+    };
   }
 
   try {
-    const products = await db.products.findMany({ where: { isVisible: true } });
-    const matched = (products || []).filter((p) => productIds.includes(p.id));
+    const products = await db.products.findMany();
+    const visibleProducts = (products || []).filter((p) => p.isVisible !== false);
+    const matched = visibleProducts.filter((p) => productIds.includes(p.id));
 
     return {
       comparedCount: matched.length,
@@ -267,11 +286,12 @@ export async function executeCompareProducts(rawArgs) {
         warranty: "Lifetime Craftsmanship Warranty",
         image: p.image,
         whyFits: `Architectural ${p.material || 'minimal'} design.`
-      }))
+      })),
+      noResultsFound: matched.length === 0
     };
   } catch (err) {
     console.error("executeCompareProducts DB error:", err);
-    return { comparedCount: 0, products: [] };
+    return { comparedCount: 0, products: [], noResultsFound: true };
   }
 }
 
@@ -279,7 +299,7 @@ export async function executeGetDiamondEducation(rawArgs) {
   const { topic } = validateEducationArgs(rawArgs);
 
   try {
-    const articles = await db.diamondEducation?.findMany({ where: { isPublished: true } }).catch(() => null);
+    const articles = await db.diamondEducation.findMany({ where: { isPublished: true } }).catch(() => []);
 
     if (!articles || articles.length === 0) {
       return {
@@ -340,7 +360,7 @@ export async function executeCreateRepairRequest(rawArgs, sessionId = null) {
   const validSessionUuid = (sessionId && uuidRegex.test(sessionId)) ? sessionId : null;
 
   try {
-    const record = await db.repairRequest?.create({
+    const record = await db.repairRequest.create({
       data: {
         sessionId: validSessionUuid || undefined,
         orderNumber: validated.orderNumber,
@@ -373,20 +393,29 @@ export async function executeCreateRepairRequest(rawArgs, sessionId = null) {
 
 // Router dispatch table for tool executions
 export async function handleToolExecution(functionName, functionArgs, sessionId = null) {
+  console.log(`\n[GEMINI TOOL CALL] ${functionName}`, "Args:", JSON.stringify(functionArgs));
+  let toolResult;
   switch (functionName) {
     case "search_products":
-      return await executeSearchProducts(functionArgs);
+      toolResult = await executeSearchProducts(functionArgs);
+      break;
     case "get_collections":
-      return await executeGetCollections(functionArgs);
+      toolResult = await executeGetCollections(functionArgs);
+      break;
     case "compare_products":
-      return await executeCompareProducts(functionArgs);
+      toolResult = await executeCompareProducts(functionArgs);
+      break;
     case "get_diamond_education":
-      return await executeGetDiamondEducation(functionArgs);
+      toolResult = await executeGetDiamondEducation(functionArgs);
+      break;
     case "create_repair_request":
-      return await executeCreateRepairRequest(functionArgs, sessionId);
+      toolResult = await executeCreateRepairRequest(functionArgs, sessionId);
+      break;
     default:
-      return { error: `Unknown function tool: ${functionName}` };
+      toolResult = { error: `Unknown function tool: ${functionName}` };
   }
+  console.log(`[GEMINI RAW TOOL RESULT] ${functionName}`, "Result:", JSON.stringify(toolResult, null, 2));
+  return toolResult;
 }
 
 // ── Multi-Turn Interactions API Execution Loop with Server-Side State ────────
@@ -396,6 +425,7 @@ export async function runInteractionsChatLoop({
   sessionId = null
 }) {
   if (!ai) {
+    console.error("[GEMINI API ERROR] Gemini API key (GEMINI_API_KEY) is missing or not configured on server.");
     throw new Error("Gemini API key is not configured on the server.");
   }
 
@@ -409,7 +439,6 @@ export async function runInteractionsChatLoop({
     const outputs = interaction.outputs || [];
     const calls = [];
     for (const step of outputs) {
-      // Step types: "model_output", "function_call", "thought", etc.
       if (step.type === "function_call" || step.functionCall) {
         const fc = step.functionCall || step;
         if (fc.name) {
@@ -421,13 +450,19 @@ export async function runInteractionsChatLoop({
   }
 
   // ── Initial turn ──────────────────────────────────────────────────────────
-  let interaction = await ai.interactions.create({
-    model: MODEL_NAME,
-    input: userMessage,
-    tools: CHATBOT_TOOLS,
-    system_instruction: VRIX_SYSTEM_INSTRUCTION,
-    previous_interaction_id: currentPreviousId || undefined
-  });
+  let interaction;
+  try {
+    interaction = await ai.interactions.create({
+      model: MODEL_NAME,
+      input: userMessage,
+      tools: CHATBOT_TOOLS,
+      system_instruction: VRIX_SYSTEM_INSTRUCTION,
+      previous_interaction_id: currentPreviousId || undefined
+    });
+  } catch (apiErr) {
+    console.error("[GEMINI API ERROR] Initial ai.interactions.create call failed:", apiErr);
+    throw apiErr;
+  }
 
   let turns = 0;
   const maxTurns = 5;
@@ -436,12 +471,9 @@ export async function runInteractionsChatLoop({
     turns++;
     currentPreviousId = interaction.id || currentPreviousId;
 
-    // Prefer output_text from SDK convenience accessor
     const textOut = interaction.output_text ?? interaction.outputText ?? interaction.text ?? interaction.output ?? "";
-
     const functionCalls = extractFunctionCalls(interaction);
 
-    // No tool calls → model has produced its final text response
     if (!functionCalls || functionCalls.length === 0) {
       finalReply = textOut;
       break;
@@ -455,6 +487,8 @@ export async function runInteractionsChatLoop({
       // Collect structured data payloads for UI components
       if (call.name === "search_products" && toolResult.products) {
         structuredData.products = toolResult.products;
+      } else if (call.name === "get_collections" && toolResult.sampleProducts) {
+        structuredData.collections = toolResult;
       } else if (call.name === "compare_products" && toolResult.products) {
         structuredData.comparison = { products: toolResult.products };
       } else if (call.name === "get_diamond_education") {
@@ -470,20 +504,23 @@ export async function runInteractionsChatLoop({
       }
 
       // ── Feed tool result back to Gemini as next interaction turn ───────────
-      interaction = await ai.interactions.create({
-        model: MODEL_NAME,
-        input: JSON.stringify(toolResult),  // plain-text tool result as next input
-        tools: CHATBOT_TOOLS,
-        system_instruction: VRIX_SYSTEM_INSTRUCTION,
-        previous_interaction_id: currentPreviousId
-      });
+      try {
+        interaction = await ai.interactions.create({
+          model: MODEL_NAME,
+          input: JSON.stringify(toolResult),
+          tools: CHATBOT_TOOLS,
+          system_instruction: VRIX_SYSTEM_INSTRUCTION,
+          previous_interaction_id: currentPreviousId
+        });
+      } catch (subTurnErr) {
+        console.error("[GEMINI API ERROR] Sub-turn ai.interactions.create call failed:", subTurnErr);
+        throw subTurnErr;
+      }
 
-      // Update state id after each sub-turn
       currentPreviousId = interaction.id || currentPreviousId;
     }
   }
 
-  // Safety fallback only if model returned truly empty text after all turns
   if (!finalReply) {
     finalReply = interaction.output_text ?? interaction.outputText ?? interaction.text ?? interaction.output ?? "I'd be happy to help you find the right piece. Could you tell me a little more about what you're looking for?";
   }
@@ -495,3 +532,4 @@ export async function runInteractionsChatLoop({
     structuredData
   };
 }
+
