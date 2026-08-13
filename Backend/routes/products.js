@@ -69,8 +69,10 @@ const normalizeProductData = (body = {}) => {
     variants,
     engravingOptions: body.engravingOptions || { enabled: false, limit: 25, price: 0 },
     giftNoteOptions: body.giftNoteOptions || { enabled: false, limit: 150, price: 0 },
-    comparisonOptions: body.comparisonOptions || { worthIndex: 5, hardness: 5, shine: 5, styleRating: 5 },
+    comparisonOptions: body.comparisonOptions || { worthIndex: 5, hardness: 5, shine: 5, styleRating: 5, styleMatching: 5 },
     giftOptions: body.giftOptions || { wrappingPrice: 0, showCustomBox: false, packagingNote: "" },
+    deliveryPolicy: typeof body.deliveryPolicy === "string" ? body.deliveryPolicy.trim() : "",
+    careGuide: typeof body.careGuide === "string" ? body.careGuide.trim() : "",
     tags: Array.isArray(body.tags) ? body.tags : [],
   };
 

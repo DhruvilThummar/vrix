@@ -52,8 +52,10 @@ type Product = {
   variants?: ProductVariant[];
   weight?: string;
   dimensions?: string;
-  comparisonOptions?: { worthIndex: number; hardness: number; shine: number; styleRating: number };
+  comparisonOptions?: { worthIndex: number; hardness: number; shine: number; styleRating?: number; styleMatching?: number };
   giftOptions?: { wrappingPrice: number; showCustomBox: boolean; packagingNote: string };
+  deliveryPolicy?: string;
+  careGuide?: string;
   tags?: string[];
 };
 
@@ -67,6 +69,10 @@ type ProductVariant = {
   image?: string;
   images?: string[];
   isAvailable?: boolean;
+  sku?: string;
+  weight?: string;
+  dimensions?: string;
+  description?: string;
 };
 
 
@@ -184,6 +190,8 @@ function AdminProductsContent() {
   const [fGiftShowCustomBox, setFGiftShowCustomBox] = useState(false);
   const [fGiftPackagingNote, setFGiftPackagingNote] = useState("");
 
+  const [fDeliveryPolicy, setFDeliveryPolicy] = useState("");
+  const [fCareGuide, setFCareGuide] = useState("");
 
   const [uploadLoading, setUploadLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -237,6 +245,8 @@ function AdminProductsContent() {
     setFAlt(""); setFWeight(""); setFDimensions(""); setFAvailableSizes([]); setFTags([]); setFVariants([]);
     setFWorthIndex(5); setFHardness(5); setFShine(5); setFStyleRating(5);
     setFGiftWrappingPrice(0); setFGiftShowCustomBox(false); setFGiftPackagingNote("");
+    setFDeliveryPolicy("We accept returns within 30 days of receipt in original, unworn condition. Engraved items are final sale.");
+    setFCareGuide("Avoid contact with harsh chemicals, perfumes, and lotions. Store in the provided VRIX pouch when not in use. Clean gently with a soft polishing cloth.");
     setActiveFormTab("Core"); setDeleteConfirm(false);
   };
 
@@ -270,6 +280,8 @@ function AdminProductsContent() {
     setFGiftWrappingPrice(p.giftOptions?.wrappingPrice ?? 0);
     setFGiftShowCustomBox(!!p.giftOptions?.showCustomBox);
     setFGiftPackagingNote(p.giftOptions?.packagingNote ?? "");
+    setFDeliveryPolicy(p.deliveryPolicy || "We accept returns within 30 days of receipt in original, unworn condition. Engraved items are final sale.");
+    setFCareGuide(p.careGuide || "Avoid contact with harsh chemicals, perfumes, and lotions. Store in the provided VRIX pouch when not in use. Clean gently with a soft polishing cloth.");
     setActiveFormTab("Core"); setDeleteConfirm(false);
   };
 
@@ -656,8 +668,10 @@ function AdminProductsContent() {
       vrixPlusPrice: Number(fVrixPlusPrice) || undefined,
       engravingOptions: { enabled: fEngravingEnabled, limit: fEngravingLimit, price: fEngravingPrice },
       giftNoteOptions: { enabled: fGiftNoteEnabled, limit: fGiftNoteLimit, price: fGiftNotePrice },
-      comparisonOptions: { worthIndex: fWorthIndex, hardness: fHardness, shine: fShine, styleRating: fStyleRating },
+      comparisonOptions: { worthIndex: fWorthIndex, hardness: fHardness, shine: fShine, styleRating: fStyleRating, styleMatching: fStyleRating },
       giftOptions: { wrappingPrice: fGiftWrappingPrice, showCustomBox: fGiftShowCustomBox, packagingNote: fGiftPackagingNote },
+      deliveryPolicy: fDeliveryPolicy,
+      careGuide: fCareGuide,
       alt: fAlt || `A minimalist architectural ${fType} by VRIX from the ${collectionLabels[fCollection] || fCollection} collection.`,
       weight: fWeight, dimensions: fDimensions,
       availableSizes: fAvailableSizes,
@@ -2109,30 +2123,64 @@ function AdminProductsContent() {
                     </div>
                   )}
 
-                  {/* ── WORTH & COMPARISON TAB ───────────────────────────── */}
+                  {/* ── WORTH, ACCORDIONS & METRICS TAB ───────────────────────────── */}
                   {activeFormTab === "Worth & Comparison" && (
-                    <div className="space-y-5">
+                    <div className="space-y-6">
                       <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded leading-relaxed">
-                        Specify comparison parameters to help customers compare alternative pieces side-by-side. Worth Index indicates the overall design value rating.
+                        Configure PDP Accordion sections: Worth &amp; Comparison ratings, Delivery &amp; Return policies, and Care instructions.
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Worth / Value Index (1-10)</label>
-                          <input type="number" min={1} max={10} value={fWorthIndex} onChange={(e) => setFWorthIndex(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
+
+                      {/* 1. Comparison Ratings */}
+                      <div className="space-y-3 p-4 border border-slate-grey/20 bg-pure-white rounded">
+                        <span className="font-label-caps text-[10px] text-deep-navy font-bold uppercase tracking-widest block">
+                          ★ Worth &amp; Comparison Rating Metrics (1 - 10)
+                        </span>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Worth / Value Index (1-10)</label>
+                            <input type="number" min={1} max={10} value={fWorthIndex} onChange={(e) => setFWorthIndex(Number(e.target.value))} className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy rounded bg-transparent font-semibold" />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Hardness Rating (1-10 Mohs)</label>
+                            <input type="number" min={1} max={10} value={fHardness} onChange={(e) => setFHardness(Number(e.target.value))} className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy rounded bg-transparent font-semibold" />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Shine / Lustre Index (1-10)</label>
+                            <input type="number" min={1} max={10} value={fShine} onChange={(e) => setFShine(Number(e.target.value))} className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy rounded bg-transparent font-semibold" />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Style Matching / Versatility (1-10)</label>
+                            <input type="number" min={1} max={10} value={fStyleRating} onChange={(e) => setFStyleRating(Number(e.target.value))} className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy rounded bg-transparent font-semibold" />
+                          </div>
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Hardness rating (1-10 Mohs)</label>
-                          <input type="number" min={1} max={10} value={fHardness} onChange={(e) => setFHardness(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Shine / Lustre Index (1-10)</label>
-                          <input type="number" min={1} max={10} value={fShine} onChange={(e) => setFShine(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest">Style Rating (1-10)</label>
-                          <input type="number" min={1} max={10} value={fStyleRating} onChange={(e) => setFStyleRating(Number(e.target.value))} className="border-b border-slate-grey/30 py-1 text-xs outline-none bg-transparent" />
-                        </div>
+                      </div>
+
+                      {/* 2. Delivery & Returns Policy Editor */}
+                      <div className="space-y-2 p-4 border border-slate-grey/20 bg-pure-white rounded">
+                        <label className="font-label-caps text-[10px] text-deep-navy font-bold uppercase tracking-widest block">
+                          📦 Delivery &amp; Returns Policy Accordion Text
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={fDeliveryPolicy}
+                          onChange={(e) => setFDeliveryPolicy(e.target.value)}
+                          placeholder="e.g. We accept returns within 30 days of receipt in original, unworn condition. Engraved items are final sale."
+                          className="w-full border border-slate-grey/30 p-2.5 text-xs outline-none focus:border-deep-navy font-body-md rounded leading-relaxed resize-none"
+                        />
+                      </div>
+
+                      {/* 3. Care Guide Editor */}
+                      <div className="space-y-2 p-4 border border-slate-grey/20 bg-pure-white rounded">
+                        <label className="font-label-caps text-[10px] text-deep-navy font-bold uppercase tracking-widest block">
+                          ✨ Care &amp; Maintenance Guide Accordion Text
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={fCareGuide}
+                          onChange={(e) => setFCareGuide(e.target.value)}
+                          placeholder="e.g. Avoid contact with harsh chemicals, perfumes, and lotions. Store in the provided VRIX pouch when not in use. Clean gently with a soft polishing cloth."
+                          className="w-full border border-slate-grey/30 p-2.5 text-xs outline-none focus:border-deep-navy font-body-md rounded leading-relaxed resize-none"
+                        />
                       </div>
                     </div>
                   )}

@@ -537,11 +537,11 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
                               </div>
                             </div>
                           )}
-                          {product.comparisonOptions.styleRating != null && (
+                          {(product.comparisonOptions.styleRating != null || product.comparisonOptions.styleMatching != null) && (
                             <div className="p-3 bg-soft-linen/25 border border-slate-grey/10 rounded flex flex-col justify-between">
                               <span className="text-[9px] font-label-caps uppercase tracking-widest text-slate-grey">Style Matching</span>
                               <div className="flex items-baseline gap-1.5 mt-1">
-                                <span className="text-xl font-bold text-deep-navy">{product.comparisonOptions.styleRating}</span>
+                                <span className="text-xl font-bold text-deep-navy">{product.comparisonOptions.styleMatching ?? product.comparisonOptions.styleRating}</span>
                                 <span className="text-[10px] text-slate-grey">/ 10 Versatility</span>
                               </div>
                             </div>
@@ -594,9 +594,9 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
                       expand_more
                     </span>
                   </button>
-                  <div className={`overflow-hidden transition-all duration-300 ${activeAccordion === "returns" ? "max-h-40 pb-4 opacity-100" : "max-h-0 opacity-0"}`}>
+                  <div className={`overflow-hidden transition-all duration-300 ${activeAccordion === "returns" ? "max-h-56 pb-4 opacity-100" : "max-h-0 opacity-0"}`}>
                     <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
-                      We accept returns within 30 days of receipt in original, unworn condition. Engraved items are final sale.
+                      {product.deliveryPolicy || "We accept returns within 30 days of receipt in original, unworn condition. Engraved items are final sale."}
                     </p>
                   </div>
                 </div>
@@ -611,9 +611,9 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
                       expand_more
                     </span>
                   </button>
-                  <div className={`overflow-hidden transition-all duration-300 ${activeAccordion === "care" ? "max-h-40 pb-4 opacity-100" : "max-h-0 opacity-0"}`}>
+                  <div className={`overflow-hidden transition-all duration-300 ${activeAccordion === "care" ? "max-h-56 pb-4 opacity-100" : "max-h-0 opacity-0"}`}>
                     <p className="font-body-md text-on-surface-variant text-sm leading-relaxed">
-                      Avoid contact with harsh chemicals, perfumes, and lotions. Store in the provided VRIX pouch when not in use. Clean gently with a soft polishing cloth.
+                      {product.careGuide || "Avoid contact with harsh chemicals, perfumes, and lotions. Store in the provided VRIX pouch when not in use. Clean gently with a soft polishing cloth."}
                     </p>
                   </div>
                 </div>
