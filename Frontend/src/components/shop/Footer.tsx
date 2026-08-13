@@ -10,9 +10,9 @@ export default function Footer() {
   const { user, isLoggedIn } = useAuth();
   const [brandName, setBrandName] = useState("VRIX");
   const [logoUrl, setLogoUrl] = useState("/logos/black.png");
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("Hari Om Apartment, 101, Surat, Gujarat 395008");
+  const [phone, setPhone] = useState("090542 85693");
+  const [email, setEmail] = useState("vrixjewels@gmail.com");
   const [footerLinks, setFooterLinks] = useState<any[]>([]);
 
   const [vrixPlusHeadline, setVrixPlusHeadline] = useState("Join VRIX+ Circle for early sale access, birthday treats, a discount on your first order, and more.");

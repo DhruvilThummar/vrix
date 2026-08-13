@@ -8,11 +8,11 @@ import FormattedText from "@/components/FormattedText";
 const FAQ_ITEMS = [
   {
     q: "How soon will I receive a response to my enquiry?",
-    a: "Our dedicated VRIX Client Concierge team responds to all email and message enquiries within 24 hours (Monday through Friday, 9:00 AM – 6:00 PM EST)."
+    a: "Our dedicated VRIX Client Concierge team responds to all email and message enquiries within 24 hours."
   },
   {
-    q: "Can I book a private bespoke jewelry consultation?",
-    a: "Yes. VRIX offers one-on-one virtual or atelier consultations for lab-grown diamond custom rings and bespoke fine jewelry. You can also submit custom requirements directly via our Bespoke Configurator."
+    q: "Can I visit the VRIX Surat Atelier or book a private consultation?",
+    a: "Yes. Our flagship studio in Surat, Gujarat is open daily until 7:00 PM. You can visit us at Hari Om Apartment 101 or book a private virtual consultation."
   },
   {
     q: "How do I check the status of an existing order?",
@@ -24,11 +24,24 @@ const FAQ_ITEMS = [
   }
 ];
 
+// Official VRIX Contact & Atelier Metadata
+const VRIX_CONTACT_INFO = {
+  address: "Hari Om Apartment, 101, Surat, Gujarat 395008",
+  mapsLink: "https://maps.app.goo.gl/t4WmnkTCFy2vvD8E8",
+  googleShareLink: "https://share.google/XHHGL27ByWwzkSREW",
+  phoneDisplay: "090542 85693",
+  phoneTel: "+919054285693",
+  hours: "Open Daily · Closes 7:00 PM",
+  email: "vrixjewels@gmail.com",
+  brandBio:
+    "VRIX Jewels is a premium jewelry brand creating minimalist lab-grown diamond pieces for modern luxury. Each design is crafted with precision, emotion, and elegance—allowing every piece to express individuality through simplicity."
+};
+
 export default function ContactPage() {
-  const [brandName, setBrandName] = useState("VRIX");
-  const [email, setEmail] = useState("vrixjewels@gmail.com");
-  const [phone, setPhone] = useState("905-428-5693");
-  const [address, setAddress] = useState("");
+  const [brandName, setBrandName] = useState("VRIX Jewels");
+  const [email, setEmail] = useState(VRIX_CONTACT_INFO.email);
+  const [phone, setPhone] = useState(VRIX_CONTACT_INFO.phoneDisplay);
+  const [address, setAddress] = useState(VRIX_CONTACT_INFO.address);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -117,7 +130,7 @@ export default function ContactPage() {
             </p>
           </div>
 
-          {/* Phone / Client Services Card */}
+          {/* Phone & Operating Hours Card */}
           <div className="p-8 border border-slate-grey/20 bg-pure-white rounded-xs shadow-xs space-y-4 hover:border-deep-navy/40 transition-all">
             <div className="w-10 h-10 rounded-full bg-soft-linen flex items-center justify-center text-deep-navy">
               <span className="material-symbols-outlined text-lg">call</span>
@@ -127,41 +140,55 @@ export default function ContactPage() {
                 Client Services Line
               </span>
               <a
-                href={`tel:${phone}`}
+                href={`tel:${VRIX_CONTACT_INFO.phoneTel}`}
                 className="font-body-md text-sm md:text-base font-semibold text-deep-navy hover:underline"
               >
-                {phone}
+                {phone || VRIX_CONTACT_INFO.phoneDisplay}
               </a>
             </div>
-            <p className="text-xs text-slate-grey/80 leading-relaxed">
-              Mon - Fri: 9:00 AM – 6:00 PM EST. Direct telephone support.
-            </p>
+            <div className="flex items-center gap-2 text-xs text-emerald-700 font-semibold pt-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+              <span>{VRIX_CONTACT_INFO.hours}</span>
+            </div>
           </div>
 
-          {/* Bespoke Custom Orders Card */}
+          {/* Location & Google Business Profile Card */}
           <div className="p-8 border border-slate-grey/20 bg-pure-white rounded-xs shadow-xs space-y-4 hover:border-deep-navy/40 transition-all">
             <div className="w-10 h-10 rounded-full bg-soft-linen flex items-center justify-center text-deep-navy">
-              <span className="material-symbols-outlined text-lg">auto_awesome</span>
+              <span className="material-symbols-outlined text-lg">location_on</span>
             </div>
             <div>
               <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest block mb-1">
-                Bespoke Design Studio
+                Atelier Location
               </span>
-              <Link
-                href="/bespoke"
-                className="font-body-md text-sm md:text-base font-semibold text-deep-navy hover:underline flex items-center gap-1"
-              >
-                <span>Request Custom Piece</span>
-                <span className="material-symbols-outlined text-xs">arrow_forward</span>
-              </Link>
+              <p className="font-body-md text-xs font-semibold text-deep-navy leading-snug">
+                {address || VRIX_CONTACT_INFO.address}
+              </p>
             </div>
-            <p className="text-xs text-slate-grey/80 leading-relaxed">
-              Design a custom lab-grown diamond ring or personalized fine jewellery piece.
-            </p>
+            <div className="flex items-center gap-3 pt-1">
+              <a
+                href={VRIX_CONTACT_INFO.mapsLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-label-caps text-[10px] uppercase tracking-wider text-deep-navy font-bold hover:underline"
+              >
+                <span>Open in Google Maps</span>
+                <span className="material-symbols-outlined text-xs">open_in_new</span>
+              </a>
+              <span className="text-slate-grey/30">•</span>
+              <a
+                href={VRIX_CONTACT_INFO.googleShareLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-label-caps text-[10px] uppercase tracking-wider text-slate-grey hover:text-deep-navy font-medium"
+              >
+                <span>Share Profile</span>
+              </a>
+            </div>
           </div>
         </div>
 
-        {/* ─── Contact Form & Location Section ─── */}
+        {/* ─── Contact Form & Brand Statement Section ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* Left Column: Form */}
           <div className="lg:col-span-7 bg-soft-linen/20 border border-slate-grey/20 p-8 md:p-12 rounded-xs shadow-xs space-y-6">
@@ -230,7 +257,7 @@ export default function ContactPage() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="e.g. +1 (905) 428-5693"
+                      placeholder="e.g. 090542 85693"
                       className="border border-slate-grey/30 bg-pure-white p-3 text-xs outline-none focus:border-deep-navy rounded-none transition-colors"
                     />
                   </div>
@@ -297,29 +324,64 @@ export default function ContactPage() {
             )}
           </div>
 
-          {/* Right Column: Atelier Info & FAQ Accordion */}
+          {/* Right Column: Atelier Info, Official Bio & Google Maps */}
           <div className="lg:col-span-5 space-y-8">
             {/* Atelier Headquarters Block */}
             <div className="p-8 border border-slate-grey/20 bg-pure-white rounded-xs space-y-4">
-              <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold block">
-                FLAGSHIP ATELIER
-              </span>
-              <h3 className="font-headline-md text-xl text-deep-navy font-light uppercase tracking-wider">
-                VRIX Headquarters
-              </h3>
-              <p className="text-xs text-slate-grey/90 leading-relaxed font-body-md">
-                {address || "Architectural Atelier & Design Studio. Private consultations available by appointment."}
-              </p>
-              <div className="pt-2 border-t border-slate-grey/15 flex items-center justify-between text-xs">
-                <span className="font-label-caps text-[9px] uppercase tracking-widest text-[#B59D7C] font-semibold">
-                  Private Appointments
+              <div className="flex items-center justify-between">
+                <span className="font-label-caps text-[10px] text-[#B59D7C] uppercase tracking-widest font-semibold">
+                  SURAT FLAGSHIP ATELIER
                 </span>
-                <Link
-                  href="/bespoke"
-                  className="font-button text-[10px] text-deep-navy hover:underline uppercase tracking-wider font-semibold"
+                <span className="font-label-caps text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 font-bold uppercase rounded">
+                  Open Today
+                </span>
+              </div>
+
+              <h3 className="font-headline-md text-xl text-deep-navy font-light uppercase tracking-wider">
+                VRIX Jewels Studio
+              </h3>
+
+              <div className="space-y-2 text-xs font-body-md text-slate-grey/90">
+                <p className="flex items-start gap-2">
+                  <span className="material-symbols-outlined text-base text-deep-navy shrink-0 mt-0.5">pin_drop</span>
+                  <span>{VRIX_CONTACT_INFO.address}</span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base text-deep-navy shrink-0">phone_in_talk</span>
+                  <a href={`tel:${VRIX_CONTACT_INFO.phoneTel}`} className="hover:underline font-semibold text-deep-navy">
+                    {VRIX_CONTACT_INFO.phoneDisplay}
+                  </a>
+                </p>
+                <p className="flex items-center gap-2 text-emerald-700 font-medium">
+                  <span className="material-symbols-outlined text-base shrink-0">schedule</span>
+                  <span>{VRIX_CONTACT_INFO.hours}</span>
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-grey/15 flex items-center justify-between text-xs">
+                <a
+                  href={VRIX_CONTACT_INFO.mapsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-button text-[10px] text-deep-navy hover:underline uppercase tracking-wider font-bold inline-flex items-center gap-1"
                 >
-                  Book Visit →
-                </Link>
+                  <span>Get Directions on Google Maps</span>
+                  <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Official Brand Statement Box */}
+            <div className="p-8 bg-soft-linen/40 border border-slate-grey/20 rounded-xs space-y-3">
+              <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold block">
+                FROM VRIX
+              </span>
+              <p className="font-chancery text-lg md:text-xl text-deep-navy italic leading-relaxed">
+                "{VRIX_CONTACT_INFO.brandBio}"
+              </p>
+              <div className="pt-2 flex items-center justify-between text-[10px] text-slate-grey font-label-caps uppercase tracking-wider">
+                <span>Minimalist Lab-Grown Diamonds</span>
+                <span>Crafted with Precision</span>
               </div>
             </div>
 
@@ -348,16 +410,6 @@ export default function ContactPage() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Brand Quote Card */}
-            <div className="p-6 bg-soft-linen/40 border border-slate-grey/20 rounded-xs text-center space-y-2">
-              <p className="font-chancery text-2xl text-deep-navy italic">
-                "A luxury that feels like you."
-              </p>
-              <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">
-                VRIX Atelier Guarantee
-              </span>
             </div>
           </div>
         </div>
