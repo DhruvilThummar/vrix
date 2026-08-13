@@ -43,6 +43,8 @@ model Product {
   variants            Json?
   comparisonOptions   Json?    @map("comparison_options")
   giftOptions         Json?    @map("gift_options")
+  deliveryPolicy      String?  @map("delivery_policy")
+  careGuide           String?  @map("care_guide")
   tags                Json?
   createdAt           DateTime @default(now()) @map("created_at")
 

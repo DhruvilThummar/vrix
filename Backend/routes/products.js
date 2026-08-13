@@ -57,7 +57,7 @@ const normalizeProductData = (body = {}) => {
     description: typeof body.description === "string" ? body.description.trim() : body.description || "",
     alt: typeof body.alt === "string" ? body.alt.trim() : body.alt || "",
     sku: typeof body.sku === "string" ? body.sku.trim() : body.sku || "",
-    collection: typeof body.collection === "string" && body.collection.trim() ? body.collection.trim() : "uncategorized",
+    collection: typeof body.collection === "string" ? body.collection.trim() : "",
     stock: body.stock === undefined ? 999 : Number(body.stock),
     isVisible: body.isVisible !== false,
     isVrixPlusExclusive: body.isVrixPlusExclusive === true,
@@ -282,7 +282,7 @@ router.put("/:id", adminAuth, async (req, res) => {
     if ((existing?.stock || 0) > 3 && (updated.stock || 0) > 0 && (updated.stock || 0) <= 3) notifyWishlistedCustomers(updated, "low").catch((err) => console.error("Low-stock notification failed:", err.message));
     res.json(updated);
   } catch (err) {
-    res.status(404).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

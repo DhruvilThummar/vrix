@@ -90,6 +90,8 @@ const PRODUCT_TEMPLATES = [
     availableSizes: ["5", "6", "7", "8"],
     engravingEnabled: true,
     giftNoteEnabled: true,
+    deliveryPolicy: "We accept returns within 30 days of receipt in original, unworn condition. Engraved items are final sale.",
+    careGuide: "Avoid contact with harsh chemicals, perfumes, and lotions. Store in the provided VRIX pouch when not in use. Clean gently with a soft polishing cloth.",
   },
   {
     id: "diamond-necklace",
@@ -103,6 +105,8 @@ const PRODUCT_TEMPLATES = [
     availableSizes: [],
     engravingEnabled: false,
     giftNoteEnabled: true,
+    deliveryPolicy: "Includes complimentary insured express courier shipping. Returns accepted within 30 days.",
+    careGuide: "Wipe with an ultra-soft lint-free cloth after wear. Inspect diamond settings annually with an authorized jeweler.",
   },
   {
     id: "tennis-bracelet",
@@ -116,6 +120,8 @@ const PRODUCT_TEMPLATES = [
     availableSizes: ["6.5", "7", "7.5"],
     engravingEnabled: true,
     giftNoteEnabled: true,
+    deliveryPolicy: "Ships in bespoke luxury presentation vault. 30-day return policy.",
+    careGuide: "Clean with warm water and mild dish soap using a soft brush. Keep separated from other pieces to prevent scratching.",
   }
 ];
 
@@ -236,10 +242,10 @@ function AdminProductsContent() {
 
   const resetForm = () => {
     setFTitle(""); setFSubtitle(""); setFSku(""); setFMaterial(""); setFType("Ring");
-    setFPrice(0); setFOriginalPrice(0); setFLayoutStyle("2x2");
+    setFPrice(0); setFOriginalPrice(""); setFLayoutStyle("2x2");
     setFImage(""); setFImages([]); setFDescription("");
     setFCollection(""); setFStock(999); setFVisible(true);
-    setFVrixPlusExclusive(false); setFVrixPlusPrice(0);
+    setFVrixPlusExclusive(false); setFVrixPlusPrice("");
     setFEngravingEnabled(false); setFEngravingLimit(25); setFEngravingPrice(0);
     setFGiftNoteEnabled(false); setFGiftNoteLimit(120); setFGiftNotePrice(0);
     setFAlt(""); setFWeight(""); setFDimensions(""); setFAvailableSizes([]); setFTags([]); setFVariants([]);
@@ -255,7 +261,7 @@ function AdminProductsContent() {
     setIsNew(false);
     setFTitle(p.title || ""); setFSubtitle(p.subtitle || ""); setFSku(p.sku || ""); setFMaterial(p.material || "");
     setFType(p.type || "Ring"); setFPrice(p.price || 0);
-    setFOriginalPrice(p.originalPrice || 0);
+    setFOriginalPrice(p.originalPrice ?? "");
     setFLayoutStyle(p.layoutStyle === "asymmetric" ? "asymmetric" : "2x2");
     setFImage(p.image || "");
     setFImages(normalizeImages(p.image || "", p.images));
@@ -263,7 +269,7 @@ function AdminProductsContent() {
     setFCollection(p.collection || "");
     setFStock(p.stock ?? 999); setFVisible(p.isVisible !== false);
     setFVrixPlusExclusive(!!p.isVrixPlusExclusive);
-    setFVrixPlusPrice(p.vrixPlusPrice || 0);
+    setFVrixPlusPrice(p.vrixPlusPrice ?? "");
     setFEngravingEnabled(p.engravingOptions?.enabled || false);
     setFEngravingLimit(p.engravingOptions?.limit || 25);
     setFEngravingPrice(p.engravingOptions?.price || 0);
@@ -406,6 +412,8 @@ function AdminProductsContent() {
     setFDimensions(tmpl.dimensions || "");
     setFStock(tmpl.stock !== undefined ? tmpl.stock : 999);
     setFVisible(tmpl.isVisible !== undefined ? tmpl.isVisible : true);
+    if (tmpl.deliveryPolicy) setFDeliveryPolicy(tmpl.deliveryPolicy);
+    if (tmpl.careGuide) setFCareGuide(tmpl.careGuide);
 
     // Apply variants if defined in template
     if (Array.isArray(tmpl.variants) && tmpl.variants.length > 0) {
@@ -451,6 +459,8 @@ function AdminProductsContent() {
       dimensions: fDimensions,
       stock: fStock,
       isVisible: fVisible,
+      deliveryPolicy: fDeliveryPolicy,
+      careGuide: fCareGuide,
       variants: fVariants,
       comparisonOptions: {
         worthIndex: fWorthIndex,
