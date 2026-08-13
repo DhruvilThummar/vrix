@@ -255,9 +255,12 @@ export default function Header() {
     };
   }, [searchQuery, allProducts, collections]);
 
-  const isActive = (path: string) => {
+  const isActive = (path: string, label?: string) => {
     if (!path || path === "#") return false;
-    if (path === "/") return pathname === "/";
+    if (path === "/") {
+      const isHomeLabel = label && /home/i.test(label);
+      return isHomeLabel ? pathname === "/" : false;
+    }
     return pathname === path || pathname.startsWith(path + "/");
   };
 
@@ -426,7 +429,7 @@ export default function Header() {
                         setActiveMegaMenu(null);
                       }
                     }}
-                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link inline-block relative ${isActive(link.path) ? "header-nav-link--active" : ""}`}
+                    className={`font-label-caps text-xs tracking-[0.15em] uppercase py-1 header-nav-link inline-block relative ${isActive(link.path, link.label) ? "header-nav-link--active" : ""}`}
                   >
                     {(link.path === "/bespoke" || link.path.includes("bespoke")) && !bespokeEnabled ? `${link.label} (Waitlist)` : link.label}
                   </Link>
@@ -1095,7 +1098,7 @@ export default function Header() {
                         <Link
                           href={link.path}
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className={`block w-full py-1 font-label-caps text-sm uppercase tracking-wider transition-colors ${isActive(link.path)
+                          className={`block w-full py-1 font-label-caps text-sm uppercase tracking-wider transition-colors ${isActive(link.path, link.label)
                               ? "text-deep-navy font-semibold"
                               : "text-ink-black/80 hover:text-ink-black"
                             }`}

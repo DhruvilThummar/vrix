@@ -177,7 +177,7 @@ export default function RootLayout({
         />
       </head>
 
-      <body className="min-h-full flex flex-col bg-surface text-on-surface font-body-md antialiased overflow-x-hidden">
+      <body className="min-h-full flex flex-col bg-surface text-on-surface font-body-md antialiased overflow-x-hidden shop-typography">
         <AuthProvider>
           <CurrencyProvider>
             <CartProvider>

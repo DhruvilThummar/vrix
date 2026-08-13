@@ -136,37 +136,57 @@
   box-shadow: none;
 }
 
-.header-member-info { color: var(--header-muted); }
+.header-member-info {
+  color: var(--header-muted);
+}
+
 .header-member-link,
 .header-member-link .material-symbols-outlined,
 .header-brand-text,
-.header-action { color: var(--header-foreground); }
-.header-action:hover { color: var(--header-accent); }
+.header-action {
+  color: var(--header-foreground);
+}
+
+.header-action:hover {
+  color: var(--header-accent);
+}
+
 .header-currency {
   color: var(--header-foreground);
   background-color: transparent;
   font-family: var(--header-font);
 }
+
 .header-count {
   color: var(--header-menu-foreground);
   background-color: var(--header-menu-background);
 }
+
 .shop-desktop-header:not(.shop-desktop-header--transparent) .header-count {
   color: #ffffff;
   background-color: #000000;
 }
-.header-nav-row { border-top: 1px solid var(--header-border); }
+
+.header-nav-row {
+  border-top: 1px solid var(--header-border);
+}
+
 .header-nav-link {
   color: color-mix(in srgb, var(--header-foreground) 75%, transparent);
   border-bottom: 1px solid transparent;
   font-family: var(--header-font);
 }
-.header-nav-link:hover { color: var(--header-foreground); }
+
+.header-nav-link:hover {
+  color: var(--header-foreground);
+}
+
 .header-nav-link--active {
   color: var(--header-foreground);
   border-bottom-color: var(--header-foreground);
   font-weight: 600;
 }
+
 .header-mega-menu {
   color: var(--header-menu-foreground);
   background-color: var(--header-menu-background);
@@ -249,12 +269,20 @@
 
 .shop-typography .font-body-lg,
 .shop-typography .font-body-md,
-.shop-typography .font-jost { font-family: var(--typography-body); }
+.shop-typography .font-jost {
+  font-family: var(--typography-body);
+}
+
 .shop-typography .font-logo,
-.shop-typography .font-aquavit { font-family: var(--typography-logo); }
+.shop-typography .font-aquavit {
+  font-family: var(--typography-logo);
+}
+
 .shop-typography .font-accent,
 .shop-typography .font-chancery,
-.shop-typography .font-highlight { font-family: var(--typography-highlight); }
+.shop-typography .font-highlight {
+  font-family: var(--typography-highlight);
+}
 
 /* A semantic heading always uses the Primary font, even if an older component
    also carries a body utility class. Highlight headings remain intentional. */
@@ -327,12 +355,29 @@
 }
 
 /* Reusable Material Symbol variants replace static inline font styles. */
-.icon-weight-thin { font-variation-settings: 'FILL' 0, 'wght' 100, 'GRAD' 0, 'opsz' 24; }
-.icon-weight-light { font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24; }
-.icon-weight-regular { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
-.icon-weight-medium { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-.icon-favorite-outline { font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24; }
-.icon-favorite-filled { font-variation-settings: 'FILL' 1, 'wght' 200, 'GRAD' 0, 'opsz' 24; }
+.icon-weight-thin {
+  font-variation-settings: 'FILL' 0, 'wght' 100, 'GRAD' 0, 'opsz' 24;
+}
+
+.icon-weight-light {
+  font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+}
+
+.icon-weight-regular {
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+.icon-weight-medium {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.icon-favorite-outline {
+  font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+}
+
+.icon-favorite-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+}
 
 /* Base resets & animations */
 body {
@@ -421,4 +466,34 @@ textarea:focus {
   flex: 0 0 auto;
   min-width: 0;
   flex-shrink: 0;
+}
+
+/*
+ * ══════════════════════════════════════════════════════════════════════════════
+ *  MANDATORY BRAND STYLE GUIDE TYPOGRAPHY ENFORCEMENT
+ * ══════════════════════════════════════════════════════════════════════════════
+ *  This block strictly enforces VRIX Brand Style Guide fonts across all storefront
+ *  pages (excluding admin pages and developer panels like .admin-layout).
+ *
+ *  - Primary Font (INTER): Headings, Subheadings, Buttons, Labels, Inputs
+ *  - Secondary Font (JOST): Body text, Paragraphs, Lists, General content
+ *  - Logo Font (AQUAVIT): Brand Logo Silhouettes
+ *  - Accent/Highlight Font (BLACK CHANCERY): Styled editorial copies
+ *
+ *  CRITICAL: Do NOT bypass this rule. Every storefront text element MUST follow this.
+ */
+
+/* 1. Global Default: Jost for body & all generic text elements */
+body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(p, span, div, a, li, td, th, option, select, textarea, input, label):not([class*="font-"]) {
+  font-family: var(--typography-body) !important; /* Jost */
+}
+
+/* 2. Headings, Subheadings, Buttons: Inter */
+body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(h1, h2, h3, h4, h5, h6, button):not(.font-accent):not(.font-chancery):not(.font-highlight):not(.font-logo):not(.font-aquavit) {
+  font-family: var(--typography-primary) !important; /* Inter */
+}
+
+/* 3. Inputs & Forms: Inter */
+body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(input, select, textarea, label):not(.font-accent):not(.font-chancery):not(.font-highlight) {
+  font-family: var(--typography-primary) !important; /* Inter */
 }
