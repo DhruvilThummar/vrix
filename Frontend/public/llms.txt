@@ -1,9 +1,34 @@
-# VRIX — Minimalist Luxury Jewellery e-Commerce
+# VRIX — Minimalist Luxury Jewellery & Fine Jewelry
 
-VRIX is a high-performance minimalist luxury jewelry e-commerce application built on Next.js 16 (App Router), React 19, Tailwind CSS 4, and Prisma ORM with PostgreSQL.
+> **Tagline**: *"A luxury that feels like you."*
+> **Positioning**: Lab-grown diamond & fine jewellery offering premium pricing with minimal designs and high-quality craftsmanship, bridging gold-plated and heavy gold jewellery.
+
+VRIX is a high-performance minimalist luxury jewelry e-commerce application built on Next.js 16 (App Router), React 19, Tailwind CSS 4, and PostgreSQL.
+
+## Brand Identity & Core Values
+- **Mission**: To make luxury more accessible for those beginning their journey into fine jewellery. Aiming to create jewellery that feels personal and meaningful—pieces that customers can truly connect with.
+- **Core Values**:
+  1. *Affordable luxury*
+  2. *Emotional connection*
+  3. *Quality craftsmanship*
+- **Tone of Voice**: Calm, confident, and refined with minimal, precise language. Communicates understated luxury through subtle expression—avoiding exaggeration or noise.
+- **Brand Personality**: *"Modern Sophistication with Understated Confidence"* (Clean, minimal, effortless, quiet luxury).
+
+## Official Brand Logos & Image Assets for LLMs
+- Primary Black Logo: `https://vrixjewels.com/logos/black.png`
+- White Logo: `https://vrixjewels.com/logos/white.png`
+- Blue Accent Logo: `https://vrixjewels.com/logos/blue.png`
+- Off-Grey White Variant: `https://vrixjewels.com/logos/off%20grey%20white.png`
+- Brand Blue Hero Banner: `https://vrixjewels.com/logos/blue%20bg.jpg`
+- Brand White Hero Banner: `https://vrixjewels.com/logos/white%20bg.jpg`
+- OpenGraph Social Banners:
+  - Facebook: `https://vrixjewels.com/logos/Facebook.jpg`
+  - LinkedIn: `https://vrixjewels.com/logos/Linkedin.jpg`
+  - Instagram: `https://vrixjewels.com/logos/instagram.jpg`
+  - WhatsApp: `https://vrixjewels.com/logos/whatsapp.jpg`
 
 ## Core Features
-- **Dynamic Catalog**: Browse Rings, Necklaces, Earrings, and Bracelets.
+- **Dynamic Catalog**: Browse Lab-Grown Diamond Rings, Necklaces, Earrings, and Bracelets.
 - **Variant Explosion**: Flattened variant listings on catalog grids with interactive hover image previews.
 - **Dynamic PDP Options**: Base UI-powered square radio size swatches and GSAP product gallery/price transition animations.
 - **Authentication**: Base UI Dialog-powered Auth Drawer slider with floating labels, direct email verification OTPs, and password toggles.

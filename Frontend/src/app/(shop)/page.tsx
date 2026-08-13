@@ -32,14 +32,46 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       url: "https://vrixjewels.com",
       siteName: "VRIX",
+      locale: "en_US",
+      type: "website",
       images: [
         {
-          url: "https://vrixjewels.com/logos/og-image.jpg",
+          url: "https://vrixjewels.com/logos/blue%20bg.jpg",
           width: 1200,
           height: 630,
-          alt: "VRIX Fine Jewelry",
+          alt: "VRIX — A luxury that feels like you",
+        },
+        {
+          url: "https://vrixjewels.com/logos/Facebook.jpg",
+          width: 1200,
+          height: 630,
+          alt: "VRIX Fine Jewelry Facebook Preview",
+        },
+        {
+          url: "https://vrixjewels.com/logos/Linkedin.jpg",
+          width: 1200,
+          height: 627,
+          alt: "VRIX Fine Jewelry LinkedIn Preview",
+        },
+        {
+          url: "https://vrixjewels.com/logos/instagram.jpg",
+          width: 1080,
+          height: 1080,
+          alt: "VRIX Fine Jewelry Instagram Preview",
+        },
+        {
+          url: "https://vrixjewels.com/logos/whatsapp.jpg",
+          width: 800,
+          height: 800,
+          alt: "VRIX Fine Jewelry WhatsApp Preview",
         },
       ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["https://vrixjewels.com/logos/blue%20bg.jpg"],
     },
   };
 }
@@ -68,7 +100,22 @@ export default async function Page() {
     "@type": "Organization",
     "name": "VRIX",
     "url": "https://vrixjewels.com",
-    "logo": "https://vrixjewels.com/logos/og-image.jpg",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://vrixjewels.com/logos/black.png",
+      "contentUrl": "https://vrixjewels.com/logos/black.png",
+      "caption": "VRIX Logo",
+    },
+    "image": [
+      "https://vrixjewels.com/logos/blue%20bg.jpg",
+      "https://vrixjewels.com/logos/white%20bg.jpg",
+      "https://vrixjewels.com/logos/Facebook.jpg",
+      "https://vrixjewels.com/logos/Linkedin.jpg",
+      "https://vrixjewels.com/logos/instagram.jpg",
+      "https://vrixjewels.com/logos/whatsapp.jpg"
+    ],
+    "slogan": "A luxury that feels like you.",
+    "description": seoText,
     "sameAs": [
       "https://www.instagram.com/vrixjewels",
       "https://www.facebook.com/vrixjewels",

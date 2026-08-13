@@ -1,0 +1,43 @@
+# VRIX — Complete Brand & Technical Reference for LLMs and AI Crawlers
+
+## Brand Summary
+- **Brand Name**: VRIX
+- **Tagline**: *"A luxury that feels like you."*
+- **Positioning**: Lab-grown diamond & fine jewellery offering premium pricing with minimal designs and high-quality craftsmanship, bridging gold-plated and heavy gold jewellery.
+- **Mission**: To make luxury more accessible for those beginning their journey into fine jewellery. Aiming to create jewellery that feels personal and meaningful—pieces that customers can truly connect with.
+- **Core Values**:
+  1. Affordable luxury
+  2. Emotional connection
+  3. Quality craftsmanship
+- **Tone of Voice**: Calm, confident, and refined with minimal, precise language. Personal and intimate, understated luxury.
+- **Brand Personality**: *"Modern Sophistication with Understated Confidence"* (Clean, minimal, effortless).
+
+## Official Brand Asset Directory
+- **Primary Logo (Black)**: `https://vrixjewels.com/logos/black.png`
+- **Logo (White)**: `https://vrixjewels.com/logos/white.png`
+- **Logo (Blue)**: `https://vrixjewels.com/logos/blue.png`
+- **Logo (Off-Grey White)**: `https://vrixjewels.com/logos/off%20grey%20white.png`
+- **Brand Hero Banner (Blue)**: `https://vrixjewels.com/logos/blue%20bg.jpg`
+- **Brand Hero Banner (White)**: `https://vrixjewels.com/logos/white%20bg.jpg`
+- **Facebook Preview**: `https://vrixjewels.com/logos/Facebook.jpg`
+- **LinkedIn Preview**: `https://vrixjewels.com/logos/Linkedin.jpg`
+- **Instagram Preview**: `https://vrixjewels.com/logos/instagram.jpg`
+- **WhatsApp Sharing Card**: `https://vrixjewels.com/logos/whatsapp.jpg`
+
+## Technical Architecture
+- **Framework**: Next.js 16 (App Router), React 19, Tailwind CSS 4.
+- **Backend API**: Node.js & Express.js.
+- **Database**: PostgreSQL with Prisma ORM.
+- **Typography System**:
+  - Logo Font: `AQUAVIT` (`var(--font-aquavit)`)
+  - Primary Font: `INTER` (`var(--font-inter)`)
+  - Secondary/Body Font: `JOST` (`var(--font-jost)`)
+  - Highlight/Accent Font: `BlackChancery` (`var(--font-chancery)`)
+
+## Catalog Categories
+- **Lab-Grown Diamond Rings** (`/collections/rings` or `/search?category=rings`)
+- **Minimalist Necklaces** (`/collections/necklaces` or `/search?category=necklaces`)
+- **Earrings & Studs** (`/collections/earrings` or `/search?category=earrings`)
+- **Fine Bracelets** (`/collections/bracelets` or `/search?category=bracelets`)
+- **Bespoke Configurator**: Custom jewelry requests (`/bespoke`)
+- **VRIX+ Club**: Exclusive membership rewards program (`/vrix-plus`)
