@@ -171,7 +171,7 @@ function AdminProductsContent() {
   const [fStock, setFStock] = useState(999);
   const [fVisible, setFVisible] = useState(true);
   const [fVrixPlusExclusive, setFVrixPlusExclusive] = useState(false);
-  const [fVrixPlusPrice, setFVrixPlusPrice] = useState(0);
+  const [fVrixPlusPrice, setFVrixPlusPrice] = useState<number | "">("");
   const [fEngravingEnabled, setFEngravingEnabled] = useState(false);
   const [fEngravingLimit, setFEngravingLimit] = useState(25);
   const [fEngravingPrice, setFEngravingPrice] = useState(0);
