@@ -398,7 +398,7 @@ export const db = {
         } catch (err) {
           console.error(`Prisma cmsSettings.upsert(${key}) failed:`, err.message);
           if (supabase) {
-            const { data, error } = await supabase.from("cms_settings").upsert({ key, value: update.value }).select("value").single();
+            const { data, error } = await supabase.from("cms_settings").upsert({ key, value: update.value }, { onConflict: "key" }).select("value").single();
             if (!error && data) return data.value;
           }
           const localData = readLocalDb();
@@ -408,7 +408,7 @@ export const db = {
         }
       } else {
         if (supabase) {
-          const { data, error } = await supabase.from("cms_settings").upsert({ key, value: update.value }).select("value").single();
+          const { data, error } = await supabase.from("cms_settings").upsert({ key, value: update.value }, { onConflict: "key" }).select("value").single();
           if (!error && data) return data.value;
         }
         const localData = readLocalDb();

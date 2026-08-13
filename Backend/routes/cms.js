@@ -56,10 +56,15 @@ router.post("/cms", adminAuth, async (req, res) => {
     ];
     for (const section of sections) {
       if (req.body[section] !== undefined) {
+        const existing = await db.cmsSettings.findUnique({ where: { key: section } });
+        let newValue = req.body[section];
+        if (existing && typeof existing === "object" && !Array.isArray(existing) && typeof newValue === "object" && !Array.isArray(newValue)) {
+          newValue = { ...existing, ...newValue };
+        }
         await db.cmsSettings.upsert({
           where: { key: section },
-          update: { value: req.body[section] },
-          create: { key: section, value: req.body[section] },
+          update: { value: newValue },
+          create: { key: section, value: newValue },
         });
       }
     }
