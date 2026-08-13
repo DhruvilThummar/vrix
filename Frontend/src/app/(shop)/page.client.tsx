@@ -691,15 +691,15 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
         <div className="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop text-center space-y-4">
           <p className="font-label-caps text-xs text-slate-grey uppercase tracking-widest flex items-center justify-center gap-3">
             <span className="w-8 h-[1px] bg-slate-grey/30 inline-block" />
-            <span>{store.homepage.seoSubheading || "Luxury Minimalist Jewellery & Design"}</span>
+            <span>{store.homepage.seoSubheading || "Luxury Minimalist Jewellery & Lab-Grown Diamonds"}</span>
             <span className="w-8 h-[1px] bg-slate-grey/30 inline-block" />
           </p>
           <h2 className="font-chancery text-2xl md:text-3xl lg:text-4xl text-deep-navy font-normal tracking-wide">
-            {store.homepage.seoHeading || "Quiet Luxury & Architectural Form"}
+            {store.homepage.seoHeading || "A Luxury That Feels Like You"}
           </h2>
           <p className="font-body-md text-xs md:text-sm text-slate-grey/90 leading-relaxed text-justify md:text-center max-w-3xl mx-auto tracking-wide">
             {store.homepage.seoText ||
-              "Welcome to VRIX, the ultimate destination for minimalist luxury jewelry and fine jewellery. Our design philosophy centers around quiet luxury, bringing you architectural, clean forms crafted from premium materials. Whether you are looking for premium gold vermeil rings, daily-wear minimalist necklaces, or elegant silver earrings and bracelets, our curated collections offer timeless pieces that speak in silence. By blending modern aesthetics with ethical, sustainable craftsmanship, VRIX redefines what fine jewelry online means for the conscious shopper. We cater to seekers of luxury jewelry worldwide, capturing the perfect balance of luxury minimalism and everyday durability. Experience the artistry of master goldsmiths and elevate your style with premium jewellery designed for the moments that belong only to you."}
+              "Welcome to VRIX — where luxury feels like you. Designed for those beginning their journey into fine jewellery, our collections blend lab-grown diamond artistry with architectural minimalism and high-quality craftsmanship. Positioned between gold-plated and heavy traditional gold jewellery, VRIX brings you quiet luxury, clean forms, and effortless elegance crafted to create a personal, meaningful connection for your everyday moments."}
           </p>
         </div>
       </section>

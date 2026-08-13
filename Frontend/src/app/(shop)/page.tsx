@@ -4,10 +4,10 @@ import { fetchDbPublic, fetchProducts } from "@/utils/api";
 
 export const dynamic = "force-dynamic";
 
-const DEFAULT_SEO_SUBHEADING = "Luxury Minimalist Jewellery & Design";
-const DEFAULT_SEO_HEADING = "Quiet Luxury & Architectural Form";
+const DEFAULT_SEO_SUBHEADING = "Luxury Minimalist Jewellery & Lab-Grown Diamonds";
+const DEFAULT_SEO_HEADING = "A Luxury That Feels Like You";
 const DEFAULT_SEO_TEXT =
-  "Welcome to VRIX, the ultimate destination for minimalist luxury jewelry and fine jewellery. Our design philosophy centers around quiet luxury, bringing you architectural, clean forms crafted from premium materials. Whether you are looking for premium gold vermeil rings, daily-wear minimalist necklaces, or elegant silver earrings and bracelets, our curated collections offer timeless pieces that speak in silence. By blending modern aesthetics with ethical, sustainable craftsmanship, VRIX redefines what fine jewelry online means for the conscious shopper. We cater to seekers of luxury jewelry worldwide, capturing the perfect balance of luxury minimalism and everyday durability. Experience the artistry of master goldsmiths and elevate your style with premium jewellery designed for the moments that belong only to you.";
+  "Welcome to VRIX — where luxury feels like you. Designed for those beginning their journey into fine jewellery, our collections blend lab-grown diamond artistry with architectural minimalism and high-quality craftsmanship. Positioned between gold-plated and heavy traditional gold jewellery, VRIX brings you quiet luxury, clean forms, and effortless elegance crafted to create a personal, meaningful connection for your everyday moments.";
 
 export async function generateMetadata(): Promise<Metadata> {
   const dbRes = await fetchDbPublic().catch(() => null);
