@@ -1234,30 +1234,44 @@ function AdminProductsContent() {
 
                   {/* ── VARIANTS TAB ──────────────────────────────────────────── */}
                   {activeFormTab === "Variants" && (
-                    <div className="space-y-5">
-                      <div className="p-3.5 border border-deep-navy/15 bg-deep-navy/[0.03] text-xs text-slate-grey leading-relaxed space-y-1 rounded-sm">
-                        <p className="font-semibold text-deep-navy font-label-caps uppercase tracking-wider text-[10px]">
-                          E-Commerce Material & Gemstone Variant Management
-                        </p>
-                        <p className="text-[11px] text-slate-grey">
-                          Add material variations (e.g., 18K Yellow Gold, Platinum, Sterling Silver) or Diamond/Gemstone options (e.g., VVS Lab Diamond, Natural Sapphire). Each variant can have custom pricing, stock level, image, and availability.
+                    <div className="space-y-6">
+                      {/* Header Info Box */}
+                      <div className="p-4 border border-deep-navy/20 bg-gradient-to-r from-deep-navy/[0.04] to-transparent rounded space-y-2">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-deep-navy text-lg">auto_awesome</span>
+                            <h4 className="font-label-caps text-xs font-bold text-deep-navy uppercase tracking-wider">
+                              VRIX Product Variant &amp; Material Management
+                            </h4>
+                          </div>
+                          {fVariants.length > 0 && (
+                            <span className="bg-deep-navy text-pure-white font-label-caps text-[9px] uppercase tracking-widest px-2.5 py-1 rounded font-bold">
+                              {fVariants.length} Active {fVariants.length === 1 ? "Variant" : "Variants"}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-grey leading-relaxed font-body-md">
+                          Add material variations (e.g. 18K Gold, Platinum, 925 Silver) or Diamond options. Each variant has an independent price, stock, label swatch, and image gallery that automatically swaps the PDP product gallery when selected.
                         </p>
                       </div>
 
-                      {/* Preset Add Buttons */}
-                      <div className="space-y-2">
-                        <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block">
-                          Quick Add Preset Variant:
-                        </span>
+                      {/* Quick Add Presets Bar */}
+                      <div className="p-4 border border-slate-grey/20 bg-soft-linen/20 rounded space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="font-label-caps text-[10px] text-deep-navy uppercase tracking-widest font-bold flex items-center gap-1">
+                            <span className="material-symbols-outlined text-xs">bolt</span>
+                            Quick Add Material Presets
+                          </span>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           {[
-                            { name: "18K Yellow Gold", type: "Metal" },
-                            { name: "18K White Gold", type: "Metal" },
-                            { name: "18K Rose Gold", type: "Metal" },
-                            { name: "Platinum", type: "Metal" },
-                            { name: "925 Sterling Silver", type: "Metal" },
-                            { name: "VVS Lab Diamond", type: "Diamond" },
-                            { name: "Natural Diamond", type: "Diamond" },
+                            { name: "18K Yellow Gold", label: "18K Gold", color: "#E5C158" },
+                            { name: "18K Rose Gold", label: "Rose Gold", color: "#E5A995" },
+                            { name: "18K White Gold", label: "White Gold", color: "#E2E8F0" },
+                            { name: "Platinum & Diamond", label: "Platinum", color: "#CBD5E1" },
+                            { name: "925 Sterling Silver", label: "Silver", color: "#D8D8D8" },
+                            { name: "VVS1 Lab Diamond", label: "VVS1 Diamond", color: "#38BDF8" },
+                            { name: "Natural Diamond", label: "Natural Diamond", color: "#818CF8" },
                           ].map((preset) => (
                             <button
                               key={preset.name}
@@ -1268,24 +1282,49 @@ function AdminProductsContent() {
                                   {
                                     id: `variant-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
                                     material: preset.name,
-                                    label: preset.name,
+                                    label: preset.label,
                                     price: null,
                                     originalPrice: null,
                                     stock: 999,
                                     image: "",
+                                    images: [],
                                     isAvailable: true,
                                   },
                                 ])
                               }
-                              className="px-2.5 py-1 text-[10px] font-label-caps uppercase tracking-wider border border-slate-grey/20 bg-pure-white hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer rounded-sm"
+                              className="px-3 py-1.5 text-[10px] font-label-caps uppercase tracking-wider border border-slate-grey/30 bg-pure-white hover:bg-deep-navy hover:text-pure-white transition-all cursor-pointer rounded flex items-center gap-2 shadow-xs group"
                             >
-                              + {preset.name}
+                              <span
+                                className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0"
+                                style={{ backgroundColor: preset.color }}
+                              />
+                              <span>+ {preset.name}</span>
                             </button>
                           ))}
                         </div>
                       </div>
 
-                      <div className="flex justify-between items-center pt-2">
+                      {/* Storefront Live Swatch Button Bar Preview */}
+                      {fVariants.length > 0 && (
+                        <div className="p-3 bg-pure-white border border-slate-grey/20 rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                          <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold shrink-0">
+                            Storefront Swatch Preview:
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {fVariants.map((v, vIdx) => (
+                              <span
+                                key={vIdx}
+                                className="px-2.5 py-1 border border-deep-navy/40 text-deep-navy text-[10px] font-label-caps uppercase tracking-wider font-semibold rounded bg-soft-linen/50"
+                              >
+                                {v.label || v.material || `Variant ${vIdx + 1}`}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Top Action Row */}
+                      <div className="flex justify-between items-center pt-1">
                         <button
                           type="button"
                           onClick={() =>
@@ -1299,287 +1338,354 @@ function AdminProductsContent() {
                                 originalPrice: null,
                                 stock: 999,
                                 image: "",
+                                images: [],
                                 isAvailable: true,
                               },
                             ])
                           }
-                          className="px-3 py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase tracking-wider cursor-pointer flex items-center gap-1 hover:bg-ink-black transition-colors rounded-sm"
+                          className="px-4 py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase tracking-widest cursor-pointer flex items-center gap-1.5 hover:bg-ink-black transition-colors rounded shadow-xs font-semibold"
                         >
-                          <span className="material-symbols-outlined text-[14px]">add</span>
-                          Add Custom Variant
+                          <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                          Add Blank Custom Variant
                         </button>
-
-                        {fVariants.length > 0 && (
-                          <span className="text-[10px] font-label-caps uppercase text-slate-grey tracking-wider">
-                            Total Variants: {fVariants.length}
-                          </span>
-                        )}
                       </div>
 
+                      {/* Variants Cards List */}
                       {fVariants.length === 0 ? (
-                        <div className="text-sm text-slate-grey py-12 text-center border-2 border-dashed border-slate-grey/20 rounded space-y-2">
-                          <span className="material-symbols-outlined text-3xl text-slate-grey/40">tune</span>
-                          <p className="font-label-caps text-xs uppercase tracking-widest">No variants configured</p>
-                          <p className="text-[11px] text-slate-grey/60 max-w-sm mx-auto">
-                            This product uses its default base material ("{fMaterial || "Standard"}") and single base price (₹{fPrice}).
-                          </p>
+                        <div className="text-sm text-slate-grey py-14 text-center border-2 border-dashed border-slate-grey/25 rounded-sm space-y-3 bg-soft-linen/10">
+                          <span className="material-symbols-outlined text-4xl text-slate-grey/40">tune</span>
+                          <div>
+                            <p className="font-label-caps text-xs uppercase tracking-widest font-semibold text-deep-navy">
+                              No Material Variants Configured
+                            </p>
+                            <p className="text-[11px] text-slate-grey/70 max-w-md mx-auto mt-1">
+                              This product currently uses its base material ("{fMaterial || "Standard"}") and single base price (₹{fPrice}). Click any quick add preset above to configure material options!
+                            </p>
+                          </div>
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          {fVariants.map((variant, index) => (
-                            <div key={variant.id} className="border border-slate-grey/25 p-4 space-y-3 bg-pure-white shadow-sm rounded-sm relative">
-                              <div className="flex justify-between items-center border-b border-slate-grey/15 pb-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-5 h-5 bg-deep-navy text-pure-white rounded-full flex items-center justify-center text-[10px] font-bold">
-                                    {index + 1}
-                                  </span>
-                                  <span className="font-label-caps text-[11px] text-deep-navy font-semibold uppercase tracking-wider">
-                                    {variant.label || variant.material || `Variant ${index + 1}`}
-                                  </span>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setFVariants((current) => current.filter((_, itemIndex) => itemIndex !== index))}
-                                  className="text-[10px] text-red-600 hover:text-red-800 uppercase font-label-caps cursor-pointer flex items-center gap-1"
-                                >
-                                  <span className="material-symbols-outlined text-[14px]">delete</span>
-                                  Remove
-                                </button>
-                              </div>
+                        <div className="space-y-5">
+                          {fVariants.map((variant, index) => {
+                            const isGold = (variant.material || "").toLowerCase().includes("gold");
+                            const isRose = (variant.material || "").toLowerCase().includes("rose");
+                            const isPlatinum = (variant.material || "").toLowerCase().includes("platinum");
+                            const isSilver = (variant.material || "").toLowerCase().includes("silver");
+                            const isDiamond = (variant.material || "").toLowerCase().includes("diamond");
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="flex flex-col gap-1">
-                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
-                                    Material / Gemstone Name *
-                                  </label>
-                                  <input
-                                    value={variant.material}
-                                    onChange={(e) =>
-                                      setFVariants((current) =>
-                                        current.map((item, itemIndex) => (itemIndex === index ? { ...item, material: e.target.value } : item))
-                                      )
-                                    }
-                                    placeholder="e.g. 18K Platinum & Diamond"
-                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
-                                  />
-                                </div>
+                            let circleColor = "#94A3B8";
+                            if (isRose) circleColor = "#E5A995";
+                            else if (isGold) circleColor = "#E5C158";
+                            else if (isPlatinum) circleColor = "#CBD5E1";
+                            else if (isSilver) circleColor = "#D8D8D8";
+                            else if (isDiamond) circleColor = "#38BDF8";
 
-                                <div className="flex flex-col gap-1">
-                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
-                                    Display Label (Pill Button Text)
-                                  </label>
-                                  <input
-                                    value={variant.label || ""}
-                                    onChange={(e) =>
-                                      setFVariants((current) =>
-                                        current.map((item, itemIndex) => (itemIndex === index ? { ...item, label: e.target.value } : item))
-                                      )
-                                    }
-                                    placeholder="e.g. Platinum"
-                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
-                                  />
-                                </div>
-
-                                <div className="flex flex-col gap-1">
-                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
-                                    Variant Selling Price (INR ₹)
-                                  </label>
-                                  <input
-                                    type="number"
-                                    value={variant.price ?? ""}
-                                    onChange={(e) =>
-                                      setFVariants((current) =>
-                                        current.map((item, itemIndex) =>
-                                          itemIndex === index ? { ...item, price: e.target.value === "" ? null : Number(e.target.value) } : item
-                                        )
-                                      )
-                                    }
-                                    placeholder={`Leave empty to use base price (₹${fPrice})`}
-                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
-                                  />
-                                </div>
-
-                                <div className="flex flex-col gap-1">
-                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
-                                    Variant Stock Units
-                                  </label>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    value={variant.stock ?? 999}
-                                    onChange={(e) =>
-                                      setFVariants((current) =>
-                                        current.map((item, itemIndex) => (itemIndex === index ? { ...item, stock: Number(e.target.value) } : item))
-                                      )
-                                    }
-                                    placeholder="999 = Unlimited"
-                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Variant Specific Images (Multiple) */}
-                              <div className="flex flex-col gap-2 pt-2 border-t border-slate-grey/10">
-                                <div className="flex items-center justify-between">
-                                  <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider">
-                                    Variant Specific Images (Swaps PDP gallery when selected)
-                                  </label>
-                                  <label className="text-[10px] font-label-caps uppercase text-deep-navy hover:underline cursor-pointer flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[13px]">upload_file</span>
-                                    Upload Variant Images
-                                    <input
-                                      type="file"
-                                      multiple
-                                      accept="image/*"
-                                      className="hidden"
-                                      onChange={async (e) => {
-                                        const files = Array.from(e.target.files || []);
-                                        if (files.length === 0) return;
-                                        try {
-                                          const result = await uploadMediaMultiple(files);
-                                          const uploadedUrls = result.results
-                                            .filter((item) => item.success && item.url)
-                                            .map((item) => item.url as string);
-                                          if (uploadedUrls.length > 0) {
-                                            setFVariants((current) =>
-                                              current.map((item, itemIndex) => {
-                                                if (itemIndex !== index) return item;
-                                                const existingImgs = Array.isArray(item.images) ? item.images : (item.image ? [item.image] : []);
-                                                const newImgs = Array.from(new Set([...existingImgs, ...uploadedUrls]));
-                                                return {
-                                                  ...item,
-                                                  image: item.image || newImgs[0] || "",
-                                                  images: newImgs,
-                                                };
-                                              })
-                                            );
-                                            showToast(`Uploaded ${uploadedUrls.length} images for ${variant.material || "variant"}`);
-                                          }
-                                        } catch (err: any) {
-                                          showToast("Upload failed: " + err.message, "err");
-                                        }
-                                      }}
+                            return (
+                              <div
+                                key={variant.id}
+                                className="border border-slate-grey/25 bg-pure-white shadow-sm rounded space-y-4 p-5 relative transition-all hover:border-deep-navy/30"
+                              >
+                                {/* Variant Header */}
+                                <div className="flex justify-between items-center border-b border-slate-grey/15 pb-3">
+                                  <div className="flex items-center gap-3">
+                                    <span
+                                      className="w-4 h-4 rounded-full border border-black/20 shrink-0"
+                                      style={{ backgroundColor: circleColor }}
                                     />
-                                  </label>
-                                </div>
-
-                                {/* Main Cover Image input */}
-                                <div className="flex gap-2 items-center">
-                                  <input
-                                    value={variant.image || ""}
-                                    onChange={(e) => {
-                                      const url = e.target.value;
-                                      setFVariants((current) =>
-                                        current.map((item, itemIndex) => {
-                                          if (itemIndex !== index) return item;
-                                          const curImgs = Array.isArray(item.images) ? item.images : [];
-                                          const nextImgs = url ? Array.from(new Set([url, ...curImgs])) : curImgs;
-                                          return { ...item, image: url, images: nextImgs };
-                                        })
-                                      );
-                                    }}
-                                    placeholder="Cover Image URL (https://...)"
-                                    className="flex-1 border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md"
-                                  />
-                                </div>
-
-                                {/* Multi-Image Gallery Input (comma separated or previews) */}
-                                <div className="flex flex-col gap-1">
-                                  <input
-                                    value={Array.isArray(variant.images) ? variant.images.join(", ") : (variant.image || "")}
-                                    onChange={(e) => {
-                                      const urls = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
-                                      setFVariants((current) =>
-                                        current.map((item, itemIndex) => {
-                                          if (itemIndex !== index) return item;
-                                          return {
-                                            ...item,
-                                            image: urls[0] || item.image || "",
-                                            images: urls,
-                                          };
-                                        })
-                                      );
-                                    }}
-                                    placeholder="Additional Image URLs (comma-separated: https://img1.jpg, https://img2.jpg)"
-                                    className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-body-md text-slate-grey/80"
-                                  />
-                                </div>
-
-                                {/* Image Thumbnails Preview Grid */}
-                                {Array.isArray(variant.images) && variant.images.length > 0 && (
-                                  <div className="flex flex-wrap gap-2 pt-1">
-                                    {variant.images.map((imgUrl, imgIdx) => {
-                                      const isCover = variant.image === imgUrl;
-                                      return (
-                                        <div key={imgIdx} className={`relative w-12 h-14 border rounded overflow-hidden group/vimg bg-soft-linen shrink-0 ${isCover ? "ring-2 ring-deep-navy border-deep-navy" : "border-slate-grey/20"}`}>
-                                          <Image src={imgUrl} alt="Variant view" fill className="object-cover" />
-                                          {isCover && (
-                                            <span className="absolute top-0 left-0 bg-deep-navy text-white text-[8px] px-1 font-bold">
-                                              Cover
-                                            </span>
-                                          )}
-                                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/vimg:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-0.5">
-                                            {!isCover && (
-                                              <button
-                                                type="button"
-                                                title="Set as variant cover"
-                                                onClick={() => {
-                                                  setFVariants((current) =>
-                                                    current.map((item, itemIndex) => (itemIndex === index ? { ...item, image: imgUrl } : item))
-                                                  );
-                                                }}
-                                                className="text-[8px] bg-white text-black px-1 py-0.5 font-bold uppercase rounded"
-                                              >
-                                                Cover
-                                              </button>
-                                            )}
-                                            <button
-                                              type="button"
-                                              title="Remove image"
-                                              onClick={() => {
-                                                setFVariants((current) =>
-                                                  current.map((item, itemIndex) => {
-                                                    if (itemIndex !== index) return item;
-                                                    const nextImgs = item.images?.filter((u) => u !== imgUrl) || [];
-                                                    return {
-                                                      ...item,
-                                                      image: item.image === imgUrl ? (nextImgs[0] || "") : item.image,
-                                                      images: nextImgs,
-                                                    };
-                                                  })
-                                                );
-                                              }}
-                                              className="text-[8px] bg-red-600 text-white px-1 py-0.5 font-bold uppercase rounded"
-                                            >
-                                              ×
-                                            </button>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
+                                    <span className="w-5 h-5 bg-deep-navy text-pure-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                                      {index + 1}
+                                    </span>
+                                    <span className="font-label-caps text-xs text-deep-navy font-bold uppercase tracking-wider">
+                                      {variant.label || variant.material || `Variant #${index + 1}`}
+                                    </span>
+                                    {variant.price && (
+                                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-label-caps">
+                                        ₹{variant.price}
+                                      </span>
+                                    )}
                                   </div>
-                                )}
-                              </div>
 
-                              <div className="pt-2 flex items-center justify-between border-t border-slate-grey/10 text-xs text-slate-grey">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={variant.isAvailable !== false}
-                                    onChange={(e) =>
-                                      setFVariants((current) =>
-                                        current.map((item, itemIndex) =>
-                                          itemIndex === index ? { ...item, isAvailable: e.target.checked } : item
+                                  <div className="flex items-center gap-3">
+                                    <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-label-caps uppercase text-slate-grey font-semibold">
+                                      <input
+                                        type="checkbox"
+                                        checked={variant.isAvailable !== false}
+                                        onChange={(e) =>
+                                          setFVariants((current) =>
+                                            current.map((item, itemIndex) =>
+                                              itemIndex === index ? { ...item, isAvailable: e.target.checked } : item
+                                            )
+                                          )
+                                        }
+                                        className="text-deep-navy"
+                                      />
+                                      <span>Available</span>
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setFVariants((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                                      }
+                                      className="text-[10px] text-red-600 hover:text-red-800 uppercase font-label-caps cursor-pointer flex items-center gap-1 font-semibold"
+                                    >
+                                      <span className="material-symbols-outlined text-[14px]">delete</span>
+                                      Remove
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Form Fields Grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                  <div className="flex flex-col gap-1.5">
+                                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">
+                                      Material / Gemstone Name *
+                                    </label>
+                                    <input
+                                      value={variant.material}
+                                      onChange={(e) =>
+                                        setFVariants((current) =>
+                                          current.map((item, itemIndex) =>
+                                            itemIndex === index ? { ...item, material: e.target.value } : item
+                                          )
                                         )
-                                      )
-                                    }
-                                    className="text-deep-navy"
-                                  />
-                                  <span className="font-label-caps text-[10px] uppercase tracking-wider">In Stock & Available on Store</span>
-                                </label>
+                                      }
+                                      placeholder="e.g. 18K Yellow Gold"
+                                      className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-transparent rounded"
+                                    />
+                                  </div>
+
+                                  <div className="flex flex-col gap-1.5">
+                                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">
+                                      Storefront Swatch Button Label
+                                    </label>
+                                    <input
+                                      value={variant.label || ""}
+                                      onChange={(e) =>
+                                        setFVariants((current) =>
+                                          current.map((item, itemIndex) =>
+                                            itemIndex === index ? { ...item, label: e.target.value } : item
+                                          )
+                                        )
+                                      }
+                                      placeholder="e.g. 18K Gold"
+                                      className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-transparent rounded"
+                                    />
+                                  </div>
+
+                                  <div className="flex flex-col gap-1.5">
+                                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">
+                                      Selling Price (INR ₹)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      value={variant.price ?? ""}
+                                      onChange={(e) =>
+                                        setFVariants((current) =>
+                                          current.map((item, itemIndex) =>
+                                            itemIndex === index
+                                              ? { ...item, price: e.target.value === "" ? null : Number(e.target.value) }
+                                              : item
+                                          )
+                                        )
+                                      }
+                                      placeholder={`Base Price: ₹${fPrice}`}
+                                      className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-transparent rounded"
+                                    />
+                                  </div>
+
+                                  <div className="flex flex-col gap-1.5">
+                                    <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-wider font-semibold">
+                                      Inventory Stock Units
+                                    </label>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      value={variant.stock ?? 999}
+                                      onChange={(e) =>
+                                        setFVariants((current) =>
+                                          current.map((item, itemIndex) =>
+                                            itemIndex === index ? { ...item, stock: Number(e.target.value) } : item
+                                          )
+                                        )
+                                      }
+                                      placeholder="999 = Unlimited"
+                                      className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-transparent rounded"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Variant Specific Image Upload Zone */}
+                                <div className="p-4 border border-slate-grey/20 bg-soft-linen/10 rounded space-y-3">
+                                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                    <div>
+                                      <label className="font-label-caps text-[10px] text-deep-navy uppercase tracking-wider font-bold block">
+                                        Variant Image Gallery &amp; PDP Swapper
+                                      </label>
+                                      <p className="text-[10px] text-slate-grey">
+                                        Upload photos for this specific material. Selected variant gallery automatically replaces product photos on PDP.
+                                      </p>
+                                    </div>
+                                    <label className="bg-deep-navy text-white text-[10px] font-label-caps uppercase tracking-wider px-3 py-1.5 rounded cursor-pointer hover:bg-ink-black transition-colors flex items-center gap-1 shrink-0">
+                                      <span className="material-symbols-outlined text-[14px]">upload_file</span>
+                                      <span>Upload Multiple Images</span>
+                                      <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                          const files = Array.from(e.target.files || []);
+                                          if (files.length === 0) return;
+                                          try {
+                                            const result = await uploadMediaMultiple(files);
+                                            const uploadedUrls = result.results
+                                              .filter((item) => item.success && item.url)
+                                              .map((item) => item.url as string);
+                                            if (uploadedUrls.length > 0) {
+                                              setFVariants((current) =>
+                                                current.map((item, itemIndex) => {
+                                                  if (itemIndex !== index) return item;
+                                                  const existingImgs = Array.isArray(item.images)
+                                                    ? item.images
+                                                    : item.image
+                                                    ? [item.image]
+                                                    : [];
+                                                  const newImgs = Array.from(new Set([...existingImgs, ...uploadedUrls]));
+                                                  return {
+                                                    ...item,
+                                                    image: item.image || newImgs[0] || "",
+                                                    images: newImgs,
+                                                  };
+                                                })
+                                              );
+                                              showToast(`Uploaded ${uploadedUrls.length} images for ${variant.material || "variant"}`);
+                                            }
+                                          } catch (err: any) {
+                                            showToast("Upload failed: " + err.message, "err");
+                                          }
+                                        }}
+                                      />
+                                    </label>
+                                  </div>
+
+                                  {/* Image Inputs */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                                    <div className="flex flex-col gap-1">
+                                      <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">
+                                        Primary Cover Photo URL:
+                                      </label>
+                                      <input
+                                        value={variant.image || ""}
+                                        onChange={(e) => {
+                                          const url = e.target.value;
+                                          setFVariants((current) =>
+                                            current.map((item, itemIndex) => {
+                                              if (itemIndex !== index) return item;
+                                              const curImgs = Array.isArray(item.images) ? item.images : [];
+                                              const nextImgs = url ? Array.from(new Set([url, ...curImgs])) : curImgs;
+                                              return { ...item, image: url, images: nextImgs };
+                                            })
+                                          );
+                                        }}
+                                        placeholder="https://res.cloudinary.com/..."
+                                        className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-pure-white rounded"
+                                      />
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                      <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest font-semibold">
+                                        All Gallery Image URLs (comma-separated):
+                                      </label>
+                                      <input
+                                        value={Array.isArray(variant.images) ? variant.images.join(", ") : (variant.image || "")}
+                                        onChange={(e) => {
+                                          const urls = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                                          setFVariants((current) =>
+                                            current.map((item, itemIndex) => {
+                                              if (itemIndex !== index) return item;
+                                              return {
+                                                ...item,
+                                                image: urls[0] || item.image || "",
+                                                images: urls,
+                                              };
+                                            })
+                                          );
+                                        }}
+                                        placeholder="https://img1.jpg, https://img2.jpg"
+                                        className="border border-slate-grey/30 p-2 text-xs outline-none focus:border-deep-navy font-body-md bg-pure-white text-slate-grey/90 rounded"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Thumbnails Gallery Grid */}
+                                  {Array.isArray(variant.images) && variant.images.length > 0 && (
+                                    <div className="pt-2 border-t border-slate-grey/15">
+                                      <span className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest block mb-2 font-semibold">
+                                        Uploaded Variant Views ({variant.images.length}):
+                                      </span>
+                                      <div className="flex flex-wrap gap-2.5">
+                                        {variant.images.map((imgUrl, imgIdx) => {
+                                          const isCover = variant.image === imgUrl;
+                                          return (
+                                            <div
+                                              key={imgIdx}
+                                              className={`relative w-16 h-20 border rounded overflow-hidden group/vimg bg-white shrink-0 shadow-xs ${
+                                                isCover ? "ring-2 ring-deep-navy border-deep-navy" : "border-slate-grey/25"
+                                              }`}
+                                            >
+                                              <Image src={imgUrl} alt="Variant view" fill className="object-cover" />
+                                              {isCover && (
+                                                <span className="absolute top-0 left-0 bg-deep-navy text-white text-[7px] px-1 font-bold font-label-caps uppercase">
+                                                  Cover
+                                                </span>
+                                              )}
+                                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/vimg:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 p-1">
+                                                {!isCover && (
+                                                  <button
+                                                    type="button"
+                                                    title="Set as variant cover"
+                                                    onClick={() => {
+                                                      setFVariants((current) =>
+                                                        current.map((item, itemIndex) =>
+                                                          itemIndex === index ? { ...item, image: imgUrl } : item
+                                                        )
+                                                      );
+                                                    }}
+                                                    className="text-[8px] bg-white text-black px-1.5 py-0.5 font-bold uppercase rounded font-label-caps"
+                                                  >
+                                                    Set Cover
+                                                  </button>
+                                                )}
+                                                <button
+                                                  type="button"
+                                                  title="Remove image"
+                                                  onClick={() => {
+                                                    setFVariants((current) =>
+                                                      current.map((item, itemIndex) => {
+                                                        if (itemIndex !== index) return item;
+                                                        const nextImgs = item.images?.filter((u) => u !== imgUrl) || [];
+                                                        return {
+                                                          ...item,
+                                                          image: item.image === imgUrl ? nextImgs[0] || "" : item.image,
+                                                          images: nextImgs,
+                                                        };
+                                                      })
+                                                    );
+                                                  }}
+                                                  className="text-[9px] bg-red-600 text-white px-2 py-0.5 font-bold uppercase rounded"
+                                                >
+                                                  Remove
+                                                </button>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
