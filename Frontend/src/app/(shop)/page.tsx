@@ -71,7 +71,7 @@ export default async function Page() {
         <HomepageClient initialData={homepageData} initialProducts={productsData} />
 
         {/* 150+ word SEO intro block naturally using both spellings */}
-        <section className="bg-soft-linen/10 py-16 border-t border-slate-grey/10">
+        <section className="bg-soft-linen/10 pt-16 border-t border-slate-grey/10">
           <div className="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop text-center">
             <h2 className="font-label-caps text-xs text-slate-grey uppercase tracking-widest mb-4">
               Luxury Minimalist Jewellery &amp; Design

@@ -57,10 +57,17 @@ export default function AdminHomepageLayoutPage() {
   // --- Carousel Settings State ---
   const [collectionsAutoScroll, setCollectionsAutoScroll] = useState(true);
   const [collectionsInterval, setCollectionsInterval] = useState(3.5);
+  const [collectionsLoop, setCollectionsLoop] = useState(true);
+
   const [newArrivalsAutoScroll, setNewArrivalsAutoScroll] = useState(true);
   const [newArrivalsInterval, setNewArrivalsInterval] = useState(4.0);
+  const [newArrivalsLoop, setNewArrivalsLoop] = useState(true);
+
   const [featuredAutoScroll, setFeaturedAutoScroll] = useState(true);
   const [featuredInterval, setFeaturedInterval] = useState(4.5);
+  const [featuredLoop, setFeaturedLoop] = useState(true);
+
+  const [categoryLoop, setCategoryLoop] = useState(true);
 
   // --- Categories State ---
   const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -96,10 +103,17 @@ export default function AdminHomepageLayoutPage() {
           const cSettings = res.homepage.carouselSettings || {};
           setCollectionsAutoScroll(cSettings.collectionsAutoScroll ?? true);
           setCollectionsInterval((cSettings.collectionsInterval ?? 3500) / 1000);
+          setCollectionsLoop(cSettings.collectionsLoop ?? true);
+
           setNewArrivalsAutoScroll(cSettings.newArrivalsAutoScroll ?? true);
           setNewArrivalsInterval((cSettings.newArrivalsInterval ?? 4000) / 1000);
+          setNewArrivalsLoop(cSettings.newArrivalsLoop ?? true);
+
           setFeaturedAutoScroll(cSettings.featuredAutoScroll ?? true);
           setFeaturedInterval((cSettings.featuredInterval ?? 4500) / 1000);
+          setFeaturedLoop(cSettings.featuredLoop ?? true);
+
+          setCategoryLoop(cSettings.categoryLoop ?? true);
           
           const defaultPhilosophy = [
             { icon: "flare", title: "Intentional Design", description: "Every piece has\na deeper meaning." },
@@ -150,10 +164,14 @@ export default function AdminHomepageLayoutPage() {
           carouselSettings: {
             collectionsAutoScroll,
             collectionsInterval: Math.round(collectionsInterval * 1000),
+            collectionsLoop,
             newArrivalsAutoScroll,
             newArrivalsInterval: Math.round(newArrivalsInterval * 1000),
+            newArrivalsLoop,
             featuredAutoScroll,
             featuredInterval: Math.round(featuredInterval * 1000),
+            featuredLoop,
+            categoryLoop,
           }
         },
       });
@@ -984,6 +1002,102 @@ export default function AdminHomepageLayoutPage() {
                 No products selected. Fallback featured items will be loaded on the homepage.
               </p>
             )}
+          </div>
+        </section>
+
+        {/* Carousel & Slider Animation Settings */}
+        <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
+          <div className="border-b border-slate-grey/10 pb-4">
+            <h3 className="font-headline-md text-base text-deep-navy uppercase tracking-wider font-semibold">
+              Carousel &amp; Slider Loop Controls
+            </h3>
+            <p className="text-xs text-slate-grey">Configure autoplay, scroll speed, and infinite loop behavior for homepage sliders.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Category Carousel Settings */}
+            <div className="p-4 border border-slate-grey/20 rounded bg-soft-linen/5 space-y-3">
+              <h4 className="font-label-caps text-xs uppercase font-bold text-deep-navy">Category Slider</h4>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-ink-black">
+                <input
+                  type="checkbox"
+                  checked={categoryLoop}
+                  onChange={(e) => setCategoryLoop(e.target.checked)}
+                  className="text-deep-navy"
+                />
+                Infinite Loop (Loop back to 1st item)
+              </label>
+            </div>
+
+            {/* New Arrivals Carousel Settings */}
+            <div className="p-4 border border-slate-grey/20 rounded bg-soft-linen/5 space-y-3">
+              <h4 className="font-label-caps text-xs uppercase font-bold text-deep-navy">New Arrivals Slider</h4>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-ink-black">
+                <input
+                  type="checkbox"
+                  checked={newArrivalsAutoScroll}
+                  onChange={(e) => setNewArrivalsAutoScroll(e.target.checked)}
+                  className="text-deep-navy"
+                />
+                Autoplay Auto-Scroll
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-grey font-label-caps uppercase">Interval (s):</span>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="1"
+                  max="20"
+                  value={newArrivalsInterval}
+                  onChange={(e) => setNewArrivalsInterval(Number(e.target.value))}
+                  className="w-16 border border-slate-grey/30 px-2 py-1 text-xs outline-none rounded"
+                />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-ink-black pt-1">
+                <input
+                  type="checkbox"
+                  checked={newArrivalsLoop}
+                  onChange={(e) => setNewArrivalsLoop(e.target.checked)}
+                  className="text-deep-navy"
+                />
+                Infinite Loop (Loop back to 1st item)
+              </label>
+            </div>
+
+            {/* Featured Products Carousel Settings */}
+            <div className="p-4 border border-slate-grey/20 rounded bg-soft-linen/5 space-y-3">
+              <h4 className="font-label-caps text-xs uppercase font-bold text-deep-navy">Featured Products Slider</h4>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-ink-black">
+                <input
+                  type="checkbox"
+                  checked={featuredAutoScroll}
+                  onChange={(e) => setFeaturedAutoScroll(e.target.checked)}
+                  className="text-deep-navy"
+                />
+                Autoplay Auto-Scroll
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-grey font-label-caps uppercase">Interval (s):</span>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="1"
+                  max="20"
+                  value={featuredInterval}
+                  onChange={(e) => setFeaturedInterval(Number(e.target.value))}
+                  className="w-16 border border-slate-grey/30 px-2 py-1 text-xs outline-none rounded"
+                />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-ink-black pt-1">
+                <input
+                  type="checkbox"
+                  checked={featuredLoop}
+                  onChange={(e) => setFeaturedLoop(e.target.checked)}
+                  className="text-deep-navy"
+                />
+                Infinite Loop (Loop back to 1st item)
+              </label>
+            </div>
           </div>
         </section>
       </form>

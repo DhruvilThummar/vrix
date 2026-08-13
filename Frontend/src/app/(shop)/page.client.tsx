@@ -195,7 +195,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
 
   // 1. Categories Carousel
   const [categoryRef, categoryApi] = useEmblaCarousel(
-    { loop: true, align: "start", dragFree: true, containScroll: "trimSnaps" },
+    { loop: carouselSettings.categoryLoop !== false, align: "start" },
     [Autoplay({ delay: 3500, stopOnMouseEnter: true, stopOnInteraction: false })]
   );
 
@@ -207,7 +207,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
   }, [carouselSettings.collectionsAutoScroll, carouselSettings.collectionsInterval]);
 
   const [collectionsRef, collectionsApi] = useEmblaCarousel(
-    { loop: true, align: "start", dragFree: true, containScroll: "trimSnaps" },
+    { loop: carouselSettings.collectionsLoop !== false, align: "start" },
     collectionsPlugins
   );
 
@@ -219,7 +219,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
   }, [carouselSettings.newArrivalsAutoScroll, carouselSettings.newArrivalsInterval]);
 
   const [newArrivalsRef, newArrivalsApi] = useEmblaCarousel(
-    { loop: true, align: "start", dragFree: true, containScroll: "trimSnaps" },
+    { loop: carouselSettings.newArrivalsLoop !== false, align: "start" },
     newArrivalsPlugins
   );
 
@@ -231,7 +231,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
   }, [carouselSettings.featuredAutoScroll, carouselSettings.featuredInterval]);
 
   const [featuredRef, featuredApi] = useEmblaCarousel(
-    { loop: true, align: "start", dragFree: true, containScroll: "trimSnaps" },
+    { loop: carouselSettings.featuredLoop !== false, align: "start" },
     featuredPlugins
   );
 
@@ -462,26 +462,49 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div className="flex gap-3 overflow-x-auto py-2.5 hide-scrollbar w-full">
-              {(store.homepage.categories || []).map((cat: any, idx: number) => (
-                <div key={idx} className="w-[180px] md:w-[240px] shrink-0">
-                  <Link href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block rounded shadow-xs">
-                    <SkeletonImage
-                      alt={cat.title}
-                      fill
-                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
-                      sizes="(max-width: 640px) 50vw, 25vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-4 transition-opacity duration-300 group-hover:opacity-95">
-                      <div className="w-full flex justify-between items-center text-pure-white">
-                        <span className="font-label-caps text-xs tracking-widest uppercase font-semibold">{cat.title}</span>
-                        <span className="material-symbols-outlined text-xs transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                      </div>
+            <div className="relative group/carousel">
+              <div ref={categoryRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
+                <div className="flex -ml-3 embla__container">
+                  {(store.homepage.categories || []).map((cat: any, idx: number) => (
+                    <div key={idx} className="w-[180px] sm:w-1/3 lg:w-1/4 pl-3 shrink-0 embla__slide">
+                      <Link href={cat.link} className="group relative aspect-square overflow-hidden border border-slate-grey/10 cursor-pointer block rounded shadow-xs">
+                        <SkeletonImage
+                          alt={cat.title}
+                          fill
+                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                          src={cat.image || "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop"}
+                          sizes="(max-width: 640px) 50vw, 25vw"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent flex items-end p-4 transition-opacity duration-300 group-hover:opacity-95">
+                          <div className="w-full flex justify-between items-center text-pure-white">
+                            <span className="font-label-caps text-xs tracking-widest uppercase font-semibold">{cat.title}</span>
+                            <span className="material-symbols-outlined text-xs transform group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                          </div>
+                        </div>
+                      </Link>
                     </div>
-                  </Link>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {(store.homepage.categories || []).length > 0 && (
+                <>
+                  <button
+                    onClick={() => categoryApi && categoryApi.scrollPrev()}
+                    className="absolute left-1 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Previous category"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_left</span>
+                  </button>
+                  <button
+                    onClick={() => categoryApi && categoryApi.scrollNext()}
+                    className="absolute right-1 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Next category"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_right</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </section>
@@ -516,18 +539,41 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div className="flex gap-3 overflow-x-auto py-2.5 hide-scrollbar w-full">
-              {newArrivalsList.map((p: any) => (
-                <div key={p.id} className="w-[200px] md:w-[260px] shrink-0 flex flex-col">
-                  <ProductCard
-                    product={p}
-                    formatPrice={formatPrice}
-                    isWishlisted={wishlist.includes(p.id)}
-                    onWishlistToggle={toggleWishlist}
-                    onQuickAdd={handleQuickAdd}
-                  />
+            <div className="relative group/carousel">
+              <div ref={newArrivalsRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
+                <div className="flex -ml-3 embla__container">
+                  {newArrivalsList.map((p: any) => (
+                    <div key={p.id} className="w-[200px] sm:w-1/3 lg:w-1/4 pl-3 shrink-0 flex flex-col embla__slide">
+                      <ProductCard
+                        product={p}
+                        formatPrice={formatPrice}
+                        isWishlisted={wishlist.includes(p.id)}
+                        onWishlistToggle={toggleWishlist}
+                        onQuickAdd={handleQuickAdd}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {newArrivalsList.length > 0 && (
+                <>
+                  <button
+                    onClick={() => newArrivalsApi && newArrivalsApi.scrollPrev()}
+                    className="absolute left-1 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Previous new arrivals"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_left</span>
+                  </button>
+                  <button
+                    onClick={() => newArrivalsApi && newArrivalsApi.scrollNext()}
+                    className="absolute right-1 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Next new arrivals"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_right</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </section>
@@ -562,18 +608,41 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
               ))}
             </div>
           ) : (
-            <div className="flex gap-3 overflow-x-auto py-2.5 hide-scrollbar w-full">
-              {featuredProductsList.map((p: any) => (
-                <div key={p.id} className="w-[200px] md:w-[260px] shrink-0 flex flex-col">
-                  <ProductCard
-                    product={p}
-                    formatPrice={formatPrice}
-                    isWishlisted={wishlist.includes(p.id)}
-                    onWishlistToggle={toggleWishlist}
-                    onQuickAdd={handleQuickAdd}
-                  />
+            <div className="relative group/carousel">
+              <div ref={featuredRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
+                <div className="flex -ml-3 embla__container">
+                  {featuredProductsList.map((p: any) => (
+                    <div key={p.id} className="w-[200px] sm:w-1/3 lg:w-1/4 pl-3 shrink-0 flex flex-col embla__slide">
+                      <ProductCard
+                        product={p}
+                        formatPrice={formatPrice}
+                        isWishlisted={wishlist.includes(p.id)}
+                        onWishlistToggle={toggleWishlist}
+                        onQuickAdd={handleQuickAdd}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {featuredProductsList.length > 0 && (
+                <>
+                  <button
+                    onClick={() => featuredApi && featuredApi.scrollPrev()}
+                    className="absolute left-1 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Previous featured products"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_left</span>
+                  </button>
+                  <button
+                    onClick={() => featuredApi && featuredApi.scrollNext()}
+                    className="absolute right-1 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    aria-label="Next featured products"
+                  >
+                    <span className="material-symbols-outlined text-base">chevron_right</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </section>
