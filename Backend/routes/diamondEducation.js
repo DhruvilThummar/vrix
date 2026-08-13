@@ -72,13 +72,15 @@ router.get("/admin/list", adminAuth, async (req, res) => {
 
 // POST /api/admin/diamond-education — Create new article
 router.post("/admin/create", adminAuth, async (req, res) => {
-  const { title, category, content, summary, tags, isPublished } = req.body || {};
+  const { title, category, content, summary, tags, isPublished, slug: customSlug } = req.body || {};
 
   if (!title || !content) {
     return res.status(400).json({ error: "Title and Content are required fields." });
   }
 
-  const slug = slugify(title) + "-" + Date.now().toString().slice(-4);
+  const baseSlug = slugify(customSlug || title) || "diamond-guide";
+  const slug = `${baseSlug}-${Date.now().toString(36)}`;
+
 
   try {
     const article = await db.diamondEducation?.create({

@@ -334,10 +334,14 @@ export async function executeCreateRepairRequest(rawArgs, sessionId = null) {
     };
   }
 
+  // Validate UUID format to prevent type mismatch with Foreign Key constraint
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const validSessionUuid = (sessionId && uuidRegex.test(sessionId)) ? sessionId : null;
+
   try {
     const record = await db.repairRequest?.create({
       data: {
-        sessionId: sessionId || undefined,
+        sessionId: validSessionUuid || undefined,
         orderNumber: validated.orderNumber,
         issueDescription: validated.issueDescription,
         contactEmail: validated.contactEmail,

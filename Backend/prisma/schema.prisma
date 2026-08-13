@@ -254,13 +254,14 @@ model BespokeVariant {
 }
 
 model ChatSession {
-  id                String        @id @default(uuid()) @db.Uuid
-  userId            String?       @map("user_id")
-  lastInteractionId String?       @map("last_interaction_id")
-  status            String        @default("ACTIVE")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String?         @map("user_id")
+  lastInteractionId String?         @map("last_interaction_id")
+  status            String          @default("ACTIVE")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
   messages          ChatMessage[]
+  repairRequests    RepairRequest[]
 
   @@map("chat_sessions")
 }
@@ -279,15 +280,17 @@ model ChatMessage {
 }
 
 model RepairRequest {
-  id               String   @id @default(uuid()) @db.Uuid
-  sessionId        String?  @map("session_id")
-  userId           String?  @map("user_id")
-  orderNumber      String   @map("order_number")
-  issueDescription String   @map("issue_description")
-  contactEmail     String   @map("contact_email")
-  status           String   @default("PENDING")
-  createdAt        DateTime @default(now()) @map("created_at")
+  id               String       @id @default(uuid()) @db.Uuid
+  sessionId        String?      @map("session_id") @db.Uuid
+  userId           String?      @map("user_id")
+  orderNumber      String       @map("order_number")
+  issueDescription String       @map("issue_description")
+  contactEmail     String       @map("contact_email")
+  status           String       @default("PENDING")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  session          ChatSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
+  @@index([sessionId])
   @@map("repair_requests")
 }
 

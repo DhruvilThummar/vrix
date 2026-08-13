@@ -160,8 +160,9 @@ export async function ensureTablesExist() {
     // Chat, Repair Requests & Diamond Education tables
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "chat_sessions" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "user_id" TEXT, "last_interaction_id" TEXT, "status" TEXT DEFAULT 'ACTIVE', "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "chat_messages" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "session_id" UUID NOT NULL REFERENCES "chat_sessions"("id") ON DELETE CASCADE, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "tool_calls" JSONB, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "repair_requests" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "session_id" TEXT, "user_id" TEXT, "order_number" TEXT NOT NULL, "issue_description" TEXT NOT NULL, "contact_email" TEXT NOT NULL, "status" TEXT DEFAULT 'PENDING', "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "repair_requests" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "session_id" UUID REFERENCES "chat_sessions"("id") ON DELETE SET NULL, "user_id" TEXT, "order_number" TEXT NOT NULL, "issue_description" TEXT NOT NULL, "contact_email" TEXT NOT NULL, "status" TEXT DEFAULT 'PENDING', "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "diamond_education" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "title" TEXT NOT NULL, "slug" TEXT UNIQUE NOT NULL, "category" TEXT DEFAULT '4Cs', "content" TEXT NOT NULL, "summary" TEXT, "tags" JSONB, "is_published" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
+
 
     // Bespoke Atelier tables
     await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_settings" (
