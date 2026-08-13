@@ -50,9 +50,16 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
     ? product.variants.filter((variant: any) => variant?.material && variant.isAvailable !== false)
     : [], [product]);
   const selectedVariant = variants.find((variant: any) => variant.id === selectedVariantId) || variants[0];
-  const activePrice = selectedVariant?.price ?? product?.price ?? 0;
-  const activeOriginalPrice = selectedVariant?.originalPrice ?? product?.originalPrice;
-  const activeStock = selectedVariant?.stock ?? product?.stock ?? 999;
+  
+  const variantPriceNum = Number(selectedVariant?.price);
+  const productPriceNum = Number(product?.price);
+  const activePrice = variantPriceNum > 0 ? variantPriceNum : (productPriceNum > 0 ? productPriceNum : 0);
+
+  const variantOrigPriceNum = Number(selectedVariant?.originalPrice);
+  const productOrigPriceNum = Number(product?.originalPrice);
+  const activeOriginalPrice = variantOrigPriceNum > 0 ? variantOrigPriceNum : (productOrigPriceNum > 0 ? productOrigPriceNum : undefined);
+
+  const activeStock = selectedVariant?.stock !== undefined && selectedVariant?.stock !== null ? Number(selectedVariant.stock) : (product?.stock ?? 999);
 
   useEffect(() => {
     try {
@@ -266,14 +273,14 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
                     </>
                   ) : activeOriginalPrice && activeOriginalPrice > activePrice ? (
                     <>
-                      <span className="font-headline-md text-ink-black text-2xl font-semibold">{getDisplayPrice(activePrice, formatPrice)}</span>
+                      <span className="font-headline-md text-ink-black text-2xl font-semibold">{getDisplayPrice(activePrice, formatPrice, product.price)}</span>
                       <span className="font-body-md text-slate-grey/60 line-through text-base">{formatPrice(activeOriginalPrice)}</span>
                       <span className="bg-emerald-700 text-white font-label-caps text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider">
                         {Math.round(((activeOriginalPrice - activePrice) / activeOriginalPrice) * 100)}% OFF
                       </span>
                     </>
                   ) : (
-                    <p className="font-headline-md text-ink-black text-2xl font-semibold">{getDisplayPrice(activePrice, formatPrice)}</p>
+                    <p className="font-headline-md text-ink-black text-2xl font-semibold">{getDisplayPrice(activePrice, formatPrice, product.price)}</p>
                   )}
                 </div>
                 <p className={`font-label-caps text-[10px] uppercase tracking-widest mt-1 ${Number(activeStock) <= 0 ? "text-red-700" : Number(activeStock) <= 3 ? "text-amber-700" : "text-emerald-700"}`}>

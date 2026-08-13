@@ -203,7 +203,7 @@ export default function ProductCard({
 
         {/* Price row */}
         <span ref={priceRef} className="font-body-md text-[11px] md:text-xs text-ink-black font-semibold">
-          {getDisplayPrice(displayPrice, formatPrice)}
+          {getDisplayPrice(displayPrice, formatPrice, product.price)}
         </span>
 
         {/* Swatches row */}

@@ -28,8 +28,12 @@ const normalizeProductData = (body = {}) => {
       id: typeof variant?.id === "string" && variant.id.trim() ? variant.id.trim() : `variant-${index + 1}`,
       material: typeof variant?.material === "string" ? variant.material.trim() : "",
       label: typeof variant?.label === "string" ? variant.label.trim() : "",
-      price: variant?.price === "" || variant?.price === undefined ? null : Number(variant.price),
-      originalPrice: variant?.originalPrice === "" || variant?.originalPrice === undefined ? null : Number(variant.originalPrice),
+      price: variant?.price !== "" && variant?.price !== undefined && variant?.price !== null && Number(variant?.price) > 0
+        ? Number(variant.price)
+        : (Number(body.price) > 0 ? Number(body.price) : null),
+      originalPrice: variant?.originalPrice !== "" && variant?.originalPrice !== undefined && variant?.originalPrice !== null && Number(variant?.originalPrice) > 0
+        ? Number(variant.originalPrice)
+        : (Number(body.originalPrice) > 0 ? Number(body.originalPrice) : null),
       stock: variant?.stock === undefined || variant?.stock === "" ? 999 : Number(variant.stock),
       image: variantImage,
       images: Array.from(new Set([variantImage, ...variantImages].filter(Boolean))),
