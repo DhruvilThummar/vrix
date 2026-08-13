@@ -223,7 +223,7 @@ export async function deleteProduct(id: string) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchCollections() {
-  return apiFetch<any[]>("/collections");
+  return apiFetchCached<any[]>("/collections", 3600);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -231,7 +231,7 @@ export async function fetchCollections() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchJournal() {
-  return apiFetch<any[]>("/journal");
+  return apiFetchCached<any[]>("/journal", 3600);
 }
 
 export async function createJournalPost(postData: any) {
