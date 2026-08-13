@@ -547,7 +547,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
             <div className="relative group/carousel">
               <div ref={newArrivalsRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
                 <div className="flex -ml-3 embla__container">
-                  {newArrivalsList.map((p: any) => (
+                  {newArrivalsList.map((p: any, idx: number) => (
                     <div key={p.id} className="w-[200px] sm:w-1/3 lg:w-1/4 pl-3 shrink-0 flex flex-col embla__slide">
                       <ProductCard
                         product={p}
@@ -555,6 +555,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                         isWishlisted={wishlist.includes(p.id)}
                         onWishlistToggle={toggleWishlist}
                         onQuickAdd={handleQuickAdd}
+                        priority={idx < 4}
                       />
                     </div>
                   ))}
@@ -616,7 +617,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
             <div className="relative group/carousel">
               <div ref={featuredRef} className="overflow-hidden w-full cursor-grab active:cursor-grabbing">
                 <div className="flex -ml-3 embla__container">
-                  {featuredProductsList.map((p: any) => (
+                  {featuredProductsList.map((p: any, idx: number) => (
                     <div key={p.id} className="w-[200px] sm:w-1/3 lg:w-1/4 pl-3 shrink-0 flex flex-col embla__slide">
                       <ProductCard
                         product={p}
@@ -624,6 +625,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                         isWishlisted={wishlist.includes(p.id)}
                         onWishlistToggle={toggleWishlist}
                         onQuickAdd={handleQuickAdd}
+                        priority={idx < 4}
                       />
                     </div>
                   ))}

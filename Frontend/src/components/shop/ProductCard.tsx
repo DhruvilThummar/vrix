@@ -13,6 +13,7 @@ interface ProductCardProps {
   isWishlisted?: boolean;
   onQuickAdd?: (product: any, variant?: any) => void;
   showQuickAdd?: boolean;
+  priority?: boolean;
 }
 
 const MATERIAL_COLORS: { [key: string]: string } = {
@@ -36,6 +37,7 @@ export default function ProductCard({
   isWishlisted = false,
   onQuickAdd,
   showQuickAdd = true,
+  priority = false,
 }: ProductCardProps) {
   const variants = product.variants || [];
   
@@ -129,7 +131,8 @@ export default function ProductCard({
                 sizes="(max-width: 768px) 50vw, 25vw"
                 src={isHovered ? secondaryImage : (activeMobileImageIdx === 1 ? secondaryImage : primaryImage)}
                 className="object-cover w-full h-full mix-blend-multiply opacity-90 transition-transform duration-700 ease-out"
-                priority
+                priority={priority}
+                loading={priority ? "eager" : "lazy"}
               />
             </div>
           </div>

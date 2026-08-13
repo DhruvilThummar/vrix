@@ -661,7 +661,7 @@ export default function CollectionDetailClient({
                     )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-500">
-                      {visibleProducts.map((p: any) => {
+                      {visibleProducts.map((p: any, idx: number) => {
                         const isWishlisted = wishlist.includes(p.id);
                         return (
                           <ProductCard
@@ -672,6 +672,7 @@ export default function CollectionDetailClient({
                             isWishlisted={isWishlisted}
                             onQuickAdd={(item, variant) => handleQuickAdd(item, variant)}
                             showQuickAdd={true}
+                            priority={idx < 4}
                           />
                         );
                       })}
@@ -692,7 +693,7 @@ export default function CollectionDetailClient({
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-gutter">
-                    {explodedProducts.map((p: any) => {
+                    {explodedProducts.map((p: any, idx: number) => {
                       const isWishlisted = wishlist.includes(p.id);
                       return (
                         <ProductCard
@@ -703,6 +704,7 @@ export default function CollectionDetailClient({
                           isWishlisted={isWishlisted}
                           onQuickAdd={(item, variant) => handleQuickAdd(item, variant)}
                           showQuickAdd={true}
+                          priority={idx < 4}
                         />
                       );
                     })}

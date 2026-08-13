@@ -172,7 +172,7 @@ export default function WishlistPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-gutter">
-              {wishlist.map((item) => (
+              {wishlist.map((item, idx) => (
                 <ProductCard
                   key={item.id}
                   product={item}
@@ -181,6 +181,7 @@ export default function WishlistPage() {
                   onWishlistToggle={(id, title, e) => handleRemove(id, title, e)}
                   onQuickAdd={(p, v) => handleMoveToBag(p as Product)}
                   showQuickAdd={true}
+                  priority={idx < 4}
                 />
               ))}
             </div>
@@ -198,12 +199,13 @@ export default function WishlistPage() {
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                  {suggestions.map((p) => (
+                  {suggestions.map((p, idx) => (
                     <ProductCard
                       key={p.id}
                       product={p}
                       formatPrice={formatPrice}
                       showQuickAdd={false}
+                      priority={idx < 4}
                     />
                   ))}
                 </div>

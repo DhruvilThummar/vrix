@@ -1,9 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Header from "@/components/shop/Header";
 import Footer from "@/components/shop/Footer";
-import VrixChatWidget from "@/components/chat/VrixChatWidget";
 import { usePathname } from "next/navigation";
+
+const VrixChatWidget = dynamic(() => import("@/components/chat/VrixChatWidget"), {
+  ssr: false,
+});
 
 export default function ShopLayout({
   children,

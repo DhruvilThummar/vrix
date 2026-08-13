@@ -320,30 +320,6 @@ const withProductDefaults = (product) => {
   };
 };
 
-const runProductQuery = async (queryWithImages, queryWithoutImages) => {
-  try {
-    const res = await queryWithImages();
-    return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
-  } catch (error) {
-    if (prisma) {
-      try {
-        await ensureTablesExist();
-        const res = await queryWithImages();
-        return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
-      } catch (retryErr) {
-        // Safe fallback using basic select if columns are missing in DB
-      }
-    }
-    if (queryWithoutImages) {
-      try {
-        const res = await queryWithoutImages();
-        return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
-      } catch (e) { }
-    }
-    throw error;
-  }
-};
-
 // withTimeout: wraps a promise with a timeout, rejects if too slow
 const withTimeout = (promise, ms) => {
   return new Promise((resolve, reject) => {
@@ -353,6 +329,30 @@ const withTimeout = (promise, ms) => {
       (err) => { clearTimeout(timer); reject(err); }
     );
   });
+};
+
+const runProductQuery = async (queryWithImages, queryWithoutImages) => {
+  try {
+    const res = await withTimeout(queryWithImages(), 8000);
+    return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
+  } catch (error) {
+    if (prisma) {
+      try {
+        await ensureTablesExist();
+        const res = await withTimeout(queryWithImages(), 5000);
+        return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
+      } catch (retryErr) {
+        // Safe fallback using basic select if columns are missing in DB
+      }
+    }
+    if (queryWithoutImages) {
+      try {
+        const res = await withTimeout(queryWithoutImages(), 5000);
+        return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
+      } catch (e) { }
+    }
+    throw error;
+  }
 };
 
 const userMemoryMap = new Map();

@@ -410,7 +410,7 @@ export default function ProductsCatalogClient({
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-gutter">
-                {processedProducts.map((p: any) => {
+                {processedProducts.map((p: any, idx: number) => {
                   const isWishlisted = wishlist.includes(p.id);
                   return (
                     <ProductCard
@@ -421,6 +421,7 @@ export default function ProductsCatalogClient({
                       onWishlistToggle={(id, title, e) => toggleWishlist(id, title, e)}
                       onQuickAdd={(item, variant) => handleQuickAdd(item, variant)}
                       showQuickAdd={true}
+                      priority={idx < 4}
                     />
                   );
                 })}

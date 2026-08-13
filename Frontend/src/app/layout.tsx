@@ -2,13 +2,15 @@
 import type { Metadata } from "next";
 import { Inter, Jost, Cormorant_Garamond } from "next/font/google";
 import localFont from "next/font/local";
+import dynamic from "next/dynamic";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
-import CookieConsentBanner from "@/components/privacy/CookieConsentBanner";
 import ConditionalScriptLoader from "@/components/privacy/ConditionalScriptLoader";
 import { Analytics } from "@vercel/analytics/react";
+
+const CookieConsentBanner = dynamic(() => import("@/components/privacy/CookieConsentBanner"));
 
 const inter = Inter({
   variable: "--font-inter",

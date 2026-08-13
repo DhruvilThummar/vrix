@@ -43,6 +43,7 @@ export default function SkeletonImage({
         width={width}
         height={height}
         onLoad={() => setLoaded(true)}
+        loading={props.priority ? "eager" : (props.loading || "lazy")}
         className={`transition-all duration-700 ease-out ${
           loaded ? "opacity-100 scale-100 blur-0" : "opacity-0 scale-105 blur-xs"
         } ${className}`}
