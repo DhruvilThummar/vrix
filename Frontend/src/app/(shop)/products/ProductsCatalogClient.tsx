@@ -139,26 +139,49 @@ export default function ProductsCatalogClient({
     let result = products.filter((p) => p.isVisible !== false && (p.stock ?? 999) > 0);
 
     if (selectedCollection !== "All") {
-      result = result.filter((p) => (p.collection || "").toLowerCase() === selectedCollection.toLowerCase());
+      result = result.filter((p) => {
+        const pColl = (p.collection || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        const targetColl = selectedCollection.toLowerCase().replace(/[^a-z0-9]/g, "");
+        return pColl === targetColl || pColl.includes(targetColl) || targetColl.includes(pColl);
+      });
     }
 
     if (selectedMaterial !== "All") {
       result = result.filter((p) => {
         const mat = (p.material || "").toLowerCase();
+        const title = (p.title || "").toLowerCase();
+        const desc = (p.description || "").toLowerCase();
+        const subtitle = (p.subtitle || "").toLowerCase();
+        const tags = Array.isArray(p.tags) ? p.tags.join(" ").toLowerCase() : "";
         const variantMats = Array.isArray(p.variants)
           ? p.variants.map((v: any) => (v.material || "").toLowerCase()).join(" ")
           : "";
-        const combined = `${mat} ${variantMats}`;
+        const combined = `${mat} ${title} ${desc} ${subtitle} ${tags} ${variantMats}`;
+        const target = selectedMaterial.toLowerCase().trim();
 
-        if (selectedMaterial === "Gold")     return combined.includes("gold");
-        if (selectedMaterial === "Silver")   return combined.includes("silver");
-        if (selectedMaterial === "Platinum") return combined.includes("platinum");
-        return true;
+        if (target === "gold")     return combined.includes("gold") || combined.includes("vermeil") || combined.includes("18k");
+        if (target === "silver")   return combined.includes("silver") || combined.includes("925") || combined.includes("sterling");
+        if (target === "platinum") return combined.includes("platinum") || combined.includes("950");
+        if (target === "diamond")  return combined.includes("diamond") || combined.includes("solitaire") || combined.includes("pave");
+        return combined.includes(target);
       });
     }
 
     if (selectedType !== "All") {
-      result = result.filter((p) => p.type.toLowerCase() === selectedType.toLowerCase());
+      result = result.filter((p) => {
+        if (!p.type) return false;
+        const pType = p.type.toLowerCase().trim();
+        const targetType = selectedType.toLowerCase().trim();
+        if (pType === targetType) return true;
+
+        const pSingular = pType.endsWith("s") ? pType.slice(0, -1) : pType;
+        const tSingular = targetType.endsWith("s") ? targetType.slice(0, -1) : targetType;
+
+        if (tSingular === "ring") {
+          return (pSingular === "ring" || pType.includes("ring")) && !pType.includes("earring");
+        }
+        return pSingular === tSingular || pType.includes(tSingular) || tSingular.includes(pSingular);
+      });
     }
 
     const exploded = result.flatMap((p) => {
