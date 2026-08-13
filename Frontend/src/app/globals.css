@@ -484,16 +484,16 @@ textarea:focus {
  */
 
 /* 1. Global Default: Jost for body & all generic text elements */
-body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(p, span, div, a, li, td, th, option, select, textarea, input, label):not([class*="font-"]) {
+body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(p, span, div, a, li, td, th, option, select, textarea, input, label):not([class*="font-"]):not(.material-symbols-outlined) {
   font-family: var(--typography-body) !important; /* Jost */
 }
 
 /* 2. Headings, Subheadings, Buttons: Inter */
-body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(h1, h2, h3, h4, h5, h6, button):not(.font-accent):not(.font-chancery):not(.font-highlight):not(.font-logo):not(.font-aquavit) {
+body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(h1, h2, h3, h4, h5, h6, button):not(.font-accent):not(.font-chancery):not(.font-highlight):not(.font-logo):not(.font-aquavit):not(.material-symbols-outlined) {
   font-family: var(--typography-primary) !important; /* Inter */
 }
 
 /* 3. Inputs & Forms: Inter */
-body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(input, select, textarea, label):not(.font-accent):not(.font-chancery):not(.font-highlight) {
+body.shop-typography:not(.admin-layout):not([class*="admin"]) :is(input, select, textarea, label):not(.font-accent):not(.font-chancery):not(.font-highlight):not(.material-symbols-outlined) {
   font-family: var(--typography-primary) !important; /* Inter */
 }
