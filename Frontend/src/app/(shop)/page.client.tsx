@@ -407,14 +407,14 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 <>
                   <button
                     onClick={() => collectionsApi && collectionsApi.scrollPrev()}
-                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
                     aria-label="Previous collections"
                   >
                     <span className="material-symbols-outlined text-lg">chevron_left</span>
                   </button>
                   <button
                     onClick={() => collectionsApi && collectionsApi.scrollNext()}
-                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
                     aria-label="Next collections"
                   >
                     <span className="material-symbols-outlined text-lg">chevron_right</span>
@@ -491,14 +491,14 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 <>
                   <button
                     onClick={() => categoryApi && categoryApi.scrollPrev()}
-                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
                     aria-label="Previous categories"
                   >
                     <span className="material-symbols-outlined text-lg">chevron_left</span>
                   </button>
                   <button
                     onClick={() => categoryApi && categoryApi.scrollNext()}
-                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
                     aria-label="Next categories"
                   >
                     <span className="material-symbols-outlined text-lg">chevron_right</span>
@@ -560,14 +560,14 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 <>
                   <button
                     onClick={() => newArrivalsApi && newArrivalsApi.scrollPrev()}
-                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
                     aria-label="Previous new arrivals"
                   >
                     <span className="material-symbols-outlined text-lg">chevron_left</span>
                   </button>
                   <button
                     onClick={() => newArrivalsApi && newArrivalsApi.scrollNext()}
-                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
                     aria-label="Next new arrivals"
                   >
                     <span className="material-symbols-outlined text-lg">chevron_right</span>
@@ -629,14 +629,14 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
                 <>
                   <button
                     onClick={() => featuredApi && featuredApi.scrollPrev()}
-                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    className="absolute left-2 md:-left-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
                     aria-label="Previous featured products"
                   >
                     <span className="material-symbols-outlined text-lg">chevron_left</span>
                   </button>
                   <button
                     onClick={() => featuredApi && featuredApi.scrollNext()}
-                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-deep-navy hover:bg-deep-navy hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
+                    className="absolute right-2 md:-right-5 top-[calc(50%-20px)] -translate-y-1/2 z-10 w-10 h-10 rounded-full border border-slate-grey/30 flex items-center justify-center text-ink-black hover:bg-ink-black hover:text-white transition-all cursor-pointer shadow-md bg-white/95"
                     aria-label="Next featured products"
                   >
                     <span className="material-symbols-outlined text-lg">chevron_right</span>
