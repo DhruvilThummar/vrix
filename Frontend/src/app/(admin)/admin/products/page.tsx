@@ -2479,7 +2479,7 @@ function AdminProductsContent() {
                         value={tmplName}
                         onChange={(e) => setTmplName(e.target.value)}
                         placeholder="e.g. Elegant Diamond Band"
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
                       />
                     </div>
@@ -2489,7 +2489,7 @@ function AdminProductsContent() {
                       <select
                         value={tmplType}
                         onChange={(e) => setTmplType(e.target.value)}
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 cursor-pointer"
                       >
                         {PRODUCT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -2506,7 +2506,7 @@ function AdminProductsContent() {
                         value={tmplMaterial}
                         onChange={(e) => setTmplMaterial(e.target.value)}
                         placeholder="e.g. 18K Yellow Gold"
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
                       />
                     </div>
@@ -2519,7 +2519,7 @@ function AdminProductsContent() {
                         required
                         value={tmplPrice}
                         onChange={(e) => setTmplPrice(e.target.value === "" ? "" : Number(e.target.value))}
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
                       />
                     </div>
@@ -2531,7 +2531,7 @@ function AdminProductsContent() {
                         min={0}
                         value={tmplOriginalPrice}
                         onChange={(e) => setTmplOriginalPrice(e.target.value === "" ? "" : Number(e.target.value))}
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         placeholder="Optional retail price"
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
                       />
@@ -2544,7 +2544,7 @@ function AdminProductsContent() {
                       <select
                         value={tmplLayoutStyle}
                         onChange={(e) => setTmplLayoutStyle(e.target.value)}
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 cursor-pointer"
                       >
                         <option value="2x2">2x2 Grid View</option>
@@ -2560,7 +2560,7 @@ function AdminProductsContent() {
                         value={tmplSizes}
                         onChange={(e) => setTmplSizes(e.target.value)}
                         placeholder="e.g. 5, 6, 7, 8, 9"
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
                       />
                     </div>
@@ -2573,7 +2573,7 @@ function AdminProductsContent() {
                       value={tmplDesc}
                       onChange={(e) => setTmplDesc(e.target.value)}
                       placeholder="Enter a default short descriptive marketing copy for products of this template..."
-                      disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                      disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                       className="w-full border border-slate-grey/30 p-2 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 rounded"
                     />
                   </div>
@@ -2584,7 +2584,7 @@ function AdminProductsContent() {
                       <select
                         value={tmplCollection}
                         onChange={(e) => setTmplCollection(e.target.value)}
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60 cursor-pointer"
                       >
                         {Object.keys(DEFAULT_COLLECTION_LABELS).map(key => (
@@ -2600,7 +2600,7 @@ function AdminProductsContent() {
                         min={0}
                         value={tmplStock}
                         onChange={(e) => setTmplStock(Number(e.target.value))}
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
                       />
                     </div>
@@ -2612,7 +2612,7 @@ function AdminProductsContent() {
                         value={tmplDimensions}
                         onChange={(e) => setTmplDimensions(e.target.value)}
                         placeholder="e.g. 15mm x 15mm"
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
                       />
                     </div>
@@ -2626,7 +2626,7 @@ function AdminProductsContent() {
                         value={tmplTags}
                         onChange={(e) => setTmplTags(e.target.value)}
                         placeholder="e.g. minimal, gift, best-seller"
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-full border-b border-slate-grey/30 py-1.5 text-xs outline-none bg-transparent font-body-md text-ink-black disabled:opacity-60"
                       />
                     </div>
@@ -2637,7 +2637,7 @@ function AdminProductsContent() {
                           type="checkbox"
                           checked={tmplVrixPlusExclusive}
                           onChange={(e) => setTmplVrixPlusExclusive(e.target.checked)}
-                          disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                          disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                           className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-60"
                         />
                         <span>VRIX+ Exclusive</span>
@@ -2648,7 +2648,7 @@ function AdminProductsContent() {
                           type="checkbox"
                           checked={tmplVisible}
                           onChange={(e) => setTmplVisible(e.target.checked)}
-                          disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                          disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                           className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-60"
                         />
                         <span>Visible on Storefront</span>
@@ -2662,7 +2662,7 @@ function AdminProductsContent() {
                         type="checkbox"
                         checked={tmplEngravingEnabled}
                         onChange={(e) => setTmplEngravingEnabled(e.target.checked)}
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-60"
                       />
                       <span>Allow Engravings by Default</span>
@@ -2673,7 +2673,7 @@ function AdminProductsContent() {
                         type="checkbox"
                         checked={tmplGiftNoteEnabled}
                         onChange={(e) => setTmplGiftNoteEnabled(e.target.checked)}
-                        disabled={selectedTemplateId ? !selectedTemplateId.startsWith("custom-") : false}
+                        disabled={Boolean(selectedTemplateId && !selectedTemplateId.startsWith("custom-"))}
                         className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy cursor-pointer disabled:opacity-60"
                       />
                       <span>Allow Gift Note Message by Default</span>
