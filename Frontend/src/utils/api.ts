@@ -831,6 +831,10 @@ export async function fetchCategories() {
   return apiFetch<any[]>("/categories");
 }
 
+export async function fetchTags(): Promise<string[]> {
+  return apiFetch<string[]>("/tags");
+}
+
 export async function fetchAllCategories() {
   return apiFetch<any[]>("/categories/all");
 }

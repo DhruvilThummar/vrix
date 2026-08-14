@@ -22,18 +22,23 @@ const PathSelector = ({
   value,
   onChange,
   allProducts = [],
-  allCollections = []
+  allCollections = [],
+  allCategories = [],
+  allTags = []
 }: {
   value: string;
   onChange: (val: string) => void;
   allProducts?: any[];
   allCollections?: any[];
+  allCategories?: string[];
+  allTags?: string[];
 }) => {
   const valStr = value ?? "";
 
   const getAutoType = (v: string) => {
     if (v.startsWith("/product/")) return "product";
     if (v.startsWith("/collections/") && v !== "/collections") return "collection";
+    if (v.includes("/products?") || v.startsWith("/products?")) return "categoryTag";
     if (v === "/" || STANDARD_PAGES.some(p => p.path === v)) return "page";
     return "custom";
   };
@@ -54,6 +59,24 @@ const PathSelector = ({
     selectedIdOrSlug = valStr.startsWith("/collections/") ? valStr.replace("/collections/", "") : (allCollections[0]?.id || allCollections[0]?.slug || "all");
   }
 
+  // Parsed Category / Tag values for mode 5
+  let selectedCategory = allCategories[0] || "Necklaces";
+  let selectedTag = "";
+  if (valStr.includes("/products?")) {
+    const catMatch = valStr.match(/category=([^&]+)/);
+    const tagMatch = valStr.match(/tag=([^&]+)/);
+    if (catMatch) selectedCategory = decodeURIComponent(catMatch[1]);
+    if (tagMatch) selectedTag = decodeURIComponent(tagMatch[1]);
+  }
+
+  const handleCategoryTagChange = (newCat: string, newTag: string) => {
+    if (newTag) {
+      onChange(`/products?category=${encodeURIComponent(newCat)}&tag=${encodeURIComponent(newTag)}`);
+    } else {
+      onChange(`/products?category=${encodeURIComponent(newCat)}`);
+    }
+  };
+
   const handleTypeChange = (newType: string) => {
     setMode(newType);
     if (newType === "page") {
@@ -64,8 +87,11 @@ const PathSelector = ({
     } else if (newType === "collection") {
       const firstColl = allCollections[0]?.id || allCollections[0]?.slug || "all";
       onChange(`/collections/${firstColl}`);
+    } else if (newType === "categoryTag") {
+      const firstCat = allCategories[0] || "Necklaces";
+      onChange(`/products?category=${encodeURIComponent(firstCat)}`);
     } else if (newType === "custom") {
-      const isStandard = valStr === "/" || STANDARD_PAGES.some(p => p.path === valStr) || valStr.startsWith("/product/") || valStr.startsWith("/collections/");
+      const isStandard = valStr === "/" || STANDARD_PAGES.some(p => p.path === valStr) || valStr.startsWith("/product/") || valStr.startsWith("/collections/") || valStr.includes("/products?");
       const defaultCustom = isStandard ? "/custom-link" : (valStr || "/custom-link");
       onChange(defaultCustom);
     }
@@ -91,6 +117,7 @@ const PathSelector = ({
         <option value="page">Standard Page</option>
         <option value="collection">Collection Page</option>
         <option value="product">Individual Product</option>
+        <option value="categoryTag">Category / Tag Filter</option>
         <option value="custom">Custom Web Link</option>
       </select>
 
@@ -138,6 +165,54 @@ const PathSelector = ({
             </option>
           ))}
         </select>
+      )}
+
+      {mode === "categoryTag" && (
+        <div className="flex flex-1 gap-2 min-w-0">
+          <select
+            value={selectedCategory}
+            onChange={(e) => handleCategoryTagChange(e.target.value, selectedTag)}
+            className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none text-slate-grey flex-1 min-w-0 truncate cursor-pointer font-medium rounded"
+          >
+            {allCategories.length > 0 ? (
+              allCategories.map((cat: any) => {
+                const catVal = typeof cat === "string" ? cat : (cat.name || cat.title || cat.id || "");
+                return (
+                  <option key={catVal} value={catVal}>
+                    {catVal}
+                  </option>
+                );
+              })
+            ) : (
+              ["Necklaces", "Earrings", "Rings", "Bracelets", "Solitaire"].map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))
+            )}
+          </select>
+
+          <select
+            value={selectedTag}
+            onChange={(e) => handleCategoryTagChange(selectedCategory, e.target.value)}
+            className="border border-slate-grey/30 bg-pure-white text-xs px-2.5 py-1.5 outline-none text-slate-grey flex-1 min-w-0 truncate cursor-pointer font-medium rounded"
+          >
+            <option value="">All Tags (No Tag Filter)</option>
+            {allTags.length > 0 ? (
+              allTags.map((tag: string) => (
+                <option key={tag} value={tag}>
+                  tag: {tag}
+                </option>
+              ))
+            ) : (
+              ["gold-vermeil", "sterling-silver", "solitaire", "hoops", "stackable", "tennis"].map((tag) => (
+                <option key={tag} value={tag}>
+                  tag: {tag}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
       )}
 
       {mode === "custom" && (

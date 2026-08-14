@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   fetchProducts, createProduct, updateProduct, deleteProduct, uploadMediaMultiple,
-  updateProductStock, updateProductVisibility, fetchAllCollections, fetchAllCategories,
+  updateProductStock, updateProductVisibility, fetchAllCollections, fetchAllCategories, fetchTags,
   fetchSiteConfig, saveSiteConfigKey
 } from "@/utils/api";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -185,6 +185,7 @@ function AdminProductsContent() {
   const [fTags, setFTags] = useState<string[]>([]);
   const [fVariants, setFVariants] = useState<ProductVariant[]>([]);
   const [fTagInput, setFTagInput] = useState("");
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   // Product Comparison & Gift Packaging properties
   const [fWorthIndex, setFWorthIndex] = useState(5);
@@ -216,6 +217,7 @@ function AdminProductsContent() {
   };
 
   const loadCollections = () => {
+    fetchTags().then(setAvailableTags).catch(() => {});
     // Categories are the primary product grouping. Keep existing collections in
     // the picker as well so historical products remain editable.
     Promise.all([fetchAllCollections(), fetchAllCategories()])
@@ -1186,24 +1188,48 @@ function AdminProductsContent() {
                       <div className="flex flex-col gap-2">
                         <label className="font-label-caps text-[9px] text-slate-grey uppercase tracking-widest flex items-center gap-1">
                           <span className="material-symbols-outlined text-[12px]">label</span>
-                          Tags
+                          Product Filter Tags (Press Enter or Comma to add)
                         </label>
                         <div className="flex gap-2">
                           <input
-                            type="text" value={fTagInput}
-                            onChange={(e) => setFTagInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
-                            placeholder="e.g. minimalist, gifting…"
+                            list="tag-suggestions"
+                            type="text"
+                            value={fTagInput}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val.includes(",")) {
+                                const parts = val.split(",");
+                                parts.forEach((p) => {
+                                  const t = p.trim().toLowerCase();
+                                  if (t && !fTags.includes(t)) setFTags((prev) => [...prev, t]);
+                                });
+                                setFTagInput("");
+                              } else {
+                                setFTagInput(val);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === ",") {
+                                e.preventDefault();
+                                addTag();
+                              }
+                            }}
+                            placeholder="e.g. gold-vermeil, solitaire, hoops…"
                             className="flex-1 border-b border-slate-grey/30 py-1 focus:border-deep-navy outline-none font-body-md text-xs bg-transparent placeholder:text-slate-grey/30"
                           />
-                          <button type="button" onClick={addTag} className="text-deep-navy text-[10px] font-label-caps uppercase px-2 hover:underline cursor-pointer">Add</button>
+                          <datalist id="tag-suggestions">
+                            {availableTags.map((tag) => (
+                              <option key={tag} value={tag} />
+                            ))}
+                          </datalist>
+                          <button type="button" onClick={addTag} className="text-deep-navy text-[10px] font-label-caps uppercase px-2 hover:underline cursor-pointer font-bold">Add</button>
                         </div>
                         {fTags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-1">
+                          <div className="flex flex-wrap gap-1.5 mt-1">
                             {fTags.map((tag) => (
-                              <span key={tag} className="flex items-center gap-1 text-[10px] bg-soft-linen border border-slate-grey/20 px-2 py-0.5 font-label-caps uppercase tracking-wider text-ink-black">
-                                {tag}
-                                <button type="button" onClick={() => setFTags(fTags.filter((t) => t !== tag))} className="text-slate-grey hover:text-red-500 cursor-pointer text-[10px]">×</button>
+                              <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 bg-deep-navy/10 text-deep-navy border border-deep-navy/20 text-[10px] font-label-caps uppercase rounded-xs">
+                                <span>{tag}</span>
+                                <button type="button" onClick={() => setFTags(fTags.filter((t) => t !== tag))} className="hover:text-red-600 font-bold ml-0.5 cursor-pointer font-bold">✕</button>
                               </span>
                             ))}
                           </div>

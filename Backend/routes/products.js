@@ -183,22 +183,29 @@ router.get("/", async (req, res) => {
     if (cached) return res.json(cached);
 
     let products = await db.products.findMany();
-    const { material, type, collection, search } = req.query;
+    const { material, type, collection, category, tag, search } = req.query;
 
-    if (collection) {
-      const col = String(collection).toLowerCase().trim();
-      products = products.filter((p) => (p.collection || "").toLowerCase() === col);
-    }
-
-    if (type) {
-      const t = String(type).toLowerCase().trim();
-      if (t === "ring" || t === "rings") {
+    // Filter by Category (matches type or collection)
+    const activeCategory = category || collection || type;
+    if (activeCategory) {
+      const catStr = String(activeCategory).toLowerCase().trim();
+      if (catStr !== "all") {
         products = products.filter((p) => {
           const pType = (p.type || "").toLowerCase().trim();
-          return pType === "ring" || pType === "rings" || (/\bring(s)?\b/i.test(pType) && !pType.includes("earring"));
+          const pCol = (p.collection || "").toLowerCase().trim();
+          return pType === catStr || pCol === catStr || pType.includes(catStr) || pCol.includes(catStr);
         });
-      } else {
-        products = products.filter((p) => (p.type || "").toLowerCase().includes(t));
+      }
+    }
+
+    // Filter by Tag slug
+    if (tag) {
+      const tagSlug = String(tag).toLowerCase().trim();
+      if (tagSlug !== "all") {
+        products = products.filter((p) => {
+          if (!Array.isArray(p.tags)) return false;
+          return p.tags.some((t) => String(t).toLowerCase().trim() === tagSlug);
+        });
       }
     }
 
@@ -229,7 +236,8 @@ router.get("/", async (req, res) => {
         const mat = (p.material || "").toLowerCase();
         const typeStr = (p.type || "").toLowerCase();
         const sku = (p.sku || "").toLowerCase();
-        return title.includes(q) || desc.includes(q) || mat.includes(q) || typeStr.includes(q) || sku.includes(q);
+        const tagsStr = Array.isArray(p.tags) ? p.tags.join(" ").toLowerCase() : "";
+        return title.includes(q) || desc.includes(q) || mat.includes(q) || typeStr.includes(q) || sku.includes(q) || tagsStr.includes(q);
       });
     }
 
