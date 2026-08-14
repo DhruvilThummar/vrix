@@ -71,15 +71,21 @@ export default function VrixChatWidget() {
     };
   }, [isOpen]);
 
-  // Keyboard operability: Esc key closes panel
+  // Keyboard operability: Esc key closes panel & Custom Product Navigation Event closes modal on mobile
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
         setIsOpen(false);
       }
     };
+    const handleCloseChat = () => setIsOpen(false);
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("vrix-close-chat", handleCloseChat);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("vrix-close-chat", handleCloseChat);
+    };
   }, [isOpen]);
 
   const processResponse = useCallback(

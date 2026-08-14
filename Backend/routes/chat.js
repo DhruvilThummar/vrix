@@ -129,12 +129,21 @@ router.post("/message", async (req, res) => {
 
     sessionId = session.id;
 
-    const actionValue = req.body?.actionValue;
-    const userLabel = req.body?.userLabel;
+    const targetKey = actionValue || userLabel;
 
-    // Quick Action Instantaneous Dispatcher
+    // Quick Action & Interactive Pill Dispatcher
     const QUICK_ACTION_MAP = {
       myself: {
+        reply: "Welcome. Let's find a piece tailored to your personal aesthetic. What category are you shopping for?",
+        options: [
+          { label: "Necklaces", value: "Necklaces" },
+          { label: "Earrings", value: "Earrings" },
+          { label: "Rings", value: "Rings" },
+          { label: "Bracelets", value: "Bracelets" },
+          { label: "Not sure yet", value: "All" }
+        ]
+      },
+      "Find a piece for myself": {
         reply: "Welcome. Let's find a piece tailored to your personal aesthetic. What category are you shopping for?",
         options: [
           { label: "Necklaces", value: "Necklaces" },
@@ -153,7 +162,26 @@ router.post("/message", async (req, res) => {
           { label: "Myself", value: "myself" }
         ]
       },
+      "Find a gift": {
+        reply: "Gifting at VRIX is curated with intention. Who are you finding a gift for?",
+        options: [
+          { label: "Partner", value: "Partner" },
+          { label: "Parent", value: "Parent" },
+          { label: "Friend", value: "Friend" },
+          { label: "Myself", value: "myself" }
+        ]
+      },
       collections: {
+        reply: "Select a signature collection category to explore:",
+        options: [
+          { label: "Necklaces", value: "Necklaces" },
+          { label: "Earrings", value: "Earrings" },
+          { label: "Rings", value: "Rings" },
+          { label: "Bracelets", value: "Bracelets" },
+          { label: "Bespoke", value: "Bespoke" }
+        ]
+      },
+      "Explore collections": {
         reply: "Select a signature collection category to explore:",
         options: [
           { label: "Necklaces", value: "Necklaces" },
@@ -194,16 +222,149 @@ router.post("/message", async (req, res) => {
           { label: "Submit Repair Request", value: "Repair" },
           { label: "Talk to Concierge", value: "trigger-handoff" }
         ]
+      },
+      Necklaces: {
+        reply: "Explore architectural VRIX necklaces crafted with lab-grown solitaires and fine gold/silver finishes:",
+        filterType: "Necklaces",
+        options: [
+          { label: "Compare these pieces", value: "compare" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      Earrings: {
+        reply: "Explore VRIX earrings — minimal studs, sculptural hoops, and drops designed for daily elegance:",
+        filterType: "Earrings",
+        options: [
+          { label: "Compare these pieces", value: "compare" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      Rings: {
+        reply: "Explore VRIX solitaire rings and minimal bands featuring conflict-free lab diamonds:",
+        filterType: "Rings",
+        options: [
+          { label: "Compare these pieces", value: "compare" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      Bracelets: {
+        reply: "Explore VRIX bracelets and cuffs designed for tactile weight and daily comfort:",
+        filterType: "Bracelets",
+        options: [
+          { label: "Compare these pieces", value: "compare" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      Partner: {
+        reply: "Here are curated gift recommendations perfect for your partner, complete with signature packaging:",
+        options: [
+          { label: "Under ₹15,000", value: "15000" },
+          { label: "Explore all collections", value: "collections" }
+        ]
+      },
+      Parent: {
+        reply: "Timeless, elegant pieces crafted for parents — thoughtful gifts meant to honor lasting memories:",
+        options: [
+          { label: "Explore all collections", value: "collections" },
+          { label: "Talk to concierge", value: "trigger-handoff" }
+        ]
+      },
+      Friend: {
+        reply: "Modern, minimalist everyday jewelry perfect for celebrating friendship and special moments:",
+        options: [
+          { label: "Explore all collections", value: "collections" }
+        ]
+      },
+      Care: {
+        reply: "VRIX Jewelry Care Guide:\n• Store pieces separately in the provided soft linen pouch.\n• Avoid direct contact with harsh chemicals, perfumes, and hairsprays.\n• Clean gently with a soft microfibre polishing cloth.",
+        options: [
+          { label: "Submit Repair Request", value: "Repair" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Jewelry Care Guide": {
+        reply: "VRIX Jewelry Care Guide:\n• Store pieces separately in the provided soft linen pouch.\n• Avoid direct contact with harsh chemicals, perfumes, and hairsprays.\n• Clean gently with a soft microfibre polishing cloth.",
+        options: [
+          { label: "Submit Repair Request", value: "Repair" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      Repair: {
+        reply: "To submit a warranty or repair service request, please provide your:\n1. Order Number (e.g. VRIX-1002)\n2. Contact Email Address\n3. Description of the repair needed\n\nOur client concierge will follow up within 24 hours.",
+        options: [
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Submit Repair Request": {
+        reply: "To submit a warranty or repair service request, please provide your:\n1. Order Number (e.g. VRIX-1002)\n2. Contact Email Address\n3. Description of the repair needed\n\nOur client concierge will follow up within 24 hours.",
+        options: [
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "4Cs": {
+        reply: "The 4Cs of Diamonds:\n• Cut: Determines brilliance and light refraction.\n• Color: Ranges from D (colorless) to Z.\n• Clarity: Evaluates natural microscopic inclusions (VRIX uses VS+ clarity).\n• Carat: Measures diamond weight.",
+        options: [
+          { label: "Ethical Sourcing", value: "Sourcing" },
+          { label: "Metal Purity Guide", value: "Metals" }
+        ]
+      },
+      Sourcing: {
+        reply: "VRIX Solitaire & Metal Sourcing:\nOur lab-grown diamonds are synthesized with zero mining impact, offering 100% conflict-free brilliance chemically identical to mined diamonds. Metals are 100% recycled 925 silver and solid 18K gold vermeil.",
+        options: [
+          { label: "Metal Purity Guide", value: "Metals" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      Metals: {
+        reply: "VRIX Metal Purity Guide:\n• 18K Solid Gold & 2.5µm Vermeil: Deep lustre and durable skin comfort.\n• 925 Sterling Silver: Pure hypoallergenic base nickel-free for daily wear.",
+        options: [
+          { label: "The 4Cs of Diamonds", value: "4Cs" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      "trigger-handoff": {
+        reply: "Our private client concierge associates are available for personal styling, custom bespoke orders, and order assistance.",
+        handoff: {
+          title: "VRIX Private Concierge",
+          description: "Quiet luxury consultation, bespoke guidance, and service.",
+          phone: "+91 90542 85693",
+          instagram: "https://www.instagram.com/vrix.official",
+          linkedin: "https://www.linkedin.com/company/vrixjewels",
+          mapsUrl: "https://share.google/EjrRFPTc3O06labrR"
+        },
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      "Talk to Concierge": {
+        reply: "Our private client concierge associates are available for personal styling, custom bespoke orders, and order assistance.",
+        handoff: {
+          title: "VRIX Private Concierge",
+          description: "Quiet luxury consultation, bespoke guidance, and service.",
+          phone: "+91 90542 85693",
+          instagram: "https://www.instagram.com/vrix.official",
+          linkedin: "https://www.linkedin.com/company/vrixjewels",
+          mapsUrl: "https://share.google/EjrRFPTc3O06labrR"
+        },
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Explore collections", value: "collections" }
+        ]
       }
     };
 
-    if (actionValue && QUICK_ACTION_MAP[actionValue]) {
-      const actionConfig = QUICK_ACTION_MAP[actionValue];
+    if (targetKey && QUICK_ACTION_MAP[targetKey]) {
+      const actionConfig = QUICK_ACTION_MAP[targetKey];
       let products = [];
       try {
         const allProds = await db.products.findMany();
         if (Array.isArray(allProds)) {
-          products = allProds.filter(p => p.isVisible !== false).slice(0, 3).map(p => ({
+          let list = allProds.filter(p => p.isVisible !== false);
+          if (actionConfig.filterType) {
+            list = list.filter(p => (p.type || p.collection || "").toLowerCase() === actionConfig.filterType.toLowerCase());
+          }
+          products = list.slice(0, 3).map(p => ({
             id: p.id,
             title: p.title,
             category: p.type || p.collection || "Jewelry",
@@ -223,7 +384,8 @@ router.post("/message", async (req, res) => {
             id: `msg-${Date.now()}`,
             sender: "bot",
             text: actionConfig.reply,
-            products: actionValue === "collections" || actionValue === "discovery" ? products : undefined,
+            products: products.length > 0 ? products : undefined,
+            handoff: actionConfig.handoff,
             options: actionConfig.options,
             timestamp: isoTimestamp
           }
