@@ -68,9 +68,13 @@ export default function AdminSettingsPage() {
       const baseUrl = getApiBaseUrl();
       const currentEmail = user?.email || adminEmail;
 
+      const secretKey = adminSecret || localStorage.getItem("vrix-admin-secret") || "vrix_admin_secret_change_me_in_production";
       const res = await fetch(`${baseUrl}/admin/update-credentials`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Admin-Secret": secretKey
+        },
         body: JSON.stringify({
           oldEmail: currentEmail,
           newEmail: adminEmail.trim(),
