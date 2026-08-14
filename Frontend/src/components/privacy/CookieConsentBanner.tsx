@@ -34,10 +34,14 @@ function getSessionId(): string {
 export default function CookieConsentBanner() {
   const [isOpen, setIsOpen] = useState(false);
   const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState<"cookies" | "dpdp">("cookies");
+  const [dpdpEmail, setDpdpEmail] = useState("");
+  const [dpdpStatus, setDpdpStatus] = useState<string | null>(null);
+  const [dpdpLoading, setDpdpLoading] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
     necessary: true,
-    analytics: false, // Default OFF for EU & IN (GDPR & DPDP Act compliance)
-    marketing: false, // Default OFF for EU & IN
+    analytics: false,
+    marketing: false,
     preferences: false,
     region: "GLOBAL",
   });
@@ -150,6 +154,73 @@ export default function CookieConsentBanner() {
     saveConsent(essentialOnly, "banner_reject_essential");
   };
 
+  const handleDpdpDataRequest = async () => {
+    if (!dpdpEmail || !dpdpEmail.includes("@")) {
+      setDpdpStatus("Please enter a valid email address.");
+      return;
+    }
+    setDpdpLoading(true);
+    setDpdpStatus(null);
+    try {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/consent/data-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: dpdpEmail }),
+      });
+      const data = await res.json();
+      setDpdpStatus(data.message || "Data request submitted.");
+    } catch (e: any) {
+      setDpdpStatus("Failed to submit request: " + e.message);
+    } finally {
+      setDpdpLoading(false);
+    }
+  };
+
+  const handleDpdpWithdrawConsent = async () => {
+    setDpdpLoading(true);
+    setDpdpStatus(null);
+    try {
+      const baseUrl = getApiBaseUrl();
+      const sessionId = getSessionId();
+      await fetch(`${baseUrl}/consent/withdraw-consent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, email: dpdpEmail }),
+      });
+      handleRejectNonEssential();
+      setDpdpStatus("All optional consent withdrawn under DPDP Act 2023 Section 6(4).");
+    } catch (e: any) {
+      setDpdpStatus("Failed to withdraw consent: " + e.message);
+    } finally {
+      setDpdpLoading(false);
+    }
+  };
+
+  const handleDpdpErasureRequest = async () => {
+    if (!dpdpEmail || !dpdpEmail.includes("@")) {
+      setDpdpStatus("Please enter your registered email address to request data erasure.");
+      return;
+    }
+    setDpdpLoading(true);
+    setDpdpStatus(null);
+    try {
+      const baseUrl = getApiBaseUrl();
+      const sessionId = getSessionId();
+      const res = await fetch(`${baseUrl}/consent/delete-account-data`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: dpdpEmail, sessionId }),
+      });
+      const data = await res.json();
+      setDpdpStatus(data.message || "Erasure request logged successfully.");
+    } catch (e: any) {
+      setDpdpStatus("Failed to submit erasure request: " + e.message);
+    } finally {
+      setDpdpLoading(false);
+    }
+  };
+
   if (!isOpen && !showPreferencesModal) return null;
 
   return (
@@ -161,10 +232,10 @@ export default function CookieConsentBanner() {
             <div className="space-y-2">
               <h3 className="font-headline-md text-xs font-bold uppercase tracking-[0.2em] text-deep-navy flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-gold-accent"></span>
-                Privacy Preferences
+                Privacy Preferences &amp; DPDP Act
               </h3>
               <p className="text-xs text-slate-grey leading-relaxed">
-                We use cookies to optimize your experience, analyze traffic, and display personalized announcements. Choose your level of privacy.
+                We respect your personal data under India&apos;s DPDP Act 2023 &amp; global privacy standards. Choose your data preferences below.
               </p>
             </div>
 
@@ -179,7 +250,10 @@ export default function CookieConsentBanner() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowPreferencesModal(true)}
+                  onClick={() => {
+                    setActiveModalTab("cookies");
+                    setShowPreferencesModal(true);
+                  }}
                   className="px-3 py-2 border border-slate-grey/20 hover:border-ink-black text-ink-black text-[10px] font-button uppercase tracking-widest transition-colors cursor-pointer text-center"
                 >
                   Manage
@@ -204,9 +278,9 @@ export default function CookieConsentBanner() {
             <div className="flex justify-between items-center border-b border-slate-grey/10 pb-4">
               <div className="space-y-1">
                 <h3 className="font-headline-md text-sm text-ink-black font-bold uppercase tracking-wider">
-                  Cookie Settings
+                  Privacy &amp; Data Control Center
                 </h3>
-                <p className="text-[10px] text-slate-grey leading-none">Customize your digital footprint</p>
+                <p className="text-[10px] text-slate-grey leading-none">Compliant with India DPDP Act 2023 &amp; GDPR</p>
               </div>
               <button
                 onClick={() => setShowPreferencesModal(false)}
@@ -217,78 +291,167 @@ export default function CookieConsentBanner() {
               </button>
             </div>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
-              {/* Strictly Necessary (Always ON) */}
-              <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 bg-soft-linen/10">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-deep-navy/5 text-deep-navy rounded mt-0.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Strictly Essential</h4>
-                    <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Required for core functions like security, checkout sessions, and preferences memory.</p>
-                  </div>
-                </div>
-                <span className="font-label-caps text-[9px] text-deep-navy uppercase font-semibold px-2 py-0.5 bg-deep-navy/5 border border-deep-navy/10 shrink-0">
-                  Always On
-                </span>
-              </div>
-
-              {/* Analytics Cookies */}
-              <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 hover:border-slate-grey/25 transition-all">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-gold-accent/5 text-gold-accent rounded mt-0.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Analytics &amp; Performance</h4>
-                    <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Aggregated visitor metrics and diagnostic details to refine store performance.</p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
-                  <input
-                    type="checkbox"
-                    checked={preferences.analytics}
-                    onChange={(e) => setPreferences({ ...preferences, analytics: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-slate-grey/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-deep-navy"></div>
-                </label>
-              </div>
-
-              {/* Marketing Cookies */}
-              <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 hover:border-slate-grey/25 transition-all">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-emerald-600/5 text-emerald-700 rounded mt-0.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Marketing &amp; Campaigns</h4>
-                    <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Delivers tailored announcements and tracks return on promotional campaigns.</p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
-                  <input
-                    type="checkbox"
-                    checked={preferences.marketing}
-                    onChange={(e) => setPreferences({ ...preferences, marketing: e.target.checked })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-9 h-5 bg-slate-grey/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-deep-navy"></div>
-                </label>
-              </div>
+            <div className="flex border-b border-slate-grey/15 gap-4">
+              <button
+                type="button"
+                onClick={() => setActiveModalTab("cookies")}
+                className={`pb-2 text-[10px] font-label-caps uppercase font-bold tracking-wider border-b-2 transition-all cursor-pointer ${
+                  activeModalTab === "cookies"
+                    ? "border-deep-navy text-deep-navy"
+                    : "border-transparent text-slate-grey hover:text-deep-navy"
+                }`}
+              >
+                Cookie Preferences
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveModalTab("dpdp")}
+                className={`pb-2 text-[10px] font-label-caps uppercase font-bold tracking-wider border-b-2 transition-all cursor-pointer ${
+                  activeModalTab === "dpdp"
+                    ? "border-deep-navy text-deep-navy"
+                    : "border-transparent text-slate-grey hover:text-deep-navy"
+                }`}
+              >
+                DPDP Act 2023 Data Rights
+              </button>
             </div>
+
+            {activeModalTab === "cookies" ? (
+              <div className="space-y-4 max-h-96 overflow-y-auto pr-1 custom-scrollbar">
+                {/* Strictly Necessary (Always ON) */}
+                <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 bg-soft-linen/10">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-deep-navy/5 text-deep-navy rounded mt-0.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Strictly Essential</h4>
+                      <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Required for core functions like security, checkout sessions, and preferences memory.</p>
+                    </div>
+                  </div>
+                  <span className="font-label-caps text-[9px] text-deep-navy uppercase font-semibold px-2 py-0.5 bg-deep-navy/5 border border-deep-navy/10 shrink-0">
+                    Always On
+                  </span>
+                </div>
+
+                {/* Analytics Cookies */}
+                <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 hover:border-slate-grey/25 transition-all">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-gold-accent/5 text-gold-accent rounded mt-0.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Analytics &amp; Performance</h4>
+                      <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Aggregated visitor metrics and diagnostic details to refine store performance.</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={preferences.analytics}
+                      onChange={(e) => setPreferences({ ...preferences, analytics: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-grey/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-deep-navy"></div>
+                  </label>
+                </div>
+
+                {/* Marketing Cookies */}
+                <div className="p-4 border border-slate-grey/10 rounded-sm flex items-start justify-between gap-4 hover:border-slate-grey/25 transition-all">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-emerald-600/5 text-emerald-700 rounded mt-0.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-xs text-ink-black uppercase tracking-wider">Marketing &amp; Campaigns</h4>
+                      <p className="text-[11px] text-slate-grey mt-1 leading-relaxed">Delivers tailored announcements and tracks return on promotional campaigns.</p>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={preferences.marketing}
+                      onChange={(e) => setPreferences({ ...preferences, marketing: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-grey/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-deep-navy"></div>
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-96 overflow-y-auto pr-1 custom-scrollbar font-body-md text-xs">
+                <div className="p-4 bg-soft-linen/20 border border-slate-grey/15 rounded space-y-3">
+                  <h4 className="font-bold text-xs uppercase text-deep-navy flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    DPDP Act 2023 Data Principal Rights
+                  </h4>
+                  <p className="text-[11px] text-slate-grey leading-relaxed">
+                    Under India&apos;s Digital Personal Data Protection Act, 2023 (DPDP Act), you have statutory rights over your personal data processed by VRIX.
+                  </p>
+
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-label-caps uppercase text-slate-grey font-semibold">Registered Email Address</label>
+                    <input
+                      type="email"
+                      value={dpdpEmail}
+                      onChange={(e) => setDpdpEmail(e.target.value)}
+                      placeholder="your.email@domain.com"
+                      className="w-full border border-slate-grey/30 px-3 py-1.5 text-xs outline-none focus:border-deep-navy bg-pure-white rounded"
+                    />
+                  </div>
+
+                  {dpdpStatus && (
+                    <p className="text-[11px] p-2 bg-deep-navy/5 text-deep-navy border border-deep-navy/15 rounded font-medium">
+                      {dpdpStatus}
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                    <button
+                      type="button"
+                      disabled={dpdpLoading}
+                      onClick={handleDpdpDataRequest}
+                      className="px-3 py-2 bg-deep-navy text-pure-white text-[9px] font-label-caps uppercase tracking-wider hover:bg-ink-black transition-colors rounded disabled:opacity-50 cursor-pointer"
+                    >
+                      Request My Data
+                    </button>
+                    <button
+                      type="button"
+                      disabled={dpdpLoading}
+                      onClick={handleDpdpWithdrawConsent}
+                      className="px-3 py-2 border border-slate-grey/30 text-ink-black text-[9px] font-label-caps uppercase tracking-wider hover:border-deep-navy transition-colors rounded disabled:opacity-50 cursor-pointer"
+                    >
+                      Withdraw Consent
+                    </button>
+                    <button
+                      type="button"
+                      disabled={dpdpLoading}
+                      onClick={handleDpdpErasureRequest}
+                      className="px-3 py-2 bg-red-600 text-pure-white text-[9px] font-label-caps uppercase tracking-wider hover:bg-red-700 transition-colors rounded disabled:opacity-50 cursor-pointer"
+                    >
+                      Delete My Account
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-surface border border-slate-grey/15 rounded space-y-1">
+                  <h5 className="font-bold text-[11px] uppercase text-deep-navy">Data Protection Officer (DPO) Contact</h5>
+                  <p className="text-[11px] text-slate-grey">Email: <a href="mailto:dpo@vrix.co.in" className="underline font-semibold text-deep-navy">dpo@vrix.co.in</a></p>
+                  <p className="text-[10px] text-slate-grey">VRIX Atelier, Diamond Financial District, Surat, Gujarat 395007</p>
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-between items-center border-t border-slate-grey/10 pt-5">
               <span className="text-[9px] text-slate-grey font-label-caps uppercase tracking-wider flex items-center gap-1.5">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Compliance: {preferences.region}
+                Compliance: {preferences.region} (DPDP / GDPR)
               </span>
               <button
                 type="button"
