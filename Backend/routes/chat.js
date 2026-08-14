@@ -409,8 +409,44 @@ router.post("/message", async (req, res) => {
       "Track Order": {
         reply: "VRIX Order Tracking & Atelier Status:\nTo track your order status:\n1. Provide your Order Reference ID (e.g. VRIX-1002).\n2. Insured express delivery takes 2-4 business days via BlueDart Air.",
         options: [
-          { label: "Talk to Concierge", value: "trigger-handoff" },
-          { label: "Explore collections", value: "collections" }
+          { label: "Shipping & Returns", value: "Shipping & Returns" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Visit Atelier": {
+        reply: "VRIX Flagship Atelier & Private Studio:\n• Location: Diamond Financial District, Surat, Gujarat 395007\n• Hours: Monday – Saturday, 10:30 AM – 7:30 PM IST\n\nExperience quiet luxury in person with private appointment styling.",
+        handoff: {
+          title: "VRIX Flagship Atelier — Surat",
+          description: "Diamond Financial District, Surat, Gujarat 395007",
+          phone: "+91 90542 85693",
+          instagram: "https://www.instagram.com/vrix.official",
+          linkedin: "https://www.linkedin.com/company/vrixjewels",
+          mapsUrl: "https://share.google/EjrRFPTc3O06labrR"
+        },
+        options: [
+          { label: "Bespoke Fitting", value: "Bespoke" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Custom Engraving": {
+        reply: "VRIX Bespoke Engraving Service:\n• Character Limit: Up to 25 characters (initials, dates, or personal coordinates).\n• Font Styles: Classic Serif, Minimal Sans-Serif, or Script.\n• Cost: Complimentary on all solid gold & solitaire orders.",
+        options: [
+          { label: "Bespoke Fitting", value: "Bespoke" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Shipping & Returns": {
+        reply: "VRIX Shipping & Return Policy:\n• Delivery: Insured express shipping via BlueDart Air within 2-4 business days.\n• Returns: 30-day complimentary returns on all unworn stock pieces.\n• Packaging: Signature anti-tarnish linen presentation box.",
+        options: [
+          { label: "Track Order", value: "Track Order" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Redeem Code": {
+        reply: "To redeem a VRIX Gift Card, Promo Code, or VRIX+ Privilege Code:\n1. Enter your 8-digit voucher code at checkout.\n2. Or share your code with our concierge associate for instant cart application.",
+        options: [
+          { label: "Under ₹15,000", value: "15000" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
         ]
       }
     };
