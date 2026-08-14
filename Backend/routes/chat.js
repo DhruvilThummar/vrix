@@ -448,11 +448,34 @@ router.post("/message", async (req, res) => {
           { label: "Under ₹15,000", value: "15000" },
           { label: "Talk to Concierge", value: "trigger-handoff" }
         ]
+      },
+      All: {
+        reply: "Explore VRIX signature fine jewelry collections across all categories:",
+        filterType: "all",
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Not sure yet": {
+        reply: "Explore VRIX signature fine jewelry collections across all categories:",
+        filterType: "all",
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
       }
     };
 
-    if (targetKey && QUICK_ACTION_MAP[targetKey]) {
-      const actionConfig = QUICK_ACTION_MAP[targetKey];
+    let matchedKey = targetKey;
+    if (targetKey && !QUICK_ACTION_MAP[targetKey]) {
+      const lowerKey = String(targetKey).toLowerCase().trim();
+      const found = Object.keys(QUICK_ACTION_MAP).find(k => k.toLowerCase().trim() === lowerKey);
+      if (found) matchedKey = found;
+    }
+
+    if (matchedKey && QUICK_ACTION_MAP[matchedKey]) {
+      const actionConfig = QUICK_ACTION_MAP[matchedKey];
       let products = [];
       try {
         const allProds = await db.products.findMany();
@@ -461,7 +484,9 @@ router.post("/message", async (req, res) => {
 
           if (actionConfig.filterType) {
             const fLower = actionConfig.filterType.toLowerCase();
-            if (fLower === "15000") {
+            if (fLower === "all") {
+              // Keep full active catalog list
+            } else if (fLower === "15000") {
               list = list.filter(p => Number(p.price) <= 15000);
             } else if (fLower === "minimal") {
               list = list.filter(p => (p.material || p.title || "").toLowerCase().includes("minimal") || (p.description || "").toLowerCase().includes("everyday"));
@@ -470,13 +495,38 @@ router.post("/message", async (req, res) => {
             } else if (fLower === "vermeil") {
               list = list.filter(p => (p.material || "").toLowerCase().includes("vermeil") || (p.material || "").toLowerCase().includes("gold"));
             } else if (fLower === "partner") {
-              list = list.filter(p => (p.type || p.collection || "").toLowerCase() === "necklaces" || (p.type || p.collection || "").toLowerCase() === "rings");
+              list = list.filter(p => {
+                const t = (p.type || p.collection || "").toLowerCase();
+                return t.includes("necklace") || t.includes("ring");
+              });
             } else if (fLower === "parent") {
-              list = list.filter(p => (p.type || p.collection || "").toLowerCase() === "bracelets" || (p.type || p.collection || "").toLowerCase() === "earrings");
+              list = list.filter(p => {
+                const t = (p.type || p.collection || "").toLowerCase();
+                return t.includes("bracelet") || t.includes("earring");
+              });
             } else if (fLower === "friend") {
               list = list.filter(p => Number(p.price) <= 25000);
             } else {
-              list = list.filter(p => (p.type || p.collection || "").toLowerCase() === fLower);
+              const stem = fLower.endsWith("s") ? fLower.slice(0, -1) : fLower;
+              list = list.filter(p => {
+                const pType = (p.type || "").toLowerCase().trim();
+                const pCol = (p.collection || "").toLowerCase().trim();
+                const pMat = (p.material || "").toLowerCase().trim();
+                const pTitle = (p.title || "").toLowerCase().trim();
+                const pTags = Array.isArray(p.tags) ? p.tags.map(t => String(t).toLowerCase().trim()) : [];
+
+                return (
+                  pType === fLower || pType === stem || pType.includes(stem) || pType.includes(fLower) ||
+                  pCol === fLower || pCol === stem || pCol.includes(stem) ||
+                  pTitle.includes(stem) || pMat.includes(stem) ||
+                  pTags.includes(fLower) || pTags.includes(stem)
+                );
+              });
+            }
+
+            // Fallback: If 0 items matched specific filter, return top active catalog products so customer is never empty-handed
+            if (list.length === 0) {
+              list = allProds.filter(p => p.isVisible !== false);
             }
           } else {
             // Do not force dummy products for menu options
@@ -496,9 +546,6 @@ router.post("/message", async (req, res) => {
       } catch (e) {}
 
       let replyText = actionConfig.reply;
-      if (actionConfig.filterType && products.length === 0) {
-        replyText = "We don't currently have a piece matching that specific filter in our active database catalog. Would you like to explore all signature collections or connect with our concierge team?";
-      }
 
       const isoTimestamp = new Date().toISOString();
       return res.json({
