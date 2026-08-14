@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { fetchDb, updateCMS, fetchProducts, fetchCollections, fetchCategories, fetchTags } from "@/utils/api";
+import { fetchDb, updateCMS, fetchProducts, fetchCollections, fetchCategories, fetchTags, uploadMedia } from "@/utils/api";
 
 // Preset standard pages
 const STANDARD_PAGES = [
@@ -844,17 +844,19 @@ export default function AdminNavigationPage() {
                             {cat.links && cat.links.map((lnk: any, lnkIdx: number) => (
                               <div key={lnkIdx} className="flex flex-col gap-2 bg-pure-white p-3 border border-slate-grey/15 rounded shadow-2xs">
                                 <div className="flex justify-between items-center">
+                                  <span className="text-[9px] font-label-caps uppercase font-bold text-slate-grey/70">Item #{lnkIdx + 1}</span>
                                   <input
                                     type="text"
                                     value={lnk.label}
                                     onChange={(e) => updateMegaLink(selectedLinkIndex, catIdx, lnkIdx, "label", e.target.value)}
                                     placeholder="Sublink label"
-                                    className="text-xs border-b border-transparent focus:border-deep-navy outline-none py-0.5 font-semibold text-deep-navy flex-1 mr-4"
+                                    className="text-xs border-b border-transparent focus:border-deep-navy outline-none py-0.5 font-semibold text-deep-navy flex-1 mx-2"
                                   />
                                   <button
                                     type="button"
                                     onClick={() => removeMegaLink(selectedLinkIndex, catIdx, lnkIdx)}
-                                    className="text-red-500 hover:text-red-700 text-xs p-1"
+                                    className="text-red-500 hover:text-red-700 text-xs p-1 cursor-pointer font-bold"
+                                    title="Remove link item"
                                   >
                                     ✕
                                   </button>
@@ -889,8 +891,33 @@ export default function AdminNavigationPage() {
                           className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy font-semibold bg-transparent"
                         />
                       </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Promo Image URL</label>
+
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between items-center">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Promo Image URL</label>
+                          <label className="text-[9px] font-label-caps uppercase text-deep-navy hover:underline cursor-pointer flex items-center gap-1 font-bold">
+                            <span className="material-symbols-outlined text-xs">upload</span>
+                            Upload Image
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  const res = await uploadMedia(file);
+                                  if (res && res.url) {
+                                    updateFeaturedMega(selectedLinkIndex, "image", res.url);
+                                    showToast("Banner image uploaded successfully.");
+                                  }
+                                } catch (err: any) {
+                                  showToast("Upload failed: " + err.message+ "err");
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                         <input
                           type="text"
                           value={navLinks[selectedLinkIndex]?.megaMenu?.featured?.image || ""}
@@ -899,6 +926,29 @@ export default function AdminNavigationPage() {
                           className="border-b border-slate-grey/30 py-1 text-xs outline-none focus:border-deep-navy bg-transparent"
                         />
                       </div>
+
+                      {/* Live Thumbnail Preview */}
+                      {navLinks[selectedLinkIndex]?.megaMenu?.featured?.image && (
+                        <div className="flex flex-col gap-1 pt-1">
+                          <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Live Micro Banner Preview</label>
+                          <div className="relative h-28 w-full overflow-hidden border border-slate-grey/20 rounded shadow-xs bg-slate-100 group">
+                            <img
+                              src={navLinks[selectedLinkIndex]?.megaMenu?.featured?.image}
+                              alt="Promo Preview"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex flex-col justify-end p-2.5">
+                              <span className="text-pure-white font-label-caps text-[10px] uppercase font-bold tracking-wider drop-shadow-sm">
+                                {navLinks[selectedLinkIndex]?.megaMenu?.featured?.title || "Featured Banner"}
+                              </span>
+                              <span className="text-pure-white/70 text-[8px] font-mono truncate">
+                                {navLinks[selectedLinkIndex]?.megaMenu?.featured?.link || "/"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex flex-col gap-1">
                         <label className="font-label-caps text-[9px] text-slate-grey uppercase font-semibold">Link Destination</label>
                         <PathSelector allProducts={allProducts} allCollections={allCollections} allCategories={allCategories} allTags={allTags}
