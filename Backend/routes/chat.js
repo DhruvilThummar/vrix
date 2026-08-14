@@ -76,8 +76,8 @@ router.get("/session/:sessionId/messages", async (req, res) => {
   }
 });
 
-// ── POST /api/chat/message — Gemini Interactions API Endpoint ────────────────
-router.post("/message", async (req, res) => {
+// ── POST /api/chat & /api/chat/message — Gemini Interactions API Endpoint ────
+const handleChatMessage = async (req, res) => {
   const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "global";
   let { sessionId, userId } = req.body || {};
 
@@ -677,12 +677,10 @@ router.post("/message", async (req, res) => {
       ]
     });
   }
-});
+};
 
-// Also support legacy /query path for backward compatibility
-router.post("/query", (req, res, next) => {
-  req.url = "/message";
-  return router._handle(req, res, next);
-});
+router.post("/message", handleChatMessage);
+router.post("/", handleChatMessage);
+router.post("/query", handleChatMessage);
 
 export default router;
