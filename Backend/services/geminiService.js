@@ -117,6 +117,18 @@ export const CHATBOT_TOOLS = [
       },
       required: ["orderNumber", "issueDescription", "contactEmail"]
     }
+  },
+  {
+    type: "function",
+    name: "get_store_policy",
+    description: "Fetch live VRIX store policies regarding shipping, returns, warranty, ring sizing, bespoke orders, or payment methods.",
+    parameters: {
+      type: "object",
+      properties: {
+        policyType: { type: "string", description: "Policy category e.g. shipping, returns, warranty, sizing, bespoke, payments" }
+      },
+      required: ["policyType"]
+    }
   }
 ];
 
@@ -391,6 +403,29 @@ export async function executeCreateRepairRequest(rawArgs, sessionId = null) {
   }
 }
 
+export async function executeGetStorePolicy(rawArgs) {
+  const policyType = typeof rawArgs?.policyType === "string" ? rawArgs.policyType.trim().toLowerCase() : "";
+  try {
+    const legalData = await db.cms.get("legal") || {};
+    const shippingData = await db.cms.get("shipping_settings") || {};
+    
+    let details = "VRIX offers complimentary insured express shipping across India, 30-day returns on unworn pieces, and lifetime craftsmanship warranty.";
+    if (policyType.includes("shipping")) {
+      details = shippingData.policy || "Complimentary insured express shipping across India delivered within 3-5 business days.";
+    } else if (policyType.includes("return") || policyType.includes("refund")) {
+      details = legalData.returnPolicy || "30-day hassle-free return window for unworn items in original packaging. Engraved items are final sale.";
+    } else if (policyType.includes("warranty")) {
+      details = "Lifetime warranty covering manufacturing defects, stone tightening, and annual cleaning services.";
+    } else if (policyType.includes("bespoke")) {
+      details = "Custom atelier design requests take 14-21 business days from CAD drafting to final setting.";
+    }
+
+    return { policyType, details };
+  } catch (err) {
+    return { policyType, details: "Please contact our concierge team for custom policy assistance." };
+  }
+}
+
 // Router dispatch table for tool executions
 export async function handleToolExecution(functionName, functionArgs, sessionId = null) {
   console.log(`\n[GEMINI TOOL CALL] ${functionName}`, "Args:", JSON.stringify(functionArgs));
@@ -410,6 +445,9 @@ export async function handleToolExecution(functionName, functionArgs, sessionId 
       break;
     case "create_repair_request":
       toolResult = await executeCreateRepairRequest(functionArgs, sessionId);
+      break;
+    case "get_store_policy":
+      toolResult = await executeGetStorePolicy(functionArgs);
       break;
     default:
       toolResult = { error: `Unknown function tool: ${functionName}` };
