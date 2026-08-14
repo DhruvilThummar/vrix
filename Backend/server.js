@@ -194,8 +194,16 @@ app.use((err, req, res, next) => {
   });
 });
 
+import { initPayPalReconcilerCron } from "./jobs/paypalReconciler.js";
+
 // Start the HTTP listener only for local runs. Vercel imports the exported app.
 if (!process.env.VERCEL) {
+  try {
+    initPayPalReconcilerCron();
+  } catch (cronErr) {
+    console.warn("Failed to start PayPal Reconciler Cron:", cronErr.message);
+  }
+
   app.listen(PORT, () => {
     console.log(`\n🚀 VRIX Backend API running → http://localhost:${PORT}`);
     console.log(`   DB Status    : Connected to PostgreSQL (Supabase) via Prisma`);

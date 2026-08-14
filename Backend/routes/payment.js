@@ -1249,18 +1249,61 @@ router.post("/paypal/capture-order", async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  PAYPAL — Webhook verification
+//  PAYPAL — Webhook Verification & Processing
 //  POST /api/payment/paypal/webhook
-//  Handles: PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.DENIED
+//  Handles: PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.DENIED, PAYMENT.CAPTURE.REFUNDED
 // ══════════════════════════════════════════════════════════════════════════════
 router.post("/paypal/webhook", async (req, res) => {
-  // Acknowledge immediately to PayPal
-  res.sendStatus(200);
+  const transmissionId = req.headers["paypal-transmission-id"];
+  const transmissionTime = req.headers["paypal-transmission-time"];
+  const certUrl = req.headers["paypal-cert-url"];
+  const authAlgo = req.headers["paypal-auth-algo"];
+  const transmissionSig = req.headers["paypal-transmission-sig"];
+  const webhookEvent = req.body;
 
   try {
-    const event = req.body;
-    const eventType = event?.event_type;
-    const resource = event?.resource;
+    const credentials = await getPayPalCredentials();
+    if (!credentials) {
+      return res.status(503).json({ error: "PayPal disabled" });
+    }
+
+    // 1. Verify Webhook Signature with PayPal REST API
+    const webhookId = process.env.PAYPAL_WEBHOOK_ID || "YOUR_PAYPAL_WEBHOOK_ID";
+    const { token, baseUrl } = await getPayPalAccessToken(credentials);
+
+    if (transmissionId && transmissionSig && certUrl) {
+      const verifyRes = await fetch(`${baseUrl}/v1/notifications/verify-webhook-signature`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transmission_id: transmissionId,
+          transmission_time: transmissionTime,
+          cert_url: certUrl,
+          auth_algo: authAlgo,
+          transmission_sig: transmissionSig,
+          webhook_id: webhookId,
+          webhook_event: webhookEvent,
+        }),
+      });
+
+      if (verifyRes.ok) {
+        const verifyData = await verifyRes.json();
+        if (verifyData.verification_status !== "SUCCESS") {
+          console.warn("[PayPal Webhook Warning]: Invalid signature verification status!", verifyData);
+          return res.status(400).json({ error: "Invalid Webhook Signature" });
+        }
+      }
+    }
+
+    // Acknowledge immediately to PayPal
+    res.status(200).json({ status: "SUCCESS" });
+
+    // 2. Process Verified Webhook Event
+    const eventType = webhookEvent?.event_type;
+    const resource = webhookEvent?.resource;
 
     if (!eventType || !resource) return;
 
@@ -1270,10 +1313,16 @@ router.post("/paypal/webhook", async (req, res) => {
       const ppOrderId = supplementalData?.order_id;
 
       if (ppOrderId) {
+        const existing = await db.payments.findFirst({ where: { gatewayOrderId: ppOrderId } });
+        if (existing && existing.status === "SUCCESS") {
+          return; // Idempotency check: Already processed
+        }
+
         await db.payments.updateMany({
           where: { gatewayOrderId: ppOrderId },
           data: { status: "SUCCESS", paymentId: captureId },
         });
+
         await db.securityLogs.create({
           data: { event: "PAYPAL_WEBHOOK_CAPTURE_COMPLETED", user: captureId, status: "SUCCESS" },
         });
@@ -1297,7 +1346,10 @@ router.post("/paypal/webhook", async (req, res) => {
       }
     }
   } catch (err) {
-    console.error("[PayPal Webhook]", err.message);
+    console.error("[PayPal Webhook Error]:", err.message);
+    if (!res.headersSent) {
+      res.status(500).json({ error: err.message });
+    }
   }
 });
 
