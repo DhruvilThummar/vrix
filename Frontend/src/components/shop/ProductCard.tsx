@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import SkeletonImage from "@/components/shop/SkeletonImage";
 import { getDisplayPrice } from "@/lib/pricing";
 import { useVariantAnimations } from "@/hooks/useVariantAnimations";
 
@@ -125,7 +126,7 @@ export default function ProductCard({
           {/* Desktop Dual Image Hover Grid */}
           <div ref={imageRef} className="relative w-full h-full flex overflow-hidden">
             <div className="relative w-full h-full flex-shrink-0">
-              <Image
+              <SkeletonImage
                 alt={product.title}
                 fill
                 sizes="(max-width: 768px) 50vw, 25vw"
