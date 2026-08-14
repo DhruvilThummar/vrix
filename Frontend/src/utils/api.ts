@@ -2,19 +2,26 @@
 import { getClientCache, setClientCache, precacheImages } from "./cacheStorage";
 
 export async function apiFetchCached<T>(endpoint: string, ttlSeconds: number = 1800): Promise<T> {
-  const cacheKey = `api_${endpoint.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
-  const cached = await getClientCache<T>(cacheKey);
-  if (cached !== null) {
-    // Revalidate in background so IndexedDB cache is updated asynchronously
-    apiFetch<T>(endpoint).then((freshData) => {
-      setClientCache(cacheKey, freshData, ttlSeconds);
-    }).catch(() => {});
-    return cached;
+  if (typeof window !== "undefined") {
+    try {
+      const cacheKey = `api_${endpoint.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+      const cached = await getClientCache<T>(cacheKey);
+      if (cached !== null) {
+        // Revalidate in background so IndexedDB cache is updated asynchronously
+        apiFetch<T>(endpoint).then((freshData) => {
+          setClientCache(cacheKey, freshData, ttlSeconds);
+        }).catch(() => {});
+        return cached;
+      }
+      const fresh = await apiFetch<T>(endpoint);
+      setClientCache(cacheKey, fresh, ttlSeconds);
+      return fresh;
+    } catch (e) {
+      console.warn("apiFetchCached browser error, falling back to apiFetch", e);
+    }
   }
 
-  const fresh = await apiFetch<T>(endpoint);
-  setClientCache(cacheKey, fresh, ttlSeconds);
-  return fresh;
+  return apiFetch<T>(endpoint);
 }
 
 export function getApiBaseUrl(): string {

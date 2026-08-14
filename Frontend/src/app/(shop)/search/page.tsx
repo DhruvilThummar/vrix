@@ -22,7 +22,7 @@ interface Product {
   tags?: string[];
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const filterParam = searchParams.get("filter");
   const queryParam = searchParams.get("q");
@@ -117,7 +117,7 @@ export default function SearchPage() {
         {/* Results */}
         <div className="w-full animate-fade-in-up" style={{ animationDelay: "200ms" }}>
           <h2 className="font-label-caps text-label-caps text-slate-grey mb-stack-lg uppercase tracking-widest border-b border-slate-grey/20 pb-4">
-            {searchQuery ? `Search Results (${filteredProducts.length})` : "Start Typing to Search"}
+            {searchQuery ? `Search Results for "${searchQuery}" (${filteredProducts.length})` : `All Jewelry Catalog (${filteredProducts.length})`}
           </h2>
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
@@ -137,10 +137,6 @@ export default function SearchPage() {
                   </div>
                 </div>
               ))}
-            </div>
-          ) : !searchQuery.trim() ? (
-            <div className="text-center py-16 text-slate-grey font-body-md italic">
-              Search by typing collections, jewelry categories, or materials above.
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-16 text-slate-grey font-body-md">
@@ -181,5 +177,17 @@ export default function SearchPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="w-full min-h-[70vh] flex items-center justify-center font-label-caps text-xs text-slate-grey uppercase tracking-widest">
+        Loading Search...
+      </div>
+    }>
+      <SearchPageContent />
+    </React.Suspense>
   );
 }
