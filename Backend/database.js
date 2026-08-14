@@ -93,118 +93,8 @@ if (isDbConnected) {
   throw new Error("Database Access Layer: DATABASE_URL is not set or not a valid PostgreSQL string. Complete Supabase database URL is required.");
 }
 
-let tablesCreated = false;
 export async function ensureTablesExist() {
-  if (!prisma) return;
-  try {
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "users" ("email" TEXT PRIMARY KEY, "name" TEXT, "phone" TEXT, "password" TEXT, "is_vrix_plus_member" BOOLEAN DEFAULT false, "vrix_plus_joined_date" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(e => console.warn("Notice: users table creation issue:", e.message));
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "cms_settings" ("key" TEXT PRIMARY KEY, "value" JSONB NOT NULL, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "products" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "subtitle" TEXT, "material" TEXT, "type" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "original_price" DOUBLE PRECISION, "image" TEXT NOT NULL, "images" JSONB, "description" TEXT, "alt" TEXT, "sku" TEXT, "collection" TEXT, "stock" INTEGER DEFAULT 999, "is_visible" BOOLEAN DEFAULT true, "is_vrix_plus_exclusive" BOOLEAN DEFAULT false, "vrix_plus_price" DOUBLE PRECISION, "layout_style" TEXT DEFAULT '2x2', "engraving_options" JSONB, "gift_note_options" JSONB, "weight" TEXT, "dimensions" TEXT, "available_sizes" JSONB, "variants" JSONB, "tags" JSONB, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "journal" ("id" TEXT PRIMARY KEY, "title" TEXT NOT NULL, "excerpt" TEXT, "content" TEXT NOT NULL, "image" TEXT NOT NULL, "date" TEXT, "read_time" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "delivery_staff" ("email" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "role" TEXT NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "redeem_codes" ("code" TEXT PRIMARY KEY, "discount" DOUBLE PRECISION NOT NULL, "type" TEXT DEFAULT 'percentage', "is_active" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "description" TEXT, "min_subtotal" DOUBLE PRECISION, "usage_limit" INTEGER, "used_count" INTEGER DEFAULT 0, "expiry_date" TEXT);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "security_logs" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "timestamp" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "event" TEXT NOT NULL, "user_email" TEXT, "status" TEXT NOT NULL);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "payments" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "order_id" TEXT UNIQUE NOT NULL, "payment_id" TEXT, "signature" TEXT, "amount" DOUBLE PRECISION NOT NULL, "currency" TEXT DEFAULT 'INR', "status" TEXT DEFAULT 'created', "user_email" TEXT, "customer_name" TEXT, "customer_phone" TEXT, "address" TEXT, "city" TEXT, "postal_code" TEXT, "assigned_agent" TEXT);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "verification_otps" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "email" TEXT NOT NULL, "otp" TEXT NOT NULL, "expires_at" TIMESTAMP NOT NULL, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "notifications" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "type" TEXT NOT NULL, "title" TEXT NOT NULL, "message" TEXT NOT NULL, "is_read" BOOLEAN DEFAULT false, "user_email" TEXT, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "addresses" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "user_email" TEXT NOT NULL REFERENCES "users"("email") ON DELETE CASCADE, "label" TEXT NOT NULL DEFAULT 'Home', "full_name" TEXT NOT NULL, "phone" TEXT, "address" TEXT NOT NULL, "apartment" TEXT, "city" TEXT NOT NULL, "state" TEXT, "postal_code" TEXT NOT NULL, "country" TEXT NOT NULL DEFAULT 'IN', "is_default" BOOLEAN NOT NULL DEFAULT false, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "wishlist_stock_alerts" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "user_email" TEXT NOT NULL REFERENCES "users"("email") ON DELETE CASCADE, "product_id" TEXT NOT NULL REFERENCES "products"("id") ON DELETE CASCADE, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "last_notified_at" TIMESTAMP, UNIQUE("user_email", "product_id"));`).catch(() => { });
-
-    // Structural migrations for missing columns
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "images" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_visible" BOOLEAN DEFAULT true;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "is_vrix_plus_exclusive" BOOLEAN DEFAULT false;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "vrix_plus_price" DOUBLE PRECISION;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "engraving_options" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "gift_note_options" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "weight" TEXT;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "dimensions" TEXT;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "available_sizes" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "subtitle" TEXT;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "variants" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "original_price" DOUBLE PRECISION;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "sku" TEXT;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "layout_style" TEXT DEFAULT \'2x2\';').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "tags" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "subtitle" TEXT;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "variants" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "comparison_options" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "gift_options" JSONB;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "delivery_policy" TEXT;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "care_guide" TEXT;').catch(() => { });
-
-    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_vrix_plus_member" BOOLEAN DEFAULT false;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "vrix_plus_joined_date" TEXT;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "role" TEXT DEFAULT \'customer\';').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "date_of_birth" TEXT;').catch(() => { });
-    await prisma.$executeRawUnsafe('ALTER TABLE "payments" ADD COLUMN IF NOT EXISTS "estimated_delivery_date" TIMESTAMP;').catch(() => { });
-
-    // Database Performance Indexing
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_users_email" ON "users" ("email");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_users_phone" ON "users" ("phone");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_verification_otps_email_otp" ON "verification_otps" ("email", "otp");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_verification_otps_expires_at" ON "verification_otps" ("expires_at");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_security_logs_user_email" ON "security_logs" ("user_email");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_products_is_visible" ON "products" ("is_visible");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_payments_order_id" ON "payments" ("order_id");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_created_at" ON "notifications" ("created_at" DESC);').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_notifications_is_read" ON "notifications" ("is_read");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_addresses_user_email" ON "addresses" ("user_email");').catch(() => { });
-    await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "idx_wishlist_stock_alerts_product" ON "wishlist_stock_alerts" ("product_id");').catch(() => { });
-
-    // Chat, Repair Requests & Diamond Education tables
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "chat_sessions" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "user_id" TEXT, "last_interaction_id" TEXT, "status" TEXT DEFAULT 'ACTIVE', "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "chat_messages" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "session_id" UUID NOT NULL REFERENCES "chat_sessions"("id") ON DELETE CASCADE, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "tool_calls" JSONB, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "repair_requests" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "session_id" UUID REFERENCES "chat_sessions"("id") ON DELETE SET NULL, "user_id" TEXT, "order_number" TEXT NOT NULL, "issue_description" TEXT NOT NULL, "contact_email" TEXT NOT NULL, "status" TEXT DEFAULT 'PENDING', "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "diamond_education" ("id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "title" TEXT NOT NULL, "slug" TEXT UNIQUE NOT NULL, "category" TEXT DEFAULT '4Cs', "content" TEXT NOT NULL, "summary" TEXT, "tags" JSONB, "is_published" BOOLEAN DEFAULT true, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP);`).catch(() => { });
-
-
-    // Bespoke Atelier tables
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_settings" (
-      "id" TEXT PRIMARY KEY DEFAULT 'default',
-      "headline" TEXT DEFAULT 'Bespoke Atelier Estimate',
-      "slogan" TEXT DEFAULT 'THE SIGNATURE COLLECTION',
-      "subtitle" TEXT DEFAULT 'Crafted to your exact specifications. Begin building your legacy piece.',
-      "introParagraph" TEXT DEFAULT 'Our master goldsmiths work directly with you in our atelier to craft bespoke, made-to-order creations.',
-      "disclaimerText" TEXT DEFAULT 'Final quote verified during 1-on-1 consultation with our lead master craftsman.',
-      "consultationCtaText" TEXT DEFAULT 'Book Atelier Consultation',
-      "craftingTimeline" TEXT DEFAULT '3 – 4 Weeks',
-      "base_min_price" DOUBLE PRECISION DEFAULT 65000,
-      "base_max_price" DOUBLE PRECISION DEFAULT 180000,
-      "is_enabled" BOOLEAN DEFAULT true,
-      "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );`).catch(() => { });
-
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_options" (
-      "id" TEXT PRIMARY KEY,
-      "category" TEXT NOT NULL,
-      "name" TEXT NOT NULL,
-      "code" TEXT NOT NULL,
-      "color_hex" TEXT,
-      "image_url" TEXT,
-      "price_multiplier" DOUBLE PRECISION DEFAULT 1.0,
-      "price_addition" DOUBLE PRECISION DEFAULT 0,
-      "sort_order" INTEGER DEFAULT 0,
-      "is_enabled" BOOLEAN DEFAULT true,
-      "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );`).catch(() => { });
-
-    await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "bespoke_variants" (
-      "id" TEXT PRIMARY KEY,
-      "silhouette" TEXT NOT NULL,
-      "metal" TEXT NOT NULL,
-      "stone_shape" TEXT,
-      "image_url" TEXT NOT NULL,
-      "price_modifier" DOUBLE PRECISION DEFAULT 1.0,
-      "is_available" BOOLEAN DEFAULT true,
-      "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );`).catch(() => { });
-
-    tablesCreated = true;
-  } catch (e) {
-    console.error("ensureTablesExist error:", e.message);
-  }
+  return true;
 }
 
 const productSelect = {
@@ -328,23 +218,20 @@ const withTimeout = (promise, ms) => {
 
 const runProductQuery = async (queryWithImages, queryWithoutImages) => {
   try {
-    const res = await withTimeout(queryWithImages(), 8000);
+    const res = await withTimeout(queryWithImages(), 3000);
     return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
   } catch (error) {
-    if (prisma) {
+    if (supabase) {
       try {
-        await ensureTablesExist();
-        const res = await withTimeout(queryWithImages(), 5000);
-        return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
-      } catch (retryErr) {
-        // Safe fallback using basic select if columns are missing in DB
-      }
+        const { data, error: sErr } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+        if (!sErr && data) return data.map(withProductDefaults);
+      } catch (e) {}
     }
     if (queryWithoutImages) {
       try {
-        const res = await withTimeout(queryWithoutImages(), 5000);
+        const res = await withTimeout(queryWithoutImages(), 2000);
         return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
-      } catch (e) { }
+      } catch (e) {}
     }
     throw error;
   }

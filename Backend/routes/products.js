@@ -2,6 +2,7 @@ import express from "express";
 import { db } from "../database.js";
 import { adminAuth } from "../middleware/auth.js";
 import { getTransporter, sendEmailWithTimeout } from "../config/apiResolvers.js";
+import { getServerCache, setServerCache, clearServerCache, CACHE_TTL } from "../config/serverCache.js";
 
 const router = express.Router();
 
@@ -177,6 +178,10 @@ router.post("/validate-stock", async (req, res) => {
 // GET /api/products — Supports optional query params: ?material=Gold&type=Ring&collection=rings&search=diamond
 router.get("/", async (req, res) => {
   try {
+    const cacheKey = `products_${JSON.stringify(req.query)}`;
+    const cached = getServerCache(cacheKey);
+    if (cached) return res.json(cached);
+
     let products = await db.products.findMany();
     const { material, type, collection, search } = req.query;
 
@@ -228,6 +233,7 @@ router.get("/", async (req, res) => {
       });
     }
 
+    setServerCache(cacheKey, products, CACHE_TTL.PRODUCTS);
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -261,6 +267,7 @@ router.post("/", adminAuth, async (req, res) => {
     }
 
     const product = await db.products.create({ data });
+    clearServerCache("products");
     res.status(201).json(product);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -278,6 +285,7 @@ router.put("/:id", adminAuth, async (req, res) => {
 
     delete data.id;
     const updated = await db.products.update({ where: { id: req.params.id }, data });
+    clearServerCache("products");
     if ((existing?.stock || 0) <= 0 && (updated.stock || 0) > 0) notifyWishlistedCustomers(updated).catch((err) => console.error("Restock notification failed:", err.message));
     if ((existing?.stock || 0) > 3 && (updated.stock || 0) > 0 && (updated.stock || 0) <= 3) notifyWishlistedCustomers(updated, "low").catch((err) => console.error("Low-stock notification failed:", err.message));
     res.json(updated);
@@ -290,6 +298,7 @@ router.put("/:id", adminAuth, async (req, res) => {
 router.delete("/:id", adminAuth, async (req, res) => {
   try {
     await db.products.delete({ where: { id: req.params.id } });
+    clearServerCache("products");
     res.json({ success: true, message: `Product ${req.params.id} deleted` });
   } catch (err) {
     res.status(404).json({ error: err.message });
@@ -303,6 +312,7 @@ router.patch("/:id/stock", adminAuth, async (req, res) => {
   try {
     const existing = await db.products.findUnique({ where: { id: req.params.id } });
     const updated = await db.products.update({ where: { id: req.params.id }, data: { stock: Number(stock) } });
+    clearServerCache("products");
     if ((existing?.stock || 0) <= 0 && updated.stock > 0) notifyWishlistedCustomers(updated).catch((err) => console.error("Restock notification failed:", err.message));
     if ((existing?.stock || 0) > 3 && updated.stock > 0 && updated.stock <= 3) notifyWishlistedCustomers(updated, "low").catch((err) => console.error("Low-stock notification failed:", err.message));
     res.json(updated);
@@ -317,6 +327,7 @@ router.patch("/:id/visibility", adminAuth, async (req, res) => {
   if (isVisible === undefined) return res.status(400).json({ error: "isVisible (boolean) is required" });
   try {
     const updated = await db.products.update({ where: { id: req.params.id }, data: { isVisible: Boolean(isVisible) } });
+    clearServerCache("products");
     res.json(updated);
   } catch (err) {
     res.status(404).json({ error: err.message });

@@ -1,6 +1,7 @@
 import express from "express";
 import { db } from "../database.js";
 import { adminAuth } from "../middleware/auth.js";
+import { getServerCache, setServerCache, clearServerCache, CACHE_TTL } from "../config/serverCache.js";
 
 const router = express.Router();
 
@@ -31,10 +32,15 @@ router.get("/db", async (req, res) => {
 // GET /api/db/public — Public DB snapshot (strips sensitive api_settings)
 router.get("/db/public", async (req, res) => {
   try {
+    const cached = getServerCache("db_public");
+    if (cached) return res.json(cached);
+
     const cms = await db.cmsSettings.findMany();
     // Strip api_settings to prevent secret key exposure to public shop pages
     const { api_settings, ...publicCms } = cms;
-    res.json({ ...publicCms, products: [], journal: [] });
+    const result = { ...publicCms, products: [], journal: [] };
+    setServerCache("db_public", result, CACHE_TTL.CMS_CONTENT);
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -43,6 +49,7 @@ router.get("/db/public", async (req, res) => {
 // POST /api/cms — Upsert any CMS section
 router.post("/cms", adminAuth, async (req, res) => {
   try {
+    clearServerCache("db_public");
     const sections = [
       "homepage", "story", "legal", "navigation", "footerLinks", "brand", "features",
       "collections", "categories", "api_settings", "vrix_plus", "announcement_bar",
