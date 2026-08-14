@@ -38,6 +38,12 @@ export default function CookieConsentBanner() {
   const [dpdpEmail, setDpdpEmail] = useState("");
   const [dpdpStatus, setDpdpStatus] = useState<string | null>(null);
   const [dpdpLoading, setDpdpLoading] = useState(false);
+  const [dpoInfo, setDpoInfo] = useState<{ dpoEmail: string; dpoAddress: string; dpoName?: string; dpoPhone?: string }>({
+    dpoEmail: "info@vrixjewels.com",
+    dpoAddress: "VRIX Flagship Atelier, Diamond Financial District, Surat, Gujarat 395007",
+    dpoName: "Data Protection Officer",
+  });
+
   const [preferences, setPreferences] = useState<CookiePreferences>({
     necessary: true,
     analytics: false,
@@ -45,6 +51,18 @@ export default function CookieConsentBanner() {
     preferences: false,
     region: "GLOBAL",
   });
+
+  useEffect(() => {
+    const baseUrl = getApiBaseUrl();
+    fetch(`${baseUrl}/consent/dpo`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.dpo) {
+          setDpoInfo(data.dpo);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     // 1. Check existing client consent state
@@ -441,9 +459,9 @@ export default function CookieConsentBanner() {
                 </div>
 
                 <div className="p-3 bg-surface border border-slate-grey/15 rounded space-y-1">
-                  <h5 className="font-bold text-[11px] uppercase text-deep-navy">Data Protection Officer (DPO) Contact</h5>
-                  <p className="text-[11px] text-slate-grey">Email: <a href="mailto:dpo@vrix.co.in" className="underline font-semibold text-deep-navy">dpo@vrix.co.in</a></p>
-                  <p className="text-[10px] text-slate-grey">VRIX Atelier, Diamond Financial District, Surat, Gujarat 395007</p>
+                  <h5 className="font-bold text-[11px] uppercase text-deep-navy">{dpoInfo.dpoName || "Data Protection Officer (DPO)"} Contact</h5>
+                  <p className="text-[11px] text-slate-grey">Email: <a href={`mailto:${dpoInfo.dpoEmail}`} className="underline font-semibold text-deep-navy">{dpoInfo.dpoEmail}</a></p>
+                  <p className="text-[10px] text-slate-grey">{dpoInfo.dpoAddress}</p>
                 </div>
               </div>
             )}

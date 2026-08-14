@@ -118,7 +118,7 @@ router.post("/data-request", async (req, res) => {
         email: cleanEmail,
         accountFound: !!userData,
         requestedAt: new Date().toISOString(),
-        dpoContact: "dpo@vrix.co.in",
+        dpoContact: "info@vrixjewels.com",
       }
     });
   } catch (err) {
@@ -189,6 +189,84 @@ router.post("/delete-account-data", async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: "Failed to process erasure request" });
+  }
+});
+
+// ── GET /api/consent/dpo — Fetch Admin DPO & DPDP Settings
+router.get("/dpo", async (req, res) => {
+  try {
+    let dpoData = {
+      dpoName: "Data Protection Officer",
+      dpoEmail: "info@vrixjewels.com",
+      dpoPhone: "+91 90542 85693",
+      dpoAddress: "VRIX Flagship Atelier, Diamond Financial District, Surat, Gujarat 395007",
+      responseHours: "48 Hours",
+      dpdpEnabled: true,
+    };
+
+    if (db?.cms) {
+      try {
+        const record = await db.cms.findUnique("dpo-config");
+        if (record && record.settings) {
+          dpoData = { ...dpoData, ...record.settings };
+        }
+      } catch (e) {}
+    }
+
+    return res.json({ success: true, dpo: dpoData });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Failed to fetch DPO config" });
+  }
+});
+
+// ── PUT /api/consent/dpo — Update Admin DPO Settings
+router.put("/dpo", async (req, res) => {
+  try {
+    const { dpoName, dpoEmail, dpoPhone, dpoAddress, responseHours, dpdpEnabled } = req.body || {};
+    const updatedSettings = {
+      dpoName: dpoName || "Data Protection Officer",
+      dpoEmail: dpoEmail || "info@vrixjewels.com",
+      dpoPhone: dpoPhone || "+91 90542 85693",
+      dpoAddress: dpoAddress || "VRIX Flagship Atelier, Diamond Financial District, Surat, Gujarat 395007",
+      responseHours: responseHours || "48 Hours",
+      dpdpEnabled: dpdpEnabled !== false,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (db?.cms) {
+      try {
+        await db.cms.update({
+          where: { key: "dpo-config" },
+          data: { settings: updatedSettings }
+        });
+      } catch (e) {
+        try {
+          await db.cms.create({
+            data: { key: "dpo-config", settings: updatedSettings }
+          });
+        } catch (createErr) {}
+      }
+    }
+
+    return res.json({ success: true, message: "DPO settings updated successfully", dpo: updatedSettings });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Failed to update DPO config" });
+  }
+});
+
+// ── GET /api/consent/logs — Fetch Admin Consent & DPDP Audit Trail Logs
+router.get("/logs", async (req, res) => {
+  try {
+    let logs = [];
+    if (db?.cookieConsent) {
+      logs = await db.cookieConsent.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 50
+      });
+    }
+    return res.json({ success: true, logs });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: "Failed to fetch consent logs" });
   }
 });
 

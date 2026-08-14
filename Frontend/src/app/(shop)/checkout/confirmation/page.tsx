@@ -119,8 +119,8 @@ export default function ConfirmationPage() {
         {/* Support Footer Note */}
         <p className="font-body-md text-xs text-slate-grey animate-fade-in" style={{ animationDelay: "500ms" }}>
           Questions? Contact us at{" "}
-          <a href="mailto:contact@vrix.com" className="text-deep-navy underline">
-            contact@vrix.com
+          <a href="mailto:info@vrixjewels.com" className="text-deep-navy underline">
+            info@vrixjewels.com
           </a>
         </p>
       </main>

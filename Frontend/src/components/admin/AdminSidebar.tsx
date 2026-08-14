@@ -22,6 +22,7 @@ const navItems = [
   { name: "Bespoke Configurator", href: "/admin/bespoke", icon: "diamond" },
   { name: "Delivery Staff", href: "/admin/delivery", icon: "local_shipping" },
   { name: "Security & Logs", href: "/admin/security", icon: "security" },
+  { name: "Privacy & DPDP", href: "/admin/privacy", icon: "shield_lock" },
   { name: "Help & Guides", href: "/admin/help", icon: "help" },
 ];
 
