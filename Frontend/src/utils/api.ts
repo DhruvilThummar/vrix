@@ -193,8 +193,10 @@ export async function fetchProducts() {
       precacheImages(products.map((p: any) => p.image || p.images?.[0]).filter(Boolean));
       return products;
     }
-  } catch (err) {
-    console.warn("apiFetchCached /products failed, trying direct Supabase fallback...", err);
+  } catch (err: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("apiFetchCached /products offline, using direct Supabase fallback");
+    }
   }
 
   // Fallback: direct Supabase JS query
@@ -219,8 +221,10 @@ export async function fetchProduct(id: string) {
       }
       return product;
     }
-  } catch (err) {
-    console.warn(`apiFetchCached /products/${id} failed, trying fallback lookup...`, err);
+  } catch (err: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn(`apiFetchCached /products/${id} offline, using fallback lookup`);
+    }
   }
 
   // Fallback 1: lookup in fetchProducts() list (matches by id or slug)
@@ -283,7 +287,22 @@ export async function deleteProduct(id: string) {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchCollections() {
-  return apiFetchCached<any[]>("/collections", 3600);
+  try {
+    const res = await apiFetchCached<any[]>("/collections", 3600);
+    if (Array.isArray(res) && res.length > 0) return res;
+  } catch (err: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("fetchCollections offline, using direct Supabase fallback");
+    }
+  }
+
+  try {
+    const { supabase } = await import("./supabase");
+    const { data } = await supabase.from("collections").select("*");
+    if (Array.isArray(data) && data.length > 0) return data;
+  } catch (e) {}
+
+  return [];
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -291,7 +310,22 @@ export async function fetchCollections() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchJournal() {
-  return apiFetchCached<any[]>("/journal", 3600);
+  try {
+    const res = await apiFetchCached<any[]>("/journal", 3600);
+    if (Array.isArray(res) && res.length > 0) return res;
+  } catch (err: any) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("fetchJournal offline, using direct Supabase fallback");
+    }
+  }
+
+  try {
+    const { supabase } = await import("./supabase");
+    const { data } = await supabase.from("journal").select("*");
+    if (Array.isArray(data) && data.length > 0) return data;
+  } catch (e) {}
+
+  return [];
 }
 
 export async function createJournalPost(postData: any) {
