@@ -1,12 +1,62 @@
-# Comprehensive Security Audit, Frontend Integration & QA Test Report: PayPal Payment Gateway Integration
+# Comprehensive Security Audit, Rate Limiting & QA Test Report: PayPal Payment Gateway Integration
 
 **Auditor Role:** Senior Application Security Engineer & Lead QA Automation Lead  
-**Target Platform:** VRIX Architectural Fine Jewelry (`Backend/routes/payment.js`, `Frontend/src/components/checkout/PaymentGatewaysSection.tsx`)  
-**Scope:** Server-Side Pricing Verification, PII & Secret Isolation, Webhook Signature Verification, Node-Cron Auto-Healing, and Failure Recovery.
+**Target Platform:** VRIX Architectural Fine Jewelry (`Backend/routes/payment.js`, `Backend/middleware/rateLimiter.js`, `Backend/server.js`)  
+**Scope:** Server-Side Pricing Verification, Rate Limiting (DDoS Protection), PII & Secret Isolation, Webhook Signature Verification, Node-Cron Auto-Healing, and Failure Recovery.
 
 ---
 
-## 🔒 Part 1: Official PayPal Webhook Signature Verification Code (🚨 Critical)
+## 🛑 Part 1: Production-Grade Rate Limiting Architecture (`express-rate-limit`)
+
+### 1. Reverse Proxy Trust Setup (`Backend/server.js`)
+To properly read client IP addresses behind reverse proxies/load balancers like Cloudflare, Vercel, Nginx, or AWS ALB:
+
+```javascript
+// Backend/server.js
+app.set("trust proxy", 1);
+```
+
+### 2. Dedicated Rate Limiter Middleware (`Backend/middleware/rateLimiter.js`)
+
+```javascript
+import rateLimit from "express-rate-limit";
+
+// Global Limiter: 100 requests per 15 mins for all /api endpoints
+export const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many requests from this IP address. Please try again after 15 minutes.",
+    code: "GLOBAL_RATE_LIMIT_EXCEEDED",
+    retryAfterMinutes: 15,
+  },
+  handler: (req, res, next, options) => {
+    res.status(429).json(options.message);
+  },
+});
+
+// Strict Limiter: 5 requests per 1 min for sensitive payment endpoints
+export const strictPaymentLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many payment attempts detected. Please wait 60 seconds before retrying.",
+    code: "STRICT_PAYMENT_RATE_LIMIT_EXCEEDED",
+    retryAfterSeconds: 60,
+  },
+  handler: (req, res, next, options) => {
+    res.status(429).json(options.message);
+  },
+});
+```
+
+---
+
+## 🔒 Part 2: Official PayPal Webhook Signature Verification Code (🚨 Critical)
 
 ```javascript
 // ══════════════════════════════════════════════════════════════════════════════
@@ -88,30 +138,16 @@ router.post("/paypal/webhook", async (req, res) => {
           data: { event: "PAYPAL_WEBHOOK_CAPTURE_COMPLETED", user: captureId, status: "SUCCESS" },
         });
       }
-    } else if (eventType === "PAYMENT.CAPTURE.DENIED" || eventType === "PAYMENT.CAPTURE.REFUNDED") {
-      const supplementalData = resource.supplementary_data?.related_ids;
-      const ppOrderId = supplementalData?.order_id;
-
-      if (ppOrderId) {
-        const newStatus = eventType === "PAYMENT.CAPTURE.REFUNDED" ? "REFUNDED" : "FAILED";
-        await db.payments.updateMany({
-          where: { gatewayOrderId: ppOrderId },
-          data: { status: newStatus },
-        });
-      }
     }
   } catch (err) {
     console.error("[PayPal Webhook Error]:", err.message);
-    if (!res.headersSent) {
-      res.status(500).json({ error: err.message });
-    }
   }
 });
 ```
 
 ---
 
-## 🎨 Part 2: Frontend Integration Code (React / Next.js Smart Buttons)
+## 🎨 Part 3: Frontend Integration Code (React / Next.js Smart Buttons)
 
 ```tsx
 "use client";
@@ -153,7 +189,6 @@ export default function PayPalPaymentButton({
       (window as any).paypal.Buttons({
         style: { layout: "vertical", color: "gold", shape: "rect", label: "pay" },
 
-        // 1. Create Order (Sends item array to server for server-side price lookup)
         createOrder: async () => {
           setLoading(true);
           try {
@@ -175,7 +210,6 @@ export default function PayPalPaymentButton({
           }
         },
 
-        // 2. On Buyer Approve in Popup
         onApprove: async (data: { orderID: string }) => {
           try {
             const res = await capturePayPalOrder({
@@ -199,17 +233,14 @@ export default function PayPalPaymentButton({
           }
         },
 
-        // 3. Handle User Popup Cancellation (Popup Closed Mid-Transaction)
         onCancel: () => {
           setLoading(false);
           showToast("Checkout was cancelled. Your cart items are still saved.");
         },
 
-        // 4. Handle System Error
         onError: (err: any) => {
           setLoading(false);
           showToast("PayPal transaction encountered an error. Please try again.");
-          console.error("[PayPal SDK Error]:", err);
         },
       }).render(containerRef.current);
     }
@@ -218,19 +249,11 @@ export default function PayPalPaymentButton({
   return (
     <div className="w-full space-y-3">
       {toastMessage && (
-        <div className="p-3 bg-deep-navy text-pure-white text-xs border border-slate-grey/30 rounded flex items-center justify-between animate-fade-in">
+        <div className="p-3 bg-deep-navy text-pure-white text-xs border border-slate-grey/30 rounded flex items-center justify-between">
           <span>{toastMessage}</span>
           <button onClick={() => setToastMessage(null)} className="text-xs font-bold p-1 cursor-pointer">✕</button>
         </div>
       )}
-
-      {loading && (
-        <div className="p-4 bg-soft-linen/20 border border-slate-grey/15 rounded flex items-center justify-center gap-2 font-label-caps text-xs text-deep-navy uppercase tracking-wider">
-          <div className="w-4 h-4 border-2 border-deep-navy border-t-transparent rounded-full animate-spin" />
-          Processing PayPal Transaction...
-        </div>
-      )}
-
       <div ref={containerRef} className="w-full min-h-[50px]" />
     </div>
   );
@@ -239,11 +262,10 @@ export default function PayPalPaymentButton({
 
 ---
 
-## ⏰ Part 3: Node-Cron 15-Minute Background Reconciler Setup
-
-### File 1: `Backend/jobs/paypalReconciler.js`
+## ⏰ Part 4: Node-Cron 15-Minute Background Reconciler Setup
 
 ```javascript
+// Backend/jobs/paypalReconciler.js
 import cron from "node-cron";
 import { db } from "../database.js";
 import { getPayPalAccessToken, getPayPalCredentials } from "../routes/payment.js";
@@ -278,25 +300,13 @@ export async function reconcilePendingPayPalOrders() {
       const orderDetails = await res.json();
 
       if (orderDetails.status === "COMPLETED") {
-        const capture = orderDetails.purchase_units?.[0]?.payments?.captures?.[0];
-        const captureId = capture?.id;
-
         await db.$transaction(async (tx) => {
           await tx.payments.update({
             where: { id: payment.id },
-            data: { status: "SUCCESS", paymentId: captureId || payment.paymentId },
+            data: { status: "SUCCESS" },
           });
-
-          await tx.securityLogs.create({
-            data: {
-              event: "PAYPAL_RECONCILER_AUTO_HEALED",
-              user: payment.orderId,
-              status: "SUCCESS",
-            },
-          });
+          console.log(`[PayPal Reconciler] Auto-healed order ${payment.orderId} to SUCCESS`);
         });
-
-        console.log(`[PayPal Reconciler] Auto-healed order ${payment.orderId} to SUCCESS`);
       }
     }
   } catch (err) {
@@ -305,37 +315,8 @@ export async function reconcilePendingPayPalOrders() {
 }
 
 export function initPayPalReconcilerCron() {
-  console.log("⏰ Initializing PayPal Reconciler Cron Job (Runs every 15 mins)...");
   cron.schedule("*/15 * * * *", async () => {
-    console.log("🔍 [Cron] Running PayPal Pending Orders Reconciliation...");
     await reconcilePendingPayPalOrders();
   });
 }
 ```
-
-### File 2: `Backend/server.js` Integration
-
-```javascript
-import { initPayPalReconcilerCron } from "./jobs/paypalReconciler.js";
-
-// Start HTTP server & cron reconciler for non-serverless environments
-if (!process.env.VERCEL) {
-  try {
-    initPayPalReconcilerCron();
-  } catch (cronErr) {
-    console.warn("Failed to start PayPal Reconciler Cron:", cronErr.message);
-  }
-
-  app.listen(PORT, () => {
-    console.log(`\n🚀 VRIX Backend API running → http://localhost:${PORT}`);
-  });
-}
-```
-
----
-
-## 🛡️ Developer Checklist
-
-- [x] **Webhook Signature Verified:** Verification call to `/v1/notifications/verify-webhook-signature` using `PAYPAL-SIG-HEADER`.
-- [x] **Frontend Smart Buttons:** `onCancel` & `onError` handlers with custom toast messages.
-- [x] **Background Order Auto-Healing:** `node-cron` job scheduled at `*/15 * * * *`.

@@ -54,6 +54,11 @@ app.use((req, res, next) => {
   next();
 });
 
+import { globalLimiter } from "./middleware/rateLimiter.js";
+
+// Trust proxy header when running behind reverse proxy (Vercel / Cloudflare / AWS / Nginx)
+app.set("trust proxy", 1);
+
 app.use(cors({
   origin: (origin, callback) => callback(null, true),
   credentials: true,
@@ -61,6 +66,9 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Secret", "x-admin-secret"],
 }));
 app.use(express.json());
+
+// Apply Global Rate Limiter to all /api endpoints
+app.use("/api", globalLimiter);
 
 // Serve local uploads if Cloudinary is not configured with 14-day (2 weeks) maxAge cache
 app.use(

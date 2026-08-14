@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { db } from "../database.js";
 import { getRazorpay, getApiSettings, getTransporter } from "../config/apiResolvers.js";
 import { createAdminNotification } from "../config/notificationHelper.js";
-
+import { strictPaymentLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -854,7 +854,7 @@ router.patch("/status/:orderId", async (req, res) => {
 //  PAYPAL — Create Order
 //  POST /api/payment/paypal/create-order
 // ══════════════════════════════════════════════════════════════════════════════
-router.post("/paypal/create-order", async (req, res) => {
+router.post("/paypal/create-order", strictPaymentLimiter, async (req, res) => {
   const {
     amount,
     currency = "USD",
@@ -976,7 +976,7 @@ router.post("/paypal/create-order", async (req, res) => {
 //  PAYPAL — Capture Order (called after buyer approves in the popup)
 //  POST /api/payment/paypal/capture-order
 // ══════════════════════════════════════════════════════════════════════════════
-router.post("/paypal/capture-order", async (req, res) => {
+router.post("/paypal/capture-order", strictPaymentLimiter, async (req, res) => {
   const {
     paypalOrderId,
     items,
