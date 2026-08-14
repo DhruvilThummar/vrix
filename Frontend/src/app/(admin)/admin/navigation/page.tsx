@@ -257,7 +257,7 @@ export default function AdminNavigationPage() {
   const [hoveredPreviewIndex, setHoveredPreviewIndex] = useState<number | null>(null);
   const [previewTheme, setPreviewTheme] = useState<"solid" | "transparent">("solid");
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, _type?: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
