@@ -14,6 +14,9 @@ export async function migrateIfNeeded() {
   return true;
 }
 
+const inMemoryCarts = new Map();
+const inMemoryWishlists = new Map();
+
 export const db = {
   isConnected: () => isDbConnected || !!supabase,
 
@@ -523,11 +526,31 @@ export const db = {
   },
 
   carts: {
-    findMany: async () => []
+    findMany: async () => Array.from(inMemoryCarts.values()),
+    findUnique: async ({ where }) => {
+      const email = String(where?.userEmail || where?.email || "").trim().toLowerCase();
+      return inMemoryCarts.get(email) || null;
+    },
+    upsert: async ({ where, create, update }) => {
+      const email = String(where?.userEmail || create?.userEmail || "").trim().toLowerCase();
+      const record = { userEmail: email, items: update?.items || create?.items || [], updatedAt: new Date() };
+      inMemoryCarts.set(email, record);
+      return record;
+    }
   },
 
   wishlists: {
-    findMany: async () => []
+    findMany: async () => Array.from(inMemoryWishlists.values()),
+    findUnique: async ({ where }) => {
+      const email = String(where?.userEmail || where?.email || "").trim().toLowerCase();
+      return inMemoryWishlists.get(email) || null;
+    },
+    upsert: async ({ where, create, update }) => {
+      const email = String(where?.userEmail || create?.userEmail || "").trim().toLowerCase();
+      const record = { userEmail: email, items: update?.items || create?.items || [], updatedAt: new Date() };
+      inMemoryWishlists.set(email, record);
+      return record;
+    }
   },
 
   securityLogs: {

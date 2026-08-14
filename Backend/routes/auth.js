@@ -513,6 +513,42 @@ router.delete("/addresses/:id", async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// POST /api/auth/sync-cart — Sync active cart items to DB
+router.post("/sync-cart", async (req, res) => {
+  const { email, items } = req.body || {};
+  if (!email) return res.status(400).json({ error: "Email is required" });
+  try {
+    const cleanEmail = String(email).trim().toLowerCase();
+    const cartItems = Array.isArray(items) ? items : [];
+    const saved = await db.carts.upsert({
+      where: { userEmail: cleanEmail },
+      create: { userEmail: cleanEmail, items: cartItems },
+      update: { items: cartItems }
+    });
+    res.json({ success: true, cart: saved });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/sync-wishlist — Sync active wishlist items to DB
+router.post("/sync-wishlist", async (req, res) => {
+  const { email, items } = req.body || {};
+  if (!email) return res.status(400).json({ error: "Email is required" });
+  try {
+    const cleanEmail = String(email).trim().toLowerCase();
+    const wishlistItems = Array.isArray(items) ? items : [];
+    const saved = await db.wishlists.upsert({
+      where: { userEmail: cleanEmail },
+      create: { userEmail: cleanEmail, items: wishlistItems },
+      update: { items: wishlistItems }
+    });
+    res.json({ success: true, wishlist: saved });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/auth/admin-login — Admin-only login, checks role=admin
 router.post("/admin-login", async (req, res) => {
   const { email, password } = req.body || {};

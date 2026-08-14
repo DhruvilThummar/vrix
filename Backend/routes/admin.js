@@ -31,10 +31,23 @@ router.get("/users", async (req, res) => {
       const totalBuying = userPayments.reduce((sum, p) => sum + getAmount(p), 0);
 
       // Active cart & wishlist counts
-      const userCart = carts.find((c) => String(c.userEmail || c.email || "").trim().toLowerCase() === cleanEmail);
-      const userWishlist = wishlists.find((w) => String(w.userEmail || w.email || "").trim().toLowerCase() === cleanEmail);
+      let userCart = carts.find((c) => String(c.userEmail || c.email || "").trim().toLowerCase() === cleanEmail);
+      let userWishlist = wishlists.find((w) => String(w.userEmail || w.email || "").trim().toLowerCase() === cleanEmail);
 
-      const cartItemsCount = Array.isArray(userCart?.items) ? userCart.items.reduce((sum, i) => sum + (i.quantity || 1), 0) : 0;
+      // Smart Fallback: Extract cart items from latest payment if active cart is empty
+      if ((!userCart || !userCart.items || userCart.items.length === 0) && userPayments.length > 0) {
+        const latestWithCart = userPayments.find((p) => p.cartItems);
+        if (latestWithCart && latestWithCart.cartItems) {
+          try {
+            const parsed = typeof latestWithCart.cartItems === "string" ? JSON.parse(latestWithCart.cartItems) : latestWithCart.cartItems;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              userCart = { items: parsed };
+            }
+          } catch (e) {}
+        }
+      }
+
+      const cartItemsCount = Array.isArray(userCart?.items) ? userCart.items.reduce((sum, i) => sum + (Number(i.quantity) || 1), 0) : 0;
       const wishlistItemsCount = Array.isArray(userWishlist?.items) ? userWishlist.items.length : 0;
 
       const { password: _, ...safeUser } = u;

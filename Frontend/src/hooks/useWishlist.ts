@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getWishlistKey } from "@/utils/api";
+import { getWishlistKey, getApiBaseUrl } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { Product } from "@/types/product.types";
 
@@ -40,11 +40,25 @@ export function useWishlist(allProducts: Product[] = []) {
         localStorage.setItem(key, JSON.stringify(updated));
         localStorage.setItem("vrix-wishlist", JSON.stringify(updated));
         setWishlistIds(updated);
+
+        // Sync with Backend if user is logged in
+        if (user?.email) {
+          const baseUrl = getApiBaseUrl();
+          const itemsPayload = updated.map((id) => {
+            const prod = allProducts.find((p) => p.id === id);
+            return prod || { id };
+          });
+          fetch(`${baseUrl}/auth/sync-wishlist`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: user.email, items: itemsPayload }),
+          }).catch(() => {});
+        }
       } catch (err) {
         console.error("Failed to toggle wishlist item:", err);
       }
     },
-    [user, wishlistIds]
+    [user, wishlistIds, allProducts]
   );
 
   const isInWishlist = useCallback(
