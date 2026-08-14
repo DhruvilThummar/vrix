@@ -181,6 +181,7 @@ const registerRoutes = (prefix = "") => {
   app.use(p("/notifications"), notificationsRouter);
   app.use(p("/geo"), geoRouter);
   app.use(p("/chat"), chatRouter);
+  app.use(p("/chatbot"), chatRouter);
   app.use(p("/consent"), consentRouter);
   app.use(p("/bespoke"), bespokeRouter);
   app.use(p("/categories"), categoriesRouter);

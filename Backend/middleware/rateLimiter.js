@@ -117,3 +117,22 @@ export const webhookLimiter = rateLimit({
     res.status(429).json(options.message);
   },
 });
+
+/**
+ * 7. AI Chatbot Limiter: Applied to /api/chat and /api/chatbot/ask
+ * Limits each IP to 10 messages per 1 minute to prevent AI API credit & token exhaustion
+ */
+export const chatbotLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "You are sending messages too quickly. Please wait 60 seconds before asking VRIX another question.",
+    code: "CHATBOT_RATE_LIMIT_EXCEEDED",
+    retryAfterSeconds: 60,
+  },
+  handler: (req, res, next, options) => {
+    res.status(429).json(options.message);
+  },
+});

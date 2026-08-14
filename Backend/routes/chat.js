@@ -1,6 +1,7 @@
 import express from "express";
 import { db } from "../database.js";
 import { runInteractionsChatLoop } from "../services/geminiService.js";
+import { chatbotLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -746,8 +747,9 @@ const handleChatMessage = async (req, res) => {
   }
 };
 
-router.post("/message", handleChatMessage);
-router.post("/", handleChatMessage);
-router.post("/query", handleChatMessage);
+router.post("/ask", chatbotLimiter, handleChatMessage);
+router.post("/message", chatbotLimiter, handleChatMessage);
+router.post("/", chatbotLimiter, handleChatMessage);
+router.post("/query", chatbotLimiter, handleChatMessage);
 
 export default router;

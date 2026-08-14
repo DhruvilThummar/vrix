@@ -260,8 +260,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// POST /api/products
-router.post("/", adminAuth, async (req, res) => {
+// POST /api/products & POST /api/products/add — Admin-only endpoint to add new jewelry
+const handleCreateProduct = async (req, res) => {
   try {
     const data = normalizeProductData(req.body);
     if (!data.title) return res.status(400).json({ error: "Product title is required" });
@@ -280,7 +280,10 @@ router.post("/", adminAuth, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+};
+
+router.post("/add", adminAuth, handleCreateProduct);
+router.post("/", adminAuth, handleCreateProduct);
 
 // PUT /api/products/:id
 router.put("/:id", adminAuth, async (req, res) => {

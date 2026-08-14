@@ -101,6 +101,17 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> 
   const res = await fetch(url, fetchOptions);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
+    if (res.status === 429 && typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("vrix:toast", {
+          detail: {
+            type: "error",
+            message: `⚠️ Rate Limit Exceeded: ${err.error || "Please wait before retrying."}`,
+            code: err.code || "RATE_LIMIT_EXCEEDED",
+          },
+        })
+      );
+    }
     throw new Error(err.error || "API request failed");
   }
   return res.json();

@@ -4,6 +4,7 @@ import { db } from "../database.js";
 import { getRazorpay, getApiSettings, getTransporter } from "../config/apiResolvers.js";
 import { createAdminNotification } from "../config/notificationHelper.js";
 import { strictPaymentLimiter, webhookLimiter } from "../middleware/rateLimiter.js";
+import { sendOrderConfirmationEmail } from "../utils/sendEmail.js";
 
 const router = express.Router();
 
@@ -58,7 +59,7 @@ const safeCompareHex = (actual, expected) => {
 // PayPal REST API credentials resolver
 // Priority: CMS api_settings → process.env
 // ──────────────────────────────────────────────────────────────────────────────
-const getPayPalCredentials = async () => {
+export const getPayPalCredentials = async () => {
   const apiSettings = await getApiSettings();
 
   // If explicitly disabled in Admin panel, return null
@@ -106,7 +107,7 @@ const getPayPalCredentials = async () => {
 // PayPal REST API token exchange helper
 // Uses OAuth2 client_credentials to get a short-lived bearer token
 // ──────────────────────────────────────────────────────────────────────────────
-const getPayPalAccessToken = async (credentials) => {
+export const getPayPalAccessToken = async (credentials) => {
   const baseUrl = credentials.mode === "live"
     ? "https://api-m.paypal.com"
     : "https://api-m.sandbox.paypal.com";
@@ -1045,7 +1046,7 @@ router.post("/paypal/capture-order", strictPaymentLimiter, async (req, res) => {
     const capture = captureData.purchase_units?.[0]?.payments?.captures?.[0];
     const captureId = capture?.id;
 
-    // Atomic transaction: update payment + stock + promo + log
+    // Atomic transaction: update payment + stock + out-of-stock flag + promo + log
     const paymentRecord = await db.$transaction(async (tx) => {
       // 1. Update payment status to SUCCESS
       const updated = await tx.payments.updateMany({
@@ -1083,14 +1084,26 @@ router.post("/paypal/capture-order", strictPaymentLimiter, async (req, res) => {
         }
       }
 
-      // 4. Decrement stock
+      // 4. Secure Inventory Management with Stock Floor Protection & Out of Stock Flagging
       if (items && Array.isArray(items)) {
         for (const item of items) {
-          if (item.id && item.qty) {
-            await tx.products.updateMany({
-              where: { id: item.id },
-              data: { stock: { decrement: item.qty } },
-            });
+          const productId = item.id;
+          const purchaseQty = Math.max(1, parseInt(item.qty || item.quantity || 1, 10));
+
+          if (productId) {
+            const product = await tx.products.findUnique({ where: { id: productId } });
+            if (product) {
+              const currentStock = Math.max(0, Number(product.stock || 0));
+              const newStock = Math.max(0, currentStock - purchaseQty);
+
+              await tx.products.update({
+                where: { id: productId },
+                data: {
+                  stock: newStock,
+                  inStock: newStock > 0, // Automatically flag as Out of Stock if 0
+                },
+              });
+            }
           }
         }
       }
@@ -1322,6 +1335,27 @@ router.post("/paypal/webhook", webhookLimiter, async (req, res) => {
           where: { gatewayOrderId: ppOrderId },
           data: { status: "SUCCESS", paymentId: captureId },
         });
+
+        const updatedPayment = await db.payments.findFirst({ where: { gatewayOrderId: ppOrderId } });
+
+        // Dispatch luxury VRIX email notification asynchronously
+        if (updatedPayment && updatedPayment.userEmail) {
+          sendOrderConfirmationEmail(updatedPayment.userEmail, {
+            orderId: updatedPayment.orderId,
+            customerName: updatedPayment.customerName || "Valued Client",
+            amount: updatedPayment.amount,
+            currency: updatedPayment.currency,
+            items: updatedPayment.cartItems ? JSON.parse(updatedPayment.cartItems) : [],
+            address: updatedPayment.address,
+            city: updatedPayment.city,
+            postalCode: updatedPayment.postalCode,
+            isGiftWrapped: updatedPayment.isGiftWrapped,
+            giftMessage: updatedPayment.giftMessage,
+            giftWrapPrice: updatedPayment.giftWrapPrice,
+            paymentId: captureId,
+            paymentGateway: "PayPal",
+          }).catch((emailErr) => console.warn("[Webhook Email Warning]:", emailErr.message));
+        }
 
         await db.securityLogs.create({
           data: { event: "PAYPAL_WEBHOOK_CAPTURE_COMPLETED", user: captureId, status: "SUCCESS" },
