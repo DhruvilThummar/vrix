@@ -515,11 +515,30 @@ const handleChatMessage = async (req, res) => {
                 const pTitle = (p.title || "").toLowerCase().trim();
                 const pTags = Array.isArray(p.tags) ? p.tags.map(t => String(t).toLowerCase().trim()) : [];
 
+                // Exclude false-positives where "ring" matches "earring"
+                if (stem === "ring" || fLower === "rings") {
+                  if (pType.includes("earring") || pCol.includes("earring") || pTitle.includes("earring")) {
+                    return false;
+                  }
+                }
+
+                // Exact equality or stem match
+                if (pType === fLower || pType === stem || pCol === fLower || pCol === stem) {
+                  return true;
+                }
+
+                // Tags match
+                if (pTags.includes(fLower) || pTags.includes(stem)) {
+                  return true;
+                }
+
+                // Word boundary matching (e.g. \bring\b matches "ring" but NOT "earring")
+                const wordBoundaryRegex = new RegExp(`\\b${stem}\\b`, "i");
                 return (
-                  pType === fLower || pType === stem || pType.includes(stem) || pType.includes(fLower) ||
-                  pCol === fLower || pCol === stem || pCol.includes(stem) ||
-                  pTitle.includes(stem) || pMat.includes(stem) ||
-                  pTags.includes(fLower) || pTags.includes(stem)
+                  wordBoundaryRegex.test(pType) ||
+                  wordBoundaryRegex.test(pCol) ||
+                  wordBoundaryRegex.test(pTitle) ||
+                  wordBoundaryRegex.test(pMat)
                 );
               });
             }

@@ -22,6 +22,11 @@ export default function VrixChatWidget() {
     surfacedProducts: [],
   });
   const [isTyping, setIsTyping] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Persistent Context Memory Window across page reloads and tab navigation
   useEffect(() => {
@@ -208,6 +213,8 @@ export default function VrixChatWidget() {
       localStorage.removeItem("vrix-chat-engine-state-v1");
     } catch (e) {}
   };
+
+  if (!mounted) return null;
 
   return (
     <>
