@@ -5,11 +5,14 @@ import Link from "next/link";
 import { BespokeEstimateData } from "./vrix-chat-types";
 import { fetchBespokeData } from "@/utils/api";
 
+import { useCurrency } from "@/context/CurrencyContext";
+
 interface BespokeEstimateCardProps {
   data: BespokeEstimateData;
 }
 
 export default function BespokeEstimateCard({ data }: BespokeEstimateCardProps) {
+  const { formatPrice } = useCurrency();
   const [cmsSettings, setCmsSettings] = useState<any>(null);
 
   useEffect(() => {
@@ -26,9 +29,10 @@ export default function BespokeEstimateCard({ data }: BespokeEstimateCardProps) 
   const disclaimer = cmsSettings?.disclaimerText || "Final quote verified during 1-on-1 consultation with our lead master craftsman.";
   const ctaText = cmsSettings?.consultationCtaText || "Book Atelier Consultation";
   const defaultLeadTime = cmsSettings?.craftingTimeline || "3 – 4 Weeks";
-  const defaultRange = cmsSettings
-    ? `₹${cmsSettings.baseMinPrice?.toLocaleString("en-IN")} – ₹${cmsSettings.baseMaxPrice?.toLocaleString("en-IN")}`
-    : "₹65,000 – ₹1,80,000";
+  
+  const minVal = cmsSettings?.baseMinPrice ? Number(cmsSettings.baseMinPrice) : 65000;
+  const maxVal = cmsSettings?.baseMaxPrice ? Number(cmsSettings.baseMaxPrice) : 180000;
+  const defaultRange = `${formatPrice(minVal)} – ${formatPrice(maxVal)}`;
 
   return (
     <div className="w-full my-2.5 p-4 bg-surface border border-outline-variant rounded-sm space-y-3 font-jost text-xs">

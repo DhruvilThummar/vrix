@@ -374,7 +374,34 @@ const handleChatMessage = async (req, res) => {
         reply: "Explore VRIX fine jewelry pieces priced under ₹15,000:",
         filterType: "15000",
         options: [
-          { label: "Explore all collections", value: "collections" },
+          { label: "₹15k – ₹50k", value: "50000" },
+          { label: "₹50k – ₹2 Lakh", value: "200000" },
+          { label: "Talk to concierge", value: "trigger-handoff" }
+        ]
+      },
+      50000: {
+        reply: "Explore VRIX fine jewelry pieces in the ₹15,000 – ₹50,000 range:",
+        filterType: "50000",
+        options: [
+          { label: "₹50k – ₹2 Lakh", value: "200000" },
+          { label: "Atelier Masterpieces (₹2L+)", value: "luxury" },
+          { label: "Talk to concierge", value: "trigger-handoff" }
+        ]
+      },
+      200000: {
+        reply: "Explore VRIX lab-grown solitaire diamonds & fine jewelry in the ₹50,000 – ₹2,00,000 range:",
+        filterType: "200000",
+        options: [
+          { label: "Atelier Masterpieces (₹2L+)", value: "luxury" },
+          { label: "Bespoke Configurator", value: "Bespoke" },
+          { label: "Talk to concierge", value: "trigger-handoff" }
+        ]
+      },
+      luxury: {
+        reply: "Explore VRIX High Atelier solitaire masterpieces and bespoke fine jewelry (₹2,00,000+):",
+        filterType: "luxury",
+        options: [
+          { label: "Bespoke Configurator", value: "Bespoke" },
           { label: "Talk to concierge", value: "trigger-handoff" }
         ]
       },
@@ -565,6 +592,26 @@ const handleChatMessage = async (req, res) => {
       } catch (e) {}
 
       let replyText = actionConfig.reply;
+      let comparison = undefined;
+
+      if (matchedKey === "compare" || matchedKey === "Compare these pieces") {
+        const compList = products.length >= 2 ? products : list.slice(0, 3);
+        comparison = {
+          title: "Side-by-Side Fine Jewelry Specification Comparison",
+          products: compList.map(p => ({
+            id: p.id,
+            title: p.title,
+            image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+            price: Number(p.price) || 0,
+            material: p.material || "18K Gold / 950 Platinum",
+            stone: p.subtitle || p.category || "Lab Diamond (VS+)",
+            category: p.category || p.type || "Fine Jewelry",
+            warranty: "VRIX Lifetime Craftsmanship Guarantee",
+            slug: p.id
+          }))
+        };
+        replyText = "Here is a side-by-side specification comparison of our signature pieces from the active database catalog:";
+      }
 
       const isoTimestamp = new Date().toISOString();
       return res.json({
@@ -577,6 +624,7 @@ const handleChatMessage = async (req, res) => {
             sender: "bot",
             text: replyText,
             products: products.length > 0 ? products : undefined,
+            comparison,
             handoff: actionConfig.handoff,
             bespokeEstimate: actionConfig.bespokeEstimate,
             options: actionConfig.options,
