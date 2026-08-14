@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,6 +11,17 @@ interface ProductCardItemProps {
   product: ChatProduct;
   onNavigate?: () => void;
 }
+
+const MATERIAL_COLORS: { [key: string]: string } = {
+  "sterling silver": "#C8C8C8",
+  "925 sterling silver": "#C8C8C8",
+  "silver": "#C8C8C8",
+  "18k gold vermeil": "#EAC37C",
+  "gold vermeil": "#EAC37C",
+  "gold": "#EAC37C",
+  "rose gold": "#B76E79",
+  "platinum": "#E5E4E2",
+};
 
 export default function ProductCardItem({ product, onNavigate }: ProductCardItemProps) {
   const router = useRouter();
@@ -25,6 +36,16 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
   const imageList = Array.isArray(product.images) && product.images.filter(Boolean).length > 0
     ? product.images.filter(Boolean)
     : [product.image || "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=800"];
+
+  const materialsList = useMemo(() => {
+    const list: string[] = [];
+    if (product.material) list.push(product.material);
+    if (!list.includes("18K Gold Vermeil")) list.push("18K Gold Vermeil");
+    if (!list.includes("925 Sterling Silver")) list.push("925 Sterling Silver");
+    return list;
+  }, [product.material]);
+
+  const [activeMaterial, setActiveMaterial] = useState(materialsList[0]);
 
   const productUrl = `/product/${product.slug || product.id}`;
 
@@ -43,6 +64,15 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
       onNavigate();
     } else if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("vrix-close-chat"));
+    }
+  };
+
+  const handleSwatchClick = (e: React.MouseEvent, mat: string, idx: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveMaterial(mat);
+    if (imageList.length > idx) {
+      setCurrentImageIndex(idx % imageList.length);
     }
   };
 
@@ -68,6 +98,11 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
         setCurrentImageIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
       }
     }
+  };
+
+  const getSwatchColor = (mat: string) => {
+    const key = mat.toLowerCase().trim();
+    return MATERIAL_COLORS[key] || "#9CA3AF";
   };
 
   return (
@@ -126,7 +161,7 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
       <div className="p-3 flex flex-col justify-between flex-grow space-y-2">
         <div>
           <span className="font-label-caps text-[9px] text-on-surface-variant uppercase tracking-widest block">
-            {product.category} · {product.material}
+            {product.category} · {activeMaterial}
           </span>
           <h4 className="font-jost text-body-md text-sm text-on-surface font-medium line-clamp-1 leading-snug group-hover:text-primary transition-colors">
             {product.title}
@@ -134,6 +169,34 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
           <p className="font-inter text-sm font-semibold text-primary mt-0.5">
             {formatPrice(product.price)}
           </p>
+
+          {/* Material Swatches Row */}
+          {materialsList.length > 1 && (
+            <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-outline-variant/30">
+              {materialsList.map((mat, idx) => {
+                const isSelected = activeMaterial === mat;
+                return (
+                  <button
+                    key={mat}
+                    type="button"
+                    onClick={(e) => handleSwatchClick(e, mat, idx)}
+                    className={`relative w-3.5 h-3.5 rounded-full flex items-center justify-center p-0 cursor-pointer transition-transform ${
+                      isSelected ? "ring-1 ring-primary ring-offset-1 scale-110" : "opacity-70 hover:opacity-100"
+                    }`}
+                    title={mat}
+                  >
+                    <span
+                      className="w-3.5 h-3.5 rounded-full border border-black/20 shrink-0 block"
+                      style={{ backgroundColor: getSwatchColor(mat) }}
+                    />
+                  </button>
+                );
+              })}
+              <span className="font-jost text-[9px] text-on-surface-variant truncate ml-0.5">
+                {activeMaterial}
+              </span>
+            </div>
+          )}
         </div>
 
         {product.whyFits && (

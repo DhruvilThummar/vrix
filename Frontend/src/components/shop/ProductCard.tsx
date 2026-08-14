@@ -86,6 +86,11 @@ export default function ProductCard({
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
+  // Immediately switch image when material swatch is clicked
+  useEffect(() => {
+    setCurrentSlideIdx(0);
+  }, [selectedMaterial]);
+
   // 2-second auto-changing image carousel
   useEffect(() => {
     if (carouselImages.length <= 1) return;
