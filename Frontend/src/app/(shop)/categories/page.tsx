@@ -2,7 +2,7 @@ import { fetchCategories } from "@/utils/api";
 import CategoriesClient from "./CategoriesClient";
 import { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const DEFAULT_CATEGORIES = [
   {

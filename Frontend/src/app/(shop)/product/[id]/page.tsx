@@ -1,8 +1,12 @@
+import { cache } from "react";
 import { fetchProduct, fetchProducts } from "@/utils/api";
 import ProductPageClient from "./ProductPageClient";
 import { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+const getCachedProduct = cache((id: string) => fetchProduct(id).catch(() => null));
+const getCachedProducts = cache(() => fetchProducts().catch(() => []));
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -11,7 +15,7 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   try {
-    const product = await fetchProduct(resolvedParams.id);
+    const product = await getCachedProduct(resolvedParams.id);
     if (!product) return { title: "Product Not Found | VRIX" };
 
     const title = `${product.title} — ${product.material || product.subtitle || "Fine"} ${product.type || "Jewelry"} | VRIX`;
@@ -42,8 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const resolvedParams = await params;
   const [product, allProducts] = await Promise.all([
-    fetchProduct(resolvedParams.id).catch(() => null),
-    fetchProducts().catch(() => []),
+    getCachedProduct(resolvedParams.id),
+    getCachedProducts(),
   ]);
 
   // Embed Product JSON-LD server-side

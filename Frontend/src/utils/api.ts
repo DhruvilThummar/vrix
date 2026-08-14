@@ -75,10 +75,17 @@ const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || "vrix_admin_secret_
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const baseUrl = getApiBaseUrl();
   const url = endpoint.startsWith("/") ? `${baseUrl}${endpoint}` : `${baseUrl}/${endpoint}`;
-  const res = await fetch(url, {
-    cache: "no-store",
+  const method = (options?.method || "GET").toUpperCase();
+  
+  // Default caching behavior: for GET requests, enable Next.js revalidation cache unless explicitly overridden
+  const fetchOptions: RequestInit = {
+    ...(method === "GET" && !options?.cache && !options?.next
+      ? { next: { revalidate: 60 } }
+      : { cache: "no-store" }),
     ...options,
-  });
+  };
+
+  const res = await fetch(url, fetchOptions);
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || "API request failed");

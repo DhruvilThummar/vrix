@@ -1,9 +1,14 @@
+import { cache } from "react";
 import { fetchCategories, fetchCollections, fetchProducts } from "@/utils/api";
 import CollectionDetailClient from "./CollectionDetailClient";
 import { Metadata } from "next";
 import { Suspense } from "react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+const getCachedCollections = cache(() => fetchCollections().catch(() => []));
+const getCachedCategories = cache(() => fetchCategories().catch(() => []));
+const getCachedProducts = cache(() => fetchProducts().catch(() => []));
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -15,8 +20,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   try {
     const [collections, categories] = await Promise.all([
-      fetchCollections().catch(() => []),
-      fetchCategories().catch(() => []),
+      getCachedCollections(),
+      getCachedCategories(),
     ]);
 
     const activeInfo = categories.find((c) => c.id === slug) || collections.find((c) => c.id === slug);
@@ -49,9 +54,9 @@ export default async function CollectionDetailPage({ params }: Props) {
   const slug = resolvedParams.slug;
 
   const [products, collections, categories] = await Promise.all([
-    fetchProducts().catch(() => []),
-    fetchCollections().catch(() => []),
-    fetchCategories().catch(() => []),
+    getCachedProducts(),
+    getCachedCollections(),
+    getCachedCategories(),
   ]);
 
   const activeCategory = categories.find((c) => c.id === slug);

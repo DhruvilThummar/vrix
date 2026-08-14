@@ -3,7 +3,7 @@ import ProductsCatalogClient from "./ProductsCatalogClient";
 import { Metadata } from "next";
 import { Suspense } from "react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Shop All Fine Jewelry Online | VRIX",

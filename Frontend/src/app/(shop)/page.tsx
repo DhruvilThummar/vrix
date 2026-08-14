@@ -1,8 +1,12 @@
+import { cache } from "react";
 import { Metadata } from "next";
 import HomepageClient from "./page.client";
 import { fetchDbPublic, fetchProducts } from "@/utils/api";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+const getCachedDbPublic = cache(() => fetchDbPublic().catch(() => null));
+const getCachedProducts = cache(() => fetchProducts().catch(() => []));
 
 const DEFAULT_SEO_SUBHEADING = "Luxury Minimalist Jewellery & Lab-Grown Diamonds";
 const DEFAULT_SEO_HEADING = "A Luxury That Feels Like You";
@@ -10,7 +14,7 @@ const DEFAULT_SEO_TEXT =
   "Welcome to VRIX — where luxury feels like you. Designed for those beginning their journey into fine jewellery, our collections blend lab-grown diamond artistry with architectural minimalism and high-quality craftsmanship. Positioned between gold-plated and heavy traditional gold jewellery, VRIX brings you quiet luxury, clean forms, and effortless elegance crafted to create a personal, meaningful connection for your everyday moments.";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const dbRes = await fetchDbPublic().catch(() => null);
+  const dbRes = await getCachedDbPublic();
   const homepage = dbRes?.homepage || {};
 
   const title = homepage.seoHeading
@@ -82,8 +86,8 @@ export default async function Page() {
 
   try {
     const [dbRes, productsRes] = await Promise.all([
-      fetchDbPublic().catch(() => null),
-      fetchProducts().catch(() => []),
+      getCachedDbPublic(),
+      getCachedProducts(),
     ]);
     homepageData = dbRes;
     productsData = productsRes || [];
