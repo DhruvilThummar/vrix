@@ -46,6 +46,18 @@ export default function HumanHandoffCard({ data }: HumanHandoffCardProps) {
         </a>
       </div>
 
+      <div className="pt-2">
+        <a
+          href="https://wa.me/919054285693?text=Hi%20VRIX%20Concierge,%20I%20would%20like%20personal%20styling%20assistance."
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-2 px-3 bg-emerald-700 text-white font-button text-button text-[10px] rounded-xs uppercase tracking-wider flex items-center justify-center gap-1.5 hover:bg-emerald-800 transition-colors shadow-2xs cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[15px]">chat</span>
+          <span>Chat Live on WhatsApp Concierge</span>
+        </a>
+      </div>
+
       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant/50 font-button text-button text-[10px]">
         <a
           href={data.mapsUrl}

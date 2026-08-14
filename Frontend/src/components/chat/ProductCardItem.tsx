@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChatProduct } from "./vrix-chat-types";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useCart } from "@/context/CartContext";
 
 interface ProductCardItemProps {
   product: ChatProduct;
@@ -26,11 +27,28 @@ const MATERIAL_COLORS: { [key: string]: string } = {
 export default function ProductCardItem({ product, onNavigate }: ProductCardItemProps) {
   const router = useRouter();
   const { formatPrice } = useCurrency();
+  const { addItem } = useCart();
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [added, setAdded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image || "",
+      material: activeMaterial,
+      quantity: 1,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
 
   // Normalize images list for carousel
   const imageList = Array.isArray(product.images) && product.images.filter(Boolean).length > 0
@@ -205,11 +223,22 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
           </p>
         )}
 
-        <div className="pt-1 flex items-center justify-between border-t border-outline-variant/40">
+        <div className="pt-1 flex items-center justify-between border-t border-outline-variant/40 gap-2">
           <span className="header-nav-link font-button text-button text-xs text-primary font-semibold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
             <span>View piece</span>
             <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
           </span>
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className={`px-2.5 py-1 text-[10px] font-button uppercase tracking-wider rounded-xs transition-all cursor-pointer ${
+              added
+                ? "bg-emerald-700 text-white font-bold"
+                : "bg-primary text-on-primary hover:opacity-90 font-semibold"
+            }`}
+          >
+            {added ? "✓ Added" : "+ Quick Add"}
+          </button>
         </div>
       </div>
     </Link>
