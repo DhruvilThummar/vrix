@@ -445,16 +445,21 @@ router.post("/message", async (req, res) => {
         }
       } catch (e) {}
 
+      let replyText = actionConfig.reply;
+      if (actionConfig.filterType && products.length === 0) {
+        replyText = "We don't currently have a piece matching that specific filter in our active database catalog. Would you like to explore all signature collections or connect with our concierge team?";
+      }
+
       const isoTimestamp = new Date().toISOString();
       return res.json({
         success: true,
         sessionId: session.id,
-        reply: actionConfig.reply,
+        reply: replyText,
         messages: [
           {
             id: `msg-${Date.now()}`,
             sender: "bot",
-            text: actionConfig.reply,
+            text: replyText,
             products: products.length > 0 ? products : undefined,
             handoff: actionConfig.handoff,
             bespokeEstimate: actionConfig.bespokeEstimate,
