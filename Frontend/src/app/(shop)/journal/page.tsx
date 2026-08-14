@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 interface Article {
@@ -20,7 +19,7 @@ const DEFAULT_ARTICLES: Article[] = [
     title: "Architectural Minimalism: The Philosophy Behind VRIX",
     excerpt: "Exploring how architectural forms and clean geometric silhouettes inspire our fine jewelry collections.",
     content: "Jewelry shouldn't overpower; it should harmonize. At VRIX, we take inspiration from modern brutalist architecture and clean minimalist lines. Every setting is engineered to remove excess metal while enhancing light reflection across lab-grown diamond facets.\n\nOur philosophy rests on three pillars: structural balance, tactile weight, and quiet luxury that feels like an organic extension of the wearer.",
-    image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=1200&auto=format&fit=crop",
+    image: "",
     date: "OCTOBER 2024",
     readTime: "4 MIN READ"
   },
@@ -29,7 +28,7 @@ const DEFAULT_ARTICLES: Article[] = [
     title: "The Lab-Grown Diamond Revolution: Conscious Brilliance",
     excerpt: "Why lab-grown diamonds represent the future of sustainable fine jewelry without optical or chemical compromise.",
     content: "Lab-grown diamonds are physically, chemically, and optically identical to mined diamonds. Created using advanced chemical vapor deposition (CVD) powered by renewable energy, VRIX lab-grown diamonds allow us to offer zero-conflict, high-purity solitaires at accessible price points.\n\nBy avoiding traditional mining, we eliminate human impact and environmental destruction while delivering VS+ clarity and F-G color brilliance.",
-    image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop",
+    image: "",
     date: "NOVEMBER 2024",
     readTime: "5 MIN READ"
   },
@@ -38,7 +37,7 @@ const DEFAULT_ARTICLES: Article[] = [
     title: "The Ultimate Guide to Caring for 18K Gold Vermeil",
     excerpt: "Essential care instructions to maintain the luster and thick golden finish of your VRIX jewelry for years.",
     content: "18K Gold Vermeil is a thick layer of solid 18K gold electroplated over pure 925 Sterling Silver. To preserve its luster:\n\n1. Store in your complimentary VRIX velvet pouch away from humidity.\n2. Avoid direct application of perfumes, lotions, or sanitizers.\n3. Clean softly using an un-treated microfiber cloth.",
-    image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop",
+    image: "",
     date: "DECEMBER 2024",
     readTime: "3 MIN READ"
   }
@@ -60,79 +59,59 @@ export default function JournalPage() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error loading journal articles:", err);
         setArticles(DEFAULT_ARTICLES);
         setLoading(false);
       });
   }, []);
 
   return (
-    <div className="w-full bg-surface min-h-screen py-section-gap">
-      <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop space-y-12">
-        {/* Header */}
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <p className="font-label-caps text-xs text-slate-grey uppercase tracking-widest">
-            Editorial Journal
-          </p>
-          <h1 className="font-display-lg text-headline-lg text-deep-navy uppercase">
-            Stories & Craft
+    <div className="w-full min-h-screen bg-pure-white text-ink-black selection:bg-deep-navy selection:text-white">
+      {/* ─── Hero Banner ─── */}
+      <section className="bg-deep-navy text-pure-white py-24 md:py-32 px-margin-mobile md:px-margin-desktop text-center border-b border-slate-grey/20">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <span className="font-jost font-secondary text-label-caps text-xs tracking-[0.25em] text-[#B59D7C] uppercase block">
+            EDITORIAL JOURNAL • VOLUME 01
+          </span>
+          <h1 className="font-inter font-primary text-3xl md:text-5xl font-light uppercase tracking-wider text-pure-white">
+            The VRIX Journal
           </h1>
-          <div className="w-16 h-px bg-slate-grey/30 mx-auto"></div>
-          <p className="font-body-md text-sm text-slate-grey leading-relaxed">
-            Delve into the design philosophy, sustainable sourcing narratives, and styling inspirations behind VRIX Fine Jewelry.
+          <div className="w-16 h-[2px] bg-[#B59D7C] mx-auto mt-6 mb-8" />
+          <p className="font-jost font-secondary text-base md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed font-light">
+            Insights on architectural jewelry design, lab-grown diamond innovation, and modern conscious luxury.
           </p>
         </div>
+      </section>
 
-        {/* Loading State */}
-        {loading ? (
-          <div className="h-64 flex items-center justify-center text-slate-grey font-label-caps text-xs tracking-widest">
-            Loading articles...
-          </div>
-        ) : articles.length === 0 ? (
-          <div className="h-64 flex items-center justify-center text-slate-grey font-body-md text-sm">
-            No journal entries found. Check back soon.
-          </div>
-        ) : (
-          /* Grid of Articles */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter pt-8">
-            {articles.map((article) => (
-              <article
-                key={article.id}
-                onClick={() => setSelectedArticle(article)}
-                className="group cursor-pointer bg-pure-white border border-slate-grey/10 shadow-sm overflow-hidden flex flex-col justify-between"
-              >
-                <div className="aspect-[16/10] relative overflow-hidden bg-soft-linen">
-                  <Image
-                    src={article.image}
-                    alt={article.title}
-                    fill
-                    className="object-cover group-hover:scale-103 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, 45vw"
-                  />
+      {/* ─── Articles Grid ─── */}
+      <section className="py-20 md:py-28 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {articles.map((article) => (
+            <article
+              key={article.id}
+              onClick={() => setSelectedArticle(article)}
+              className="group cursor-pointer bg-soft-linen p-8 border border-slate-grey/15 flex flex-col justify-between space-y-6 hover:border-deep-navy transition-colors duration-300"
+            >
+              <div className="space-y-4">
+                <div className="flex gap-3 items-center text-[10px] font-inter font-primary text-[#B59D7C] tracking-widest uppercase">
+                  <span>{article.date}</span>
+                  <span>•</span>
+                  <span>{article.readTime}</span>
                 </div>
-                <div className="p-8 flex-1 flex flex-col justify-between space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex gap-4 items-center text-[10px] font-label-caps text-slate-grey tracking-wider uppercase">
-                      <span>{article.date}</span>
-                      <span className="w-1.5 h-1.5 bg-slate-grey/30 rounded-full"></span>
-                      <span>{article.readTime}</span>
-                    </div>
-                    <h3 className="font-headline-md text-deep-navy text-xl group-hover:text-ink-black transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="font-body-md text-slate-grey text-sm leading-relaxed">
-                      {article.excerpt}
-                    </p>
-                  </div>
-                  <span className="inline-flex items-center gap-2 font-button text-button text-deep-navy group-hover:text-slate-grey transition-colors uppercase tracking-widest text-xs pt-2">
-                    Read Article <i className="fa-solid fa-arrow-right text-[10px]"></i>
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </main>
+                <h2 className="font-inter font-primary text-lg font-semibold text-deep-navy group-hover:text-black transition-colors uppercase leading-snug">
+                  {article.title}
+                </h2>
+                <p className="font-jost font-secondary text-xs md:text-sm text-slate-grey leading-relaxed">
+                  {article.excerpt}
+                </p>
+              </div>
+
+              <span className="inline-flex items-center gap-2 font-inter font-primary text-xs text-deep-navy font-semibold uppercase tracking-widest pt-4">
+                Read Article <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </span>
+            </article>
+          ))}
+        </div>
+      </section>
 
       {/* Immersive Reader Modal */}
       {selectedArticle && (
@@ -164,16 +143,8 @@ export default function JournalPage() {
                 </p>
               </div>
 
-              {/* Cover Image in Modal */}
-              <div className="aspect-[16/9] relative bg-soft-linen w-full overflow-hidden border border-slate-grey/10">
-                <Image
-                  src={selectedArticle.image}
-                  alt={selectedArticle.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 768px"
-                />
-              </div>
+              {/* Gold Divider Line */}
+              <div className="w-16 h-[2px] bg-[#B59D7C]" />
 
               {/* Article Main Copy */}
               <div className="font-body-md text-sm text-slate-grey leading-relaxed whitespace-pre-line space-y-4">

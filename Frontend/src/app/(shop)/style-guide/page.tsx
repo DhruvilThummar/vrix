@@ -1,61 +1,92 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_DATA = {
   heroTitle: "Jewelry Style Guide",
-  bannerImage: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?q=80&w=1600&auto=format&fit=crop",
   content: "Master the art of understated luxury. Learn how to layer delicate gold pendants, stack architectural lab-grown diamond bands, and seamlessly pair 18K Gold Vermeil with 925 Sterling Silver for a personalized signature aesthetic."
 };
 
+const STYLING_RULES = [
+  {
+    number: "01",
+    rule: "The Rule of Proportions",
+    tip: "Pair statement solitaire rings with minimalist thin bands. Maintain visual equilibrium by leaving breathing space between hand focal points."
+  },
+  {
+    number: "02",
+    rule: "Layering Length Cascades",
+    tip: "When stacking chains, space lengths at 16, 18, and 20 inches to allow each pendant and pave link to reflect light individually."
+  },
+  {
+    number: "03",
+    rule: "Mixed Metal Harmony",
+    tip: "Combine 18K Gold Vermeil with Recycled 925 Silver by ensuring at least one piece shares a common architectural geometry."
+  }
+];
+
 export default function StyleGuidePage() {
-  const [pageData, setPageData] = useState(DEFAULT_DATA);
+  const [data, setData] = useState(DEFAULT_DATA);
 
   useEffect(() => {
     fetchDb()
       .then((res) => {
-        if (res.custom_pages && res.custom_pages["style-guide"]) {
-          setPageData({ ...DEFAULT_DATA, ...res.custom_pages["style-guide"] });
+        if (res.style_guide) {
+          setData((prev) => ({ ...prev, ...res.style_guide }));
         }
       })
-      .catch((err) => console.error("Error loading CMS data:", err));
+      .catch(() => {});
   }, []);
 
   return (
-    <div className="w-full flex flex-col items-center min-h-[70vh] bg-surface pb-section-gap">
-      {pageData.bannerImage ? (
-        <section className="relative w-full h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden bg-deep-navy mb-section-gap">
-          <Image
-            alt={pageData.heroTitle}
-            fill
-            className="object-cover object-center opacity-70"
-            src={pageData.bannerImage}
-            priority
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-ink-black/30"></div>
-          <div className="relative z-10 text-center px-margin-mobile">
-            <h1 className="script-hero text-6xl md:text-8xl text-pure-white font-light tracking-wide drop-shadow-sm">
-              {pageData.heroTitle}
-            </h1>
-          </div>
-        </section>
-      ) : (
-        <div className="w-full pt-section-gap pb-8 px-margin-mobile text-center">
-          <h1 className="font-display-lg text-4xl md:text-5xl text-deep-navy uppercase mb-stack-md tracking-wider">
-            {pageData.heroTitle}
+    <div className="w-full min-h-screen bg-pure-white text-ink-black selection:bg-deep-navy selection:text-white">
+      {/* ─── Hero Banner ─── */}
+      <section className="bg-deep-navy text-pure-white py-24 md:py-32 px-margin-mobile md:px-margin-desktop text-center border-b border-slate-grey/20">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <span className="font-jost font-secondary text-label-caps text-xs tracking-[0.25em] text-[#B59D7C] uppercase block">
+            EDITORIAL CURATION • STYLING DIRECTORY
+          </span>
+          <h1 className="font-inter font-primary text-3xl md:text-5xl font-light uppercase tracking-wider text-pure-white">
+            {data.heroTitle}
           </h1>
-          <div className="w-12 h-px bg-slate-grey/30 mx-auto"></div>
+          <div className="w-16 h-[2px] bg-[#B59D7C] mx-auto mt-6 mb-8" />
+          <p className="font-jost font-secondary text-base md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed font-light">
+            {data.content}
+          </p>
         </div>
-      )}
+      </section>
 
-      <div className="px-margin-mobile max-w-3xl mx-auto text-center mt-8">
-        <p className="font-body-lg text-slate-grey leading-relaxed whitespace-pre-line">
-          {pageData.content}
-        </p>
-      </div>
+      {/* ─── Styling Rules Section ─── */}
+      <section className="py-20 md:py-28 max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {STYLING_RULES.map((item, idx) => (
+            <div key={idx} className="bg-soft-linen p-8 md:p-10 border border-slate-grey/15 flex flex-col justify-between space-y-6">
+              <div className="space-y-4">
+                <span className="font-inter font-primary text-2xl font-bold text-[#B59D7C]">
+                  {item.number}
+                </span>
+                <h2 className="font-inter font-primary text-xl font-semibold text-deep-navy uppercase tracking-wide">
+                  {item.rule}
+                </h2>
+                <p className="font-jost font-secondary text-sm text-slate-grey leading-relaxed">
+                  {item.tip}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-16 text-center">
+          <Link
+            href="/products"
+            className="inline-block bg-deep-navy text-pure-white px-10 py-4 font-inter font-primary text-xs uppercase tracking-widest hover:bg-black transition-colors duration-300"
+          >
+            Curate Your Collection
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

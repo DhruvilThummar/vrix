@@ -112,9 +112,9 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
     } catch (e) {}
   }, []);
 
-  // Progressive background lazy loading of products and image pre-caching
+  // Progressive background lazy loading of products only if server didn't provide initialProducts
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || (initialProducts && initialProducts.length > 0)) return;
     const timer = setTimeout(async () => {
       try {
         const { fetchProducts } = await import("@/utils/api");
@@ -127,7 +127,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
       }
     }, 400);
     return () => clearTimeout(timer);
-  }, []);
+  }, [initialProducts]);
 
   const toggleWishlist = (id: string, title: string, e: React.MouseEvent) => {
     e.preventDefault();
