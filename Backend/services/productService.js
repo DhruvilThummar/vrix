@@ -190,7 +190,10 @@ export const productService = {
     return [];
   },
 
-  findUnique: async (id) => {
+  findUnique: async (arg) => {
+    const id = typeof arg === "string" ? arg : (arg?.where?.id || arg?.id);
+    if (!id) return null;
+
     if (isDbConnected && prisma) {
       try {
         return await runProductQuery(
@@ -211,7 +214,10 @@ export const productService = {
     return null;
   },
 
-  create: async (data) => {
+  create: async (arg) => {
+    const data = (arg && typeof arg === "object" && arg.data !== undefined) ? arg.data : arg;
+    if (!data || typeof data !== "object") throw new Error("Product payload is required for creation.");
+
     if (isDbConnected && prisma) {
       try {
         return await runProductQuery(
@@ -235,7 +241,19 @@ export const productService = {
     throw new Error("Product Microservice: Storage unavailable.");
   },
 
-  update: async (id, data) => {
+  update: async (arg1, arg2) => {
+    let id;
+    let data;
+    if (typeof arg1 === "string") {
+      id = arg1;
+      data = arg2;
+    } else if (arg1 && typeof arg1 === "object") {
+      id = arg1.where?.id || arg1.id;
+      data = arg1.data !== undefined ? arg1.data : arg2;
+    }
+
+    if (!id || !data) throw new Error("Product ID and update payload are required.");
+
     if (isDbConnected && prisma) {
       try {
         return await runProductQuery(
@@ -259,13 +277,17 @@ export const productService = {
     throw new Error("Product Microservice: Storage unavailable.");
   },
 
-  exists: async ({ where }) => {
-    if (!where || !where.id) return false;
-    const p = await productService.findUnique(where.id);
+  exists: async (arg) => {
+    const id = typeof arg === "string" ? arg : (arg?.where?.id || arg?.id);
+    if (!id) return false;
+    const p = await productService.findUnique(id);
     return !!p;
   },
 
-  delete: async (id) => {
+  delete: async (arg) => {
+    const id = typeof arg === "string" ? arg : (arg?.where?.id || arg?.id);
+    if (!id) return false;
+
     if (isDbConnected && prisma) {
       try {
         await prisma.product.delete({ where: { id } });
