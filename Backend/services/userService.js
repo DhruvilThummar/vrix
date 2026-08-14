@@ -154,5 +154,18 @@ export const userService = {
     }
 
     return record;
+  },
+
+  findUnique: async ({ where }) => {
+    const email = where?.email || where?.id;
+    return userService.findByEmail(email);
+  },
+
+  update: async ({ where, data }) => {
+    const email = where?.email || where?.id;
+    const existing = await userService.findByEmail(email);
+    const updatedPayload = { ...(existing || {}), ...(data || {}), email };
+    return userService.upsert(updatedPayload);
   }
 };
+

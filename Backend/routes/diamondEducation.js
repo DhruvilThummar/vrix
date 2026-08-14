@@ -15,14 +15,14 @@ function slugify(text) {
     .replace(/\-\-+/g, "-");
 }
 
-// ── Public Endpoints ────────────────────────────────────────────────────────
+// ── Public List Endpoint ───────────────────────────────────────────────────
 // GET /api/diamond-education — Public published articles
 router.get("/", async (req, res) => {
   try {
-    const articles = await db.diamondEducation?.findMany({
+    const articles = await db.diamondEducation.findMany({
       where: { isPublished: true },
       orderBy: { createdAt: "desc" }
-    }).catch(() => []);
+    });
 
     res.json({
       success: true,
@@ -34,31 +34,13 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/diamond-education/:slug — Public single article by slug
-router.get("/:slug", async (req, res) => {
-  try {
-    const article = await db.diamondEducation?.findUnique({
-      where: { slug: req.params.slug }
-    }).catch(() => null);
-
-    if (!article || !article.isPublished) {
-      return res.status(404).json({ error: "Article not found." });
-    }
-
-    res.json({ success: true, article });
-  } catch (err) {
-    console.error("Fetch article by slug error:", err);
-    res.status(500).json({ error: "Failed to fetch article." });
-  }
-});
-
 // ── Admin Endpoints (Protected by adminAuth Middleware) ────────────────────
-// GET /api/admin/diamond-education — Admin list all articles (published & drafts)
+// GET /api/diamond-education/admin/list — Admin list all articles (published & drafts)
 router.get("/admin/list", adminAuth, async (req, res) => {
   try {
-    const articles = await db.diamondEducation?.findMany({
+    const articles = await db.diamondEducation.findMany({
       orderBy: { createdAt: "desc" }
-    }).catch(() => []);
+    });
 
     res.json({
       success: true,
@@ -70,7 +52,7 @@ router.get("/admin/list", adminAuth, async (req, res) => {
   }
 });
 
-// POST /api/admin/diamond-education — Create new article
+// POST /api/diamond-education/admin/create — Create new article
 router.post("/admin/create", adminAuth, async (req, res) => {
   const { title, category, content, summary, tags, isPublished, slug: customSlug } = req.body || {};
 
@@ -81,9 +63,8 @@ router.post("/admin/create", adminAuth, async (req, res) => {
   const baseSlug = slugify(customSlug || title) || "diamond-guide";
   const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
-
   try {
-    const article = await db.diamondEducation?.create({
+    const article = await db.diamondEducation.create({
       data: {
         title: title.trim(),
         slug,
@@ -106,7 +87,7 @@ router.post("/admin/create", adminAuth, async (req, res) => {
   }
 });
 
-// PUT /api/admin/diamond-education/:id — Update article
+// PUT /api/diamond-education/admin/update/:id — Update article
 router.put("/admin/update/:id", adminAuth, async (req, res) => {
   const { title, category, content, summary, tags, isPublished } = req.body || {};
   const { id } = req.params;
@@ -123,7 +104,7 @@ router.put("/admin/update/:id", adminAuth, async (req, res) => {
     if (tags !== undefined) updateData.tags = tags;
     if (isPublished !== undefined) updateData.isPublished = Boolean(isPublished);
 
-    const article = await db.diamondEducation?.update({
+    const article = await db.diamondEducation.update({
       where: { id },
       data: updateData
     });
@@ -139,12 +120,12 @@ router.put("/admin/update/:id", adminAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/admin/diamond-education/:id — Delete article
+// DELETE /api/diamond-education/admin/delete/:id — Delete article
 router.delete("/admin/delete/:id", adminAuth, async (req, res) => {
   const { id } = req.params;
 
   try {
-    await db.diamondEducation?.delete({
+    await db.diamondEducation.delete({
       where: { id }
     });
 
@@ -158,4 +139,24 @@ router.delete("/admin/delete/:id", adminAuth, async (req, res) => {
   }
 });
 
+// ── Public Single Article Endpoint (Wildcard slug must come LAST) ───────────
+// GET /api/diamond-education/:slug — Public single article by slug
+router.get("/:slug", async (req, res) => {
+  try {
+    const article = await db.diamondEducation.findUnique({
+      where: { slug: req.params.slug }
+    });
+
+    if (!article || !article.isPublished) {
+      return res.status(404).json({ error: "Article not found." });
+    }
+
+    res.json({ success: true, article });
+  } catch (err) {
+    console.error("Fetch article by slug error:", err);
+    res.status(500).json({ error: "Failed to fetch article." });
+  }
+});
+
 export default router;
+

@@ -1,4 +1,5 @@
 import express from "express";
+import crypto from "crypto";
 import { db } from "../database.js";
 import { createAdminNotification } from "../config/notificationHelper.js";
 
@@ -94,39 +95,43 @@ router.patch("/users/:email/vrix-plus", async (req, res) => {
 router.get("/stats", async (req, res) => {
   try {
     const [products, payments, promoCount] = await Promise.all([
-      db.products.findMany(),
-      db.payments.findMany(),
-      db.redeemCodes.count()
+      db.products.findMany().catch(() => []),
+      db.payments.findMany().catch(() => []),
+      db.redeemCodes.count().catch(() => 0)
     ]);
 
-    const totalRevenue = payments
-      .filter((p) => ["SUCCESS", "DELIVERED", "PAID"].includes(normalizeStatus(p.status)))
+    const safeProducts = Array.isArray(products) ? products : [];
+    const safePayments = Array.isArray(payments) ? payments : [];
+    const safePromoCount = typeof promoCount === "number" ? promoCount : 0;
+
+    const totalRevenue = safePayments
+      .filter((p) => p && ["SUCCESS", "DELIVERED", "PAID"].includes(normalizeStatus(p.status)))
       .reduce((acc, p) => acc + getAmount(p), 0);
 
-    const pending = payments.filter((p) => ["CREATED", "PENDING", "SUCCESS", "PAID"].includes(normalizeStatus(p.status))).length;
-    const delivered = payments.filter((p) => normalizeStatus(p.status) === "DELIVERED").length;
-    const outOfStock = products.filter((p) => (p.stock ?? 999) === 0).length;
-    const hidden = products.filter((p) => p.isVisible === false).length;
+    const pending = safePayments.filter((p) => p && ["CREATED", "PENDING", "SUCCESS", "PAID"].includes(normalizeStatus(p.status))).length;
+    const delivered = safePayments.filter((p) => p && normalizeStatus(p.status) === "DELIVERED").length;
+    const outOfStock = safeProducts.filter((p) => p && (p.stock ?? 999) === 0).length;
+    const hidden = safeProducts.filter((p) => p && p.isVisible === false).length;
 
     res.json({
-      totalProducts: products.length,
-      totalOrders: payments.length,
+      totalProducts: safeProducts.length,
+      totalOrders: safePayments.length,
       totalRevenue,
       pendingOrders: pending,
       deliveredOrders: delivered,
       outOfStock,
       hiddenProducts: hidden,
-      totalPromoCodes: promoCount,
+      totalPromoCodes: safePromoCount,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("GET /admin/stats error:", err);
+    res.status(500).json({ error: err.message || "Failed to fetch admin stats." });
   }
 });
 
 // POST /api/admin/update-credentials
-import crypto from "crypto";
 router.post("/update-credentials", async (req, res) => {
-  const { oldEmail, newEmail, newPassword } = req.body;
+  const { oldEmail, newEmail, newPassword } = req.body || {};
   if (!oldEmail || !newEmail) {
     return res.status(400).json({ error: "Current email and new email are required." });
   }
@@ -135,12 +140,16 @@ router.post("/update-credentials", async (req, res) => {
     const cleanOld = String(oldEmail).trim().toLowerCase();
     const cleanNew = String(newEmail).trim().toLowerCase();
 
-    const existing = await db.users.findUnique({ where: { email: cleanOld } });
+    let existing = await db.users.findUnique({ where: { email: cleanOld } });
     if (!existing) {
-      return res.status(404).json({ error: "Admin user not found." });
+      existing = await db.users.upsert({
+        email: cleanOld,
+        name: "Administrator",
+        role: "admin"
+      });
     }
 
-    const updateData = { email: cleanNew };
+    const updateData = { email: cleanNew, role: "admin" };
     if (newPassword && newPassword.trim()) {
       updateData.password = crypto.createHash("sha256").update(newPassword.trim()).digest("hex");
     }
@@ -158,7 +167,8 @@ router.post("/update-credentials", async (req, res) => {
 
     res.json({ success: true, message: "Credentials updated successfully.", newEmail: cleanNew });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("update-credentials error:", err);
+    res.status(500).json({ error: err.message || "Failed to update credentials." });
   }
 });
 

@@ -412,8 +412,16 @@ export default function AdminHeader({
                 className="w-full text-left px-4 py-2 text-sm text-deep-navy hover:bg-soft-linen/30 flex items-center gap-2 cursor-pointer transition-colors"
               >
                 <span className="material-symbols-outlined text-sm">settings</span>
-                <span>Edit Profile Settings</span>
+                <span>Edit Profile Modal</span>
               </button>
+              <Link
+                href="/admin/settings"
+                onClick={() => setIsDropdownOpen(false)}
+                className="px-4 py-2 text-sm text-deep-navy hover:bg-soft-linen/30 flex items-center gap-2 cursor-pointer transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">manage_accounts</span>
+                <span>Account &amp; Password Settings</span>
+              </Link>
               <Link
                 href="/"
                 className="px-4 py-2 text-sm text-deep-navy hover:bg-soft-linen/30 flex items-center gap-2 cursor-pointer transition-colors"

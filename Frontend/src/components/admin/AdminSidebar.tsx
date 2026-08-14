@@ -23,6 +23,7 @@ const navItems = [
   { name: "Delivery Staff", href: "/admin/delivery", icon: "local_shipping" },
   { name: "Security & Logs", href: "/admin/security", icon: "security" },
   { name: "Privacy & DPDP", href: "/admin/privacy", icon: "shield_lock" },
+  { name: "Account & Credentials", href: "/admin/settings", icon: "manage_accounts" },
   { name: "Help & Guides", href: "/admin/help", icon: "help" },
 ];
 

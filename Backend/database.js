@@ -187,6 +187,21 @@ export const db = {
   },
 
   redeemCodes: {
+    count: async () => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.redeemCode.count();
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { count } = await supabase.from("redeem_codes").select("*", { count: "exact", head: true });
+          if (typeof count === "number") return count;
+        } catch (e) {}
+      }
+      const all = await db.redeemCodes.findMany();
+      return all.length;
+    },
     findMany: async () => {
       if (isDbConnected && prisma) {
         try {
@@ -229,6 +244,292 @@ export const db = {
     }
   },
 
+  deliveryStaff: {
+    findMany: async (args) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.deliveryStaff.findMany(args || { orderBy: { createdAt: "desc" } });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { data } = await supabase.from("delivery_staff").select("*").order("created_at", { ascending: false });
+          if (Array.isArray(data)) return data;
+        } catch (e) {}
+      }
+      return [];
+    },
+    findUnique: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.deliveryStaff.findUnique({ where });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { data } = await supabase.from("delivery_staff").select("*").eq("email", where?.email).maybeSingle();
+          if (data) return data;
+        } catch (e) {}
+      }
+      return null;
+    },
+    create: async (args) => {
+      const data = args?.data || args;
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.deliveryStaff.create({ data });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { data: res } = await supabase.from("delivery_staff").insert([data]).select().single();
+          if (res) return res;
+        } catch (e) {}
+      }
+      return data;
+    },
+    update: async ({ where, data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.deliveryStaff.update({ where, data });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { data: res } = await supabase.from("delivery_staff").update(data).eq("email", where?.email).select().single();
+          if (res) return res;
+        } catch (e) {}
+      }
+      return { email: where?.email, ...data };
+    },
+    delete: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.deliveryStaff.delete({ where });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          await supabase.from("delivery_staff").delete().eq("email", where?.email);
+        } catch (e) {}
+      }
+      return true;
+    },
+    count: async () => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.deliveryStaff.count();
+        } catch (e) {}
+      }
+      return 0;
+    }
+  },
+
+  diamondEducation: {
+    findMany: async (args) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.diamondEducation.findMany(args || { orderBy: { createdAt: "desc" } });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          let query = supabase.from("diamond_education").select("*").order("created_at", { ascending: false });
+          if (args?.where?.isPublished !== undefined) {
+            query = query.eq("is_published", args.where.isPublished);
+          }
+          const { data } = await query;
+          if (Array.isArray(data)) return data;
+        } catch (e) {}
+      }
+      return [];
+    },
+    findUnique: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.diamondEducation.findUnique({ where });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          let query = supabase.from("diamond_education").select("*");
+          if (where?.id) query = query.eq("id", where.id);
+          else if (where?.slug) query = query.eq("slug", where.slug);
+          const { data } = await query.maybeSingle();
+          if (data) return data;
+        } catch (e) {}
+      }
+      return null;
+    },
+    create: async (args) => {
+      const data = args?.data || args;
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.diamondEducation.create({ data });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { data: res } = await supabase.from("diamond_education").insert([data]).select().single();
+          if (res) return res;
+        } catch (e) {}
+      }
+      return data;
+    },
+    update: async ({ where, data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.diamondEducation.update({ where, data });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { data: res } = await supabase.from("diamond_education").update(data).eq("id", where?.id).select().single();
+          if (res) return res;
+        } catch (e) {}
+      }
+      return { id: where?.id, ...data };
+    },
+    delete: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.diamondEducation.delete({ where });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          await supabase.from("diamond_education").delete().eq("id", where?.id);
+        } catch (e) {}
+      }
+      return true;
+    },
+    count: async () => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.diamondEducation.count();
+        } catch (e) {}
+      }
+      return 0;
+    }
+  },
+
+  cookieConsent: {
+    create: async ({ data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.cookieConsent.create({ data });
+        } catch (e) {}
+      }
+      return data;
+    },
+    findFirst: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.cookieConsent.findFirst({ where });
+        } catch (e) {}
+      }
+      return null;
+    }
+  },
+
+  bespokeSettings: {
+    findUnique: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeSettings.findUnique({ where });
+        } catch (e) {}
+      }
+      return null;
+    },
+    upsert: async ({ where, update, create }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeSettings.upsert({ where, update, create });
+        } catch (e) {}
+      }
+      return create;
+    }
+  },
+  bespokeOption: {
+    findMany: async (args) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeOption.findMany(args);
+        } catch (e) {}
+      }
+      return [];
+    },
+    create: async ({ data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeOption.create({ data });
+        } catch (e) {}
+      }
+      return data;
+    },
+    update: async ({ where, data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeOption.update({ where, data });
+        } catch (e) {}
+      }
+      return data;
+    },
+    delete: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeOption.delete({ where });
+        } catch (e) {}
+      }
+      return true;
+    }
+  },
+  bespokeVariant: {
+    findMany: async (args) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeVariant.findMany(args);
+        } catch (e) {}
+      }
+      return [];
+    },
+    upsert: async ({ where, update, create }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeVariant.upsert({ where, update, create });
+        } catch (e) {}
+      }
+      return create;
+    },
+    delete: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.bespokeVariant.delete({ where });
+        } catch (e) {}
+      }
+      return true;
+    }
+  },
+
+  repairRequest: {
+    create: async ({ data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.repairRequest.create({ data });
+        } catch (e) {}
+      }
+      return data;
+    }
+  },
+
+  carts: {
+    findMany: async () => []
+  },
+
+  wishlists: {
+    findMany: async () => []
+  },
+
   securityLogs: {
     findMany: async () => {
       if (isDbConnected && prisma) {
@@ -250,3 +551,5 @@ export const db = {
 };
 
 db.verificationOtps = db.otps;
+db.cookieConsents = db.cookieConsent;
+
