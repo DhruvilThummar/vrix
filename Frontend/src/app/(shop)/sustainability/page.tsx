@@ -12,18 +12,18 @@ const DEFAULT_DATA = {
 const SUSTAINABILITY_PILLARS = [
   {
     icon: "solar_power",
-    title: "Solar-Powered Diamonds",
-    description: "Our lab-grown solitaires are synthesized in CVD chambers powered by solar energy micro-grids."
+    title: "Conscious Solitaires",
+    description: "Lab-grown diamonds offering zero-conflict brilliance without mining impact."
   },
   {
     icon: "eco",
-    title: "FSC Packaging",
-    description: "Signature midnight navy boxes crafted from 100% FSC-certified unbleached virgin paper."
+    title: "Minimalist Packaging",
+    description: "Signature gift packaging designed for reuse, protection, and unboxing simplicity."
   },
   {
     icon: "local_shipping",
-    title: "Carbon-Neutral Delivery",
-    description: "Every shipment is offset through verified high-integrity carbon capture partnerships."
+    title: "Thoughtful Operations",
+    description: "Streamlined studio practices focused on reducing waste and honoring craftsmanship."
   }
 ];
 

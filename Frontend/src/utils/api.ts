@@ -186,12 +186,19 @@ export async function fetchHomepageCMSAPI() {
 //  PRODUCTS
 // ══════════════════════════════════════════════════════════════════════════════
 
+const trimProductForListing = (p: any) => {
+  if (!p) return p;
+  const { description, careGuide, deliveryPolicy, comparisonOptions, giftOptions, engravingOptions, giftNoteOptions, ...compact } = p;
+  return compact;
+};
+
 export async function fetchProducts() {
   try {
     const products = await apiFetchCached<any[]>("/products", 1800);
     if (Array.isArray(products) && products.length > 0) {
-      precacheImages(products.map((p: any) => p.image || p.images?.[0]).filter(Boolean));
-      return products;
+      const compactList = products.map(trimProductForListing);
+      precacheImages(compactList.map((p: any) => p.image || p.images?.[0]).filter(Boolean));
+      return compactList;
     }
   } catch (err: any) {
     if (process.env.NODE_ENV === "development") {
@@ -202,9 +209,9 @@ export async function fetchProducts() {
   // Fallback: direct Supabase JS query
   try {
     const { supabase } = await import("./supabase");
-    const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("products").select("id, title, subtitle, material, type, price, original_price, image, collection, stock, is_visible, is_vrix_plus_exclusive, vrix_plus_price, sku, tags, created_at").order("created_at", { ascending: false });
     if (!error && Array.isArray(data) && data.length > 0) {
-      return data;
+      return data.map(trimProductForListing);
     }
   } catch (e) {}
 

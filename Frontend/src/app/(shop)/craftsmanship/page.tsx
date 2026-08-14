@@ -12,23 +12,23 @@ const DEFAULT_DATA = {
 const CRAFTSMANSHIP_STEPS = [
   {
     step: "01",
-    title: "Architectural Drafting",
-    description: "Silhouette proportioning designed to balance tactile weight with minimalist symmetry."
+    title: "Minimalist Architectural Drafting",
+    description: "Every silhouette is proportioned to strip away excess metal, leaving a clean, balanced form."
   },
   {
     step: "02",
-    title: "Precision Lost-Wax Casting",
-    description: "Molten 925 Sterling Silver cast in vacuum chambers to eliminate micro-porosity."
+    title: "Precision Metal Casting",
+    description: "High-purity metals cast with meticulous care to ensure tactile weight and lasting durability."
   },
   {
     step: "03",
-    title: "Micro-Pave Diamond Setting",
-    description: "VS+ ethical lab-grown diamonds hand-set under 40x magnification microscopes."
+    title: "Lab-Grown Diamond Setting",
+    description: "Consciously chosen lab-grown diamonds, hand-set to maximize brilliance and emotional resonance."
   },
   {
     step: "04",
-    title: "Multi-Layer 18K Vermeil Finish",
-    description: "Thick 2.5µm solid 18K gold electroplating followed by hand mirror-polishing."
+    title: "Master Hand Polishing",
+    description: "Multi-stage hand polishing to achieve a smooth, understated luster meant for daily wear."
   }
 ];
 

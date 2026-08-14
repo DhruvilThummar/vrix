@@ -13,20 +13,20 @@ const MATERIALS_SPECS = [
   {
     icon: "diamond",
     title: "Lab-Grown Diamonds",
-    badge: "VS+ CLARITY • F-G COLOR",
-    detail: "Physically and chemically identical to mined diamonds. Grown using renewable-energy CVD processes with zero environmental land degradation."
+    badge: "CONSCIOUS BRILLIANCE",
+    detail: "Optically and chemically identical to mined diamonds, offering zero-conflict brilliance crafted with modern precision."
   },
   {
     icon: "auto_awesome",
     title: "18K Gold Vermeil",
-    badge: "2.5 MICRONS • SOLID 18K",
-    detail: "A thick coat of solid 18K gold electroplated over pure 925 Sterling Silver, offering 5x the thickness of standard gold plating."
+    badge: "PREMIUM LUSTER",
+    detail: "A generous layer of solid 18K gold over sterling silver, bridging gold-plated accessibility and heavy fine jewelry durability."
   },
   {
     icon: "recycling",
-    title: "Recycled 925 Silver",
-    badge: "HYPOALLERGENIC • RECYCLED",
-    detail: "Sourced from 100% recycled industrial silver refineries, nickel-free and cadmium-free for daily skin contact."
+    title: "925 Sterling Silver",
+    badge: "HYPOALLERGENIC BASE",
+    detail: "Pure 925 sterling silver crafted for everyday comfort, personal connection, and timeless aesthetic appeal."
   }
 ];
 
