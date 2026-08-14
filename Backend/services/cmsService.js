@@ -28,6 +28,23 @@ export const cmsService = {
     return null;
   },
 
+  findUnique: async ({ where }) => {
+    const key = where?.key;
+    if (!key) return null;
+    return await cmsService.get(key);
+  },
+
+  findMany: async () => {
+    return await cmsService.publicAll();
+  },
+
+  upsert: async ({ where, update, create }) => {
+    const key = where?.key;
+    const value = update?.value || create?.value;
+    if (!key) return null;
+    return await cmsService.update(key, value);
+  },
+
   update: async (key, value) => {
     let result = value;
     if (isDbConnected && prisma) {

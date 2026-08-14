@@ -259,6 +259,12 @@ export const productService = {
     throw new Error("Product Microservice: Storage unavailable.");
   },
 
+  exists: async ({ where }) => {
+    if (!where || !where.id) return false;
+    const p = await productService.findUnique(where.id);
+    return !!p;
+  },
+
   delete: async (id) => {
     if (isDbConnected && prisma) {
       try {

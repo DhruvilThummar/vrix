@@ -19,7 +19,65 @@ export const db = {
 
   products: productService,
   cms: cmsService,
+  cmsSettings: cmsService,
   users: userService,
+
+  notifications: {
+    findMany: async () => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.notification.findMany({ orderBy: { createdAt: "desc" }, take: 50 });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { data } = await supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50);
+          if (Array.isArray(data)) return data;
+        } catch (e) {}
+      }
+      return [];
+    },
+    update: async ({ where, data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.notification.update({ where, data });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          const { data: res } = await supabase.from("notifications").update(data).eq("id", where?.id).select().single();
+          if (res) return res;
+        } catch (e) {}
+      }
+      return { id: where?.id, ...data };
+    },
+    updateMany: async ({ data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.notification.updateMany({ data });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          await supabase.from("notifications").update(data).neq("id", "00000000-0000-0000-0000-000000000000");
+        } catch (e) {}
+      }
+      return { count: 0 };
+    },
+    deleteMany: async () => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.notification.deleteMany();
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          await supabase.from("notifications").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+        } catch (e) {}
+      }
+      return { count: 0 };
+    }
+  },
 
   journal: {
     findMany: async () => {
@@ -94,6 +152,14 @@ export const db = {
       }
       return [];
     },
+    findFirst: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.verificationOtp.findFirst({ where });
+        } catch (e) {}
+      }
+      return null;
+    },
     create: async (data) => {
       if (isDbConnected && prisma) {
         try {
@@ -101,6 +167,65 @@ export const db = {
         } catch (e) {}
       }
       return data;
+    },
+    delete: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.verificationOtp.delete({ where });
+        } catch (e) {}
+      }
+      return true;
+    },
+    deleteMany: async ({ where } = {}) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.verificationOtp.deleteMany({ where });
+        } catch (e) {}
+      }
+      return { count: 0 };
+    }
+  },
+
+  redeemCodes: {
+    findMany: async () => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.redeemCode.findMany({ orderBy: { createdAt: "desc" } });
+        } catch (e) {}
+      }
+      return [];
+    },
+    findUnique: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.redeemCode.findUnique({ where });
+        } catch (e) {}
+      }
+      return null;
+    },
+    create: async ({ data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.redeemCode.create({ data });
+        } catch (e) {}
+      }
+      return data;
+    },
+    update: async ({ where, data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.redeemCode.update({ where, data });
+        } catch (e) {}
+      }
+      return { id: where?.code, ...data };
+    },
+    delete: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.redeemCode.delete({ where });
+        } catch (e) {}
+      }
+      return true;
     }
   },
 
@@ -123,3 +248,5 @@ export const db = {
     }
   }
 };
+
+db.verificationOtps = db.otps;
