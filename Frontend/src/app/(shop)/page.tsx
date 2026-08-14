@@ -14,7 +14,10 @@ const DEFAULT_SEO_TEXT =
   "Welcome to VRIX — where luxury feels like you. Designed for those beginning their journey into fine jewellery, our collections blend lab-grown diamond artistry with architectural minimalism and high-quality craftsmanship. Positioned between gold-plated and heavy traditional gold jewellery, VRIX brings you quiet luxury, clean forms, and effortless elegance crafted to create a personal, meaningful connection for your everyday moments.";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const dbRes = await getCachedDbPublic();
+  const dbRes: any = await Promise.race([
+    getCachedDbPublic(),
+    new Promise((resolve) => setTimeout(() => resolve(null), 250)),
+  ]);
   const homepage = dbRes?.homepage || {};
 
   const title = homepage.seoHeading
@@ -86,11 +89,17 @@ export default async function Page() {
 
   try {
     const [dbRes, productsRes] = await Promise.all([
-      getCachedDbPublic(),
-      getCachedProducts(),
+      Promise.race([
+        getCachedDbPublic(),
+        new Promise((resolve) => setTimeout(() => resolve(null), 300)),
+      ]),
+      Promise.race([
+        getCachedProducts(),
+        new Promise((resolve) => setTimeout(() => resolve([]), 300)),
+      ]),
     ]);
     homepageData = dbRes;
-    productsData = productsRes || [];
+    productsData = (productsRes as any[]) || [];
   } catch (error) {
     console.error("Error fetching homepage data on server:", error);
   }

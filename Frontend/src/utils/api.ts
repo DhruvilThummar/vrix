@@ -27,6 +27,12 @@ export function getApiBaseUrl(): string {
       return `${window.location.origin}/api`;
     }
   }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/api`;
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/api`;
+  }
   return "http://127.0.0.1:5000/api";
 }
 
@@ -174,19 +180,59 @@ export async function fetchHomepageCMSAPI() {
 // ══════════════════════════════════════════════════════════════════════════════
 
 export async function fetchProducts() {
-  const products = await apiFetchCached<any[]>("/products", 1800);
-  if (Array.isArray(products)) {
-    precacheImages(products.map((p: any) => p.image || p.images?.[0]).filter(Boolean));
+  try {
+    const products = await apiFetchCached<any[]>("/products", 1800);
+    if (Array.isArray(products) && products.length > 0) {
+      precacheImages(products.map((p: any) => p.image || p.images?.[0]).filter(Boolean));
+      return products;
+    }
+  } catch (err) {
+    console.warn("apiFetchCached /products failed, trying direct Supabase fallback...", err);
   }
-  return products;
+
+  // Fallback: direct Supabase JS query
+  try {
+    const { supabase } = await import("./supabase");
+    const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data;
+    }
+  } catch (e) {}
+
+  return [];
 }
 
 export async function fetchProduct(id: string) {
-  const product = await apiFetchCached<any>(`/products/${id}`, 1800);
-  if (product && (product.image || Array.isArray(product.images))) {
-    precacheImages([product.image, ...(product.images || [])].filter(Boolean));
+  if (!id) return null;
+  try {
+    const product = await apiFetchCached<any>(`/products/${encodeURIComponent(id)}`, 1800);
+    if (product && product.id) {
+      if (product.image || Array.isArray(product.images)) {
+        precacheImages([product.image, ...(product.images || [])].filter(Boolean));
+      }
+      return product;
+    }
+  } catch (err) {
+    console.warn(`apiFetchCached /products/${id} failed, trying fallback lookup...`, err);
   }
-  return product;
+
+  // Fallback 1: lookup in fetchProducts() list (matches by id or slug)
+  try {
+    const all = await fetchProducts();
+    if (Array.isArray(all)) {
+      const match = all.find((p: any) => String(p.id).toLowerCase() === String(id).toLowerCase() || String(p.slug || "").toLowerCase() === String(id).toLowerCase());
+      if (match) return match;
+    }
+  } catch (e) {}
+
+  // Fallback 2: Direct Supabase client query
+  try {
+    const { supabase } = await import("./supabase");
+    const { data } = await supabase.from("products").select("*").or(`id.eq.${id},slug.eq.${id}`).maybeSingle();
+    if (data) return data;
+  } catch (e) {}
+
+  return null;
 }
 
 export async function validateStock(items: Array<{ id: string; title: string; quantity: number }>) {

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getWishlistKey, setWishlistStockAlert } from "@/utils/api";
+import { getWishlistKey, setWishlistStockAlert, fetchProduct } from "@/utils/api";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import ProductImageGrid2x2 from "@/components/pdp/ProductImageGrid2x2";
@@ -31,7 +31,9 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
   const { formatPrice } = useCurrency();
   const { addItem } = useCart();
 
-  const [product] = useState<any>(initialProduct);
+  const [product, setProduct] = useState<any>(initialProduct);
+  const [loadingProduct, setLoadingProduct] = useState(!initialProduct);
+
   const [selectedMetal, setSelectedMetal] = useState(
     initialProduct?.variants?.[0]?.material || initialProduct?.material || ""
   );
@@ -45,6 +47,26 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
   const [wishlistActive, setWishlistActive] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeAccordion, setActiveAccordion] = useState<string | null>("details");
+
+  useEffect(() => {
+    if (initialProduct) {
+      setProduct(initialProduct);
+      setLoadingProduct(false);
+      return;
+    }
+
+    const pathParts = window.location.pathname.split("/");
+    const idFromPath = pathParts[pathParts.length - 1];
+    if (idFromPath) {
+      setLoadingProduct(true);
+      fetchProduct(idFromPath)
+        .then((data) => {
+          if (data) setProduct(data);
+        })
+        .catch((err) => console.error("Client fetchProduct failed:", err))
+        .finally(() => setLoadingProduct(false));
+    }
+  }, [initialProduct]);
 
   const variants = useMemo(() => Array.isArray(product?.variants)
     ? product.variants.filter((variant: any) => variant?.material && variant.isAvailable !== false)
@@ -270,6 +292,19 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
       setToastMessage(null);
     }, 4000);
   };
+
+  if (loadingProduct && !product) {
+    return (
+      <div className="max-w-container-max mx-auto px-4 md:px-8 py-12 grid grid-cols-1 md:grid-cols-12 gap-8">
+        <div className="md:col-span-7 aspect-square bg-slate-grey/10 animate-pulse rounded" />
+        <div className="md:col-span-5 space-y-4">
+          <div className="h-8 bg-slate-grey/10 animate-pulse w-3/4 rounded" />
+          <div className="h-6 bg-slate-grey/10 animate-pulse w-1/4 rounded" />
+          <div className="h-24 bg-slate-grey/10 animate-pulse w-full rounded" />
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (

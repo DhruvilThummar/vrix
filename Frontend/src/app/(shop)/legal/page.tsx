@@ -129,8 +129,8 @@ function LegalPageContent() {
   useEffect(() => {
     fetchDb()
       .then((res) => {
-        if (res.legal) {
-          setLegalData(res.legal);
+        if (res && res.legal && typeof res.legal === "object") {
+          setLegalData((prev: any) => ({ ...DEFAULT_LEGAL, ...res.legal }));
         }
       })
       .catch((err) => console.error("Error loading legal content:", err));
@@ -147,6 +147,8 @@ function LegalPageContent() {
     router.push(`/legal?tab=${tab}`, { scroll: false });
   };
 
+  const activeContent = legalData[activeTab] || DEFAULT_LEGAL[activeTab] || DEFAULT_LEGAL["privacy"];
+
   return (
     <div className="w-full bg-surface min-h-screen">
       <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-section-gap grid grid-cols-1 lg:grid-cols-12 gap-12 relative">
@@ -162,10 +164,10 @@ function LegalPageContent() {
                 <li key={key}>
                   <button
                     onClick={() => handleTabChange(key)}
-                    className={`block text-left w-full font-body-md text-sm transition-colors py-2 border-l-2 -ml-[18px] pl-[16px] cursor-pointer ${
+                    className={`font-label-caps text-xs tracking-wider uppercase transition-colors py-1 cursor-pointer block text-left ${
                       activeTab === key
-                        ? "text-deep-navy border-deep-navy font-semibold"
-                        : "text-slate-grey border-transparent hover:text-ink-black"
+                        ? "text-deep-navy font-bold text-sm -ml-[17px] border-l-2 border-deep-navy pl-3"
+                        : "text-slate-grey hover:text-ink-black"
                     }`}
                   >
                     {DEFAULT_LEGAL[key].title}
@@ -176,41 +178,41 @@ function LegalPageContent() {
           </nav>
         </aside>
 
-        {/* Mobile Dropdown selector: Visible on mobile/tablet */}
-        <div className="lg:hidden col-span-1 flex flex-col gap-2">
-          <label htmlFor="policy-select" className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest">
-            Select Policy Document
-          </label>
-          <select
-            id="policy-select"
-            value={activeTab}
-            onChange={(e) => handleTabChange(e.target.value)}
-            className="w-full bg-pure-white border border-slate-grey/25 py-3 px-4 font-body-md text-ink-black focus:border-deep-navy focus:ring-0 rounded-none cursor-pointer"
-          >
+        {/* Mobile Tab selector */}
+        <div className="lg:hidden col-span-1 border-b border-slate-grey/20 pb-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
             {Object.keys(DEFAULT_LEGAL).map((key) => (
-              <option key={key} value={key}>
+              <button
+                key={key}
+                onClick={() => handleTabChange(key)}
+                className={`font-label-caps text-xs uppercase tracking-wider px-4 py-2 shrink-0 transition-colors cursor-pointer ${
+                  activeTab === key
+                    ? "bg-deep-navy text-pure-white"
+                    : "bg-pure-white text-slate-grey border border-slate-grey/20"
+                }`}
+              >
                 {DEFAULT_LEGAL[key].title}
-              </option>
+              </button>
             ))}
-          </select>
+          </div>
         </div>
 
-        {/* Right Article Body */}
-        <article className="lg:col-span-8 lg:col-start-5 bg-pure-white border border-slate-grey/10 p-8 md:p-12 shadow-sm space-y-8 min-h-[500px]">
+        {/* Main Content Area */}
+        <article className="lg:col-span-9">
           
-          {legalData[activeTab] && (
+          {activeContent && (
             <div className="space-y-8 animate-fade-in">
               <header className="border-b border-slate-grey/15 pb-4">
                 <h1 className="font-display-lg text-headline-md text-deep-navy uppercase">
-                  {legalData[activeTab].title}
+                  {activeContent.title}
                 </h1>
                 <p className="font-body-md text-xs text-slate-grey mt-1">
-                  Last Updated: {legalData[activeTab].lastUpdated || "October 2024"}
+                  Last Updated: {activeContent.lastUpdated || "October 2024"}
                 </p>
               </header>
 
               <section className="space-y-6">
-                {legalData[activeTab].sections && legalData[activeTab].sections.map((section: any, idx: number) => (
+                {activeContent.sections && activeContent.sections.map((section: any, idx: number) => (
                   <div key={idx} className="space-y-3">
                     <h2 className="font-headline-md text-base text-ink-black font-semibold">
                       {section.title}
@@ -218,7 +220,7 @@ function LegalPageContent() {
                     <div className="font-body-md text-sm text-slate-grey leading-relaxed whitespace-pre-line">
                       {section.content}
                     </div>
-                    {idx < legalData[activeTab].sections.length - 1 && (
+                    {idx < activeContent.sections.length - 1 && (
                       <hr className="border-t border-slate-grey/10 pt-4" />
                     )}
                   </div>

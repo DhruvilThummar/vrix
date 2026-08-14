@@ -287,8 +287,8 @@ export default function Footer() {
                 <i className="fa-brands fa-linkedin-in text-sm w-4 text-center"></i>
                 LinkedIn
               </a>
-              <a href="https://share.google/EjrRFPTc3O06labrR" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
-                <i className="fa-brands fa-location-dot text-sm w-4 text-center"></i>
+              <a href="https://maps.app.goo.gl/8T8BXYRDTct5VwWn7" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+                <i className="fa-solid fa-map-marker text-sm w-4 text-center"></i>
                 Location
               </a>
             </div>

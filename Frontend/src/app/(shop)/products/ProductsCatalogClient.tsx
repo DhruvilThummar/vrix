@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { getWishlistKey } from "@/utils/api";
+import { getWishlistKey, fetchProducts, fetchCollections } from "@/utils/api";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import ProductCard from "@/components/shop/ProductCard";
@@ -30,9 +30,29 @@ export default function ProductsCatalogClient({
 
   const getParam = (key: string, fallback: string) => searchParams.get(key) || fallback;
 
-  const [products] = useState(initialProducts);
-  const [collections] = useState(initialCollections);
-  
+  const [products, setProducts] = useState<any[]>(initialProducts || []);
+  const [collections, setCollections] = useState<any[]>(initialCollections || []);
+
+  useEffect(() => {
+    if (Array.isArray(initialProducts) && initialProducts.length > 0) {
+      setProducts(initialProducts);
+    } else {
+      fetchProducts().then((res) => {
+        if (Array.isArray(res) && res.length > 0) setProducts(res);
+      }).catch((e) => console.error("ProductsCatalogClient fetchProducts error:", e));
+    }
+  }, [initialProducts]);
+
+  useEffect(() => {
+    if (Array.isArray(initialCollections) && initialCollections.length > 0) {
+      setCollections(initialCollections);
+    } else {
+      fetchCollections().then((res) => {
+        if (Array.isArray(res) && res.length > 0) setCollections(res);
+      }).catch((e) => console.error("ProductsCatalogClient fetchCollections error:", e));
+    }
+  }, [initialCollections]);
+
   const [selectedCollection, setSelectedCollection] = useState(() => getParam("collection", "All"));
   const [selectedMaterial, setSelectedMaterial] = useState(() => getParam("material", "All"));
   const [selectedType, setSelectedType] = useState(() => getParam("type", "All"));
