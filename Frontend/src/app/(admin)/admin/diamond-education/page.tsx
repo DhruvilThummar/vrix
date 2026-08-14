@@ -39,7 +39,7 @@ export default function AdminDiamondEducationPage() {
 
   const getAdminSecret = () => {
     if (typeof window === "undefined") return "";
-    return localStorage.getItem("vrix-admin-secret") || "vrix-admin-secret-key-2026";
+    return localStorage.getItem("vrix-admin-secret") || process.env.NEXT_PUBLIC_ADMIN_SECRET || "vrix_admin_secret_change_me_in_production";
   };
 
   const showToast = (msg: string) => {

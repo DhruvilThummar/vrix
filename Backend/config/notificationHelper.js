@@ -5,6 +5,11 @@ import { getTransporter, sendEmailWithTimeout, getApiSettings } from "../config/
  * Creates an admin notification in the database and concurrently emails the administrator.
  */
 export async function createAdminNotification({ type, title, message, userEmail = null }) {
+  // Only allow NEW_ORDER notifications (disable user registrations, VRIX+ joins, etc.)
+  if (type !== "NEW_ORDER" && !String(type).toUpperCase().includes("ORDER")) {
+    return null;
+  }
+
   try {
     // 1. Persist notification to DB
     const notif = await db.notifications.create({
