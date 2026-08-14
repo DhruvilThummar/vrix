@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { db } from "../database.js";
 import { getTransporter, sendEmailWithTimeout, getApiSettings, getGoogleConfig } from "../config/apiResolvers.js";
 import { createAdminNotification } from "../config/notificationHelper.js";
+import { sendUserLoginSecurityAlert } from "../config/loginAlertHelper.js";
 import { authLimiter, otpLimiter } from "../middleware/rateLimiter.js";
 
 
@@ -235,6 +236,7 @@ router.post("/login/direct", async (req, res) => {
     }
 
     db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => { });
+    sendUserLoginSecurityAlert({ userEmail: user.email, userName: user.name, req });
     res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, role: user.role || "customer", isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -276,6 +278,7 @@ router.post("/login/confirm", async (req, res) => {
     await db.verificationOtps.delete({ where: { id: record.id } });
     const user = await db.users.findUnique({ where: { email: cleanEmail } });
     await db.securityLogs.create({ data: { event: "ACCOUNT_LOGIN", user: cleanEmail, status: "SUCCESS" } });
+    sendUserLoginSecurityAlert({ userEmail: user.email, userName: user.name, req });
 
     res.json({ success: true, user: { email: user.email, name: user.name, phone: user.phone, isVrixPlusMember: !!user.isVrixPlusMember, vrixPlusJoinedDate: user.vrixPlusJoinedDate || null } });
   } catch (err) {
@@ -512,7 +515,7 @@ router.delete("/addresses/:id", async (req, res) => {
 
 // POST /api/auth/admin-login — Admin-only login, checks role=admin
 router.post("/admin-login", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required." });
   }
@@ -541,6 +544,8 @@ router.post("/admin-login", async (req, res) => {
     }
 
     db.securityLogs.create({ data: { event: "ADMIN_LOGIN", user: cleanEmail, status: "SUCCESS" } }).catch(() => { });
+    sendUserLoginSecurityAlert({ userEmail: user.email, userName: user.name, req });
+
     res.json({
       success: true,
       admin: {
@@ -556,7 +561,7 @@ router.post("/admin-login", async (req, res) => {
 
 // POST /api/auth/google — Google OAuth authentication & automatic user registration / login
 router.post("/google", async (req, res) => {
-  const { credential, email, name, picture, phone, joinVrixPlus } = req.body;
+  const { credential, email, name, picture, phone, joinVrixPlus } = req.body || {};
 
   try {
     const googleConfig = await getGoogleConfig();
@@ -636,7 +641,6 @@ router.post("/google", async (req, res) => {
           month: "long",
           year: "numeric"
         });
-        // Notification for joining VRIX+
         createAdminNotification({
           type: "VRIX_PLUS_JOINED",
           title: "🎉 VRIX+ Member Joined",
@@ -644,7 +648,6 @@ router.post("/google", async (req, res) => {
           userEmail: user.email
         });
       }
-
 
       if (Object.keys(updateData).length > 0) {
         user = await db.users.update({
@@ -656,9 +659,10 @@ router.post("/google", async (req, res) => {
       await db.securityLogs.create({
         data: { event: "GOOGLE_LOGIN", user: cleanEmail, status: "SUCCESS" },
       }).catch(() => { });
+      sendUserLoginSecurityAlert({ userEmail: user.email, userName: user.name, req });
 
     } else {
-      // Create user in DB (store all data same as OTP login/register)
+      // Create user in DB
       const todayStr = new Date().toLocaleDateString("en-GB", {
         day: "numeric",
         month: "long",
@@ -676,7 +680,6 @@ router.post("/google", async (req, res) => {
         },
       });
 
-      // New registration notification
       createAdminNotification({
         type: "NEW_REGISTRATION",
         title: "👤 New Customer Registered",
@@ -693,11 +696,10 @@ router.post("/google", async (req, res) => {
         });
       }
 
-
       await db.securityLogs.create({
         data: { event: "GOOGLE_REGISTER", user: cleanEmail, status: "SUCCESS" },
       }).catch(() => { });
-
+      sendUserLoginSecurityAlert({ userEmail: user.email, userName: user.name, req });
     }
 
     return res.json({

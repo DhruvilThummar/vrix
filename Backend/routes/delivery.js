@@ -1,6 +1,7 @@
 import express from "express";
 import { db } from "../database.js";
 import { getTransporter, getApiSettings } from "../config/apiResolvers.js";
+import { sendUserLoginSecurityAlert } from "../config/loginAlertHelper.js";
 
 const router = express.Router();
 
@@ -69,6 +70,7 @@ router.post("/auth/verify", async (req, res) => {
 
     await db.verificationOtps.delete({ where: { id: record.id } });
     await db.securityLogs.create({ data: { event: "DELIVERY_STAFF_LOGIN", user: email, status: "SUCCESS" } });
+    sendUserLoginSecurityAlert({ userEmail: staff.email, userName: staff.name, req });
 
     res.json({ success: true, user: { email: staff.email, name: staff.name, role: staff.role } });
   } catch (err) {
