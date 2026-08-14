@@ -129,6 +129,108 @@ router.post("/message", async (req, res) => {
 
     sessionId = session.id;
 
+    const actionValue = req.body?.actionValue;
+    const userLabel = req.body?.userLabel;
+
+    // Quick Action Instantaneous Dispatcher
+    const QUICK_ACTION_MAP = {
+      myself: {
+        reply: "Welcome. Let's find a piece tailored to your personal aesthetic. What category are you shopping for?",
+        options: [
+          { label: "Necklaces", value: "Necklaces" },
+          { label: "Earrings", value: "Earrings" },
+          { label: "Rings", value: "Rings" },
+          { label: "Bracelets", value: "Bracelets" },
+          { label: "Not sure yet", value: "All" }
+        ]
+      },
+      gift: {
+        reply: "Gifting at VRIX is curated with intention. Who are you finding a gift for?",
+        options: [
+          { label: "Partner", value: "Partner" },
+          { label: "Parent", value: "Parent" },
+          { label: "Friend", value: "Friend" },
+          { label: "Myself", value: "myself" }
+        ]
+      },
+      collections: {
+        reply: "Select a signature collection category to explore:",
+        options: [
+          { label: "Necklaces", value: "Necklaces" },
+          { label: "Earrings", value: "Earrings" },
+          { label: "Rings", value: "Rings" },
+          { label: "Bracelets", value: "Bracelets" },
+          { label: "Bespoke", value: "Bespoke" }
+        ]
+      },
+      discovery: {
+        reply: "Explore our collection by style or price preference. What are you looking for?",
+        options: [
+          { label: "Minimal & Everyday", value: "Minimal" },
+          { label: "Solitaire Diamonds", value: "Solitaire" },
+          { label: "Under ₹15,000", value: "15000" },
+          { label: "18K Gold Vermeil", value: "Vermeil" }
+        ]
+      },
+      compare: {
+        reply: "Which pieces would you like to compare side-by-side?",
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      education: {
+        reply: "What would you like to explore about our materials and craftsmanship?",
+        options: [
+          { label: "The 4Cs of Diamonds", value: "4Cs" },
+          { label: "Ethical Sourcing", value: "Sourcing" },
+          { label: "Metal Purity Guide", value: "Metals" }
+        ]
+      },
+      warranty: {
+        reply: "VRIX provides lifetime craftsmanship warranty on all pieces. How can we assist you?",
+        options: [
+          { label: "Jewelry Care Guide", value: "Care" },
+          { label: "Submit Repair Request", value: "Repair" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      }
+    };
+
+    if (actionValue && QUICK_ACTION_MAP[actionValue]) {
+      const actionConfig = QUICK_ACTION_MAP[actionValue];
+      let products = [];
+      try {
+        const allProds = await db.products.findMany();
+        if (Array.isArray(allProds)) {
+          products = allProds.filter(p => p.isVisible !== false).slice(0, 3).map(p => ({
+            id: p.id,
+            title: p.title,
+            category: p.type || p.collection || "Jewelry",
+            price: Number(p.price) || 0,
+            image: p.image || ""
+          }));
+        }
+      } catch (e) {}
+
+      const isoTimestamp = new Date().toISOString();
+      return res.json({
+        success: true,
+        sessionId: session.id,
+        reply: actionConfig.reply,
+        messages: [
+          {
+            id: `msg-${Date.now()}`,
+            sender: "bot",
+            text: actionConfig.reply,
+            products: actionValue === "collections" || actionValue === "discovery" ? products : undefined,
+            options: actionConfig.options,
+            timestamp: isoTimestamp
+          }
+        ]
+      });
+    }
+
     // Record user message in DB
     await db.chatMessage?.create({
       data: {
