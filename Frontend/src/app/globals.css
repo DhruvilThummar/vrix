@@ -103,16 +103,25 @@
 }
 
 /* Typography styles matching Brand Style Guide */
-/* Primary Font: Inter (Headings, Subheadings, Buttons, Labels) */
+/* Primary Font: Inter (Headings, Subheadings, Buttons, Labels e.g. "Shop by Category") */
 .font-display-lg,
 .font-display-lg-mobile,
 .font-headline-md,
-.font-inter {
-  font-family: var(--typography-primary);
+.font-inter,
+.font-primary {
+  font-family: var(--typography-primary) !important;
+}
+
+/* Secondary Font: Jost (Body text, descriptions, eyebrows e.g. "Atelier Selections") */
+.font-jost,
+.font-secondary,
+.font-body-md,
+.font-body-lg {
+  font-family: var(--typography-body) !important;
 }
 
 .font-chancery {
-  font-family: var(--typography-highlight);
+  font-family: var(--typography-highlight) !important;
 }
 
 .font-label-caps {

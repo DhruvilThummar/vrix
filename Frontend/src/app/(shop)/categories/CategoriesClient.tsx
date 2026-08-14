@@ -23,10 +23,10 @@ export default function CategoriesClient({ initialCategories }: CategoriesClient
 
         {/* Editorial Title */}
         <header className="max-w-3xl mx-auto text-center mb-16 space-y-4">
-          <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest">
+          <p className="font-jost font-secondary font-label-caps text-label-caps text-slate-grey uppercase tracking-widest">
             Atelier Selections
           </p>
-          <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-deep-navy uppercase">
+          <h1 className="font-inter font-primary font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-deep-navy uppercase">
             Shop by Category
           </h1>
           <p className="font-body-lg text-body-lg text-slate-grey leading-relaxed">

@@ -466,10 +466,10 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
         <section className="reveal-section py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
           <div className="flex items-end justify-between mb-section-gap">
             <div>
-              <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
+              <p className="font-jost font-secondary font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
                 Atelier Selections
               </p>
-              <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
+              <h2 className="font-inter font-primary font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
                 Shop by Category
               </h2>
             </div>
@@ -537,10 +537,10 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
         <section className="reveal-section py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
           <div className="flex items-end justify-between mb-section-gap">
             <div>
-              <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
+              <p className="font-jost font-secondary font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
                 Atelier Releases
               </p>
-              <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
+              <h2 className="font-inter font-primary font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
                 New Arrivals
               </h2>
             </div>
@@ -607,10 +607,10 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
         <section className="reveal-section py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
           <div className="flex items-end justify-between mb-section-gap">
             <div>
-              <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
+              <p className="font-jost font-secondary font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
                 Curated Atelier Picks
               </p>
-              <h2 className="font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
+              <h2 className="font-inter font-primary font-headline-md text-headline-md text-deep-navy font-light uppercase tracking-wider">
                 Featured Products
               </h2>
             </div>
