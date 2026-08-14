@@ -129,6 +129,8 @@ router.post("/message", async (req, res) => {
 
     sessionId = session.id;
 
+    const actionValue = req.body?.actionValue;
+    const userLabel = req.body?.userLabel;
     const targetKey = actionValue || userLabel;
 
     // Quick Action & Interactive Pill Dispatcher
