@@ -396,6 +396,20 @@ router.post("/message", async (req, res) => {
         },
         options: [
           { label: "Talk to Concierge", value: "trigger-handoff" },
+          { label: "Ring Size Guide", value: "Size Guide" }
+        ]
+      },
+      "Size Guide": {
+        reply: "VRIX International Ring Size Guide:\n• Size 5 (US) / 49 (EU): 15.7mm Inner Diameter\n• Size 6 (US) / 52 (EU): 16.5mm Inner Diameter\n• Size 7 (US) / 54 (EU): 17.3mm Inner Diameter\n• Size 8 (US) / 57 (EU): 18.2mm Inner Diameter\n\nWrap a strip of paper around your finger base and measure the millimeter circumference.",
+        options: [
+          { label: "Bespoke Fitting", value: "Bespoke" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Track Order": {
+        reply: "VRIX Order Tracking & Atelier Status:\nTo track your order status:\n1. Provide your Order Reference ID (e.g. VRIX-1002).\n2. Insured express delivery takes 2-4 business days via BlueDart Air.",
+        options: [
+          { label: "Talk to Concierge", value: "trigger-handoff" },
           { label: "Explore collections", value: "collections" }
         ]
       }
