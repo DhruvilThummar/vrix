@@ -22,6 +22,7 @@ export interface ChatProduct {
   price: number;
   originalPrice?: number;
   image: string;
+  images?: string[];
   whyFits?: string;
   stone?: string;
   warranty?: string;

@@ -94,7 +94,7 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
         {/* Carousel Slide Indicators */}
         {imageList.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-xs">
-            {imageList.map((_, idx) => (
+            {imageList.map((_: string, idx: number) => (
               <span
                 key={idx}
                 className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
