@@ -61,8 +61,17 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Serve local uploads if Cloudinary is not configured
-app.use("/uploads", express.static(path.join(__dirname, "data", "uploads")));
+// Serve local uploads if Cloudinary is not configured with 14-day (2 weeks) maxAge cache
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "data", "uploads"), {
+    maxAge: "14d",
+    immutable: true,
+    setHeaders: (res) => {
+      res.setHeader("Cache-Control", "public, max-age=1209600, immutable");
+    },
+  })
+);
 
 // ─── Startup Migration ─────────────────────────────────────────────────────────
 await migrateIfNeeded();

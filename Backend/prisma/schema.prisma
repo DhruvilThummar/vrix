@@ -48,6 +48,11 @@ model Product {
   tags                Json?
   createdAt           DateTime @default(now()) @map("created_at")
 
+  @@index([type])
+  @@index([collection])
+  @@index([isVisible])
+  @@index([price])
+  @@index([createdAt])
   @@map("products")
 }
 

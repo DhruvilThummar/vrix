@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    minimumCacheTTL: 1209600, // 14 days (2 weeks) cache TTL for images
     remotePatterns: [
       // Google (user avatars, AI-generated public images)
       {
