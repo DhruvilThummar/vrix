@@ -721,11 +721,18 @@ function AdminProductsContent() {
 
   const handleToggleVisibility = async (p: Product) => {
     try {
-      await updateProductVisibility(p.id, !(p.isVisible !== false));
-      setProducts((prev) => prev.map((x) => x.id === p.id ? { ...x, isVisible: !(p.isVisible !== false) } : x));
-      if (selectedProduct?.id === p.id) setFVisible(!(p.isVisible !== false));
-      showToast(`"${p.title}" ${p.isVisible !== false ? "hidden" : "visible"} on store.`);
-    } catch (err: any) { showToast("Failed: " + err.message, "err"); }
+      const currentVis = fVisible;
+      const nextVis = !currentVis;
+      await updateProductVisibility(p.id, nextVis);
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, isVisible: nextVis } : x)));
+      if (selectedProduct?.id === p.id) {
+        setSelectedProduct((prev: any) => (prev ? { ...prev, isVisible: nextVis } : prev));
+      }
+      setFVisible(nextVis);
+      showToast(`"${p.title}" ${nextVis ? "published to" : "hidden from"} store.`);
+    } catch (err: any) {
+      showToast("Failed to update visibility: " + err.message, "err");
+    }
   };
 
   const handleStockChange = async (p: Product, newStock: number) => {

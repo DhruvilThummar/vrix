@@ -1,6 +1,9 @@
 import { prisma, isDbConnected } from "../config/prismaClient.js";
 import { supabase } from "../config/supabaseClient.js";
 
+const cmsCache = new Map();
+const CMS_TTL_MS = 60000; // 60-second high-speed in-memory cache TTL
+
 const withTimeout = (promise, ms) => {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`CMS Microservice query timed out after ${ms}ms`)), ms);
@@ -13,19 +16,29 @@ const withTimeout = (promise, ms) => {
 
 export const cmsService = {
   get: async (key) => {
+    const cached = cmsCache.get(key);
+    if (cached && Date.now() - cached.ts < CMS_TTL_MS) {
+      return cached.val;
+    }
+
+    let val = null;
     if (isDbConnected && prisma) {
       try {
-        const res = await withTimeout(prisma.cmsSetting.findUnique({ where: { key } }), 600);
-        if (res && res.value !== undefined) return res.value;
+        const res = await withTimeout(prisma.cmsSetting.findUnique({ where: { key } }), 500);
+        if (res && res.value !== undefined) val = res.value;
       } catch (err) {}
     }
-    if (supabase) {
+    if (val === null && supabase) {
       try {
         const { data, error } = await supabase.from("cms_settings").select("value").eq("key", key).maybeSingle();
-        if (!error && data && data.value !== undefined) return data.value;
+        if (!error && data && data.value !== undefined) val = data.value;
       } catch (e) {}
     }
-    return null;
+
+    if (val !== null) {
+      cmsCache.set(key, { val, ts: Date.now() });
+    }
+    return val;
   },
 
   findUnique: async ({ where }) => {
@@ -46,6 +59,7 @@ export const cmsService = {
   },
 
   update: async (key, value) => {
+    cmsCache.set(key, { val: value, ts: Date.now() });
     let result = value;
     if (isDbConnected && prisma) {
       try {
@@ -66,14 +80,21 @@ export const cmsService = {
   },
 
   publicAll: async () => {
+    const cachedAll = cmsCache.get("__ALL__");
+    if (cachedAll && Date.now() - cachedAll.ts < CMS_TTL_MS) {
+      return cachedAll.val;
+    }
+
     const result = {};
     if (isDbConnected && prisma) {
       try {
-        const rows = await withTimeout(prisma.cmsSetting.findMany(), 800);
+        const rows = await withTimeout(prisma.cmsSetting.findMany(), 600);
         if (Array.isArray(rows)) {
           for (const row of rows) {
             result[row.key] = row.value;
+            cmsCache.set(row.key, { val: row.value, ts: Date.now() });
           }
+          cmsCache.set("__ALL__", { val: result, ts: Date.now() });
           return result;
         }
       } catch (err) {}
@@ -84,11 +105,13 @@ export const cmsService = {
         if (!error && Array.isArray(data)) {
           for (const row of data) {
             result[row.key] = row.value;
+            cmsCache.set(row.key, { val: row.value, ts: Date.now() });
           }
+          cmsCache.set("__ALL__", { val: result, ts: Date.now() });
           return result;
         }
       } catch (e) {}
     }
     return result;
-  }
+  },
 };
