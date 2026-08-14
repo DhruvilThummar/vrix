@@ -353,6 +353,51 @@ router.post("/message", async (req, res) => {
           { label: "Find a piece for myself", value: "myself" },
           { label: "Explore collections", value: "collections" }
         ]
+      },
+      Minimal: {
+        reply: "Explore VRIX minimal everyday silhouettes designed for subtle elegance and daily wear:",
+        filterType: "minimal",
+        options: [
+          { label: "Under ₹15,000", value: "15000" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      Solitaire: {
+        reply: "Explore VRIX lab-grown solitaire diamonds crafted with VS+ clarity and optical brilliance:",
+        filterType: "solitaire",
+        options: [
+          { label: "The 4Cs of Diamonds", value: "4Cs" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      15000: {
+        reply: "Explore VRIX fine jewelry pieces priced under ₹15,000:",
+        filterType: "15000",
+        options: [
+          { label: "Explore all collections", value: "collections" },
+          { label: "Talk to concierge", value: "trigger-handoff" }
+        ]
+      },
+      Vermeil: {
+        reply: "Explore VRIX 18K Gold Vermeil jewelry featuring thick solid gold over pure 925 sterling silver:",
+        filterType: "vermeil",
+        options: [
+          { label: "Metal Purity Guide", value: "Metals" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      Bespoke: {
+        reply: "Bespoke pieces are made-to-order in our Surat atelier. Our goldsmiths work directly with you from preliminary sketch to final setting.",
+        bespokeEstimate: {
+          pieceType: "Custom Fine Jewelry",
+          metalChoice: "18K Solid Gold / 950 Platinum",
+          estimatedPriceRange: "₹65,000 – ₹1,80,000",
+          leadTime: "3 – 4 Weeks"
+        },
+        options: [
+          { label: "Talk to Concierge", value: "trigger-handoff" },
+          { label: "Explore collections", value: "collections" }
+        ]
       }
     };
 
@@ -363,15 +408,39 @@ router.post("/message", async (req, res) => {
         const allProds = await db.products.findMany();
         if (Array.isArray(allProds)) {
           let list = allProds.filter(p => p.isVisible !== false);
+
           if (actionConfig.filterType) {
-            list = list.filter(p => (p.type || p.collection || "").toLowerCase() === actionConfig.filterType.toLowerCase());
+            const fLower = actionConfig.filterType.toLowerCase();
+            if (fLower === "15000") {
+              list = list.filter(p => Number(p.price) <= 15000);
+            } else if (fLower === "minimal") {
+              list = list.filter(p => (p.material || p.title || "").toLowerCase().includes("minimal") || (p.description || "").toLowerCase().includes("everyday"));
+            } else if (fLower === "solitaire") {
+              list = list.filter(p => (p.title || p.description || "").toLowerCase().includes("solitaire") || (p.title || p.description || "").toLowerCase().includes("diamond"));
+            } else if (fLower === "vermeil") {
+              list = list.filter(p => (p.material || "").toLowerCase().includes("vermeil") || (p.material || "").toLowerCase().includes("gold"));
+            } else if (fLower === "partner") {
+              list = list.filter(p => (p.type || p.collection || "").toLowerCase() === "necklaces" || (p.type || p.collection || "").toLowerCase() === "rings");
+            } else if (fLower === "parent") {
+              list = list.filter(p => (p.type || p.collection || "").toLowerCase() === "bracelets" || (p.type || p.collection || "").toLowerCase() === "earrings");
+            } else if (fLower === "friend") {
+              list = list.filter(p => Number(p.price) <= 25000);
+            } else {
+              list = list.filter(p => (p.type || p.collection || "").toLowerCase() === fLower);
+            }
+          } else {
+            // Do not force dummy products for menu options
+            list = [];
           }
-          products = list.slice(0, 3).map(p => ({
+
+          products = list.slice(0, 4).map(p => ({
             id: p.id,
             title: p.title,
             category: p.type || p.collection || "Jewelry",
+            material: p.material || "18K Gold / 950 Platinum",
             price: Number(p.price) || 0,
-            image: p.image || ""
+            image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+            slug: p.id
           }));
         }
       } catch (e) {}
@@ -388,6 +457,7 @@ router.post("/message", async (req, res) => {
             text: actionConfig.reply,
             products: products.length > 0 ? products : undefined,
             handoff: actionConfig.handoff,
+            bespokeEstimate: actionConfig.bespokeEstimate,
             options: actionConfig.options,
             timestamp: isoTimestamp
           }
