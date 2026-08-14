@@ -44,7 +44,6 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
     } else if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("vrix-close-chat"));
     }
-    router.push(productUrl);
   };
 
   // Touch Swipe Gesture Handlers
@@ -72,9 +71,10 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
   };
 
   return (
-    <div
+    <Link
+      href={productUrl}
       onClick={handleCardClick}
-      className="flex flex-col bg-surface border border-outline-variant rounded-sm overflow-hidden shadow-xs hover:border-primary/50 transition-all max-w-[260px] shrink-0 cursor-pointer group"
+      className="flex flex-col bg-surface border border-outline-variant rounded-sm overflow-hidden shadow-xs hover:border-primary/50 transition-all max-w-[260px] shrink-0 cursor-pointer group block"
     >
       {/* Product Image Carousel Surface */}
       <div
@@ -149,6 +149,6 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
           </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
