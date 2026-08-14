@@ -31,14 +31,10 @@ router.get("/db", async (req, res) => {
 // GET /api/db/public — Public DB snapshot (strips sensitive api_settings)
 router.get("/db/public", async (req, res) => {
   try {
-    const [cms, products, journal] = await Promise.all([
-      db.cmsSettings.findMany(),
-      db.products.findMany(),
-      db.journal.findMany()
-    ]);
+    const cms = await db.cmsSettings.findMany();
     // Strip api_settings to prevent secret key exposure to public shop pages
     const { api_settings, ...publicCms } = cms;
-    res.json({ ...publicCms, products, journal });
+    res.json({ ...publicCms, products: [], journal: [] });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
