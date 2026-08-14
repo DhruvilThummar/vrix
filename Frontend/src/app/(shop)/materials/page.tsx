@@ -5,9 +5,9 @@ import Image from "next/image";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_DATA = {
-  heroTitle: "Materials",
-  bannerImage: "",
-  content: "We source only the finest, consciously mined metals and conflict-free stones."
+  heroTitle: "Conscious Materials",
+  bannerImage: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1600&auto=format&fit=crop",
+  content: "We source only ethical lab-grown diamonds, 100% recycled 925 Sterling Silver, and thick 18K Gold Vermeil (over 2.5 microns). By bridging affordable luxury and heavy fine jewelry, VRIX creates meaningful pieces designed to withstand everyday life while leaving a lighter footprint on the earth."
 };
 
 export default function MaterialsPage() {

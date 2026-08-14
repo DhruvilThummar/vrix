@@ -8,7 +8,7 @@ import { fetchDbPublic as fetchDb } from "@/utils/api";
 const DEFAULT_STORY = {
   title: "Conscious Luxury, Redefined.",
   content: "VRIX was born from a desire to strip away the excess and focus on what truly matters: the emotional resonance of a beautifully crafted object. We believe jewelry is not merely adornment, but an architectural extension of the self. Each piece is a quiet statement of confidence, designed with permanence in mind.",
-  bannerImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuCcdSpPRuZyOFUUJWKwm3afGsU9w9KpeUWno8Pa42A3pGYlx1-vN0KKCKvmLJPL_EFfXLzobCo-BC0d2ku2Y7xvw6-c6PqmPba6dqp88n5JeiiFO3b1oi7F0Jes10YaLZMvbActMGPD-i7hLlh-8O8lKIAWu2lNOd5NowaV5Bx5bBvA7WNnXtH_DM7asrOcYuRbufZEoke_TcPK1e6Jfu89JigYO7RWowWl4ItJ-wTKDT4ncdBjNZ71p0MOODMz1Qw5ooa5DL3cdyI",
+  bannerImage: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=1600&auto=format&fit=crop",
   heroTitle: "Made to be Yours",
   ethosTitle: "The VRIX Standard",
   ethos: [
@@ -30,8 +30,8 @@ const DEFAULT_STORY = {
   ],
   anchorTitle: "Designed for Permanence",
   anchorContent: "Our studios operate on a philosophy of minimalism. By removing the unnecessary, we expose the structural beauty of precious metals and stones. The result is a collection that transcends seasonal trends, offering a quiet luxury that speaks volumes.",
-  anchorImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuDtENGLHbYBSzrsxO1UA_vwuaj919h5smCWviaFEdZLzR_osd4WjVJpSBPd6hyzV0ZnN7PWRDBSrSRiFyEkLmRgKj5AaNuDYF7Jkaqtackww_4FTsBF9gGEaq__xBfU4Iwx9JpDTLru3dXLLSKP94Bto5xexScU3fGTHhcZaIbN7WnudaWj_DQ7xK0isEAcQb8YomApNcvfJql9Otu8_a3RPPhk2ahHRtXMeA6KAm-79FWAV9Lh4PntuV9cJOVOytqyBUl5PpHMOkc",
-  anchorLinkText: "Explore the Process"
+  anchorImage: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop",
+  anchorLinkText: "Explore the Collection"
 };
 
 export default function BrandStoryPage() {

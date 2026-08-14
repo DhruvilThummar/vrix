@@ -14,21 +14,54 @@ interface Article {
   readTime: string;
 }
 
+const DEFAULT_ARTICLES: Article[] = [
+  {
+    id: "art-1",
+    title: "Architectural Minimalism: The Philosophy Behind VRIX",
+    excerpt: "Exploring how architectural forms and clean geometric silhouettes inspire our fine jewelry collections.",
+    content: "Jewelry shouldn't overpower; it should harmonize. At VRIX, we take inspiration from modern brutalist architecture and clean minimalist lines. Every setting is engineered to remove excess metal while enhancing light reflection across lab-grown diamond facets.\n\nOur philosophy rests on three pillars: structural balance, tactile weight, and quiet luxury that feels like an organic extension of the wearer.",
+    image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=1200&auto=format&fit=crop",
+    date: "OCTOBER 2024",
+    readTime: "4 MIN READ"
+  },
+  {
+    id: "art-2",
+    title: "The Lab-Grown Diamond Revolution: Conscious Brilliance",
+    excerpt: "Why lab-grown diamonds represent the future of sustainable fine jewelry without optical or chemical compromise.",
+    content: "Lab-grown diamonds are physically, chemically, and optically identical to mined diamonds. Created using advanced chemical vapor deposition (CVD) powered by renewable energy, VRIX lab-grown diamonds allow us to offer zero-conflict, high-purity solitaires at accessible price points.\n\nBy avoiding traditional mining, we eliminate human impact and environmental destruction while delivering VS+ clarity and F-G color brilliance.",
+    image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1200&auto=format&fit=crop",
+    date: "NOVEMBER 2024",
+    readTime: "5 MIN READ"
+  },
+  {
+    id: "art-3",
+    title: "The Ultimate Guide to Caring for 18K Gold Vermeil",
+    excerpt: "Essential care instructions to maintain the luster and thick golden finish of your VRIX jewelry for years.",
+    content: "18K Gold Vermeil is a thick layer of solid 18K gold electroplated over pure 925 Sterling Silver. To preserve its luster:\n\n1. Store in your complimentary VRIX velvet pouch away from humidity.\n2. Avoid direct application of perfumes, lotions, or sanitizers.\n3. Clean softly using an un-treated microfiber cloth.",
+    image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=1200&auto=format&fit=crop",
+    date: "DECEMBER 2024",
+    readTime: "3 MIN READ"
+  }
+];
+
 export default function JournalPage() {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<Article[]>(DEFAULT_ARTICLES);
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
   useEffect(() => {
     fetchDb()
       .then((res) => {
-        if (res.journal) {
+        if (res && Array.isArray(res.journal) && res.journal.length > 0) {
           setArticles(res.journal);
+        } else {
+          setArticles(DEFAULT_ARTICLES);
         }
         setLoading(false);
       })
       .catch((err) => {
         console.error("Error loading journal articles:", err);
+        setArticles(DEFAULT_ARTICLES);
         setLoading(false);
       });
   }, []);

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { fetchProducts } from "@/utils/api";
 import { searchProducts } from "@/utils/productSearch";
 import { getDisplayPrice } from "@/lib/pricing";
@@ -18,11 +19,16 @@ interface Product {
   price: number;
   image: string;
   type: string;
+  tags?: string[];
 }
 
 export default function SearchPage() {
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get("filter");
+  const queryParam = searchParams.get("q");
+
   const [products, setProducts] = useState<Product[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(queryParam || filterParam || "");
   const [loading, setLoading] = useState(true);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { formatPrice } = useCurrency();
@@ -43,10 +49,19 @@ export default function SearchPage() {
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) {
-      return []; // Do not show dummy/default products when search is empty
+      return products; // Show all products when no specific query is entered
+    }
+    const q = searchQuery.toLowerCase().trim();
+    if (q === "gifts" || filterParam === "gifts") {
+      const giftItems = products.filter((p: any) => {
+        const title = (p.title || "").toLowerCase();
+        const tags = Array.isArray(p.tags) ? p.tags.join(" ").toLowerCase() : "";
+        return title.includes("gift") || tags.includes("gift") || title.includes("band") || title.includes("pendant") || title.includes("ring");
+      });
+      return giftItems.length > 0 ? giftItems : products;
     }
     return searchProducts(products, searchQuery);
-  }, [products, searchQuery]);
+  }, [products, searchQuery, filterParam]);
 
   const trendingSearches = [
     "Ring",

@@ -5,9 +5,9 @@ import Image from "next/image";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_DATA = {
-  heroTitle: "Craftsmanship",
-  bannerImage: "",
-  content: "Every VRIX piece is meticulously crafted by master artisans."
+  heroTitle: "Master Craftsmanship",
+  bannerImage: "https://images.unsplash.com/photo-1611591474117-1f0c6c8603f2?q=80&w=1600&auto=format&fit=crop",
+  content: "Every VRIX piece is meticulously crafted by master artisans using time-honored lost-wax casting and architectural precision. From hand-setting each ethical lab-grown diamond to multi-layer 18K Gold Vermeil hand-polishing, our ateliers ensure uncompromising quality and enduring elegance."
 };
 
 export default function CraftsmanshipPage() {

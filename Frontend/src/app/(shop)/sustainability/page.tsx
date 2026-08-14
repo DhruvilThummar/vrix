@@ -5,9 +5,9 @@ import Image from "next/image";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_DATA = {
-  heroTitle: "Sustainability",
-  bannerImage: "",
-  content: "True luxury shouldn't cost the earth."
+  heroTitle: "Sustainable Luxury",
+  bannerImage: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=1600&auto=format&fit=crop",
+  content: "Sustainability is at the core of VRIX identity. By utilizing solar-powered lab-grown diamonds, 100% recycled precious metals, plastic-free FSC-certified signature gift boxes, and carbon-neutral studio logistics, we prove that luxury can be modern, personal, and profoundly responsible."
 };
 
 export default function SustainabilityPage() {

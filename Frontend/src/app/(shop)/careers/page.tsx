@@ -5,9 +5,9 @@ import Image from "next/image";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_DATA = {
-  heroTitle: "Careers",
-  bannerImage: "",
-  content: "Join the team redefining modern jewelry."
+  heroTitle: "Careers at VRIX",
+  bannerImage: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1600&auto=format&fit=crop",
+  content: "Join the team redefining modern minimalist luxury fine jewelry. We are always looking for passionate artisans, e-commerce visionaries, brand storytellers, and customer experience specialists. Send your portfolio to vrixjewels@gmail.com to start your journey with us."
 };
 
 export default function CareersPage() {

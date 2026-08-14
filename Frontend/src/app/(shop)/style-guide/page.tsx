@@ -5,9 +5,9 @@ import Image from "next/image";
 import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_DATA = {
-  heroTitle: "Style Guide",
-  bannerImage: "",
-  content: "Discover how to layer, stack, and curate your personal collection."
+  heroTitle: "Jewelry Style Guide",
+  bannerImage: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?q=80&w=1600&auto=format&fit=crop",
+  content: "Master the art of understated luxury. Learn how to layer delicate gold pendants, stack architectural lab-grown diamond bands, and seamlessly pair 18K Gold Vermeil with 925 Sterling Silver for a personalized signature aesthetic."
 };
 
 export default function StyleGuidePage() {
