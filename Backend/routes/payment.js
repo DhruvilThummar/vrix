@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { db } from "../database.js";
 import { getRazorpay, getApiSettings, getTransporter } from "../config/apiResolvers.js";
 import { createAdminNotification } from "../config/notificationHelper.js";
-import { strictPaymentLimiter } from "../middleware/rateLimiter.js";
+import { strictPaymentLimiter, webhookLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -1253,7 +1253,7 @@ router.post("/paypal/capture-order", strictPaymentLimiter, async (req, res) => {
 //  POST /api/payment/paypal/webhook
 //  Handles: PAYMENT.CAPTURE.COMPLETED, PAYMENT.CAPTURE.DENIED, PAYMENT.CAPTURE.REFUNDED
 // ══════════════════════════════════════════════════════════════════════════════
-router.post("/paypal/webhook", async (req, res) => {
+router.post("/paypal/webhook", webhookLimiter, async (req, res) => {
   const transmissionId = req.headers["paypal-transmission-id"];
   const transmissionTime = req.headers["paypal-transmission-time"];
   const certUrl = req.headers["paypal-cert-url"];

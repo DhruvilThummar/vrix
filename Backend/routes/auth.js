@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { db } from "../database.js";
 import { getTransporter, sendEmailWithTimeout, getApiSettings, getGoogleConfig } from "../config/apiResolvers.js";
 import { createAdminNotification } from "../config/notificationHelper.js";
+import { authLimiter, otpLimiter } from "../middleware/rateLimiter.js";
 
 
 
@@ -10,7 +11,7 @@ import { createAdminNotification } from "../config/notificationHelper.js";
 const router = express.Router();
 
 // POST /api/auth/register — Check if user exists, send OTP to register
-router.post("/register", async (req, res) => {
+router.post("/register", authLimiter, async (req, res) => {
   const { email, password, name, phone } = req.body;
   if (!email || !password || !name) {
     return res.status(400).json({ error: "Email, password, and name are required." });
@@ -143,7 +144,7 @@ router.post("/register/confirm", async (req, res) => {
 });
 
 // POST /api/auth/login — Verify password, send OTP to log in
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   const { email, password } = req.body;
   if (!email) {
     return res.status(400).json({ error: "Email is required." });

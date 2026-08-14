@@ -1,11 +1,12 @@
 import express from "express";
 import { db } from "../database.js";
 import { getTransporter, sendEmailWithTimeout, getApiSettings } from "../config/apiResolvers.js";
+import { otpLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 // POST /api/otp/send
-router.post("/send", async (req, res) => {
+router.post("/send", otpLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email is required" });
 

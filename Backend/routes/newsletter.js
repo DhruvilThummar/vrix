@@ -1,11 +1,12 @@
 import express from "express";
 import { db } from "../database.js";
 import { getTransporter, getApiSettings } from "../config/apiResolvers.js";
+import { contactLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
 // POST /api/newsletter/subscribe — Subscribe email to newsletter
-router.post("/subscribe", async (req, res) => {
+router.post("/subscribe", contactLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email || !String(email).includes("@")) {
     return res.status(400).json({ error: "A valid email address is required." });
