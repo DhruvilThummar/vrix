@@ -2687,7 +2687,7 @@ function AdminProductsContent() {
                         <button
                           type="button"
                           onClick={() => {
-                            handleApplyTemplate(selectedTemplateId);
+                            if (selectedTemplateId) handleApplyTemplate(selectedTemplateId);
                             setShowTemplateModal(false);
                           }}
                           className="px-4 py-2 bg-deep-navy text-pure-white hover:bg-emerald-700 font-label-caps text-xs tracking-wider uppercase rounded flex items-center gap-1 cursor-pointer transition-colors"
@@ -2712,7 +2712,7 @@ function AdminProductsContent() {
                       {selectedTemplateId && selectedTemplateId.startsWith("custom-") && (
                         <button
                           type="button"
-                          onClick={() => handleDeleteTemplate(selectedTemplateId)}
+                          onClick={() => { if (selectedTemplateId) handleDeleteTemplate(selectedTemplateId); }}
                           className="px-4 py-2 border border-red-200 text-error hover:bg-red-50 font-label-caps text-xs tracking-wider uppercase rounded cursor-pointer transition-colors flex items-center gap-1"
                         >
                           <span className="material-symbols-outlined text-[14px]">delete</span>
