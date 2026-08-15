@@ -638,16 +638,26 @@ export default function Header() {
             <div className="space-y-4">
               {cartItems.map((item) => (
                 <div key={item.id + (item.size || "")} className="flex gap-4 p-3 border border-soft-linen bg-surface/30">
-                  <div className="w-20 h-24 bg-soft-linen relative shrink-0">
-                    <Image src={item.image} alt={item.title} fill className="object-cover" sizes="80px" />
-                  </div>
+                  <Link
+                    href={`/product/${item.id}${item.material ? `?material=${encodeURIComponent(item.material)}` : ""}`}
+                    onClick={() => setIsCartOpen(false)}
+                    className="w-20 h-24 bg-soft-linen relative shrink-0 block cursor-pointer group/item-img"
+                  >
+                    <Image src={item.image} alt={item.title} fill className="object-cover group-hover/item-img:scale-105 transition-transform duration-300" sizes="80px" />
+                  </Link>
                   <div className="flex-grow flex flex-col justify-between">
                     <div>
                       <div className="flex justify-between items-start">
-                        <h4 className="font-label-caps text-xs uppercase font-semibold text-deep-navy pr-4">{item.title}</h4>
+                        <Link
+                          href={`/product/${item.id}${item.material ? `?material=${encodeURIComponent(item.material)}` : ""}`}
+                          onClick={() => setIsCartOpen(false)}
+                          className="font-label-caps text-xs uppercase font-semibold text-deep-navy pr-4 hover:underline cursor-pointer"
+                        >
+                          {item.title}
+                        </Link>
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="text-slate-grey hover:text-red-600 transition-colors"
+                          className="text-slate-grey hover:text-red-600 transition-colors cursor-pointer shrink-0"
                           aria-label="Remove item"
                         >
                           <span className="material-symbols-outlined text-lg">delete</span>
@@ -699,28 +709,40 @@ export default function Header() {
                 {allProducts.slice(0, 5).map((p) => (
                   <div
                     key={p.id}
-                    className="w-36 shrink-0 p-2.5 border border-soft-linen bg-surface/30 flex flex-col justify-between space-y-2 hover:border-black/30 transition-colors"
+                    className="w-36 shrink-0 p-2.5 border border-soft-linen bg-surface/30 flex flex-col justify-between space-y-2 hover:border-black/30 transition-colors cursor-pointer group/recommend"
+                    onClick={() => {
+                      setIsCartOpen(false);
+                      router.push(`/product/${p.id}`);
+                    }}
                   >
-                    <div className="relative aspect-square bg-soft-linen">
+                    <div className="relative aspect-square bg-soft-linen overflow-hidden">
                       <Image
                         src={p.image}
                         alt={p.title}
                         fill
-                        className="object-cover mix-blend-multiply"
+                        className="object-cover mix-blend-multiply group-hover/recommend:scale-105 transition-transform duration-300"
                         sizes="120px"
                       />
                     </div>
                     <div>
-                      <p className="font-label-caps text-[10px] uppercase font-semibold text-deep-navy truncate">
+                      <Link
+                        href={`/product/${p.id}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCartOpen(false);
+                        }}
+                        className="font-label-caps text-[10px] uppercase font-semibold text-deep-navy truncate block hover:underline"
+                      >
                         {p.title}
-                      </p>
+                      </Link>
                       <p className="font-body-md text-xs font-semibold mt-0.5">
                         {formatPrice(p.price)}
                       </p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (Number(p.stock ?? 999) <= 0) return;
                         addItem({
                           id: p.id,
@@ -834,16 +856,26 @@ export default function Header() {
             <div className="grid grid-cols-1 gap-4">
               {wishlist.map((item) => (
                 <div key={item.id} className="flex gap-4 p-3 border border-soft-linen bg-surface/30">
-                  <div className="w-20 h-24 bg-soft-linen relative shrink-0">
-                    <SkeletonImage src={item.image} alt={item.title} fill className="object-cover" sizes="80px" />
-                  </div>
+                  <Link
+                    href={`/product/${item.id}${item.material ? `?material=${encodeURIComponent(item.material)}` : ""}`}
+                    onClick={() => setIsWishlistOpen(false)}
+                    className="w-20 h-24 bg-soft-linen relative shrink-0 block cursor-pointer group/item-img"
+                  >
+                    <SkeletonImage src={item.image} alt={item.title} fill className="object-cover group-hover/item-img:scale-105 transition-transform duration-300" sizes="80px" />
+                  </Link>
                   <div className="flex-grow flex flex-col justify-between">
                     <div>
                       <div className="flex justify-between items-start">
-                        <h4 className="font-label-caps text-xs uppercase font-semibold text-deep-navy pr-4">{item.title}</h4>
+                        <Link
+                          href={`/product/${item.id}${item.material ? `?material=${encodeURIComponent(item.material)}` : ""}`}
+                          onClick={() => setIsWishlistOpen(false)}
+                          className="font-label-caps text-xs uppercase font-semibold text-deep-navy pr-4 hover:underline cursor-pointer"
+                        >
+                          {item.title}
+                        </Link>
                         <button
                           onClick={() => handleRemoveFromWishlist(item.id)}
-                          className="text-slate-grey hover:text-red-600 transition-colors"
+                          className="text-slate-grey hover:text-red-600 transition-colors cursor-pointer shrink-0"
                         >
                           <span className="material-symbols-outlined text-lg">close</span>
                         </button>
@@ -855,7 +887,7 @@ export default function Header() {
                     <div className="pt-2">
                       <button
                         onClick={() => handleMoveToCart(item)}
-                        className="w-full py-2 bg-black text-white text-[10px] uppercase font-button tracking-wider hover:bg-black/90 transition-colors"
+                        className="w-full py-2 bg-black text-white text-[10px] uppercase font-button tracking-wider hover:bg-black/90 transition-colors cursor-pointer"
                       >
                         Add to Bag
                       </button>
