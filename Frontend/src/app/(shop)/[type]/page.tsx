@@ -85,7 +85,6 @@ function TypePageContent() {
     ]).finally(() => setLoading(false));
   }, []);
 
-  // Dual filter: match by collection slug (admin-assigned) OR product type keyword
   const processedProducts = useMemo(() => {
     const keyword = typeInfo?.typeKeyword || slug;
     let result = products.filter((p) => {
@@ -110,10 +109,41 @@ function TypePageContent() {
       result = result.filter((p) => matchesMaterialFilter(p, selectedMaterial));
     }
 
-    if (sortBy === "PriceLowHigh")  result.sort((a, b) => a.price - b.price);
-    if (sortBy === "PriceHighLow") result.sort((a, b) => b.price - a.price);
+    const exploded = result.flatMap((p) => {
+      if (Array.isArray(p.variants) && p.variants.length > 0) {
+        let availableVariants = p.variants.filter((v: any) => v.isAvailable !== false);
 
-    return result;
+        if (selectedMaterial !== "All") {
+          availableVariants = availableVariants.filter((v: any) =>
+            matchesMaterialFilter({ ...p, material: v.material || p.material, title: v.label || p.title, variants: [] }, selectedMaterial)
+          );
+        }
+
+        if (availableVariants.length > 0) {
+          return availableVariants.map((v: any) => ({
+            ...p,
+            _variantCardId: `${p.id}-${v.id}`,
+            image: v.image || p.image,
+            images: v.images || p.images,
+            price: v.price ?? p.price,
+            originalPrice: v.originalPrice ?? p.originalPrice,
+            material: v.material || p.material,
+            stock: v.stock ?? p.stock,
+            variants: [],
+          }));
+        }
+      }
+
+      if (selectedMaterial === "All" || matchesMaterialFilter(p, selectedMaterial)) {
+        return [{ ...p, _variantCardId: p.id }];
+      }
+      return [];
+    });
+
+    if (sortBy === "PriceLowHigh")  exploded.sort((a, b) => a.price - b.price);
+    if (sortBy === "PriceHighLow") exploded.sort((a, b) => b.price - a.price);
+
+    return exploded;
   }, [products, slug, typeInfo, selectedMaterial, sortBy]);
 
 
@@ -343,7 +373,7 @@ function TypePageContent() {
                 {processedProducts.map((p) => {
                   const isWishlisted = wishlist.includes(p.id);
                   return (
-                    <Link key={p.id} href={`/product/${p.id}`} className="flex flex-col group cursor-pointer">
+                    <Link key={p._variantCardId || p.id} href={`/product/${p.id}`} className="flex flex-col group cursor-pointer">
                       <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden">
                         <Image
                           alt={p.title}

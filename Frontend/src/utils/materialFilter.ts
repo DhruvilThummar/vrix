@@ -1,4 +1,39 @@
 /**
+ * Helper functions to identify metal and gemstone materials.
+ */
+function isGoldMaterial(str: string): boolean {
+  if (!str) return false;
+  return (
+    str.includes("gold") ||
+    str.includes("vermeil") ||
+    str.includes("18k") ||
+    str.includes("14k") ||
+    str.includes("22k") ||
+    str.includes("24k")
+  );
+}
+
+function isSilverMaterial(str: string): boolean {
+  if (!str) return false;
+  return str.includes("silver") || str.includes("sterling") || str.includes("925");
+}
+
+function isPlatinumMaterial(str: string): boolean {
+  if (!str) return false;
+  return str.includes("platinum") || str.includes("950");
+}
+
+function isDiamondItem(matContext: string): boolean {
+  if (!matContext) return false;
+  return (
+    matContext.includes("diamond") ||
+    matContext.includes("solitaire") ||
+    matContext.includes("pave") ||
+    matContext.includes("moissanite")
+  );
+}
+
+/**
  * Utility function to strictly and accurately match products against material filter criteria.
  * Excludes long description body text to prevent false positives when descriptions mention other materials.
  */
@@ -10,68 +45,58 @@ export function matchesMaterialFilter(product: any, selectedMaterial: string): b
   const title = (product?.title || "").toLowerCase().trim();
   const subtitle = (product?.subtitle || "").toLowerCase().trim();
   const tags = Array.isArray(product?.tags) ? product.tags.join(" ").toLowerCase() : "";
-  const variantMats = Array.isArray(product?.variants)
-    ? product.variants.map((v: any) => (v?.material || "").toLowerCase()).join(" ")
-    : "";
 
-  // Combine direct material declarations and relevant identifiers (exclude description)
-  const matContext = `${mainMat} ${variantMats} ${tags} ${title} ${subtitle}`;
+  const hasVariants = Array.isArray(product?.variants) && product.variants.length > 0;
+  const variantMats = hasVariants
+    ? product.variants.map((v: any) => (v?.material || "").toLowerCase())
+    : [];
+
+  const matContext = `${mainMat} ${variantMats.join(" ")} ${tags} ${title} ${subtitle}`;
 
   if (target === "gold") {
-    // Must contain gold, vermeil, or gold karats (18k, 14k, 22k, 24k)
-    const hasGoldTerm =
-      matContext.includes("gold") ||
-      matContext.includes("vermeil") ||
-      matContext.includes("18k") ||
-      matContext.includes("14k") ||
-      matContext.includes("22k") ||
-      matContext.includes("24k");
+    // Primary material is explicitly gold
+    if (isGoldMaterial(mainMat)) return true;
 
-    // If primary material is explicitly silver or platinum with no gold in main material,
-    // only accept if variants explicitly offer a gold option
-    const isPureSilverOrPlatinum =
-      (mainMat.includes("silver") || mainMat.includes("sterling") || mainMat.includes("platinum") || mainMat.includes("925") || mainMat.includes("950")) &&
-      !mainMat.includes("gold") &&
-      !mainMat.includes("vermeil");
+    // Any variant is explicitly gold
+    if (variantMats.some((m: string) => isGoldMaterial(m))) return true;
 
-    if (isPureSilverOrPlatinum) {
-      return variantMats.includes("gold") || variantMats.includes("vermeil");
-    }
-    return hasGoldTerm;
+    // If primary metal is explicitly silver or platinum with no gold variant, reject
+    if (isSilverMaterial(mainMat) || isPlatinumMaterial(mainMat)) return false;
+
+    // Fallback: title/tags indicate gold when main material is unstated
+    return isGoldMaterial(matContext);
   }
 
   if (target === "silver") {
-    const hasSilverTerm =
-      matContext.includes("silver") ||
-      matContext.includes("sterling") ||
-      matContext.includes("925");
+    // Primary material is explicitly silver
+    if (isSilverMaterial(mainMat)) return true;
 
-    const isPureGoldOrPlatinum =
-      (mainMat.includes("gold") || mainMat.includes("platinum") || mainMat.includes("vermeil")) &&
-      !mainMat.includes("silver") &&
-      !mainMat.includes("sterling");
+    // Any variant is explicitly silver
+    if (variantMats.some((m: string) => isSilverMaterial(m))) return true;
 
-    if (isPureGoldOrPlatinum) {
-      return variantMats.includes("silver") || variantMats.includes("sterling") || variantMats.includes("925");
-    }
-    return hasSilverTerm;
+    // If primary metal is explicitly gold or platinum with no silver variant, reject
+    if (isGoldMaterial(mainMat) || isPlatinumMaterial(mainMat)) return false;
+
+    // Fallback: title/tags indicate silver when main material is unstated
+    return isSilverMaterial(matContext);
   }
 
   if (target === "platinum") {
-    const hasPlatinumTerm = matContext.includes("platinum") || matContext.includes("950");
+    // Primary material is explicitly platinum
+    if (isPlatinumMaterial(mainMat)) return true;
 
-    const isPureGoldOrSilver =
-      (mainMat.includes("gold") || mainMat.includes("silver") || mainMat.includes("sterling") || mainMat.includes("vermeil")) &&
-      !mainMat.includes("platinum");
+    // Any variant is explicitly platinum
+    if (variantMats.some((m: string) => isPlatinumMaterial(m))) return true;
 
-    if (isPureGoldOrSilver) {
-      return variantMats.includes("platinum") || variantMats.includes("950");
-    }
-    return hasPlatinumTerm;
+    // If primary metal is explicitly gold or silver with no platinum variant, reject
+    if (isGoldMaterial(mainMat) || isSilverMaterial(mainMat)) return false;
+
+    // Fallback: title/tags indicate platinum when main material is unstated
+    return isPlatinumMaterial(matContext);
   }
 
   if (target === "diamond") {
-    return matContext.includes("diamond") || matContext.includes("solitaire") || matContext.includes("pave");
+    return isDiamondItem(matContext);
   }
 
   return matContext.includes(target);

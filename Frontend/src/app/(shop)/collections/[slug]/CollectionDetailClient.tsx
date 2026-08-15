@@ -139,9 +139,16 @@ export default function CollectionDetailClient({
   const explodedProducts = useMemo(() => {
     const list = processedBaseProducts.flatMap((p) => {
       if (Array.isArray(p.variants) && p.variants.length > 0) {
-        return p.variants
-          .filter((v: any) => v.isAvailable !== false)
-          .map((v: any) => ({
+        let availableVariants = p.variants.filter((v: any) => v.isAvailable !== false);
+
+        if (selectedMaterial !== "All") {
+          availableVariants = availableVariants.filter((v: any) =>
+            matchesMaterialFilter({ ...p, material: v.material || p.material, title: v.label || p.title, variants: [] }, selectedMaterial)
+          );
+        }
+
+        if (availableVariants.length > 0) {
+          return availableVariants.map((v: any) => ({
             ...p,
             _variantCardId: `${p.id}-${v.id}`,
             image: v.image || p.image,
@@ -152,8 +159,13 @@ export default function CollectionDetailClient({
             stock: v.stock ?? p.stock,
             variants: [],
           }));
+        }
       }
-      return [{ ...p, _variantCardId: p.id }];
+
+      if (selectedMaterial === "All" || matchesMaterialFilter(p, selectedMaterial)) {
+        return [{ ...p, _variantCardId: p.id }];
+      }
+      return [];
     });
 
     if (sortBy === "PriceLowHigh") {
@@ -163,7 +175,7 @@ export default function CollectionDetailClient({
     }
 
     return list;
-  }, [processedBaseProducts, sortBy]);
+  }, [processedBaseProducts, selectedMaterial, sortBy]);
 
   const [carouselIndex, setCarouselIndex] = useState(0);
 
