@@ -58,6 +58,11 @@ export default function ProductsCatalogClient({
   const [selectedMaterial, setSelectedMaterial] = useState(() => getParam("material", "All"));
   const [selectedType, setSelectedType] = useState(() => getParam("type", "All"));
   const [sortBy, setSortBy] = useState(() => getParam("sort", "Curated"));
+  const [minPrice, setMinPrice] = useState(() => getParam("minPrice", ""));
+  const [maxPrice, setMaxPrice] = useState(() => getParam("maxPrice", ""));
+  const [pricePreset, setPricePreset] = useState(() => getParam("pricePreset", "All"));
+  const [inStockOnly, setInStockOnly] = useState(() => getParam("inStock", "false") === "true");
+
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -69,11 +74,15 @@ export default function ProductsCatalogClient({
     setSelectedMaterial(getParam("material", "All"));
     setSelectedType(getParam("type", "All"));
     setSortBy(getParam("sort", "Curated"));
+    setMinPrice(getParam("minPrice", ""));
+    setMaxPrice(getParam("maxPrice", ""));
+    setPricePreset(getParam("pricePreset", "All"));
+    setInStockOnly(getParam("inStock", "false") === "true");
   }, [searchParams]);
 
   const updateQueryParam = (key: string, value: string) => {
     const nextParams = new URLSearchParams(searchParams.toString());
-    if (value === "All" || !value) {
+    if (value === "All" || !value || value === "false") {
       nextParams.delete(key);
     } else {
       nextParams.set(key, value);
@@ -99,6 +108,36 @@ export default function ProductsCatalogClient({
   const handleSortChange = (sort: string) => {
     setSortBy(sort);
     updateQueryParam("sort", sort);
+  };
+
+  const handlePricePresetChange = (preset: string) => {
+    setPricePreset(preset);
+    updateQueryParam("pricePreset", preset);
+    let min = "";
+    let max = "";
+    if (preset === "Under5k") { min = "0"; max = "5000"; }
+    else if (preset === "5kTo15k") { min = "5000"; max = "15000"; }
+    else if (preset === "15kTo35k") { min = "15000"; max = "35000"; }
+    else if (preset === "Above35k") { min = "35000"; max = ""; }
+
+    setMinPrice(min);
+    setMaxPrice(max);
+    updateQueryParam("minPrice", min);
+    updateQueryParam("maxPrice", max);
+  };
+
+  const handleCustomPriceApply = (minVal: string, maxVal: string) => {
+    setPricePreset("Custom");
+    updateQueryParam("pricePreset", "Custom");
+    setMinPrice(minVal);
+    setMaxPrice(maxVal);
+    updateQueryParam("minPrice", minVal);
+    updateQueryParam("maxPrice", maxVal);
+  };
+
+  const handleInStockToggle = (checked: boolean) => {
+    setInStockOnly(checked);
+    updateQueryParam("inStock", checked ? "true" : "false");
   };
 
   useEffect(() => {
@@ -150,14 +189,27 @@ export default function ProductsCatalogClient({
     setSelectedCollection("All");
     setSelectedMaterial("All");
     setSelectedType("All");
+    setMinPrice("");
+    setMaxPrice("");
+    setPricePreset("All");
+    setInStockOnly(false);
+
     updateQueryParam("collection", "All");
     updateQueryParam("material", "All");
     updateQueryParam("type", "All");
+    updateQueryParam("minPrice", "");
+    updateQueryParam("maxPrice", "");
+    updateQueryParam("pricePreset", "All");
+    updateQueryParam("inStock", "false");
     showToast("Filters reset successfully.");
   };
 
   const processedProducts = useMemo(() => {
-    let result = products.filter((p) => p.isVisible !== false && (p.stock ?? 999) > 0);
+    let result = products.filter((p) => p.isVisible !== false);
+
+    if (inStockOnly) {
+      result = result.filter((p) => (p.stock ?? 999) > 0);
+    }
 
     if (selectedCollection !== "All") {
       result = result.filter((p) => {
@@ -188,9 +240,13 @@ export default function ProductsCatalogClient({
       });
     }
 
-    const exploded = result.flatMap((p) => {
+    let exploded = result.flatMap((p) => {
       if (Array.isArray(p.variants) && p.variants.length > 0) {
         let availableVariants = p.variants.filter((v: any) => v.isAvailable !== false);
+
+        if (inStockOnly) {
+          availableVariants = availableVariants.filter((v: any) => (v.stock ?? 999) > 0);
+        }
 
         if (selectedMaterial !== "All") {
           availableVariants = availableVariants.filter((v: any) =>
@@ -219,6 +275,20 @@ export default function ProductsCatalogClient({
       return [];
     });
 
+    if (minPrice) {
+      const minVal = Number(minPrice);
+      if (!isNaN(minVal) && minVal > 0) {
+        exploded = exploded.filter((item) => Number(item.price) >= minVal);
+      }
+    }
+
+    if (maxPrice) {
+      const maxVal = Number(maxPrice);
+      if (!isNaN(maxVal) && maxVal > 0) {
+        exploded = exploded.filter((item) => Number(item.price) <= maxVal);
+      }
+    }
+
     if (sortBy === "PriceLowHigh") {
       exploded.sort((a, b) => a.price - b.price);
     } else if (sortBy === "PriceHighLow") {
@@ -226,7 +296,7 @@ export default function ProductsCatalogClient({
     }
 
     return exploded;
-  }, [products, selectedCollection, selectedMaterial, selectedType, sortBy]);
+  }, [products, selectedCollection, selectedMaterial, selectedType, minPrice, maxPrice, inStockOnly, sortBy]);
 
   const handleQuickAdd = (p: any, variant: any) => {
     addItem({
@@ -241,12 +311,20 @@ export default function ProductsCatalogClient({
     showToast(`Added "${p.title}" to Bag!`);
   };
 
+  const hasActiveFilters =
+    selectedCollection !== "All" ||
+    selectedMaterial !== "All" ||
+    selectedType !== "All" ||
+    !!minPrice ||
+    !!maxPrice ||
+    inStockOnly;
+
   return (
     <div className="w-full bg-pure-white relative min-h-screen">
       {toastMessage && (
         <div className="fixed bottom-8 right-8 z-50 bg-deep-navy text-pure-white px-6 py-4 border border-slate-grey/30 shadow-2xl flex items-center gap-3 animate-fade-in duration-300">
           <span className="material-symbols-outlined text-sm">info</span>
-          <p className="font-body-md text-sm tracking-wide">{toastMessage}</p>
+          <p className="font-inter font-primary text-sm tracking-wide">{toastMessage}</p>
           <button
             onClick={() => setToastMessage(null)}
             className="ml-4 hover:text-slate-grey cursor-pointer text-xs"
@@ -258,7 +336,7 @@ export default function ProductsCatalogClient({
 
       {/* Visible Breadcrumbs for SEO */}
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-4">
-        <nav className="flex items-center gap-2 text-[10px] font-label-caps text-slate-grey uppercase tracking-wider">
+        <nav className="flex items-center gap-2 text-[10px] font-inter font-primary uppercase tracking-wider text-slate-grey">
           <Link href="/" className="hover:text-ink-black transition-colors">Home</Link>
           <span className="material-symbols-outlined text-[10px]">chevron_right</span>
           <span className="text-ink-black font-semibold">All Jewelry</span>
@@ -267,30 +345,34 @@ export default function ProductsCatalogClient({
 
       <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pb-section-gap">
         <header className="py-12 flex flex-col items-center text-center max-w-3xl mx-auto space-y-4">
-          <h1 className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-deep-navy uppercase tracking-tight">
+          <span className="font-chancery font-accent text-xl md:text-2xl text-deep-navy">
+            A luxury that feels like you.
+          </span>
+          <h1 className="font-inter font-primary text-3xl md:text-4xl text-deep-navy uppercase font-bold tracking-tight">
             The Atelier Catalog
           </h1>
-          <p className="font-body-lg text-body-lg text-secondary">
+          <p className="font-jost font-secondary text-sm md:text-base text-secondary max-w-xl">
             Explore our complete collection of handcrafted luxury bands, necklaces, earrings, and bespoke fine jewelry.
           </p>
         </header>
 
-        <div className="border-t border-b border-slate-grey/30 py-3 sm:py-4 mb-stack-lg flex flex-wrap justify-between items-center gap-3 relative z-20">
+        {/* Toolbar Header */}
+        <div className="border-t border-b border-slate-grey/30 py-3 sm:py-4 mb-6 flex flex-wrap justify-between items-center gap-3 relative z-20">
           <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
             <button
               onClick={() => {
                 setFiltersOpen(!filtersOpen);
                 setSortOpen(false);
               }}
-              className="md:hidden shrink-0 font-label-caps text-[10px] text-on-surface hover:text-deep-navy uppercase tracking-wider flex items-center gap-1 group transition-colors cursor-pointer"
+              className="md:hidden shrink-0 font-inter font-primary text-[10px] text-on-surface hover:text-deep-navy uppercase tracking-wider flex items-center gap-1 group transition-colors cursor-pointer"
             >
               <span>Filters</span>
               <span className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${filtersOpen ? "rotate-180" : ""}`}>
                 expand_more
               </span>
             </button>
-            <span className="hidden md:inline font-label-caps text-xs text-slate-grey uppercase tracking-widest">
-              Faceted Search / {processedProducts.length} Items
+            <span className="hidden md:inline font-inter font-primary text-xs text-slate-grey uppercase tracking-widest">
+              Faceted Search &nbsp;/&nbsp; <strong className="text-deep-navy">{processedProducts.length} Items</strong>
             </span>
           </div>
 
@@ -300,7 +382,7 @@ export default function ProductsCatalogClient({
                 setSortOpen(!sortOpen);
                 setFiltersOpen(false);
               }}
-              className="max-w-[11rem] sm:max-w-none font-label-caps text-[10px] sm:text-label-caps text-on-surface hover:text-deep-navy uppercase tracking-wider sm:tracking-widest flex items-center gap-1 group transition-colors cursor-pointer text-right"
+              className="max-w-[11rem] sm:max-w-none font-inter font-primary text-[10px] sm:text-xs text-on-surface hover:text-deep-navy uppercase tracking-wider sm:tracking-widest flex items-center gap-1 group transition-colors cursor-pointer text-right"
             >
               <span className="hidden sm:inline">
                 Sort: {sortBy === "Curated" ? "Curated" : sortBy === "PriceLowHigh" ? "Price: Low to High" : "Price: High to Low"}
@@ -320,7 +402,7 @@ export default function ProductsCatalogClient({
                       handleSortChange(sort);
                       setSortOpen(false);
                     }}
-                    className={`px-4 py-2 text-left font-label-caps text-xs tracking-wider uppercase hover:bg-soft-linen cursor-pointer ${sortBy === sort ? "text-deep-navy font-semibold" : "text-slate-grey"}`}
+                    className={`px-4 py-2 text-left font-inter font-primary text-xs tracking-wider uppercase hover:bg-soft-linen cursor-pointer ${sortBy === sort ? "text-deep-navy font-semibold" : "text-slate-grey"}`}
                   >
                     {sort === "Curated" ? "Curated" : sort === "PriceLowHigh" ? "Price: Low to High" : "Price: High to Low"}
                   </button>
@@ -330,14 +412,84 @@ export default function ProductsCatalogClient({
           </div>
         </div>
 
+        {/* Active Filter Chips Bar */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-2 mb-6 pb-4 border-b border-slate-grey/15">
+            <span className="font-inter font-primary text-[11px] text-slate-grey uppercase tracking-wider mr-1">
+              Active Filters:
+            </span>
+
+            {selectedCollection !== "All" && (
+              <button
+                onClick={() => handleCollectionChange("All")}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-soft-linen border border-slate-grey/30 text-deep-navy font-inter font-primary text-[10px] uppercase tracking-wider rounded-xs hover:bg-slate-grey/20 cursor-pointer transition-colors"
+              >
+                <span>Collection: {collections.find((c) => c.id === selectedCollection)?.title || selectedCollection}</span>
+                <span className="text-xs">✕</span>
+              </button>
+            )}
+
+            {selectedMaterial !== "All" && (
+              <button
+                onClick={() => handleMaterialChange("All")}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-soft-linen border border-slate-grey/30 text-deep-navy font-inter font-primary text-[10px] uppercase tracking-wider rounded-xs hover:bg-slate-grey/20 cursor-pointer transition-colors"
+              >
+                <span>Material: {selectedMaterial}</span>
+                <span className="text-xs">✕</span>
+              </button>
+            )}
+
+            {selectedType !== "All" && (
+              <button
+                onClick={() => handleTypeChange("All")}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-soft-linen border border-slate-grey/30 text-deep-navy font-inter font-primary text-[10px] uppercase tracking-wider rounded-xs hover:bg-slate-grey/20 cursor-pointer transition-colors"
+              >
+                <span>Type: {selectedType}</span>
+                <span className="text-xs">✕</span>
+              </button>
+            )}
+
+            {(minPrice || maxPrice) && (
+              <button
+                onClick={() => handleCustomPriceApply("", "")}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-soft-linen border border-slate-grey/30 text-deep-navy font-inter font-primary text-[10px] uppercase tracking-wider rounded-xs hover:bg-slate-grey/20 cursor-pointer transition-colors"
+              >
+                <span>
+                  Price: {minPrice ? `₹${Number(minPrice).toLocaleString()}` : "₹0"} - {maxPrice ? `₹${Number(maxPrice).toLocaleString()}` : "Any"}
+                </span>
+                <span className="text-xs">✕</span>
+              </button>
+            )}
+
+            {inStockOnly && (
+              <button
+                onClick={() => handleInStockToggle(false)}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-soft-linen border border-slate-grey/30 text-deep-navy font-inter font-primary text-[10px] uppercase tracking-wider rounded-xs hover:bg-slate-grey/20 cursor-pointer transition-colors"
+              >
+                <span>In Stock Only</span>
+                <span className="text-xs">✕</span>
+              </button>
+            )}
+
+            <button
+              onClick={handleResetFilters}
+              className="text-[10px] font-inter font-primary text-deep-navy font-semibold underline hover:text-ink-black uppercase tracking-wider ml-2 cursor-pointer"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col md:flex-row gap-8 items-start">
+          {/* Sidebar Filters */}
           <aside className="hidden md:block w-64 shrink-0 sticky top-24 space-y-8 bg-soft-linen/10 p-6 border border-slate-grey/15">
+            {/* Collections */}
             <div>
-              <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
+              <h4 className="font-inter font-primary text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
                 Collections
               </h4>
               <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-jost font-secondary text-slate-grey hover:text-ink-black">
                   <input
                     type="radio"
                     name="collection"
@@ -345,10 +497,10 @@ export default function ProductsCatalogClient({
                     onChange={() => handleCollectionChange("All")}
                     className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy"
                   />
-                  <span className={selectedCollection === "All" ? "text-deep-navy font-semibold" : ""}>All Collections</span>
+                  <span className={selectedCollection === "All" ? "text-deep-navy font-semibold font-inter font-primary" : ""}>All Collections</span>
                 </label>
                 {collections.map((col) => (
-                  <label key={col.id} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                  <label key={col.id} className="flex items-center gap-2 cursor-pointer text-xs font-jost font-secondary text-slate-grey hover:text-ink-black">
                     <input
                       type="radio"
                       name="collection"
@@ -356,19 +508,20 @@ export default function ProductsCatalogClient({
                       onChange={() => handleCollectionChange(col.id)}
                       className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy"
                     />
-                    <span className={selectedCollection === col.id ? "text-deep-navy font-semibold" : ""}>{col.title}</span>
+                    <span className={selectedCollection === col.id ? "text-deep-navy font-semibold font-inter font-primary" : ""}>{col.title}</span>
                   </label>
                 ))}
               </div>
             </div>
 
+            {/* Materials */}
             <div>
-              <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
+              <h4 className="font-inter font-primary text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
                 Materials
               </h4>
               <div className="flex flex-col gap-2">
                 {MATERIAL_OPTIONS.map((mat) => (
-                  <label key={mat} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                  <label key={mat} className="flex items-center gap-2 cursor-pointer text-xs font-jost font-secondary text-slate-grey hover:text-ink-black">
                     <input
                       type="radio"
                       name="material"
@@ -376,19 +529,20 @@ export default function ProductsCatalogClient({
                       onChange={() => handleMaterialChange(mat)}
                       className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy"
                     />
-                    <span className={selectedMaterial === mat ? "text-deep-navy font-semibold" : ""}>{mat}</span>
+                    <span className={selectedMaterial === mat ? "text-deep-navy font-semibold font-inter font-primary" : ""}>{mat}</span>
                   </label>
                 ))}
               </div>
             </div>
 
+            {/* Product Type */}
             <div>
-              <h4 className="font-label-caps text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
+              <h4 className="font-inter font-primary text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
                 Product Type
               </h4>
               <div className="flex flex-col gap-2">
                 {TYPE_OPTIONS.map((type) => (
-                  <label key={type} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
+                  <label key={type} className="flex items-center gap-2 cursor-pointer text-xs font-jost font-secondary text-slate-grey hover:text-ink-black">
                     <input
                       type="radio"
                       name="type"
@@ -396,30 +550,103 @@ export default function ProductsCatalogClient({
                       onChange={() => handleTypeChange(type)}
                       className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy"
                     />
-                    <span className={selectedType === type ? "text-deep-navy font-semibold" : ""}>{type}</span>
+                    <span className={selectedType === type ? "text-deep-navy font-semibold font-inter font-primary" : ""}>{type}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            {(selectedCollection !== "All" || selectedMaterial !== "All" || selectedType !== "All") && (
+            {/* Price Range */}
+            <div>
+              <h4 className="font-inter font-primary text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
+                Price Range
+              </h4>
+              <div className="flex flex-col gap-2 mb-3">
+                {[
+                  { id: "All", label: "All Prices" },
+                  { id: "Under5k", label: "Under ₹5,000" },
+                  { id: "5kTo15k", label: "₹5,000 - ₹15,000" },
+                  { id: "15kTo35k", label: "₹15,000 - ₹35,000" },
+                  { id: "Above35k", label: "Above ₹35,000" },
+                ].map((p) => (
+                  <label key={p.id} className="flex items-center gap-2 cursor-pointer text-xs font-jost font-secondary text-slate-grey hover:text-ink-black">
+                    <input
+                      type="radio"
+                      name="pricePreset"
+                      checked={pricePreset === p.id}
+                      onChange={() => handlePricePresetChange(p.id)}
+                      className="w-3.5 h-3.5 text-deep-navy border-slate-grey/30 focus:ring-deep-navy"
+                    />
+                    <span className={pricePreset === p.id ? "text-deep-navy font-semibold font-inter font-primary" : ""}>{p.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Custom Min / Max inputs */}
+              <div className="pt-2 border-t border-slate-grey/10">
+                <span className="font-inter font-primary text-[10px] text-slate-grey uppercase tracking-wider block mb-2">Custom Range (₹)</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    className="w-full px-2 py-1 border border-slate-grey/30 text-xs font-inter font-primary rounded-xs focus:outline-none focus:border-deep-navy"
+                  />
+                  <span className="text-slate-grey text-xs">-</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    className="w-full px-2 py-1 border border-slate-grey/30 text-xs font-inter font-primary rounded-xs focus:outline-none focus:border-deep-navy"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCustomPriceApply(minPrice, maxPrice)}
+                  className="w-full mt-2 py-1 bg-soft-linen text-deep-navy border border-slate-grey/30 text-[10px] font-inter font-primary uppercase tracking-wider hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer"
+                >
+                  Apply Price
+                </button>
+              </div>
+            </div>
+
+            {/* Availability */}
+            <div>
+              <h4 className="font-inter font-primary text-xs text-deep-navy font-bold tracking-widest uppercase border-b border-slate-grey/10 pb-2 mb-4">
+                Availability
+              </h4>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-jost font-secondary text-slate-grey hover:text-ink-black">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => handleInStockToggle(e.target.checked)}
+                  className="w-3.5 h-3.5 text-deep-navy rounded-xs border-slate-grey/30 focus:ring-deep-navy"
+                />
+                <span className={inStockOnly ? "text-deep-navy font-semibold font-inter font-primary" : ""}>In Stock Only</span>
+              </label>
+            </div>
+
+            {hasActiveFilters && (
               <button
                 onClick={handleResetFilters}
-                className="w-full py-2 bg-deep-navy text-pure-white text-[10px] font-label-caps uppercase hover:bg-ink-black transition-colors cursor-pointer"
+                className="w-full py-2 bg-deep-navy text-pure-white text-[10px] font-inter font-primary uppercase tracking-wider hover:bg-ink-black transition-colors cursor-pointer"
               >
                 Reset Filters
               </button>
             )}
           </aside>
 
+          {/* Product Grid */}
           <div className="flex-grow w-full">
             {processedProducts.length === 0 ? (
               <div className="text-center py-section-gap flex flex-col items-center justify-center space-y-4">
                 <span className="material-symbols-outlined text-slate-grey text-4xl">inventory_2</span>
-                <p className="font-headline-md text-slate-grey">No products found matching your active filters.</p>
+                <p className="font-jost font-secondary text-base text-slate-grey">No products found matching your active filters.</p>
                 <button
                   onClick={handleResetFilters}
-                  className="px-6 py-2 border border-deep-navy text-deep-navy font-button text-xs uppercase hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer"
+                  className="px-6 py-2 border border-deep-navy text-deep-navy font-inter font-primary text-xs uppercase tracking-wider hover:bg-deep-navy hover:text-pure-white transition-colors cursor-pointer"
                 >
                   Reset Filters
                 </button>

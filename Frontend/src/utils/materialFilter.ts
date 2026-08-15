@@ -23,14 +23,27 @@ function isPlatinumMaterial(str: string): boolean {
   return str.includes("platinum") || str.includes("950");
 }
 
-function isDiamondItem(matContext: string): boolean {
-  if (!matContext) return false;
-  return (
-    matContext.includes("diamond") ||
-    matContext.includes("solitaire") ||
-    matContext.includes("pave") ||
-    matContext.includes("moissanite")
-  );
+function isDiamondItem(product: any): boolean {
+  if (!product) return false;
+
+  const mainMat = (product?.material || "").toLowerCase().trim();
+  const title = (product?.title || "").toLowerCase().trim();
+  const subtitle = (product?.subtitle || "").toLowerCase().trim();
+  const tags = Array.isArray(product?.tags) ? product.tags.join(" ").toLowerCase() : "";
+
+  const hasVariants = Array.isArray(product?.variants) && product.variants.length > 0;
+  const variantMats = hasVariants
+    ? product.variants.map((v: any) => `${v?.material || ""} ${v?.label || ""}`.toLowerCase()).join(" ")
+    : "";
+
+  const terms = ["diamond", "moissanite"];
+
+  // Match if material, title, subtitle, variants, or tags explicitly state diamond or moissanite
+  if (terms.some((t) => mainMat.includes(t) || variantMats.includes(t) || title.includes(t) || subtitle.includes(t))) {
+    return true;
+  }
+
+  return terms.some((t) => tags.includes(t));
 }
 
 /**
@@ -96,7 +109,7 @@ export function matchesMaterialFilter(product: any, selectedMaterial: string): b
   }
 
   if (target === "diamond") {
-    return isDiamondItem(matContext);
+    return isDiamondItem(product);
   }
 
   return matContext.includes(target);

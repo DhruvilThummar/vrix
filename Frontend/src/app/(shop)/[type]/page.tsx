@@ -9,7 +9,8 @@ import { matchesMaterialFilter } from "@/utils/materialFilter";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { useCurrency } from "@/context/CurrencyContext";
+import ProductCard from "@/components/shop/ProductCard";
+import { useCart } from "@/context/CartContext";
 
 // Canonical map: URL slug → matching product type values (case-insensitive contains)
 const TYPE_MAP: Record<string, { label: string; typeKeyword: string }> = {
@@ -29,6 +30,7 @@ function TypePageContent() {
   const router = useRouter();
   const { user, isLoggedIn } = useAuth();
   const { formatPrice } = useCurrency();
+  const { addItem } = useCart();
 
   const slug = (params.type as string)?.toLowerCase() || "";
   const typeInfo = TYPE_MAP[slug];
@@ -146,6 +148,19 @@ function TypePageContent() {
     return exploded;
   }, [products, slug, typeInfo, selectedMaterial, sortBy]);
 
+
+  const handleQuickAdd = (p: any, variant: any) => {
+    addItem({
+      id: p.id,
+      title: p.title,
+      subtitle: p.subtitle || p.type,
+      price: variant?.price ?? p.price,
+      image: variant?.image ?? p.image,
+      material: variant?.material ?? p.material ?? "18K Gold Vermeil",
+      stock: Number(variant?.stock ?? p.stock ?? 999),
+    });
+    showToast(`Added "${p.title}" to Bag!`);
+  };
 
   const toggleWishlist = (id: string, title: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -370,44 +385,19 @@ function TypePageContent() {
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-gutter">
-                {processedProducts.map((p) => {
+                {processedProducts.map((p: any, idx: number) => {
                   const isWishlisted = wishlist.includes(p.id);
                   return (
-                    <Link key={p._variantCardId || p.id} href={`/product/${p.id}`} className="flex flex-col group cursor-pointer">
-                      <div className="relative w-full aspect-[3/4] md:aspect-[4/5] bg-soft-linen overflow-hidden">
-                        <Image
-                          alt={p.title}
-                          fill
-                          className="object-cover object-center mix-blend-multiply opacity-90 group-hover:scale-105 transition-transform duration-700 ease-out"
-                          src={p.image}
-                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                        <button
-                          onClick={(e) => toggleWishlist(p.id, p.title, e)}
-                          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-                          className="absolute top-2 right-2 md:top-4 md:right-4 text-slate-grey hover:text-deep-navy transition-colors z-10 cursor-pointer p-1"
-                        >
-                          <span className={`material-symbols-outlined text-lg md:text-xl ${isWishlisted ? "icon-favorite-filled text-error" : "icon-favorite-outline"}`}>
-                            favorite
-                          </span>
-                        </button>
-                        {/* Collection badge */}
-                        {p.collection && p.collection !== slug && (
-                          <span className="absolute bottom-2 left-2 bg-pure-white/90 text-ink-black font-label-caps text-[8px] uppercase tracking-widest px-2 py-0.5 border border-slate-grey/20">
-                            {p.collection}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-1.5 md:mt-stack-sm flex flex-col md:flex-row md:justify-between md:items-start pt-1 md:pt-2 gap-0.5">
-                        <div className="flex flex-col space-y-0.5 md:space-y-1 min-w-0">
-                          <h2 className="font-body-md text-[11px] md:text-body-md text-on-surface font-medium truncate">{p.title}</h2>
-                          <span className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest text-[8px] md:text-[10px] truncate">
-                            {p.subtitle || p.type}
-                          </span>
-                        </div>
-                        <span className="font-body-md text-[11px] md:text-body-md text-on-surface font-semibold shrink-0">{formatPrice(p.price)}</span>
-                      </div>
-                    </Link>
+                    <ProductCard
+                      key={p._variantCardId || p.id}
+                      product={p}
+                      formatPrice={formatPrice}
+                      isWishlisted={isWishlisted}
+                      onWishlistToggle={(id, title, e) => toggleWishlist(id, title, e)}
+                      onQuickAdd={(item, variant) => handleQuickAdd(item, variant)}
+                      showQuickAdd={true}
+                      priority={idx < 4}
+                    />
                   );
                 })}
               </div>
