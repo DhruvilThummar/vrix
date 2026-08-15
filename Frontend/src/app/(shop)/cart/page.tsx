@@ -105,20 +105,25 @@ export default function CartPage() {
           <div className="lg:col-span-8 flex flex-col gap-stack-lg">
             {items.map((item) => (
               <div key={`${item.id}-${item.size}`} className="flex flex-col sm:flex-row gap-gutter pb-stack-lg border-b border-slate-grey/20">
-                <div className="w-full sm:w-48 aspect-[4/5] bg-soft-linen shrink-0 relative overflow-hidden">
+                <Link
+                  href={`/product/${item.id}`}
+                  className="w-full sm:w-48 aspect-[4/5] bg-soft-linen shrink-0 relative overflow-hidden group block cursor-pointer"
+                >
                   <Image
                     src={item.image}
                     alt={item.title}
                     fill
-                    className="object-cover mix-blend-multiply"
+                    className="object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
                     sizes="192px"
                   />
-                </div>
+                </Link>
                 <div className="flex-grow flex flex-col justify-between py-2">
                   <div>
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-headline-md text-headline-md text-primary">{item.title}</h3>
+                        <Link href={`/product/${item.id}`} className="hover:underline">
+                          <h3 className="font-headline-md text-headline-md text-primary">{item.title}</h3>
+                        </Link>
                         <p className="text-xs text-slate-grey font-body-md mt-0.5">{item.subtitle || "Fine Jewelry"}</p>
                         <p className="text-[10px] text-slate-grey/70 font-body-md">{item.material}</p>
                         {item.size && <p className="text-xs text-slate-grey font-body-md">Size: <span className="text-ink-black">{item.size}</span></p>}

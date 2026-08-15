@@ -97,6 +97,7 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
   // Touch Swipe Gesture Handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = e.targetTouches[0].clientX;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -106,7 +107,7 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (imageList.length <= 1) return;
     const distance = touchStartX.current - touchEndX.current;
-    if (Math.abs(distance) > 35) {
+    if (Math.abs(distance) > 35 && touchEndX.current > 0) {
       e.stopPropagation();
       if (distance > 35) {
         // Swipe Left -> Next Image
@@ -116,6 +117,8 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
         setCurrentImageIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
       }
     }
+    touchStartX.current = 0;
+    touchEndX.current = 0;
   };
 
   const getSwatchColor = (mat: string) => {
