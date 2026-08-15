@@ -95,19 +95,36 @@ export default function CollectionDetailClient({
   const [sortOpen, setSortOpen] = useState(false);
 
   const processedBaseProducts = useMemo(() => {
-    const activeCollection = collectionQuery || "silent-center";
-    let result = products.filter((p) => (
-      p.isVisible !== false &&
-      (p.stock ?? 999) > 0 &&
-      (p.collection || "") === activeCollection
-    ));
+    const activeSlug = (collectionQuery || "silent-center").toLowerCase().trim();
+    const targetNorm = activeSlug.replace(/[^a-z0-9]/g, "");
+
+    const visibleProducts = products.filter(
+      (p) => p.isVisible !== false && (p.stock ?? 999) > 0
+    );
+
+    let result: any[] = [];
+
+    if (targetNorm === "all" || targetNorm === "allcollections") {
+      result = visibleProducts;
+    } else {
+      result = visibleProducts.filter((p) => {
+        const pCollNorm = (p.collection || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (!pCollNorm) return false;
+        return pCollNorm === targetNorm || pCollNorm.includes(targetNorm) || targetNorm.includes(pCollNorm);
+      });
+
+      // Fallback: If no products explicitly match the collection string, return visible products
+      if (result.length === 0) {
+        result = visibleProducts;
+      }
+    }
 
     if (selectedMaterial !== "All") {
       result = result.filter((p) => matchesMaterialFilter(p, selectedMaterial));
     }
 
     if (selectedType !== "All") {
-      result = result.filter((p) => p.type.toLowerCase() === selectedType.toLowerCase());
+      result = result.filter((p) => (p.type || "").toLowerCase().includes(selectedType.toLowerCase()));
     }
 
     return result;
