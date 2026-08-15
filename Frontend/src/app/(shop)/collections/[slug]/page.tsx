@@ -77,8 +77,15 @@ export default async function CollectionDetailPage({ params }: Props) {
       sections: activeCategory.sections || [],
       isCategory: true,
     };
-  } else {
-    const activeCollection = collections.find((c) => c.id === slug);
+    const targetNorm = slug.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const activeCollection = collections.find((c: any) => {
+      if (!c) return false;
+      const cIdNorm = (c.id || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const cTitleNorm = (c.title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const cLinkNorm = (c.link || "").replace("/collections/", "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      return cIdNorm === targetNorm || cTitleNorm === targetNorm || cLinkNorm === targetNorm || cIdNorm.includes(targetNorm) || targetNorm.includes(cIdNorm);
+    });
+
     if (activeCollection) {
       collectionInfo = {
         title: activeCollection.title,
@@ -95,9 +102,12 @@ export default async function CollectionDetailPage({ params }: Props) {
         sections: activeCollection.sections || [],
       };
     } else {
+      const isNewArrivals = slug === "silent-center" || slug === "new-arrivals" || slug === "trending";
       collectionInfo = {
-        title: slug.charAt(0).toUpperCase() + slug.slice(1),
-        description: "Explore designer jewelry items.",
+        title: isNewArrivals ? "New Arrivals / Trending" : slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        description: isNewArrivals
+          ? "Explore our latest handcrafted fine jewelry pieces, minimal gold rings, and architectural designs."
+          : `Explore designer jewelry items from our ${slug.replace(/-/g, " ")} collection.`,
         layoutStyle: "classic",
       };
     }

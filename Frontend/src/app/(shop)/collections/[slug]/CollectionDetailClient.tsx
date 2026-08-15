@@ -98,13 +98,19 @@ export default function CollectionDetailClient({
     const activeSlug = (collectionQuery || "silent-center").toLowerCase().trim();
     const targetNorm = activeSlug.replace(/[^a-z0-9]/g, "");
 
-    const visibleProducts = products.filter(
+    const visibleProducts = (products || []).filter(
       (p) => p.isVisible !== false && (p.stock ?? 999) > 0
     );
 
     let result: any[] = [];
 
-    if (targetNorm === "all" || targetNorm === "allcollections") {
+    if (
+      targetNorm === "all" ||
+      targetNorm === "allcollections" ||
+      targetNorm === "silentcenter" ||
+      targetNorm === "newarrivals" ||
+      targetNorm === "trending"
+    ) {
       result = visibleProducts;
     } else {
       result = visibleProducts.filter((p) => {
@@ -596,7 +602,7 @@ export default function CollectionDetailClient({
                     Materials
                   </h4>
                   <div className="flex flex-col gap-2">
-                    {["All", "Gold", "Silver"].map((mat) => (
+                    {["All", "Gold", "Silver", "Platinum", "Diamond"].map((mat) => (
                       <label key={mat} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
                         <input
                           type="radio"
@@ -616,7 +622,7 @@ export default function CollectionDetailClient({
                     Product Type
                   </h4>
                   <div className="flex flex-col gap-2">
-                    {["All", "Ring", "Necklace", "Earring", "Bracelet"].map((type) => (
+                    {["All", "Ring", "Necklace", "Earring", "Bracelet", "Pendant", "Cuff", "Brooch", "Anklet"].map((type) => (
                       <label key={type} className="flex items-center gap-2 cursor-pointer text-xs font-body-md text-slate-grey hover:text-ink-black">
                         <input
                           type="radio"
