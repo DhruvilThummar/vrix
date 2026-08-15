@@ -127,8 +127,8 @@ export default function ProductCard({
             aria-label="Toggle Wishlist"
           >
             <span
-              className={`material-symbols-outlined text-[16px] md:text-[18px] ${
-                isWishlisted ? "text-red-600 fill-current" : ""
+              className={`material-symbols-outlined text-[16px] md:text-[18px] transition-all duration-200 ${
+                isWishlisted ? "icon-favorite-filled text-red-600 scale-110" : "icon-favorite-outline text-slate-grey hover:text-red-600"
               }`}
             >
               favorite

@@ -563,10 +563,14 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
                     </button>
                     <button
                       onClick={handleAddToWishlist}
-                      className="flex-grow flex-1 border border-slate-grey/30 py-3 font-button uppercase tracking-widest hover:border-ink-black transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm text-ink-black bg-transparent"
+                      className={`flex-grow flex-1 border py-3 font-button uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-1.5 text-xs sm:text-sm ${
+                        wishlistActive
+                          ? "border-red-600 text-red-600 bg-red-50/40 font-semibold"
+                          : "border-slate-grey/30 text-ink-black bg-transparent hover:border-ink-black"
+                      }`}
                     >
-                      <span className={`material-symbols-outlined text-[18px] shrink-0 ${wishlistActive ? "text-red-600 fill-red-600" : ""}`}>
-                        {wishlistActive ? "favorite" : "favorite_border"}
+                      <span className={`material-symbols-outlined text-[18px] shrink-0 ${wishlistActive ? "icon-favorite-filled text-red-600" : "icon-favorite-outline text-slate-grey"}`}>
+                        favorite
                       </span>
                       <span className="truncate">
                         {wishlistActive ? "In Wishlist" : "Wishlist"}
