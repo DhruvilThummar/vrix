@@ -67,14 +67,6 @@ export default function ProductCardItem({ product, onNavigate }: ProductCardItem
 
   const productUrl = `/product/${product.slug || product.id}`;
 
-  // 2-second auto-changing image carousel
-  useEffect(() => {
-    if (imageList.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % imageList.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [imageList.length]);
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Execute mobile close event

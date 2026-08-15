@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import SkeletonImage from "@/components/shop/SkeletonImage";
@@ -65,72 +65,13 @@ export default function ProductCard({
   const primaryImage = activeVariant?.image || product.image;
   const secondaryImage =
     activeVariant?.images?.[0] ||
-    (Array.isArray(product.images) ? product.images[1] || product.images[0] : null) ||
-    primaryImage;
-
-  // Normalized image list for 2s auto-carousel
-  const carouselImages = useMemo(() => {
-    const list = [primaryImage];
-    if (secondaryImage && secondaryImage !== primaryImage) list.push(secondaryImage);
-    if (Array.isArray(product.images)) {
-      product.images.forEach((img: string) => {
-        if (img && !list.includes(img)) list.push(img);
-      });
-    }
-    return list.filter(Boolean);
-  }, [primaryImage, secondaryImage, product.images]);
-
-  const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const touchStartX = useRef<number>(0);
-  const touchEndX = useRef<number>(0);
-
-  // Immediately switch image when material swatch is clicked
-  useEffect(() => {
-    setCurrentSlideIdx(0);
-  }, [selectedMaterial]);
-
-  // 2-second auto-changing image carousel
-  useEffect(() => {
-    if (carouselImages.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSlideIdx((prev) => (prev + 1) % carouselImages.length);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [carouselImages.length]);
+    (Array.isArray(product.images) ? product.images.find((img: string) => img && img !== primaryImage) || product.images[1] : null) ||
+    null;
 
   const displayPrice = activeVariant?.price ?? product.price;
   const displayMaterial = activeVariant?.material || product.material || "";
   const productId = product?.id || product?._id || product?.slug;
   const productUrl = `/product/${productId}${selectedMaterial ? `?material=${encodeURIComponent(selectedMaterial)}` : ""}`;
-
-  // Touch Swipe Gesture Handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.targetTouches[0].clientX;
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (carouselImages.length <= 1) return;
-    const distance = touchStartX.current - touchEndX.current;
-    if (Math.abs(distance) > 35 && touchEndX.current > 0) {
-      e.stopPropagation();
-      if (distance > 35) {
-        // Swipe Left -> Next Image
-        setCurrentSlideIdx((prev) => (prev + 1) % carouselImages.length);
-      } else {
-        // Swipe Right -> Previous Image
-        setCurrentSlideIdx((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
-      }
-    }
-    touchStartX.current = 0;
-    touchEndX.current = 0;
-  };
 
   const getSwatchColor = (mat: string) => {
     const key = mat.toLowerCase().trim();
@@ -141,27 +82,17 @@ export default function ProductCard({
     <Link
       href={productUrl}
       className="product-card group/product-card relative flex flex-col h-full bg-white text-black @container/card select-none cursor-pointer block border border-outline-variant/30 hover:border-primary/50 transition-all rounded-xs overflow-hidden shadow-xs hover:shadow-md"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setCurrentSlideIdx(0);
-      }}
     >
       {/* Images Area Surface */}
-      <div
-        className="relative group/product-card-images overflow-hidden w-full pb-[118.9%] z-10 bg-soft-linen rounded-xs"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div className="absolute top-0 left-0 w-full h-full flex md:grid">
+      <div className="relative group/product-card-images overflow-hidden w-full pb-[118.9%] z-10 bg-soft-linen rounded-xs">
+        <div className="absolute top-0 left-0 w-full h-full">
           {/* Primary Image */}
-          <div className="relative overflow-hidden z-10 flex-shrink-0 w-full h-full object-cover md:col-start-1 md:row-start-1">
+          <div className="relative overflow-hidden z-10 w-full h-full object-cover">
             <SkeletonImage
               alt={product.title}
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
-              src={carouselImages[currentSlideIdx] || primaryImage}
+              src={primaryImage}
               className="relative object-cover z-[1] h-full w-full mix-blend-multiply opacity-95 group-hover/product-card:scale-105 transition-all duration-700 ease-out"
               priority={priority}
               loading={priority ? "eager" : "lazy"}
@@ -169,8 +100,8 @@ export default function ProductCard({
           </div>
 
           {/* Secondary Image (Visible on Hover) */}
-          {secondaryImage && secondaryImage !== primaryImage && currentSlideIdx === 0 && (
-            <div className="absolute inset-0 z-20 w-full h-full overflow-hidden object-cover md:opacity-0 md:blur-[2px] md:transition-[opacity,filter] md:duration-300 md:ease-out md:group-hover/product-card:opacity-100 md:group-hover/product-card:blur-0">
+          {secondaryImage && secondaryImage !== primaryImage && (
+            <div className="absolute inset-0 z-20 w-full h-full overflow-hidden object-cover opacity-0 transition-opacity duration-500 ease-out group-hover/product-card:opacity-100">
               <SkeletonImage
                 alt={`${product.title} hover view`}
                 fill
@@ -182,20 +113,6 @@ export default function ProductCard({
             </div>
           )}
         </div>
-
-        {/* Carousel Indicators */}
-        {carouselImages.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex gap-1 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-xs md:hidden">
-            {carouselImages.map((_: string, idx: number) => (
-              <span
-                key={idx}
-                className={`block w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  idx === currentSlideIdx ? "bg-white w-3" : "bg-white/50"
-                }`}
-              />
-            ))}
-          </div>
-        )}
 
         {/* Wishlist Button */}
         {onWishlistToggle && (
