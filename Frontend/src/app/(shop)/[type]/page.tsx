@@ -11,6 +11,7 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import ProductCard from "@/components/shop/ProductCard";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 
 // Canonical map: URL slug → matching product type values (case-insensitive contains)
 const TYPE_MAP: Record<string, { label: string; typeKeyword: string }> = {
