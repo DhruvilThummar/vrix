@@ -9,8 +9,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import ProductCard from "@/components/shop/ProductCard";
 import { useCart } from "@/context/CartContext";
+import { matchesMaterialFilter } from "@/utils/materialFilter";
 
-const MATERIAL_OPTIONS = ["All", "Gold", "Silver", "Platinum"];
+const MATERIAL_OPTIONS = ["All", "Gold", "Silver", "Platinum", "Diamond"];
 const TYPE_OPTIONS = ["All", "Ring", "Necklace", "Earring", "Bracelet", "Pendant", "Cuff", "Brooch", "Anklet"];
 
 interface ProductsCatalogClientProps {
@@ -167,24 +168,7 @@ export default function ProductsCatalogClient({
     }
 
     if (selectedMaterial !== "All") {
-      result = result.filter((p) => {
-        const mat = (p.material || "").toLowerCase();
-        const title = (p.title || "").toLowerCase();
-        const desc = (p.description || "").toLowerCase();
-        const subtitle = (p.subtitle || "").toLowerCase();
-        const tags = Array.isArray(p.tags) ? p.tags.join(" ").toLowerCase() : "";
-        const variantMats = Array.isArray(p.variants)
-          ? p.variants.map((v: any) => (v.material || "").toLowerCase()).join(" ")
-          : "";
-        const combined = `${mat} ${title} ${desc} ${subtitle} ${tags} ${variantMats}`;
-        const target = selectedMaterial.toLowerCase().trim();
-
-        if (target === "gold")     return combined.includes("gold") || combined.includes("vermeil") || combined.includes("18k");
-        if (target === "silver")   return combined.includes("silver") || combined.includes("925") || combined.includes("sterling");
-        if (target === "platinum") return combined.includes("platinum") || combined.includes("950");
-        if (target === "diamond")  return combined.includes("diamond") || combined.includes("solitaire") || combined.includes("pave");
-        return combined.includes(target);
-      });
+      result = result.filter((p) => matchesMaterialFilter(p, selectedMaterial));
     }
 
     if (selectedType !== "All") {

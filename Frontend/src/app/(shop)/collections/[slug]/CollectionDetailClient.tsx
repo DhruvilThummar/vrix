@@ -13,6 +13,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useAuth } from "@/context/AuthContext";
 import ProductCard from "@/components/shop/ProductCard";
+import { matchesMaterialFilter } from "@/utils/materialFilter";
 
 interface CollectionDetailClientProps {
   slug: string;
@@ -102,19 +103,7 @@ export default function CollectionDetailClient({
     ));
 
     if (selectedMaterial !== "All") {
-      result = result.filter((p) => {
-        const mat = (p.material || "").toLowerCase();
-        const variantMats = Array.isArray(p.variants)
-          ? p.variants.map((v: any) => (v.material || "").toLowerCase()).join(" ")
-          : "";
-        const combined = `${mat} ${variantMats}`;
-
-        if (selectedMaterial === "Gold")     return combined.includes("gold");
-        if (selectedMaterial === "Silver")   return combined.includes("silver");
-        if (selectedMaterial === "Platinum") return combined.includes("platinum");
-        if (selectedMaterial === "Diamond")  return combined.includes("diamond");
-        return true;
-      });
+      result = result.filter((p) => matchesMaterialFilter(p, selectedMaterial));
     }
 
     if (selectedType !== "All") {

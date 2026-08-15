@@ -213,17 +213,37 @@ router.get("/", async (req, res) => {
       const matFilter = String(material).toLowerCase().trim();
       if (matFilter !== "all") {
         products = products.filter((p) => {
-          const mainMat = (p.material || "").toLowerCase();
+          const mainMat = (p.material || "").toLowerCase().trim();
+          const title = (p.title || "").toLowerCase().trim();
+          const subtitle = (p.subtitle || "").toLowerCase().trim();
+          const tags = Array.isArray(p.tags) ? p.tags.join(" ").toLowerCase() : "";
           const variantMats = Array.isArray(p.variants)
-            ? p.variants.map((v) => (v.material || "").toLowerCase()).join(" ")
+            ? p.variants.map((v) => (v?.material || "").toLowerCase()).join(" ")
             : "";
-          const combined = `${mainMat} ${variantMats}`;
+          const matContext = `${mainMat} ${variantMats} ${tags} ${title} ${subtitle}`;
 
-          if (matFilter === "gold")     return combined.includes("gold");
-          if (matFilter === "silver")   return combined.includes("silver");
-          if (matFilter === "platinum") return combined.includes("platinum");
-          if (matFilter === "diamond")  return combined.includes("diamond");
-          return combined.includes(matFilter);
+          if (matFilter === "gold") {
+            const hasGold = matContext.includes("gold") || matContext.includes("vermeil") || matContext.includes("18k") || matContext.includes("14k");
+            const isPureSilverOrPlatinum = (mainMat.includes("silver") || mainMat.includes("sterling") || mainMat.includes("platinum") || mainMat.includes("925") || mainMat.includes("950")) && !mainMat.includes("gold") && !mainMat.includes("vermeil");
+            if (isPureSilverOrPlatinum) return variantMats.includes("gold") || variantMats.includes("vermeil");
+            return hasGold;
+          }
+          if (matFilter === "silver") {
+            const hasSilver = matContext.includes("silver") || matContext.includes("sterling") || matContext.includes("925");
+            const isPureGoldOrPlatinum = (mainMat.includes("gold") || mainMat.includes("platinum") || mainMat.includes("vermeil")) && !mainMat.includes("silver") && !mainMat.includes("sterling");
+            if (isPureGoldOrPlatinum) return variantMats.includes("silver") || variantMats.includes("sterling") || variantMats.includes("925");
+            return hasSilver;
+          }
+          if (matFilter === "platinum") {
+            const hasPlatinum = matContext.includes("platinum") || matContext.includes("950");
+            const isPureGoldOrSilver = (mainMat.includes("gold") || mainMat.includes("silver") || mainMat.includes("sterling") || mainMat.includes("vermeil")) && !mainMat.includes("platinum");
+            if (isPureGoldOrSilver) return variantMats.includes("platinum") || variantMats.includes("950");
+            return hasPlatinum;
+          }
+          if (matFilter === "diamond") {
+            return matContext.includes("diamond") || matContext.includes("solitaire") || matContext.includes("pave");
+          }
+          return matContext.includes(matFilter);
         });
       }
     }

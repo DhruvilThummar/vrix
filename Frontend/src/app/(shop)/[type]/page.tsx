@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState, useMemo, Suspense, useEffect } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { fetchCategories, fetchCollections, fetchProducts, getWishlistKey } from "@/utils/api";
+import { matchesMaterialFilter } from "@/utils/materialFilter";
 import { useAuth } from "@/context/AuthContext";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -106,24 +107,7 @@ function TypePageContent() {
     });
 
     if (selectedMaterial !== "All") {
-      result = result.filter((p) => {
-        const mat = (p.material || "").toLowerCase();
-        const title = (p.title || "").toLowerCase();
-        const desc = (p.description || "").toLowerCase();
-        const subtitle = (p.subtitle || "").toLowerCase();
-        const tags = Array.isArray(p.tags) ? p.tags.join(" ").toLowerCase() : "";
-        const variantMats = Array.isArray(p.variants)
-          ? p.variants.map((v: any) => (v.material || "").toLowerCase()).join(" ")
-          : "";
-        const combined = `${mat} ${title} ${desc} ${subtitle} ${tags} ${variantMats}`;
-        const target = selectedMaterial.toLowerCase().trim();
-
-        if (target === "gold")     return combined.includes("gold") || combined.includes("vermeil") || combined.includes("18k");
-        if (target === "silver")   return combined.includes("silver") || combined.includes("925") || combined.includes("sterling");
-        if (target === "platinum") return combined.includes("platinum") || combined.includes("950");
-        if (target === "diamond")  return combined.includes("diamond") || combined.includes("solitaire") || combined.includes("pave");
-        return combined.includes(target);
-      });
+      result = result.filter((p) => matchesMaterialFilter(p, selectedMaterial));
     }
 
     if (sortBy === "PriceLowHigh")  result.sort((a, b) => a.price - b.price);
