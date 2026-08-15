@@ -140,7 +140,7 @@ export default function ProductCard({
   return (
     <Link
       href={productUrl}
-      className="product-card group relative flex flex-col h-full bg-white text-black @container/card select-none cursor-pointer block border border-outline-variant/30 hover:border-primary/50 transition-all rounded-xs overflow-hidden shadow-xs hover:shadow-md"
+      className="product-card group/product-card relative flex flex-col h-full bg-white text-black @container/card select-none cursor-pointer block border border-outline-variant/30 hover:border-primary/50 transition-all rounded-xs overflow-hidden shadow-xs hover:shadow-md"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
@@ -149,26 +149,43 @@ export default function ProductCard({
     >
       {/* Images Area Surface */}
       <div
-        className="relative group/product-card overflow-hidden w-full pb-[118.9%] z-10 bg-soft-linen rounded-xs"
+        className="relative group/product-card-images overflow-hidden w-full pb-[118.9%] z-10 bg-soft-linen rounded-xs"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="absolute inset-0 w-full h-full flex overflow-hidden">
-          <SkeletonImage
-            alt={product.title}
-            fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            src={carouselImages[currentSlideIdx] || primaryImage}
-            className="object-cover w-full h-full mix-blend-multiply opacity-95 group-hover:scale-105 transition-all duration-700 ease-out"
-            priority={priority}
-            loading={priority ? "eager" : "lazy"}
-          />
+        <div className="absolute top-0 left-0 w-full h-full flex md:grid">
+          {/* Primary Image */}
+          <div className="relative overflow-hidden z-10 flex-shrink-0 w-full h-full object-cover md:col-start-1 md:row-start-1">
+            <SkeletonImage
+              alt={product.title}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              src={carouselImages[currentSlideIdx] || primaryImage}
+              className="relative object-cover z-[1] h-full w-full mix-blend-multiply opacity-95 group-hover/product-card:scale-105 transition-all duration-700 ease-out"
+              priority={priority}
+              loading={priority ? "eager" : "lazy"}
+            />
+          </div>
+
+          {/* Secondary Image (Visible on Hover) */}
+          {secondaryImage && secondaryImage !== primaryImage && currentSlideIdx === 0 && (
+            <div className="absolute inset-0 z-20 w-full h-full overflow-hidden object-cover md:opacity-0 md:blur-[2px] md:transition-[opacity,filter] md:duration-300 md:ease-out md:group-hover/product-card:opacity-100 md:group-hover/product-card:blur-0">
+              <SkeletonImage
+                alt={`${product.title} hover view`}
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                src={secondaryImage}
+                className="relative object-cover z-[1] h-full w-full mix-blend-multiply group-hover/product-card:scale-105 transition-all duration-700 ease-out"
+                loading="lazy"
+              />
+            </div>
+          )}
         </div>
 
         {/* Carousel Indicators */}
         {carouselImages.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex gap-1 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-xs">
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex gap-1 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-xs md:hidden">
             {carouselImages.map((_: string, idx: number) => (
               <span
                 key={idx}
@@ -190,6 +207,7 @@ export default function ProductCard({
               onWishlistToggle(product.id, product.title, e);
             }}
             className="absolute top-2 right-2 z-30 p-1.5 rounded-full bg-white/80 backdrop-blur-xs text-slate-grey hover:text-red-600 transition-colors cursor-pointer"
+            aria-label="Toggle Wishlist"
           >
             <span
               className={`material-symbols-outlined text-[16px] md:text-[18px] ${
@@ -210,10 +228,14 @@ export default function ProductCard({
               e.stopPropagation();
               if (onQuickAdd) onQuickAdd(product, activeVariant);
             }}
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 opacity-0 group-hover/product-card:opacity-100 transition-opacity duration-300 bg-white/95 hover:bg-black hover:text-white border border-slate-grey/30 px-4 py-1.5 rounded-xs shadow-sm flex items-center gap-1 cursor-pointer transition-colors font-inter font-primary"
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 opacity-0 group-hover/product-card:opacity-100 transition-opacity duration-300 bg-white/95 hover:bg-black hover:text-white border border-slate-grey/30 px-3.5 py-1.5 rounded-xs shadow-xs flex items-center gap-1 cursor-pointer transition-colors font-inter font-primary"
+            aria-label={`Add ${product.title} to bag`}
           >
-            <span className="text-[10px] uppercase font-semibold tracking-wider">Add</span>
-            <span className="material-symbols-outlined text-[10px]">add</span>
+            <span className="text-[10px] md:text-xs uppercase font-normal tracking-wider">Add</span>
+            <svg className="w-2.5 h-2.5" viewBox="0 0 10 11" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M5 0.5V10.5" strokeLinecap="round" />
+              <path d="M0 5.5H10" strokeLinecap="round" />
+            </svg>
           </button>
         )}
       </div>
