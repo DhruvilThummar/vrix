@@ -518,8 +518,13 @@ router.get("/invoice/:orderId", async (req, res) => {
       layoutMode: "modern"
     };
 
+    let currencySettings = null;
     try {
-      const dbCms = await db.cmsSettings.findUnique({ where: { key: "invoice_settings" } });
+      const [dbCms, rawCur] = await Promise.all([
+        db.cmsSettings.findUnique({ where: { key: "invoice_settings" } }).catch(() => null),
+        db.cmsSettings.findUnique({ where: { key: "currency_settings" } }).catch(() => null),
+      ]);
+
       if (dbCms && dbCms.value) {
         let val = dbCms.value;
         if (typeof val === "string") {
@@ -533,8 +538,12 @@ router.get("/invoice/:orderId", async (req, res) => {
           cfg = { ...cfg, ...val };
         }
       }
+
+      if (rawCur) {
+        currencySettings = rawCur.value ? (typeof rawCur.value === "string" ? JSON.parse(rawCur.value) : rawCur.value) : rawCur;
+      }
     } catch (e) {
-      console.warn("Failed to load invoice_settings CMS config, using defaults:", e.message);
+      console.warn("Failed to load invoice_settings or currency_settings CMS config, using defaults:", e.message);
     }
 
     const dateStr = new Date(payment.createdAt || Date.now()).toLocaleDateString("en-IN", {
@@ -546,9 +555,15 @@ router.get("/invoice/:orderId", async (req, res) => {
     const isIndia = String(payment.city || "").toLowerCase().includes("india") || 
                     String(payment.address || "").toLowerCase().includes("india") ||
                     !payment.currency || payment.currency === "INR";
+    const isEu = ["eur", "gbp"].includes(String(payment.currency || "").toLowerCase());
 
+    const inTax = Number(currencySettings?.inTaxRate ?? 18);
+    const usTax = Number(currencySettings?.usTaxRate ?? 5);
+    const euTax = Number(currencySettings?.euTaxRate ?? 20);
+
+    const taxPercent = isIndia ? inTax : isEu ? euTax : usTax;
+    const taxRate = taxPercent / 100;
     const subtotal = Number(payment.amount || 0);
-    const taxRate = isIndia ? 0.18 : 0.05; // 18% GST default for India
     const taxAmount = subtotal * (taxRate / (1 + taxRate)); // inclusive tax calculation
     const baseAmount = subtotal - taxAmount;
 
@@ -758,18 +773,18 @@ router.get("/invoice/:orderId", async (req, res) => {
               ${isIndia ? `
                 <tr>
                   <td colspan="2" style="border: none;"></td>
-                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">CGST (9%)</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">CGST (${(taxPercent / 2).toFixed(1)}%)</td>
                   <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${formatCurrency(taxAmount / 2)}</td>
                 </tr>
                 <tr>
                   <td colspan="2" style="border: none;"></td>
-                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">SGST (9%)</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">SGST (${(taxPercent / 2).toFixed(1)}%)</td>
                   <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${formatCurrency(taxAmount / 2)}</td>
                 </tr>
               ` : `
                 <tr>
                   <td colspan="2" style="border: none;"></td>
-                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">VAT / Tax (${Math.round(taxRate * 100)}%)</td>
+                  <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">VAT / Tax (${taxPercent}%)</td>
                   <td style="text-align: right; font-size: 12px; color: #666; padding: 8px 12px;">${formatCurrency(taxAmount)}</td>
                 </tr>
               `}

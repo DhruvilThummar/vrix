@@ -411,7 +411,10 @@ export async function executeGetStorePolicy(rawArgs) {
     
     let details = "VRIX offers complimentary insured express shipping across India, 30-day returns on unworn pieces, and lifetime craftsmanship warranty.";
     if (policyType.includes("shipping")) {
-      details = shippingData.policy || "Complimentary insured express shipping across India delivered within 3-5 business days.";
+      const freeThreshold = shippingData.freeShippingThreshold ? `on orders above ₹${Number(shippingData.freeShippingThreshold).toLocaleString("en-IN")}` : "across India";
+      const feeText = shippingData.standardFee ? `Standard shipping fee is ₹${Number(shippingData.standardFee).toLocaleString("en-IN")}.` : "";
+      const timeframe = shippingData.deliveryTimeframe || "delivered within 3-5 business days";
+      details = shippingData.policy || `${shippingData.shippingLabel || "Insured express shipping"} ${freeThreshold} (${timeframe}). ${feeText}`.trim();
     } else if (policyType.includes("return") || policyType.includes("refund")) {
       details = legalData.returnPolicy || "30-day hassle-free return window for unworn items in original packaging. Engraved items are final sale.";
     } else if (policyType.includes("warranty")) {
