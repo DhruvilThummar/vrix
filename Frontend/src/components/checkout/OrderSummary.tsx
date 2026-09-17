@@ -13,6 +13,7 @@ interface OrderSummaryProps {
   shipping: ShippingData | null;
   isGiftWrapped: boolean;
   giftWrapPrice: number;
+  shippingFee?: number;
 }
 
 export default function OrderSummary({
@@ -23,13 +24,28 @@ export default function OrderSummary({
   shipping,
   isGiftWrapped,
   giftWrapPrice,
+  shippingFee,
 }: OrderSummaryProps) {
-  const { currency, formatPrice } = useCurrency();
+  const { currency, formatPrice, shippingSettings, systemSettings } = useCurrency();
 
-  // Memoized Tax Calculation (CGST/SGST 9% each for IN, 5% VAT for Global)
+  const computedFinalSubtotal = Math.max(0, subtotal - discountAmount);
+  const wrapAmount = isGiftWrapped ? (giftWrapPrice || 250) : 0;
+  const effectiveShippingFee = shippingFee !== undefined
+    ? shippingFee
+    : shipping?.shippingFee !== undefined
+    ? shipping.shippingFee
+    : Math.max(0, grandTotal - computedFinalSubtotal - wrapAmount);
+
+  // Dynamic Tax Calculation from Admin System Settings
   const taxInfo: TaxBreakdown = useMemo(() => {
     const isIndia = currency === "INR";
-    const taxRate = isIndia ? 0.18 : 0.05;
+    const ratePercent = isIndia
+      ? (systemSettings?.inTaxRate ?? 18)
+      : currency === "EUR"
+      ? (systemSettings?.euTaxRate ?? 20)
+      : (systemSettings?.usTaxRate ?? 5);
+
+    const taxRate = ratePercent / 100;
     const totalWithWrap = grandTotal;
     const taxAmount = totalWithWrap * (taxRate / (1 + taxRate));
     const baseAmount = totalWithWrap - taxAmount;
@@ -41,9 +57,9 @@ export default function OrderSummary({
       taxAmount,
       cgst: taxAmount / 2,
       sgst: taxAmount / 2,
-      vatRate: Math.round(taxRate * 100),
+      vatRate: ratePercent,
     };
-  }, [currency, grandTotal]);
+  }, [currency, grandTotal, systemSettings]);
 
   return (
     <div className="sticky top-28 bg-soft-linen/40 border border-slate-grey/20 p-6 space-y-5">
@@ -82,8 +98,22 @@ export default function OrderSummary({
       <div className="space-y-2 text-xs font-body-md text-ink-black border-t border-slate-grey/20 pt-4">
         <div className="flex justify-between">
           <span className="text-slate-grey font-medium">Checkout Subtotal</span>
-          <span>
-            {formatPrice(subtotal - discountAmount)}
+          <span>{formatPrice(subtotal - discountAmount)}</span>
+        </div>
+
+        {/* Explicit Shipping Fee Row */}
+        <div className="flex justify-between items-center">
+          <span className="text-slate-grey font-medium">
+            {shippingSettings?.shippingLabel || "Shipping & Handling"}
+          </span>
+          <span className="font-semibold">
+            {effectiveShippingFee === 0 ? (
+              <span className="text-emerald-700 uppercase tracking-wider text-[10px] font-bold">
+                Complimentary
+              </span>
+            ) : (
+              formatPrice(effectiveShippingFee)
+            )}
           </span>
         </div>
 
@@ -97,38 +127,32 @@ export default function OrderSummary({
           </div>
         )}
 
-        {/* Dynamic Tax Breakdown */}
-        <div className="space-y-2 pt-2 border-t border-dashed border-slate-grey/15">
-          <div className="flex justify-between text-[11px] text-slate-grey">
-            <span>Base Amount (excl. tax)</span>
-            <span>
-              {formatPrice(taxInfo.baseAmount)}
-            </span>
-          </div>
-          {taxInfo.isIndia ? (
-            <>
-              <div className="flex justify-between text-[11px] text-slate-grey">
-                <span>CGST (9%)</span>
-                <span>
-                  {formatPrice(taxInfo.cgst)}
-                </span>
-              </div>
-              <div className="flex justify-between text-[11px] text-slate-grey">
-                <span>SGST (9%)</span>
-                <span>
-                  {formatPrice(taxInfo.sgst)}
-                </span>
-              </div>
-            </>
-          ) : (
+        {/* Dynamic Tax Breakdown (Controlled by Admin showBaseAmount) */}
+        {systemSettings?.showBaseAmount !== false && taxInfo.taxAmount > 0 && (
+          <div className="space-y-2 pt-2 border-t border-dashed border-slate-grey/15">
             <div className="flex justify-between text-[11px] text-slate-grey">
-              <span>Regional Tax / VAT ({taxInfo.vatRate}%)</span>
-              <span>
-                {formatPrice(taxInfo.taxAmount)}
-              </span>
+              <span>Base Amount (excl. tax)</span>
+              <span>{formatPrice(taxInfo.baseAmount)}</span>
             </div>
-          )}
-        </div>
+            {taxInfo.isIndia ? (
+              <>
+                <div className="flex justify-between text-[11px] text-slate-grey">
+                  <span>CGST ({(taxInfo.vatRate / 2).toFixed(1)}%)</span>
+                  <span>{formatPrice(taxInfo.cgst)}</span>
+                </div>
+                <div className="flex justify-between text-[11px] text-slate-grey">
+                  <span>SGST ({(taxInfo.vatRate / 2).toFixed(1)}%)</span>
+                  <span>{formatPrice(taxInfo.sgst)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between text-[11px] text-slate-grey">
+                <span>Regional Tax / VAT ({taxInfo.vatRate}%)</span>
+                <span>{formatPrice(taxInfo.taxAmount)}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Total Due */}
         <div className="flex justify-between font-headline-md text-lg border-t border-slate-grey/20 pt-3 mt-2">

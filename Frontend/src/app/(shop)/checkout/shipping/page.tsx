@@ -24,7 +24,7 @@ export default function ShippingPage() {
   const router = useRouter();
   const { isLoggedIn, user } = useAuth();
   const { subtotal, discount, promoType } = useCart();
-  const { currency } = useCurrency();
+  const { currency, shippingSettings } = useCurrency();
   const { setShipping, shipping: savedShipping, isLoaded } = useCheckoutStorage();
 
   useEffect(() => {
@@ -94,7 +94,10 @@ export default function ShippingPage() {
       : 0;
 
   const finalSubtotal = Math.max(0, subtotal - discountAmount);
-  const rawShippingFee = finalSubtotal >= 15000 ? 0 : 1500;
+  const stdFee = shippingSettings?.standardFee ?? 1500;
+  const threshold = shippingSettings?.freeShippingThreshold ?? 15000;
+  const isEnabled = shippingSettings?.isEnabled !== false;
+  const rawShippingFee = !isEnabled || finalSubtotal >= threshold ? 0 : stdFee;
   const grandTotal = finalSubtotal + rawShippingFee;
 
   // Validation function
@@ -140,6 +143,7 @@ export default function ShippingPage() {
       phone,
       grandTotal,
       currency: currency || "INR",
+      shippingFee: rawShippingFee,
     };
 
     setShipping(shippingData);

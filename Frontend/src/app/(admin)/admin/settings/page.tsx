@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getApiBaseUrl, uploadMedia } from "@/utils/api";
 import Image from "next/image";
+import Link from "next/link";
 
 const DEFAULT_AVATAR = "https://lh3.googleusercontent.com/aida-public/AB6AXuCEmDU3gu16YubKEVucF99HSS0iunyLU-YcbfpfX9oeZzjPdLD20AMfwJNxNlPG0c9jCGX2GJyo6O3_-kgjnu_9YPI6tWcYCujJKYFngfcebHqBEnkmdkv-561gqgQUG3BHCniP5Kj92pqfqs8NLRmcH2cQxdX7DTn9Kzmjqi7Ry3FBcjpeo31uXBUviSFTGjuuu7KVIaMGAeEg4r9_lVPAShUIH1QIIXrJdyb0hxe9AlXd1VW6wgAApagpCY3c-CV2KqwlPsM4sEk";
 
@@ -116,6 +117,28 @@ export default function AdminSettingsPage() {
         <p className="font-body-md text-xs text-slate-grey">
           Update your Admin Login ID (Email), Password, Security Headers, and Profile details.
         </p>
+      </div>
+
+      {/* Quick Link to Shipping & Taxes */}
+      <div className="bg-soft-linen/50 border border-slate-grey/20 p-4 rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="material-symbols-outlined text-deep-navy text-2xl">local_shipping</span>
+          <div>
+            <p className="font-headline-md text-xs uppercase tracking-wider text-deep-navy font-bold">
+              Looking for Shipping &amp; Taxation Settings?
+            </p>
+            <p className="font-body-md text-[11px] text-slate-grey mt-0.5">
+              Standard shipping fees, free shipping minimum thresholds, and base amount (tax) settings are managed on their dedicated page.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/admin/shipping-taxes"
+          className="bg-deep-navy text-pure-white px-4 py-2 text-xs font-label-caps uppercase tracking-wider rounded hover:bg-ink-black transition-colors shrink-0 flex items-center gap-1.5"
+        >
+          <span>Open Shipping &amp; Taxes</span>
+          <span className="material-symbols-outlined text-sm">arrow_forward</span>
+        </Link>
       </div>
 
       {/* Alert Message */}

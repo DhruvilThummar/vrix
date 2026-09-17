@@ -15,7 +15,7 @@ export default function CartPage() {
   const router = useRouter();
   const { isLoggedIn } = useAuth();
   const { items, subtotal, discount, promoCode, promoType, updateQty, removeItem, applyPromo, clearPromo } = useCart();
-  const { formatPrice, taxLabel } = useCurrency();
+  const { formatPrice, taxLabel, shippingSettings } = useCurrency();
   const [promoInput, setPromoInput] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -51,7 +51,10 @@ export default function CartPage() {
       : 0;
 
   const total = Math.max(0, subtotal - discountAmount);
-  const shipping = total >= 15000 ? 0 : 1500;
+  const stdFee = shippingSettings?.standardFee ?? 1500;
+  const threshold = shippingSettings?.freeShippingThreshold ?? 15000;
+  const isEnabled = shippingSettings?.isEnabled !== false;
+  const shipping = !isEnabled || total >= threshold ? 0 : stdFee;
   const grandTotal = total + shipping;
 
   const handleApplyPromo = async (e: React.FormEvent) => {
@@ -221,11 +224,11 @@ export default function CartPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-slate-grey">Shipping</span>
+                  <span className="text-slate-grey">{shippingSettings?.shippingLabel || "Shipping"}</span>
                   <span>{shipping === 0 ? <span className="text-green-700">Free</span> : formatPrice(shipping)}</span>
                 </div>
-                {shipping > 0 && (
-                  <p className="text-[10px] text-slate-grey font-body-md">Add {formatPrice(Math.max(0, 15000 - subtotal))} more for free shipping.</p>
+                {shipping > 0 && threshold > 0 && (
+                  <p className="text-[10px] text-slate-grey font-body-md">Add {formatPrice(Math.max(0, threshold - total))} more for free shipping.</p>
                 )}
                 {taxLabel && (
                   <p className="text-[10px] text-slate-grey/70 italic border-t border-slate-grey/10 pt-2">{taxLabel}</p>

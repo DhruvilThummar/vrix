@@ -172,6 +172,7 @@ export async function updateCMS(data: {
   announcement_bar?: any;
   invoice_settings?: any;
   currency_settings?: any;
+  shipping_settings?: any;
   offers_page?: any;
 }) {
   return adminFetch<any>("/cms", {

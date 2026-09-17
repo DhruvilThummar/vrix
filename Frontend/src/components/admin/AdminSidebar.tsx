@@ -20,6 +20,7 @@ const navItems = [
   { name: "Navigation", href: "/admin/navigation", icon: "navigation" },
 
   { name: "Bespoke Configurator", href: "/admin/bespoke", icon: "diamond" },
+  { name: "Shipping & Taxes", href: "/admin/shipping-taxes", icon: "payments" },
   { name: "Delivery Staff", href: "/admin/delivery", icon: "local_shipping" },
   { name: "Security & Logs", href: "/admin/security", icon: "security" },
   { name: "Privacy & DPDP", href: "/admin/privacy", icon: "shield_lock" },

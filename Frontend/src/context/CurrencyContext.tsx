@@ -19,6 +19,21 @@ export interface TaxRule {
   label: string;
 }
 
+export interface ShippingSettings {
+  standardFee: number;
+  freeShippingThreshold: number;
+  isEnabled: boolean;
+  shippingLabel: string;
+}
+
+export interface SystemSettings {
+  showBaseAmount: boolean;
+  taxInclusive: boolean;
+  inTaxRate: number;
+  usTaxRate: number;
+  euTaxRate: number;
+}
+
 interface CurrencyContextType {
   detectedCountry: string;
   detectedCountryName: string;
@@ -31,10 +46,13 @@ interface CurrencyContextType {
   taxInclusive: boolean;
   taxLabel: string;
   supportedCurrencies: CurrencyConfig[];
+  shippingSettings: ShippingSettings;
+  systemSettings: SystemSettings;
   formatPrice: (inrAmount: number) => string;
   formatPriceRaw: (inrAmount: number) => number;
   setCurrency: (code: string) => void;
   isAutoDetected: boolean;
+  reloadSettings: () => Promise<void>;
 }
 
 const DEFAULT_CURRENCIES: CurrencyConfig[] = [
@@ -68,9 +86,85 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState("INR");
   const [isAutoDetected, setIsAutoDetected] = useState(false);
 
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings>({
+    standardFee: 1500,
+    freeShippingThreshold: 15000,
+    isEnabled: true,
+    shippingLabel: "Insured Express Delivery",
+  });
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>({
+    showBaseAmount: true,
+    taxInclusive: true,
+    inTaxRate: 18,
+    usTaxRate: 5,
+    euTaxRate: 20,
+  });
+
+  const loadSettingsFromDb = useCallback(async () => {
+    try {
+      const dbData = await fetchDb();
+      if (dbData.shipping_settings) {
+        setShippingSettings({
+          standardFee: Number(dbData.shipping_settings.standardFee ?? dbData.shipping_settings.shippingFee ?? 1500),
+          freeShippingThreshold: Number(dbData.shipping_settings.freeShippingThreshold ?? 15000),
+          isEnabled: dbData.shipping_settings.isEnabled !== false,
+          shippingLabel: dbData.shipping_settings.shippingLabel || "Insured Express Delivery",
+        });
+      }
+      if (dbData.currency_settings) {
+        const curSettings = dbData.currency_settings;
+        setSystemSettings({
+          showBaseAmount: curSettings.showBaseAmount !== false,
+          taxInclusive: curSettings.taxInclusive !== false,
+          inTaxRate: Number(curSettings.inTaxRate ?? 18),
+          usTaxRate: Number(curSettings.usTaxRate ?? 5),
+          euTaxRate: Number(curSettings.euTaxRate ?? 20),
+        });
+
+        if (curSettings.inTaxRate !== undefined || curSettings.usTaxRate !== undefined || curSettings.euTaxRate !== undefined) {
+          setTaxRules((prev) =>
+            prev.map((rule) => {
+              if (rule.country === "IN" && curSettings.inTaxRate !== undefined) {
+                return { ...rule, rate: Number(curSettings.inTaxRate) };
+              }
+              if (rule.country === "US" && curSettings.usTaxRate !== undefined) {
+                return { ...rule, rate: Number(curSettings.usTaxRate) };
+              }
+              if (["GB", "DE", "FR", "IT", "ES", "NL", "BE", "AT"].includes(rule.country) && curSettings.euTaxRate !== undefined) {
+                return { ...rule, rate: Number(curSettings.euTaxRate) };
+              }
+              return rule;
+            })
+          );
+        }
+
+        if (curSettings.usdRate || curSettings.eurRate) {
+          setSupportedCurrencies((prev) =>
+            prev.map((c) => {
+              if (c.code === "USD" && curSettings.usdRate) {
+                return { ...c, rate: Number((1 / Number(curSettings.usdRate)).toFixed(4)) };
+              }
+              if (c.code === "EUR" && curSettings.eurRate) {
+                return { ...c, rate: Number((1 / Number(curSettings.eurRate)).toFixed(4)) };
+              }
+              return c;
+            })
+          );
+        }
+
+        if (curSettings.supportedCurrencies?.length) setSupportedCurrencies(curSettings.supportedCurrencies);
+        if (curSettings.taxRules?.length) setTaxRules(curSettings.taxRules);
+      }
+    } catch (e) {
+      console.warn("Failed to load currency & shipping settings from db", e);
+    }
+  }, []);
+
   // Initialize from DB & Geo API
   useEffect(() => {
     async function init() {
+      await loadSettingsFromDb();
+
       if (typeof window !== "undefined" && window.location.pathname.startsWith("/admin")) {
         setCurrencyState("INR");
         setDetectedCountry("IN");
@@ -81,16 +175,6 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
       let currentCountry = "IN";
       let currentCountryName = "India";
-      let curSettings: any = null;
-
-      try {
-        const dbData = await fetchDb();
-        if (dbData.currency_settings) {
-          curSettings = dbData.currency_settings;
-          if (curSettings.supportedCurrencies?.length) setSupportedCurrencies(curSettings.supportedCurrencies);
-          if (curSettings.taxRules?.length) setTaxRules(curSettings.taxRules);
-        }
-      } catch (e) {}
 
       // Check saved user preference first
       const savedCur = localStorage.getItem("vrix-currency");
@@ -113,7 +197,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             setDetectedCountryName(currentCountryName);
 
             // Match currency by country
-            const activeList = curSettings?.supportedCurrencies?.length ? curSettings.supportedCurrencies : DEFAULT_CURRENCIES;
+            const activeList = supportedCurrencies.length ? supportedCurrencies : DEFAULT_CURRENCIES;
             const matched = activeList.find((c: CurrencyConfig) => c.countries?.includes(currentCountry));
             if (matched) {
               setCurrencyState(matched.code);
@@ -131,7 +215,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     }
 
     init();
-  }, []);
+  }, [loadSettingsFromDb]);
 
   const setCurrency = useCallback((code: string) => {
     setCurrencyState(code);
@@ -180,10 +264,13 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         taxInclusive: activeTaxRule.inclusive,
         taxLabel: activeTaxRule.label,
         supportedCurrencies,
+        shippingSettings,
+        systemSettings,
         formatPrice,
         formatPriceRaw,
         setCurrency,
         isAutoDetected,
+        reloadSettings: loadSettingsFromDb,
       }}
     >
       {children}

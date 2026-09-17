@@ -9,6 +9,7 @@ export interface ShippingData {
   phone: string;
   grandTotal: number;
   currency: string;
+  shippingFee?: number;
 }
 
 export interface OrderDetails {

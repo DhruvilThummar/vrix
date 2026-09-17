@@ -178,6 +178,7 @@ export default function PaymentPage() {
             shipping={shipping}
             isGiftWrapped={isGiftWrapped}
             giftWrapPrice={giftWrapPrice}
+            shippingFee={shipping?.shippingFee}
           />
         </div>
       </main>

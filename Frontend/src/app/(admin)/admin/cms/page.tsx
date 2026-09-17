@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { fetchDb, updateCMS, createJournalPost, updateJournalPost, deleteJournalPost, fetchProducts, fetchCollections, uploadMedia } from "@/utils/api";
 
 type TabType = "story" | "legal" | "journal" | "vrix-plus" | "announcement-bar" | "gift-wrapping" | "metal-types" | "custom-pages" | "invoice-customizer" | "currency-settings" | "offers-showcase" | "footer";
@@ -2108,6 +2109,27 @@ export default function AdminCMSPage() {
       {/* 13. MULTI-CURRENCY & INTERNATIONALIZATION TAB */}
       {activeTab === "currency-settings" && (
         <div className="space-y-6 animate-fade-in">
+          <div className="bg-soft-linen/50 border border-slate-grey/20 p-5 rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="material-symbols-outlined text-deep-navy text-2xl">local_shipping</span>
+              <div>
+                <p className="font-headline-md text-xs uppercase tracking-wider text-deep-navy font-bold">
+                  Dedicated Shipping &amp; Taxes Control Center
+                </p>
+                <p className="font-body-md text-[11px] text-slate-grey mt-0.5">
+                  Standard shipping fees, free shipping minimum thresholds, base amount visibility, and live simulator are now managed in their own dedicated page.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/shipping-taxes"
+              className="bg-deep-navy text-pure-white px-4 py-2 text-xs font-label-caps uppercase tracking-wider rounded hover:bg-ink-black transition-colors shrink-0 flex items-center gap-1.5"
+            >
+              <span>Open Dedicated Page</span>
+              <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            </Link>
+          </div>
+
           <section className="bg-pure-white border border-slate-grey/25 p-8 shadow-sm space-y-6 rounded">
             <div className="border-b border-slate-grey/15 pb-2">
               <h3 className="font-headline-md text-lg text-deep-navy uppercase">
