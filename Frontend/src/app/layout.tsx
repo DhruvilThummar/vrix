@@ -8,7 +8,7 @@ import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import ConditionalScriptLoader from "@/components/privacy/ConditionalScriptLoader";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 
 const CookieConsentBanner = dynamic(() => import("@/components/privacy/CookieConsentBanner"));
 
