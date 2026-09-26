@@ -11,6 +11,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import AuthDrawer from "@/components/auth/AuthDrawer";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useLaunchCountdown } from "@/context/LaunchCountdownContext";
 import { Select, SelectRootChangeEventDetails } from "@base-ui/react/select";
 import "flag-icons/css/flag-icons.min.css";
 
@@ -52,6 +53,7 @@ export default function Header() {
   const { items: cartItems, totalItems, subtotal, removeItem, updateQty, addItem, isGiftWrapped, toggleGiftWrap, giftWrapPrice, selectedGiftOptions, toggleGiftOption } = useCart();
   const { user, isLoggedIn } = useAuth();
   const { currency, setCurrency: changeCurrency, formatPrice } = useCurrency();
+  const { isPreLaunch, isSaleCountdown, config: launchConfig } = useLaunchCountdown();
 
   const isHomePage = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
@@ -277,43 +279,87 @@ export default function Header() {
 
   return (
     <>
-      {/* ─── ANNOUNCEMENT BAR — controlled by admin CMS ─── */}
-      {announcementBar?.isEnabled && (
-        <div
-          style={{
-            backgroundColor: announcementBar?.backgroundColor || "#000000",
-            color: announcementBar?.textColor || "#ffffff",
-            fontSize: announcementBar?.fontSize || "11px"
-          }}
-          className="w-full fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 transition-all duration-500 min-h-[32px] flex items-center justify-center gap-3 overflow-hidden"
-        >
-          {announcementBar?.lines && announcementBar.lines.length > 0 && (
-            <div key={currentLineIndex} className="animate-fade-in-slide whitespace-nowrap flex items-center gap-2">
-              <span>{announcementBar.lines[currentLineIndex]}</span>
-              {announcementBar.showLink !== false && (
-                <Link
-                  href={announcementBar.actionLink || "/offers"}
-                  className="underline underline-offset-2 hover:opacity-80 font-bold ml-1 cursor-pointer"
-                >
-                  {announcementBar.actionText || "Shop Offers →"}
-                </Link>
-              )}
-            </div>
-          )}
-        </div>
+      {/* ─── ANNOUNCEMENT BAR — controlled by admin CMS / launch countdown ─── */}
+      {isPreLaunch ? (
+        launchConfig?.showAnnouncementBar !== false && (
+          <div
+            className="w-full fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 bg-black text-white transition-all duration-500 min-h-[32px] flex items-center justify-center gap-2 overflow-hidden text-[11px]"
+          >
+            <span>{launchConfig?.announcementText || "✦ OFFICIAL ATELIER LAUNCH COUNTDOWN — ENTERING A NEW ERA OF LAB-GROWN DIAMONDS ✦"}</span>
+            {launchConfig?.announcementLinkText && (
+              <Link
+                href={launchConfig?.announcementLinkUrl || "/contact"}
+                className="underline underline-offset-2 hover:opacity-80 font-bold ml-1 cursor-pointer"
+              >
+                {launchConfig.announcementLinkText}
+              </Link>
+            )}
+          </div>
+        )
+      ) : isSaleCountdown ? (
+        launchConfig?.showAnnouncementBar !== false && (
+          <div
+            className="w-full fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-amber-300/30 bg-[#07090E] text-white transition-all duration-500 min-h-[32px] flex items-center justify-center gap-2 overflow-hidden text-[11px]"
+          >
+            <span className="inline-flex items-center gap-1.5 text-amber-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+              {launchConfig?.announcementText || `✦ LIMITED TIME EVENT: USE CODE [${launchConfig?.saleDiscountCode || "VRIX15"}] FOR ${launchConfig?.saleDiscountHighlight || "UP TO 25% OFF"} ✦`}
+            </span>
+            <Link
+              href={launchConfig?.saleCtaUrl || "/collections"}
+              className="underline underline-offset-2 hover:text-amber-200 font-bold ml-2 cursor-pointer text-white tracking-widest"
+            >
+              {launchConfig?.announcementLinkText || "Shop Sale →"}
+            </Link>
+          </div>
+        )
+      ) : (
+        announcementBar?.isEnabled && (
+          <div
+            style={{
+              backgroundColor: announcementBar?.backgroundColor || "#000000",
+              color: announcementBar?.textColor || "#ffffff",
+              fontSize: announcementBar?.fontSize || "11px"
+            }}
+            className="w-full fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 transition-all duration-500 min-h-[32px] flex items-center justify-center gap-3 overflow-hidden"
+          >
+            {announcementBar?.lines && announcementBar.lines.length > 0 && (
+              <div key={currentLineIndex} className="animate-fade-in-slide whitespace-nowrap flex items-center gap-2">
+                <span>{announcementBar.lines[currentLineIndex]}</span>
+                {announcementBar.showLink !== false && (
+                  <Link
+                    href={announcementBar.actionLink || "/offers"}
+                    className="underline underline-offset-2 hover:opacity-80 font-bold ml-1 cursor-pointer"
+                  >
+                    {announcementBar.actionText || "Shop Offers →"}
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        )
       )}
 
       {/* ─── DESKTOP NAVIGATION ─── */}
-      <header className={`shop-desktop-header hidden md:block fixed ${announcementBar?.isEnabled ? "top-8" : "top-0"} left-0 right-0 z-40 transition-all duration-500 ease-out ${isTransparent ? "shop-desktop-header--transparent" : ""}`}>
+      <header className={`shop-desktop-header hidden md:block fixed ${(isPreLaunch || isSaleCountdown ? launchConfig?.showAnnouncementBar !== false : announcementBar?.isEnabled) ? "top-8" : "top-0"} left-0 right-0 z-40 transition-all duration-500 ease-out ${isTransparent ? "shop-desktop-header--transparent" : ""}`}>
         {/* Brand Banner Row */}
         <div className="w-full max-w-container-max mx-auto px-margin-desktop py-4 grid grid-cols-3 items-center">
           {/* Left space */}
           <div className="header-member-info flex justify-start text-xs font-label-caps">
-            {isLoggedIn && user?.isVrixPlusMember && (
-              <Link href="/vrix-plus" className="header-member-link flex items-center gap-1.5 font-semibold hover:opacity-85 transition-opacity">
-                <span className="material-symbols-outlined text-[15px] font-bold animate-pulse">stars</span>
-                VRIX+ ACTIVE MEMBER
+            {isPreLaunch ? (
+              <Link
+                href="/contact"
+                className="font-inter font-primary text-xs tracking-[0.2em] font-semibold uppercase hover:opacity-75 transition-opacity py-1 px-2 border-b border-transparent hover:border-current"
+              >
+                CONTACT US
               </Link>
+            ) : (
+              isLoggedIn && user?.isVrixPlusMember && (
+                <Link href="/vrix-plus" className="header-member-link flex items-center gap-1.5 font-semibold hover:opacity-85 transition-opacity">
+                  <span className="material-symbols-outlined text-[15px] font-bold animate-pulse">stars</span>
+                  VRIX+ ACTIVE MEMBER
+                </Link>
+              )
             )}
           </div>
 
@@ -380,52 +426,57 @@ export default function Header() {
                 </Select.Positioner>
               </Select.Portal>
             </Select.Root>
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center"
-              aria-label="Search Catalog"
-            >
-              <i className="fa-solid fa-magnifying-glass text-[18px]"></i>
-            </button>
-            <button
-              onClick={() => setIsWishlistOpen(true)}
-              className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
-              aria-label="View Wishlist"
-            >
-              <i className="fa-regular fa-heart text-[19px]"></i>
-              {wishlist.length > 0 && (
-                <span className="header-count absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {wishlist.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setIsAuthOpen(true)}
-              className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center"
-              aria-label="User Account"
-            >
-              <i className="fa-regular fa-user text-[19px]"></i>
-            </button>
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
-              aria-label="Open Shopping Bag"
-            >
-              <i className="fa-solid fa-bag-shopping text-[19px]"></i>
-              {totalItems > 0 && (
-                <span className="header-count absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                  {totalItems}
-                </span>
-              )}
-            </button>
+            {!isPreLaunch && (
+              <>
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center"
+                  aria-label="Search Catalog"
+                >
+                  <i className="fa-solid fa-magnifying-glass text-[18px]"></i>
+                </button>
+                <button
+                  onClick={() => setIsWishlistOpen(true)}
+                  className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
+                  aria-label="View Wishlist"
+                >
+                  <i className="fa-regular fa-heart text-[19px]"></i>
+                  {wishlist.length > 0 && (
+                    <span className="header-count absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                      {wishlist.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setIsAuthOpen(true)}
+                  className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center"
+                  aria-label="User Account"
+                >
+                  <i className="fa-regular fa-user text-[19px]"></i>
+                </button>
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center relative"
+                  aria-label="Open Shopping Bag"
+                >
+                  <i className="fa-solid fa-bag-shopping text-[19px]"></i>
+                  {totalItems > 0 && (
+                    <span className="header-count absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                      {totalItems}
+                    </span>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Links Navigation Row */}
-        <div
-          className="header-nav-row w-full py-3 transition-all duration-500 relative"
-          onMouseLeave={() => setActiveMegaMenu(null)}
-        >
+        {/* Links Navigation Row - Hidden during Pre-Launch Mode */}
+        {!isPreLaunch && (
+          <div
+            className="header-nav-row w-full py-3 transition-all duration-500 relative"
+            onMouseLeave={() => setActiveMegaMenu(null)}
+          >
           <nav className="flex justify-center gap-8 items-center max-w-container-max mx-auto px-margin-desktop">
             {navLinks.map((link, idx) => {
               const megaMenuData = link.megaMenu;
@@ -515,27 +566,37 @@ export default function Header() {
             </div>
           )}
         </div>
+      )}
       </header>
 
       {/* ─── MOBILE NAVIGATION ─── */}
       <header 
         className={`md:hidden fixed ${
-          announcementBar?.isEnabled ? "top-8" : "top-0"
+          (isPreLaunch || isSaleCountdown ? launchConfig?.showAnnouncementBar !== false : announcementBar?.isEnabled) ? "top-8" : "top-0"
         } left-0 right-0 z-40 transition-all duration-500 ease-out border-b px-margin-mobile py-4 grid grid-cols-3 items-center ${
           isTransparent 
             ? "bg-transparent text-white border-white/15" 
             : "bg-pure-white text-ink-black border-soft-linen shadow-sm"
         }`}
       >
-        {/* Left: Hamburger menu */}
-        <div className="flex justify-start">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="cursor-pointer flex items-center justify-center w-8 h-8"
-            aria-label="Open Menu Drawer"
-          >
-            <i className="fa-solid fa-bars text-[20px]"></i>
-          </button>
+        {/* Left: Hamburger menu or Contact link in pre-launch */}
+        <div className="flex justify-start items-center">
+          {isPreLaunch ? (
+            <Link
+              href="/contact"
+              className="text-[11px] font-inter font-primary tracking-widest uppercase font-semibold hover:opacity-75 transition-opacity"
+            >
+              CONTACT
+            </Link>
+          ) : (
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="cursor-pointer flex items-center justify-center w-8 h-8"
+              aria-label="Open Menu Drawer"
+            >
+              <i className="fa-solid fa-bars text-[20px]"></i>
+            </button>
+          )}
         </div>
 
         {/* Center: Brand Logo */}
@@ -562,25 +623,36 @@ export default function Header() {
 
         {/* Right: Actions */}
         <div className="flex justify-end gap-3 items-center">
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="cursor-pointer flex items-center justify-center w-8 h-8"
-            aria-label="Open Search"
-          >
-            <i className="fa-solid fa-magnifying-glass text-[18px]"></i>
-          </button>
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="cursor-pointer flex items-center justify-center w-8 h-8 relative"
-            aria-label="Open Cart Drawer"
-          >
-            <i className="fa-solid fa-bag-shopping text-[18px]"></i>
-            {totalItems > 0 && (
-              <span className={`absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isTransparent ? "bg-white text-black" : "bg-black text-white"}`}>
-                {totalItems}
-              </span>
-            )}
-          </button>
+          {isPreLaunch ? (
+            <Link
+              href="/contact"
+              className="text-[10px] font-inter font-primary uppercase tracking-wider text-slate-grey hover:text-black transition-colors"
+            >
+              ATELIER
+            </Link>
+          ) : (
+            <>
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="cursor-pointer flex items-center justify-center w-8 h-8"
+                aria-label="Open Search"
+              >
+                <i className="fa-solid fa-magnifying-glass text-[18px]"></i>
+              </button>
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="cursor-pointer flex items-center justify-center w-8 h-8 relative"
+                aria-label="Open Cart Drawer"
+              >
+                <i className="fa-solid fa-bag-shopping text-[18px]"></i>
+                {totalItems > 0 && (
+                  <span className={`absolute -top-1 -right-1 text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${isTransparent ? "bg-white text-black" : "bg-black text-white"}`}>
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+            </>
+          )}
         </div>
       </header>
 

@@ -19,6 +19,9 @@ import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 import FormattedText from "@/components/FormattedText";
+import { useLaunchCountdown } from "@/context/LaunchCountdownContext";
+import LaunchCountdownHero from "@/components/shop/LaunchCountdownHero";
+import SaleCountdownBanner from "@/components/shop/SaleCountdownBanner";
 
 const DEFAULT_CATEGORIES = [
   { title: "Necklace", image: "https://res.cloudinary.com/cacfvpzf/image/upload/v1785734524/vrix/z7ekw55bkfo527ivhzme.png", link: "/collections/silent-center?type=necklace" },
@@ -81,7 +84,7 @@ interface HomepageClientProps {
 
 export default function HomepageClient({ initialData, initialProducts }: HomepageClientProps) {
   const { formatPrice } = useCurrency();
-  const { addItem } = useCart();
+  const { isPreLaunch, isSaleCountdown, config: launchConfig } = useLaunchCountdown();
   const [store, setStore] = useState(() => {
     if (initialData?.homepage) {
       return {
@@ -299,73 +302,82 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
       )}
 
       {/* ─── Hero Section ─── */}
-      {(loading || slides.length > 0) && (
-        <section className="relative h-[819px] md:h-screen w-full flex items-center bg-[#EBEAE4] overflow-hidden">
-          {loading ? (
-            <div className="absolute inset-0 z-0">
-              <Skeleton height="100%" borderRadius="0px" containerClassName="w-full h-full block" />
-            </div>
-          ) : (
-            slides.map((slide: any, sIdx: number) => (
-              <div
-                key={sIdx}
-                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${sIdx === activeSlide ? "opacity-100 z-10 animate-fade-in" : "opacity-0 z-0 pointer-events-none"
-                  }`}
-              >
-                <div className="absolute inset-0">
-                  <SkeletonImage
-                    alt={slide.title || "Hero Slide"}
-                    fill
-                    className="object-cover object-center"
-                    src={slide.image}
-                    priority={sIdx === 0}
-                    sizes="100vw"
-                  />
+      {isPreLaunch ? (
+        <LaunchCountdownHero />
+      ) : isSaleCountdown && launchConfig?.saleDisplayType !== "BAR" ? (
+        <SaleCountdownBanner />
+      ) : (
+        <>
+          {isSaleCountdown && <SaleCountdownBanner />}
+          {(loading || slides.length > 0) && (
+            <section className="relative h-[819px] md:h-screen w-full flex items-center bg-[#EBEAE4] overflow-hidden">
+              {loading ? (
+                <div className="absolute inset-0 z-0">
+                  <Skeleton height="100%" borderRadius="0px" containerClassName="w-full h-full block" />
                 </div>
-                <div className="absolute inset-0 bg-black/5" />
-
-                <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
-                  <div className="max-w-xl text-pure-white">
-                    <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-90">
-                      <FormattedText text={slide.subtitle} />
-                    </p>
-                    <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
-                      <FormattedText
-                        text={slide.title}
-                        highlightClass="font-chancery normal-case font-normal italic text-blue-900 text-3xl md:text-5xl lg:text-6xl px-1 tracking-wide"
+              ) : (
+                slides.map((slide: any, sIdx: number) => (
+                  <div
+                    key={sIdx}
+                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${sIdx === activeSlide ? "opacity-100 z-10 animate-fade-in" : "opacity-0 z-0 pointer-events-none"
+                      }`}
+                  >
+                    <div className="absolute inset-0">
+                      <SkeletonImage
+                        alt={slide.title || "Hero Slide"}
+                        fill
+                        className="object-cover object-center"
+                        src={slide.image}
+                        priority={sIdx === 0}
+                        sizes="100vw"
                       />
-                    </h1>
-                    <Link
-                      href={slide.link || "/collections/silent-center"}
-                      className="inline-block font-button text-button uppercase px-8 py-3 border border-pure-white text-pure-white hover:bg-pure-white hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
-                    >
-                      {slide.linkText || "Discover Collections"}
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+                    </div>
+                    <div className="absolute inset-0 bg-black/5" />
 
-          {/* Carousel indicator dots */}
-          {!loading && slides.length > 1 && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2.5">
-              {slides.map((_: any, sIdx: number) => (
-                <button
-                  key={sIdx}
-                  onClick={() => setActiveSlide(sIdx)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${sIdx === activeSlide ? "bg-ink-black md:bg-pure-white scale-125" : "bg-ink-black/40 md:bg-pure-white/40 hover:bg-ink-black/70 md:hover:bg-pure-white/70"
-                    }`}
-                  aria-label={`Go to slide ${sIdx + 1}`}
-                />
-              ))}
-            </div>
+                    <div className="relative z-10 h-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop w-full flex items-center">
+                      <div className="max-w-xl text-pure-white">
+                        <p className="font-label-caps text-label-caps mb-stack-md tracking-widest uppercase opacity-90">
+                          <FormattedText text={slide.subtitle} />
+                        </p>
+                        <h1 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg mb-stack-lg leading-tight uppercase font-light">
+                          <FormattedText
+                            text={slide.title}
+                            highlightClass="font-chancery normal-case font-normal italic text-blue-900 text-3xl md:text-5xl lg:text-6xl px-1 tracking-wide"
+                          />
+                        </h1>
+                        <Link
+                          href={slide.link || "/collections/silent-center"}
+                          className="inline-block font-button text-button uppercase px-8 py-3 border border-pure-white text-pure-white hover:bg-pure-white hover:text-deep-navy transition-colors duration-300 cursor-pointer tracking-wider"
+                        >
+                          {slide.linkText || "Discover Collections"}
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {/* Carousel indicator dots */}
+              {!loading && slides.length > 1 && (
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex gap-2.5">
+                  {slides.map((_: any, sIdx: number) => (
+                    <button
+                      key={sIdx}
+                      onClick={() => setActiveSlide(sIdx)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${sIdx === activeSlide ? "bg-ink-black md:bg-pure-white scale-125" : "bg-ink-black/40 md:bg-pure-white/40 hover:bg-ink-black/70 md:hover:bg-pure-white/70"
+                        }`}
+                      aria-label={`Go to slide ${sIdx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
           )}
-        </section>
+        </>
       )}
 
       {/* ─── Collections Section ─── */}
-      {(loading || featuredCollectionsList.length > 0) && (
+      {!isPreLaunch && (loading || featuredCollectionsList.length > 0) && (
         <section className="reveal-section py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
           <div className="flex items-end justify-between mb-section-gap">
             <div>
@@ -462,7 +474,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
       )}
 
       {/* ─── Shop by Category Section ─── */}
-      {(loading || (store.homepage.categories && store.homepage.categories.length > 0)) && (
+      {!isPreLaunch && (loading || (store.homepage.categories && store.homepage.categories.length > 0)) && (
         <section className="reveal-section py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
           <div className="flex items-end justify-between mb-section-gap">
             <div>
@@ -533,7 +545,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
       )}
 
       {/* ─── New Arrivals Product Section ─── */}
-      {(loading || newArrivalsList.length > 0) && (
+      {!isPreLaunch && (loading || newArrivalsList.length > 0) && (
         <section className="reveal-section py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
           <div className="flex items-end justify-between mb-section-gap">
             <div>
@@ -603,7 +615,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
       )}
 
       {/* ─── Featured Products Section ─── */}
-      {(loading || featuredProductsList.length > 0) && (
+      {!isPreLaunch && (loading || featuredProductsList.length > 0) && (
         <section className="reveal-section py-section-gap max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop border-t border-slate-grey/15">
           <div className="flex items-end justify-between mb-section-gap">
             <div>
@@ -673,7 +685,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
       )}
 
       {/* ─── Brand Philosophy / Features ─── */}
-      {(loading || (store.homepage.philosophy && store.homepage.philosophy.length > 0)) && (
+      {!isPreLaunch && (loading || (store.homepage.philosophy && store.homepage.philosophy.length > 0)) && (
         <section className="bg-[#F5F4F0] py-section-gap border-t border-slate-grey/25">
           <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop text-center">
             <p className="font-label-caps text-label-caps text-slate-grey uppercase tracking-widest mb-stack-sm">
@@ -711,7 +723,8 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
       )}
 
       {/* ─── SEO Editorial Section (Chancery Font & Minimalist Luxury Styling) ─── */}
-      <section className="bg-soft-linen/20 py-16 md:py-20 border-t border-slate-grey/15">
+      {!isPreLaunch && (
+        <section className="bg-soft-linen/20 py-16 md:py-20 border-t border-slate-grey/15">
         <div className="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop text-center space-y-4">
           <p className="font-label-caps text-xs text-slate-grey uppercase tracking-widest flex items-center justify-center gap-3">
             <span className="w-8 h-[1px] bg-slate-grey/30 inline-block" />
@@ -727,6 +740,7 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
           </p>
         </div>
       </section>
+      )}
     </div>
   );
 }

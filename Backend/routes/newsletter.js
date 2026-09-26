@@ -17,10 +17,17 @@ router.post("/subscribe", contactLimiter, async (req, res) => {
   try {
     // Persist to CMS newsletter_subscribers list
     const existing = await db.cmsSettings.findUnique({ where: { key: "newsletter_subscribers" } });
-    const subscribers = Array.isArray(existing) ? existing : [];
+    let subscribers = [];
+    if (Array.isArray(existing)) {
+      subscribers = existing;
+    } else if (existing && Array.isArray(existing.value)) {
+      subscribers = existing.value;
+    } else if (existing && typeof existing.value === "string") {
+      try { subscribers = JSON.parse(existing.value); } catch (_) {}
+    }
 
     if (subscribers.includes(normalizedEmail)) {
-      return res.json({ success: true, message: "You are already subscribed. Thank you!" });
+      return res.json({ success: true, message: "You are already on the VIP launch list. Thank you!" });
     }
 
     subscribers.push(normalizedEmail);
@@ -70,8 +77,16 @@ router.post("/subscribe", contactLimiter, async (req, res) => {
 // GET /api/newsletter/subscribers — Admin: list all subscribers
 router.get("/subscribers", async (req, res) => {
   try {
-    const data = await db.cmsSettings.findUnique({ where: { key: "newsletter_subscribers" } });
-    res.json({ subscribers: Array.isArray(data) ? data : [], count: Array.isArray(data) ? data.length : 0 });
+    const existing = await db.cmsSettings.findUnique({ where: { key: "newsletter_subscribers" } });
+    let subscribers = [];
+    if (Array.isArray(existing)) {
+      subscribers = existing;
+    } else if (existing && Array.isArray(existing.value)) {
+      subscribers = existing.value;
+    } else if (existing && typeof existing.value === "string") {
+      try { subscribers = JSON.parse(existing.value); } catch (_) {}
+    }
+    res.json({ subscribers, count: subscribers.length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -55,7 +55,7 @@ router.post("/cms", adminAuth, async (req, res) => {
       "collections", "categories", "api_settings", "vrix_plus", "announcement_bar",
       "currency_settings", "shipping_settings", "gift_wrapping", "metal_types",
       "custom_pages", "invoice_settings", "bespoke_config", "offers_page",
-      "product_templates"
+      "product_templates", "launch_countdown"
     ];
     for (const section of sections) {
       if (req.body[section] !== undefined) {
@@ -226,6 +226,51 @@ router.post("/cms/product-templates", adminAuth, async (req, res) => {
       create: { key: "product_templates", value: templates }
     });
     res.json({ success: true, templates });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/cms/launch-countdown — Public endpoint for launch / sale countdown config
+router.get("/cms/launch-countdown", async (req, res) => {
+  try {
+    const setting = await db.cmsSettings.findUnique({ where: { key: "launch_countdown" } });
+    const defaultData = {
+      mode: "LAUNCH", // "LAUNCH" | "SALE" | "DISABLED"
+      targetDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      badgeText: "UNVEILING SOON",
+      title: "V R I X",
+      subtitle: "A luxury that feels like you.",
+      description: "Lab-grown diamonds and fine jewellery crafted with architectural minimalism and quiet luxury. Our inaugural digital atelier arrives soon.",
+      bgImage: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop",
+      bgOverlayOpacity: 45,
+      showAnnouncementBar: true,
+      announcementText: "✦ OFFICIAL ATELIER LAUNCH COUNTDOWN — ENTERING A NEW ERA OF LAB-GROWN DIAMONDS ✦",
+      announcementLinkText: "Contact Atelier →",
+      announcementLinkUrl: "/contact",
+      enableWaitlist: true,
+      waitlistSuccessMsg: "Thank you. You have been added to our private VIP launch list.",
+      contactButtonText: "Contact Atelier",
+      contactButtonUrl: "/contact",
+      autoUnlockOnZero: true
+    };
+    res.json(setting || defaultData);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/cms/launch-countdown — Admin endpoint to update launch / sale countdown
+router.post("/cms/launch-countdown", adminAuth, async (req, res) => {
+  try {
+    clearServerCache("db_public");
+    const data = req.body;
+    await db.cmsSettings.upsert({
+      where: { key: "launch_countdown" },
+      update: { value: data },
+      create: { key: "launch_countdown", value: data }
+    });
+    res.json({ success: true, launch_countdown: data });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

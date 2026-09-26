@@ -10,11 +10,41 @@ export default function ConditionalScriptLoader() {
   const [consent, setConsent] = useState<CookiePreferences | null>(null);
 
   useEffect(() => {
+    // Ensure window.dataLayer & gtag function exist + Google Consent Mode v2 Default
+    if (typeof window !== "undefined") {
+      (window as any).dataLayer = (window as any).dataLayer || [];
+      if (!(window as any).gtag) {
+        (window as any).gtag = function (...args: any[]) {
+          (window as any).dataLayer.push(args);
+        };
+      }
+      (window as any).gtag("consent", "default", {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+        wait_for_update: 500,
+      });
+    }
+
     // Read initial consent from storage
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        setConsent(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setConsent(parsed);
+        if (parsed.analytics) {
+          (window as any).gtag("consent", "update", {
+            analytics_storage: "granted",
+          });
+        }
+        if (parsed.marketing) {
+          (window as any).gtag("consent", "update", {
+            ad_storage: "granted",
+            ad_user_data: "granted",
+            ad_personalization: "granted",
+          });
+        }
       } catch (e) {}
     }
 

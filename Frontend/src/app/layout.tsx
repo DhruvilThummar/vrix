@@ -7,6 +7,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { LaunchCountdownProvider } from "@/context/LaunchCountdownContext";
 import ConditionalScriptLoader from "@/components/privacy/ConditionalScriptLoader";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -143,24 +144,6 @@ export default function RootLayout({
       className={`${inter.variable} ${jost.variable} ${aquavit.variable} ${chancery.variable} h-full antialiased`}
     >
       <head>
-        {/* Google Consent Mode v2 Default Settings */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              
-              // Define default consent state (denied on startup for compliance)
-              gtag('consent', 'default', {
-                'ad_storage': 'denied',
-                'ad_user_data': 'denied',
-                'ad_personalization': 'denied',
-                'analytics_storage': 'denied',
-                'wait_for_update': 500
-              });
-            `,
-          }}
-        />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -183,10 +166,12 @@ export default function RootLayout({
         <AuthProvider>
           <CurrencyProvider>
             <CartProvider>
-              {children}
-              <CookieConsentBanner />
-              <ConditionalScriptLoader />
-              <Analytics />
+              <LaunchCountdownProvider>
+                {children}
+                <CookieConsentBanner />
+                <ConditionalScriptLoader />
+                <Analytics />
+              </LaunchCountdownProvider>
             </CartProvider>
           </CurrencyProvider>
         </AuthProvider>

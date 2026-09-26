@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { fetchDb, updateCMS, fetchProducts, fetchCollections } from "@/utils/api";
 
 function VisualImagePreview({ src, alt }: { src?: string; alt?: string }) {
@@ -336,6 +337,30 @@ export default function AdminHomepageLayoutPage() {
             >
               {saveLoading ? "Saving Changes..." : "Save Homepage Settings"}
             </button>
+          </div>
+
+          {/* Quick banner for Launch & Countdown Manager */}
+          <div className="bg-amber-50/80 border border-amber-200 p-4 rounded flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-900 shrink-0">
+                <span className="material-symbols-outlined text-xl">hourglass_top</span>
+              </div>
+              <div>
+                <p className="font-inter font-bold text-xs uppercase tracking-wider text-amber-950">
+                  Pre-Launch &amp; Sale Countdown Manager
+                </p>
+                <p className="font-jost text-xs text-amber-900/80 mt-0.5">
+                  Configure coming-soon countdown (inspired by denorreys.com) or promotional sale ticker banner.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/admin/launch-countdown"
+              className="px-4 py-2 bg-deep-navy text-white text-xs font-inter uppercase tracking-wider font-semibold rounded hover:bg-ink-black transition-colors shrink-0 flex items-center gap-1.5 self-start sm:self-center"
+            >
+              <span>Manage Countdown</span>
+              <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            </Link>
           </div>
         </div>
 

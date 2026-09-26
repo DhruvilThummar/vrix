@@ -385,32 +385,45 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Concierge FAQ Accordion */}
-            <div className="border border-slate-grey/20 bg-pure-white p-8 rounded-xs space-y-4">
-              <span className="font-label-caps text-[10px] text-slate-grey uppercase tracking-widest font-semibold block">
-                FREQUENTLY ASKED QUESTIONS
+            {/* Concierge FAQ Accordion — moved to full width below */}
+          </div>
+        </div>
+
+        {/* ─── Full-Width FAQ Section ─── */}
+        <div className="border border-slate-grey/20 bg-pure-white p-8 md:p-12 rounded-xs space-y-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-2">
+            <div>
+              <span className="font-label-caps text-[10px] text-[#B59D7C] uppercase tracking-widest font-semibold block mb-1">
+                CLIENT CONCIERGE
               </span>
-              <div className="divide-y divide-slate-grey/15">
-                {FAQ_ITEMS.map((faq, idx) => (
-                  <div key={idx} className="py-3.5">
-                    <button
-                      onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                      className="w-full flex justify-between items-center text-left font-label-caps text-xs text-deep-navy font-semibold uppercase tracking-wider cursor-pointer"
-                    >
-                      <span>{faq.q}</span>
-                      <span className={`material-symbols-outlined text-base transition-transform duration-300 ${openFaq === idx ? "rotate-180" : ""}`}>
-                        expand_more
-                      </span>
-                    </button>
-                    {openFaq === idx && (
-                      <p className="mt-2 text-xs text-slate-grey leading-relaxed font-body-md animate-fade-in">
-                        {faq.a}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <h2 className="font-headline-md text-xl md:text-2xl text-deep-navy font-light uppercase tracking-wider">
+                Frequently Asked Questions
+              </h2>
             </div>
+            <p className="font-body-md text-xs text-slate-grey max-w-sm leading-relaxed">
+              Everything you need to know about VRIX, our craftsmanship, and how we serve our clients.
+            </p>
+          </div>
+
+          <div className="divide-y divide-slate-grey/15">
+            {FAQ_ITEMS.map((faq, idx) => (
+              <div key={idx} className="py-4 md:py-5">
+                <button
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  className="w-full flex justify-between items-center text-left font-label-caps text-xs md:text-sm text-deep-navy font-semibold uppercase tracking-wider cursor-pointer group"
+                >
+                  <span className="pr-6">{faq.q}</span>
+                  <span className={`material-symbols-outlined text-base text-slate-grey group-hover:text-deep-navy transition-all duration-300 shrink-0 ${openFaq === idx ? "rotate-180" : ""}`}>
+                    expand_more
+                  </span>
+                </button>
+                {openFaq === idx && (
+                  <p className="mt-3 text-sm text-slate-grey leading-relaxed font-body-md animate-fade-in max-w-3xl">
+                    {faq.a}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </main>

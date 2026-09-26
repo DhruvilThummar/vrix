@@ -174,12 +174,39 @@ export async function updateCMS(data: {
   currency_settings?: any;
   shipping_settings?: any;
   offers_page?: any;
+  launch_countdown?: any;
 }) {
   return adminFetch<any>("/cms", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+}
+
+export async function fetchLaunchCountdown() {
+  try {
+    return await apiFetch<any>("/cms/launch-countdown", { cache: "no-store" });
+  } catch (err: any) {
+    console.warn("fetchLaunchCountdown offline / rate-limited (using local fallback):", err?.message || err);
+    return null;
+  }
+}
+
+export async function updateLaunchCountdown(data: any) {
+  return adminFetch<any>("/cms/launch-countdown", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchNewsletterSubscribers(): Promise<{ subscribers: string[]; count: number }> {
+  try {
+    return await apiFetch<{ subscribers: string[]; count: number }>("/newsletter/subscribers");
+  } catch (err: any) {
+    console.warn("fetchNewsletterSubscribers error:", err?.message || err);
+    return { subscribers: [], count: 0 };
+  }
 }
 
 export async function fetchGiftWrappingAPI() {

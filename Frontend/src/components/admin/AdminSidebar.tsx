@@ -15,6 +15,7 @@ const navItems = [
   { name: "Marketing", href: "/admin/marketing", icon: "confirmation_number" },
 
   { name: "CMS", href: "/admin/cms", icon: "article" },
+  { name: "Launch & Countdown", href: "/admin/launch-countdown", icon: "hourglass_top" },
   { name: "Homepage Layout", href: "/admin/homepage", icon: "view_quilt" },
   { name: "Diamond Education", href: "/admin/diamond-education", icon: "school" },
   { name: "Navigation", href: "/admin/navigation", icon: "navigation" },
