@@ -40,7 +40,7 @@ export default function SaleCountdownBanner() {
   // ─────────────────────────────────────────────────────────────────────────────
   if (displayType === "HERO" || displayType === "BOTH") {
     return (
-      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-[#07090E] text-pure-white px-4 sm:px-6 pt-20 sm:pt-24 md:pt-24 pb-10 md:pb-12">
+      <section className="relative w-full min-h-[92vh] md:min-h-screen flex items-center justify-center overflow-hidden bg-[#07090E] text-pure-white px-5 sm:px-8 pt-20 sm:pt-24 md:pt-28 pb-12 md:pb-16">
         {/* Background Photo with Cinematic Luxury Vignette */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -59,11 +59,11 @@ export default function SaleCountdownBanner() {
         </div>
 
         {/* Hero Content Container */}
-        <div className="relative z-10 max-w-6xl mx-auto text-center flex flex-col items-center">
+        <div className="relative z-10 max-w-3xl mx-auto text-center flex flex-col items-center">
 
 
           {/* Official VRIX Logo */}
-          <div className="relative w-56 sm:w-72 md:w-96 h-20 sm:h-24 md:h-32 mb-3 select-none drop-shadow-lg">
+          <div className="relative w-36 sm:w-44 md:w-52 h-12 sm:h-14 md:h-16 mb-5 select-none drop-shadow-lg">
             <Image
               src="/logos/white.png"
               alt="VRIX"
@@ -75,12 +75,12 @@ export default function SaleCountdownBanner() {
           </div>
 
           {/* Main Sale Headline */}
-          <h1 className="font-inter text-4xl sm:text-6xl md:text-8xl tracking-[0.15em] sm:tracking-[0.2em] uppercase text-white font-light mb-3 select-none drop-shadow-md">
+          <h1 className="font-inter font-primary text-2xl sm:text-4xl md:text-5xl tracking-[0.12em] sm:tracking-[0.18em] uppercase text-white font-light mb-4 select-none drop-shadow-md">
             {config.saleTitle || "THE SOLITAIRE SALE"}
           </h1>
 
           {/* Subtitle / Description */}
-          <p className="font-jost font-secondary text-sm sm:text-base md:text-lg text-white/90 font-light tracking-[0.05em] mb-3 max-w-2xl drop-shadow">
+          <p className="font-jost font-secondary text-xs sm:text-sm md:text-base text-white/85 font-light tracking-[0.04em] mb-2 max-w-xl drop-shadow">
             {config.saleSubtitle || (
               <>
                 Limited allocation of fine lab-grown diamonds with{" "}
@@ -93,18 +93,18 @@ export default function SaleCountdownBanner() {
           </p>
 
           {config.saleDescription && (
-            <p className="font-jost font-secondary text-xs sm:text-sm text-white/70 max-w-lg mb-6 leading-relaxed">
+            <p className="font-jost font-secondary text-[11px] sm:text-xs text-white/60 max-w-md mb-5 leading-relaxed">
               {config.saleDescription}
             </p>
           )}
 
           {/* One-Click Copy Coupon Code Pill */}
           {discountCode && (
-            <div className="mb-8 flex items-center justify-center">
+            <div className="mb-6 flex items-center justify-center">
               <button
                 type="button"
                 onClick={handleCopyCode}
-                className="group relative inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-dashed border-amber-300/60 bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all duration-300 hover:border-amber-300 cursor-pointer shadow-lg active:scale-95"
+                className="group relative inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-dashed border-amber-300/60 bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all duration-300 hover:border-amber-300 cursor-pointer shadow-lg active:scale-95"
                 title="Click to copy promo code"
               >
                 <span className="material-symbols-outlined text-amber-300 text-sm">
@@ -124,56 +124,56 @@ export default function SaleCountdownBanner() {
           )}
 
           {/* Architectural Luxury Countdown Blocks */}
-          <div suppressHydrationWarning className="w-full max-w-2xl mx-auto mb-8 sm:mb-10">
-            <div className="grid grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
+          <div suppressHydrationWarning className="w-full max-w-xl mx-auto mb-6 sm:mb-8">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4">
               {/* DAYS */}
-              <div className="flex flex-col items-center justify-center p-3 sm:p-5 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-amber-300/40">
+              <div className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-amber-300/40">
                 <span
                   suppressHydrationWarning
-                  className="font-inter font-primary text-3xl sm:text-5xl md:text-6xl font-light text-white tracking-tight tabular-nums"
+                  className="font-inter font-primary text-2xl sm:text-3xl md:text-4xl font-light text-white tracking-tight tabular-nums"
                 >
                   {formatNumber(timeLeft.days)}
                 </span>
-                <span className="font-inter font-primary text-[9px] sm:text-[11px] tracking-[0.25em] uppercase text-white/70 mt-2 font-medium">
+                <span className="font-inter font-primary text-[8px] sm:text-[10px] tracking-[0.25em] uppercase text-white/60 mt-1.5 font-medium">
                   Days
                 </span>
               </div>
 
               {/* HOURS */}
-              <div className="flex flex-col items-center justify-center p-3 sm:p-5 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-amber-300/40">
+              <div className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-amber-300/40">
                 <span
                   suppressHydrationWarning
-                  className="font-inter font-primary text-3xl sm:text-5xl md:text-6xl font-light text-white tracking-tight tabular-nums"
+                  className="font-inter font-primary text-2xl sm:text-3xl md:text-4xl font-light text-white tracking-tight tabular-nums"
                 >
                   {formatNumber(timeLeft.hours)}
                 </span>
-                <span className="font-inter font-primary text-[9px] sm:text-[11px] tracking-[0.25em] uppercase text-white/70 mt-2 font-medium">
+                <span className="font-inter font-primary text-[8px] sm:text-[10px] tracking-[0.25em] uppercase text-white/60 mt-1.5 font-medium">
                   Hours
                 </span>
               </div>
 
               {/* MINUTES */}
-              <div className="flex flex-col items-center justify-center p-3 sm:p-5 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-amber-300/40">
+              <div className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-amber-300/40">
                 <span
                   suppressHydrationWarning
-                  className="font-inter font-primary text-3xl sm:text-5xl md:text-6xl font-light text-white tracking-tight tabular-nums"
+                  className="font-inter font-primary text-2xl sm:text-3xl md:text-4xl font-light text-white tracking-tight tabular-nums"
                 >
                   {formatNumber(timeLeft.minutes)}
                 </span>
-                <span className="font-inter font-primary text-[9px] sm:text-[11px] tracking-[0.25em] uppercase text-white/70 mt-2 font-medium">
+                <span className="font-inter font-primary text-[8px] sm:text-[10px] tracking-[0.25em] uppercase text-white/60 mt-1.5 font-medium">
                   Minutes
                 </span>
               </div>
 
               {/* SECONDS */}
-              <div className="flex flex-col items-center justify-center p-3 sm:p-5 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-amber-300/40">
+              <div className="flex flex-col items-center justify-center p-2.5 sm:p-4 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-amber-300/40">
                 <span
                   suppressHydrationWarning
-                  className="font-inter font-primary text-3xl sm:text-5xl md:text-6xl font-light text-amber-200 tracking-tight tabular-nums"
+                  className="font-inter font-primary text-2xl sm:text-3xl md:text-4xl font-light text-amber-200 tracking-tight tabular-nums"
                 >
                   {formatNumber(timeLeft.seconds)}
                 </span>
-                <span className="font-inter font-primary text-[9px] sm:text-[11px] tracking-[0.25em] uppercase text-white/70 mt-2 font-medium">
+                <span className="font-inter font-primary text-[8px] sm:text-[10px] tracking-[0.25em] uppercase text-white/60 mt-1.5 font-medium">
                   Seconds
                 </span>
               </div>
@@ -181,10 +181,10 @@ export default function SaleCountdownBanner() {
           </div>
 
           {/* Dual Action CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
             <Link
               href={config.saleCtaUrl || "/collections"}
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-pure-white hover:bg-white/90 text-ink-black text-xs font-inter font-primary tracking-[0.2em] uppercase font-semibold transition-all duration-300 rounded-xs cursor-pointer shadow-lg hover:shadow-2xl active:scale-95"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-pure-white hover:bg-white/90 text-ink-black text-[11px] font-inter font-primary tracking-[0.18em] uppercase font-semibold transition-all duration-300 rounded-xs cursor-pointer shadow-lg hover:shadow-2xl active:scale-95"
             >
               <span>{config.saleCtaText || "Shop The Sale"}</span>
               <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -192,14 +192,14 @@ export default function SaleCountdownBanner() {
 
             <Link
               href={config.saleSecondaryCtaUrl || "/products"}
-              className="inline-flex items-center gap-2 px-8 py-3.5 border border-white/60 hover:border-white hover:bg-white/10 text-white text-xs font-inter font-primary tracking-[0.2em] uppercase font-medium transition-all duration-300 rounded-xs cursor-pointer shadow-md"
+              className="inline-flex items-center gap-2 px-6 py-3 border border-white/60 hover:border-white hover:bg-white/10 text-white text-[11px] font-inter font-primary tracking-[0.18em] uppercase font-medium transition-all duration-300 rounded-xs cursor-pointer shadow-md"
             >
               <span>{config.saleSecondaryCtaText || "Explore All Pieces"}</span>
             </Link>
           </div>
 
           {/* Understated Luxury Trust Indicators */}
-          <div className="pt-6 border-t border-white/10 w-full max-w-2xl flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-[10px] sm:text-[11px] tracking-widest text-white/50 uppercase font-jost font-secondary select-none">
+          <div className="pt-5 border-t border-white/10 w-full max-w-xl flex flex-wrap justify-center items-center gap-x-5 gap-y-1.5 text-[9px] sm:text-[10px] tracking-widest text-white/45 uppercase font-jost font-secondary select-none">
             <span>Lab-Grown Solitaires</span>
             <span className="text-white/30">·</span>
             <span>Architectural Minimalism</span>
