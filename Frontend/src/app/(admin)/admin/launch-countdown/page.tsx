@@ -84,8 +84,9 @@ export default function AdminLaunchCountdownPage() {
   };
 
   // Remaining time calculation ticker for Admin preview
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
   useEffect(() => {
+    setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -117,7 +118,7 @@ export default function AdminLaunchCountdownPage() {
 
   // Compute live admin preview timer
   const targetTime = new Date(config.targetDate).getTime();
-  const diff = isNaN(targetTime) ? 0 : targetTime - now;
+  const diff = isNaN(targetTime) || now === 0 ? 0 : targetTime - now;
   const isExpired = diff <= 0;
   const days = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
   const hours = Math.max(0, Math.floor((diff / (1000 * 60 * 60)) % 24));
