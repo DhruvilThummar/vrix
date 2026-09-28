@@ -19,6 +19,7 @@ import { gsap } from "@/lib/gsap";
 import { getDisplayPrice } from "@/lib/pricing";
 import { useVariantAnimations } from "@/hooks/useVariantAnimations";
 import ProductCard from "@/components/shop/ProductCard";
+import { trackViewContent, trackAddToCart } from "@/utils/analytics";
 
 interface ProductPageClientProps {
   initialProduct: any;
@@ -92,7 +93,21 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
         setWishlistActive(list.includes(product.id));
       }
     } catch { }
-  }, [product, user?.email]);
+
+    // Track ViewContent for Meta Pixel & Google Analytics
+    if (product?.id) {
+      trackViewContent(
+        {
+          id: product.id,
+          name: product.title,
+          category: product.type || "Jewelry",
+          price: activePrice,
+          variant: selectedVariant?.material || product.material,
+        },
+        "INR"
+      );
+    }
+  }, [product, user?.email, activePrice, selectedVariant?.material]);
 
   const galleryImages = useMemo(() => {
     if (!product) return [];
@@ -252,6 +267,20 @@ export default function ProductPageClient({ initialProduct, allProducts }: Produ
         giftNote,
         stock: Number(activeStock),
       });
+
+      // Track AddToCart for Meta Pixel & Google Analytics
+      trackAddToCart(
+        {
+          id: product.id,
+          name: product.title,
+          category: product.type || "Jewelry",
+          price: basePrice + customizationPrice,
+          quantity: 1,
+          variant: selectedVariant?.material || selectedMetal || product.material,
+        },
+        "INR"
+      );
+
       setBagLoading(false);
       showToast(`✓ "${product.title}" has been successfully added to your bag.`);
     }, 600);

@@ -365,4 +365,84 @@ router.patch("/:id/visibility", adminAuth, async (req, res) => {
   }
 });
 
+// ─── Direct Google Ads & Meta Ads Product Feeds ──────────────────────────────
+// GET /api/products/feed/google (Google Merchant Center XML RSS Feed)
+router.get("/feed/google", async (req, res) => {
+  try {
+    const products = await db.products.findMany();
+    const siteUrl = process.env.FRONTEND_URL || "https://vrixjewels.com";
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>VRIX Luxury Minimalist Jewelry</title>
+    <link>${siteUrl}</link>
+    <description>Lab-grown diamond &amp; fine jewelry product feed for Google Shopping Ads</description>
+`;
+
+    products.filter((p) => p.isVisible !== false).forEach((p) => {
+      const pUrl = `${siteUrl}/product/${encodeURIComponent(p.id)}`;
+      const inStock = (p.stock ?? 999) > 0 ? "in_stock" : "out_of_stock";
+      const price = Number(p.price || 0).toFixed(2);
+      const title = (p.title || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const desc = (p.description || p.subtitle || p.title || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+      xml += `    <item>
+      <g:id>${p.id}</g:id>
+      <g:title>${title}</g:title>
+      <g:description>${desc}</g:description>
+      <g:link>${pUrl}</g:link>
+      <g:image_link>${p.image || ""}</g:image_link>
+      <g:brand>VRIX</g:brand>
+      <g:condition>new</g:condition>
+      <g:availability>${inStock}</g:availability>
+      <g:price>${price} INR</g:price>
+      <g:google_product_category>188</g:google_product_category>
+      <g:product_type>${p.type || "Jewelry"}</g:product_type>
+    </item>\n`;
+    });
+
+    xml += `  </channel>
+</rss>`;
+
+    res.set("Content-Type", "application/xml; charset=utf-8");
+    res.send(xml);
+  } catch (err) {
+    res.status(500).send(`Error generating Google feed: ${err.message}`);
+  }
+});
+
+// GET /api/products/feed/meta (Meta / Facebook & Instagram Catalog CSV Feed)
+router.get("/feed/meta", async (req, res) => {
+  try {
+    const products = await db.products.findMany();
+    const siteUrl = process.env.FRONTEND_URL || "https://vrixjewels.com";
+
+    const escapeCsv = (str = "") => `"${String(str).replace(/"/g, '""')}"`;
+    const headers = ["id", "title", "description", "availability", "condition", "price", "link", "image_link", "brand", "google_product_category"];
+
+    const rows = products.filter((p) => p.isVisible !== false).map((p) => {
+      const inStock = (p.stock ?? 999) > 0 ? "in stock" : "out of stock";
+      return [
+        escapeCsv(p.id),
+        escapeCsv(p.title),
+        escapeCsv(p.description || p.subtitle || p.title),
+        escapeCsv(inStock),
+        escapeCsv("new"),
+        escapeCsv(`${Number(p.price || 0).toFixed(2)} INR`),
+        escapeCsv(`${siteUrl}/product/${encodeURIComponent(p.id)}`),
+        escapeCsv(p.image || ""),
+        escapeCsv("VRIX"),
+        escapeCsv("Apparel & Accessories > Jewelry")
+      ].join(",");
+    });
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    res.set("Content-Type", "text/csv; charset=utf-8");
+    res.send(csv);
+  } catch (err) {
+    res.status(500).send(`Error generating Meta feed: ${err.message}`);
+  }
+});
+
 export default router;

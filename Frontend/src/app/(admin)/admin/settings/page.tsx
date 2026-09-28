@@ -17,6 +17,8 @@ export default function AdminSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [adminSecret, setAdminSecret] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [metaPixelId, setMetaPixelId] = useState("");
+  const [gaId, setGaId] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -29,11 +31,15 @@ export default function AdminSettingsPage() {
       const storedEmail = user?.email || localStorage.getItem("vrix-admin-email") || "admin@vrix.com";
       const storedAvatar = localStorage.getItem("vrix_admin_avatar") || DEFAULT_AVATAR;
       const storedSecret = localStorage.getItem("vrix-admin-secret") || "vrix-admin-secret-key-2026";
+      const storedPixel = localStorage.getItem("vrix_meta_pixel_id") || "";
+      const storedGa = localStorage.getItem("vrix_ga_measurement_id") || "G-4MHMGSMVEE";
 
       setAdminName(storedName);
       setAdminEmail(storedEmail);
       setAvatarUrl(storedAvatar);
       setAdminSecret(storedSecret);
+      setMetaPixelId(storedPixel);
+      setGaId(storedGa);
     }
   }, [user]);
 
@@ -94,12 +100,14 @@ export default function AdminSettingsPage() {
       localStorage.setItem("vrix_admin_name", adminName);
       localStorage.setItem("vrix_admin_avatar", avatarUrl);
       localStorage.setItem("vrix-admin-secret", adminSecret);
+      localStorage.setItem("vrix_meta_pixel_id", metaPixelId.trim());
+      localStorage.setItem("vrix_ga_measurement_id", gaId.trim());
       
       login(resData.newEmail || adminEmail, { name: adminName });
 
       setNewPassword("");
       setConfirmPassword("");
-      setMessage({ type: "success", text: "🎉 Admin ID (Email) & Password updated successfully!" });
+      setMessage({ type: "success", text: "🎉 Admin credentials & Analytics Tracking settings updated successfully!" });
     } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Failed to save settings." });
     } finally {
@@ -287,6 +295,78 @@ export default function AdminSettingsPage() {
                 placeholder="••••••••"
                 className="w-full border-b border-slate-grey/30 py-2 font-body-md text-sm outline-none focus:border-deep-navy"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Analytics & Ads Tracking Section */}
+        <div className="bg-pure-white p-6 border border-slate-grey/20 shadow-sm space-y-4">
+          <h2 className="font-headline-md text-sm uppercase tracking-wider text-deep-navy border-b border-slate-grey/15 pb-3 flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg">insights</span>
+            Meta (Facebook/Instagram) &amp; Google Ads Tracking
+          </h2>
+          <p className="text-[11px] text-slate-grey">
+            Track product details, views, add to cart, and purchases directly for Facebook, Instagram, and Google Ads campaigns.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block font-label-caps text-[10px] uppercase tracking-widest text-slate-grey mb-1">
+                Meta Pixel ID (Facebook / Instagram Ads)
+              </label>
+              <input
+                type="text"
+                value={metaPixelId}
+                onChange={(e) => setMetaPixelId(e.target.value)}
+                placeholder="e.g. 123456789012345"
+                className="w-full border-b border-slate-grey/30 py-2 font-mono text-xs outline-none focus:border-deep-navy"
+              />
+              <p className="text-[10px] text-slate-grey mt-1">
+                Your Meta Business Pixel ID for running targeted ads and retargeting campaigns.
+              </p>
+            </div>
+
+            <div>
+              <label className="block font-label-caps text-[10px] uppercase tracking-widest text-slate-grey mb-1">
+                Google Measurement / Tag ID (GA4 &amp; Google Ads)
+              </label>
+              <input
+                type="text"
+                value={gaId}
+                onChange={(e) => setGaId(e.target.value)}
+                placeholder="e.g. G-XXXXXXXXXX or AW-XXXXXXXXX"
+                className="w-full border-b border-slate-grey/30 py-2 font-mono text-xs outline-none focus:border-deep-navy"
+              />
+              <p className="text-[10px] text-slate-grey mt-1">
+                Google Analytics 4 or Google Ads conversion tracking tag.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-grey/15 space-y-2">
+            <p className="font-label-caps text-[10px] uppercase tracking-widest text-deep-navy font-bold">
+              Dynamic Product Feed URLs (For Google Shopping &amp; Meta Ads Catalog):
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+              <div className="bg-soft-linen/50 p-2.5 rounded border border-slate-grey/20 flex flex-col justify-between">
+                <div>
+                  <span className="font-semibold text-deep-navy">Google Merchant XML Feed:</span>
+                  <p className="font-mono text-[10px] text-slate-grey break-all select-all mt-0.5">
+                    {typeof window !== "undefined" ? `${getApiBaseUrl()}/products/feed/google` : "/api/products/feed/google"}
+                  </p>
+                </div>
+                <span className="text-[9px] text-slate-grey mt-1">Use in Google Merchant Center Data Feeds</span>
+              </div>
+
+              <div className="bg-soft-linen/50 p-2.5 rounded border border-slate-grey/20 flex flex-col justify-between">
+                <div>
+                  <span className="font-semibold text-deep-navy">Meta Catalog CSV Feed:</span>
+                  <p className="font-mono text-[10px] text-slate-grey break-all select-all mt-0.5">
+                    {typeof window !== "undefined" ? `${getApiBaseUrl()}/products/feed/meta` : "/api/products/feed/meta"}
+                  </p>
+                </div>
+                <span className="text-[9px] text-slate-grey mt-1">Use in Facebook / Instagram Commerce Manager</span>
+              </div>
             </div>
           </div>
         </div>

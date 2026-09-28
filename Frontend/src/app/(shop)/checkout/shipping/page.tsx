@@ -10,6 +10,7 @@ import { useCheckoutStorage } from "@/hooks/useCheckoutStorage";
 import GiftWrappingSection from "@/components/checkout/GiftWrappingSection";
 import { ShippingData } from "@/types/checkout";
 import { fetchSavedAddresses, SavedAddress } from "@/utils/api";
+import { trackInitiateCheckout } from "@/utils/analytics";
 
 interface FormErrors {
   email?: string;
@@ -23,15 +24,31 @@ interface FormErrors {
 export default function ShippingPage() {
   const router = useRouter();
   const { isLoggedIn, user } = useAuth();
-  const { subtotal, discount, promoType } = useCart();
+  const { items, subtotal, discount, promoType } = useCart();
   const { currency, shippingSettings } = useCurrency();
   const { setShipping, shipping: savedShipping, isLoaded } = useCheckoutStorage();
 
   useEffect(() => {
     if (!isLoggedIn) {
       router.push("/account");
+      return;
     }
-  }, [isLoggedIn, router]);
+
+    if (items && items.length > 0) {
+      trackInitiateCheckout(
+        items.map((i) => ({
+          id: i.id,
+          name: i.title,
+          category: i.subtitle || "Jewelry",
+          price: i.price,
+          quantity: i.quantity,
+          variant: i.material || "",
+        })),
+        subtotal,
+        currency || "INR"
+      );
+    }
+  }, [isLoggedIn, router, items, subtotal, currency]);
 
   // Form State
   const [country, setCountry] = useState("IN");

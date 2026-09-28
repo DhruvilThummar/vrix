@@ -57,15 +57,31 @@ export default function ConditionalScriptLoader() {
     return () => window.removeEventListener("cookieConsentUpdated", handleUpdate as EventListener);
   }, []);
 
+  const [pixelId, setPixelId] = useState<string>(
+    process.env.NEXT_PUBLIC_META_PIXEL_ID || ""
+  );
+  const [gaId, setGaId] = useState<string>(
+    process.env.NEXT_PUBLIC_GA_ID || "G-4MHMGSMVEE"
+  );
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedPixel = localStorage.getItem("vrix_meta_pixel_id");
+      if (storedPixel) setPixelId(storedPixel);
+      const storedGa = localStorage.getItem("vrix_ga_measurement_id");
+      if (storedGa) setGaId(storedGa);
+    }
+  }, []);
+
   if (!consent) return null;
 
   return (
     <>
-      {/* ── Analytics Category (Google Analytics 4) ── */}
-      {consent.analytics && (
+      {/* ── Analytics Category (Google Analytics 4 / Google Ads) ── */}
+      {consent.analytics && gaId && (
         <>
           <Script
-            src="https://www.googletagmanager.com/gtag/js?id=G-4MHMGSMVEE"
+            src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
             strategy="afterInteractive"
           />
           <Script id="google-analytics" strategy="afterInteractive">
@@ -73,14 +89,14 @@ export default function ConditionalScriptLoader() {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-4MHMGSMVEE', { page_path: window.location.pathname });
+              gtag('config', '${gaId}', { page_path: window.location.pathname });
             `}
           </Script>
         </>
       )}
 
-      {/* ── Marketing Category (Meta Pixel) ── */}
-      {consent.marketing && (
+      {/* ── Marketing Category (Meta Pixel for Instagram/Facebook Ads) ── */}
+      {consent.marketing && pixelId && (
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
@@ -91,7 +107,7 @@ export default function ConditionalScriptLoader() {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', 'YOUR_PIXEL_ID');
+            fbq('init', '${pixelId}');
             fbq('track', 'PageView');
           `}
         </Script>

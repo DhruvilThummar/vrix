@@ -9,6 +9,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { useCheckoutStorage } from "@/hooks/useCheckoutStorage";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import PaymentGatewaysSection from "@/components/checkout/PaymentGatewaysSection";
+import { trackPurchase } from "@/utils/analytics";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -47,6 +48,21 @@ export default function PaymentPage() {
   }, [isLoggedIn, items.length, isLoaded, shipping, router]);
 
   const handlePaymentSuccess = (orderId: string, paymentId: string) => {
+    // Track Purchase for Meta Pixel & Google Analytics/Ads
+    trackPurchase(
+      orderId,
+      paymentAmount,
+      currency || "INR",
+      items.map((i) => ({
+        id: i.id,
+        name: i.title,
+        category: i.subtitle || "Jewelry",
+        price: i.price,
+        quantity: i.quantity,
+        variant: i.material || "",
+      }))
+    );
+
     clearCart();
     setOrder({
       orderId,
