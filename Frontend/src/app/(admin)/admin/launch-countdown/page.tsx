@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { fetchLaunchCountdown, updateLaunchCountdown, uploadMedia, fetchNewsletterSubscribers } from "@/utils/api";
 import { DEFAULT_LAUNCH_CONFIG, LaunchCountdownConfig } from "@/context/LaunchCountdownContext";
@@ -43,6 +43,8 @@ export default function AdminLaunchCountdownPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [adminActiveSlide, setAdminActiveSlide] = useState(0);
 
   // VIP Waitlist Subscribers
   const [subscribers, setSubscribers] = useState<string[]>([]);
@@ -104,9 +106,15 @@ export default function AdminLaunchCountdownPage() {
     fetchLaunchCountdown()
       .then((res) => {
         if (res && typeof res === "object") {
+          const loadedBgImages = Array.isArray(res.bgImages) && res.bgImages.length > 0
+            ? res.bgImages
+            : (res.bgImage ? [res.bgImage] : DEFAULT_LAUNCH_CONFIG.bgImages);
+
           setConfig({
             ...DEFAULT_LAUNCH_CONFIG,
             ...res,
+            bgImages: loadedBgImages,
+            bgImage: loadedBgImages?.[0] || DEFAULT_LAUNCH_CONFIG.bgImage,
           });
         }
       })
@@ -115,6 +123,93 @@ export default function AdminLaunchCountdownPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Compute active list of background images
+  const currentBgImages = useMemo(() => {
+    if (Array.isArray(config.bgImages) && config.bgImages.length > 0) {
+      return config.bgImages.filter(Boolean);
+    }
+    return [config.bgImage || PRESET_BACKGROUNDS[0].url];
+  }, [config.bgImages, config.bgImage]);
+
+  // Live preview ticker for admin
+  useEffect(() => {
+    if (currentBgImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setAdminActiveSlide((prev) => (prev + 1) % currentBgImages.length);
+    }, config.slideInterval || 4000);
+    return () => clearInterval(interval);
+  }, [currentBgImages.length, config.slideInterval]);
+
+  const handleAddImage = (urlToAdd?: string) => {
+    const url = (urlToAdd || newImageUrl).trim();
+    if (!url) {
+      showToast("Please enter an image URL.");
+      return;
+    }
+    if (currentBgImages.includes(url)) {
+      showToast("This image is already in the slider.");
+      return;
+    }
+    const updated = [...currentBgImages, url];
+    setConfig((prev) => ({
+      ...prev,
+      bgImages: updated,
+      bgImage: updated[0] || prev.bgImage,
+    }));
+    setNewImageUrl("");
+    showToast("Added image to countdown background carousel.");
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    if (currentBgImages.length <= 1) {
+      showToast("At least one background image is required in the carousel.");
+      return;
+    }
+    const updated = currentBgImages.filter((_, idx) => idx !== indexToRemove);
+    setConfig((prev) => ({
+      ...prev,
+      bgImages: updated,
+      bgImage: updated[0] || "",
+    }));
+    showToast("Removed image from countdown carousel.");
+  };
+
+  const handleMoveImage = (fromIdx: number, toIdx: number) => {
+    if (toIdx < 0 || toIdx >= currentBgImages.length) return;
+    const updated = [...currentBgImages];
+    const [moved] = updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, moved);
+    setConfig((prev) => ({
+      ...prev,
+      bgImages: updated,
+      bgImage: updated[0] || prev.bgImage,
+    }));
+  };
+
+  const handleTogglePreset = (presetUrl: string) => {
+    if (currentBgImages.includes(presetUrl)) {
+      if (currentBgImages.length <= 1) {
+        showToast("At least one image is required in the carousel.");
+        return;
+      }
+      const updated = currentBgImages.filter((u) => u !== presetUrl);
+      setConfig((prev) => ({
+        ...prev,
+        bgImages: updated,
+        bgImage: updated[0] || "",
+      }));
+      showToast("Preset removed from carousel.");
+    } else {
+      const updated = [...currentBgImages, presetUrl];
+      setConfig((prev) => ({
+        ...prev,
+        bgImages: updated,
+        bgImage: updated[0] || prev.bgImage,
+      }));
+      showToast("Preset added to carousel.");
+    }
+  };
 
   // Compute live admin preview timer
   const targetTime = new Date(config.targetDate).getTime();
@@ -143,17 +238,27 @@ export default function AdminLaunchCountdownPage() {
     try {
       const res = await uploadMedia(file);
       if (res?.url) {
-        setConfig((prev) => ({ ...prev, bgImage: res.url }));
-        showToast("Hero background image uploaded successfully!");
+        const updated = currentBgImages.includes(res.url) ? currentBgImages : [...currentBgImages, res.url];
+        setConfig((prev) => ({
+          ...prev,
+          bgImages: updated,
+          bgImage: updated[0] || res.url,
+        }));
+        showToast("Image uploaded and added to countdown carousel!");
       }
     } catch (err: any) {
       console.warn("Server upload failed, falling back to local base64 preview:", err);
-      // Fallback: Read as base64 data URL so admin can preview & use image even if backend media upload is offline
       const reader = new FileReader();
       reader.onload = () => {
         if (typeof reader.result === "string") {
-          setConfig((prev) => ({ ...prev, bgImage: reader.result as string }));
-          showToast("Image loaded successfully (Local/Client Preview).");
+          const base64 = reader.result as string;
+          const updated = [...currentBgImages, base64];
+          setConfig((prev) => ({
+            ...prev,
+            bgImages: updated,
+            bgImage: updated[0] || base64,
+          }));
+          showToast("Image loaded and added to carousel (Client Preview).");
         }
       };
       reader.onerror = () => {
@@ -162,6 +267,7 @@ export default function AdminLaunchCountdownPage() {
       reader.readAsDataURL(file);
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -169,7 +275,13 @@ export default function AdminLaunchCountdownPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateLaunchCountdown(config);
+      const payload: LaunchCountdownConfig = {
+        ...config,
+        bgImages: currentBgImages,
+        bgImage: currentBgImages[0] || config.bgImage || DEFAULT_LAUNCH_CONFIG.bgImage,
+      };
+      await updateLaunchCountdown(payload);
+      setConfig(payload);
       showToast("🎉 Launch & Countdown settings saved successfully!");
     } catch (err: any) {
       showToast(err.message || "Failed to save settings.");
@@ -590,87 +702,324 @@ export default function AdminLaunchCountdownPage() {
             </div>
           </div>
 
-          {/* Background Image Selection & Upload */}
-          <div className="space-y-3 pt-2 border-t border-slate-grey/15">
-            <label className="block text-xs font-inter font-primary uppercase tracking-wider font-semibold text-deep-navy">
-              Hero Background Image
-            </label>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={config.bgImage}
-                onChange={(e) => setConfig((prev) => ({ ...prev, bgImage: e.target.value }))}
-                placeholder="https://..."
-                className="flex-1 bg-soft-linen/30 border border-slate-grey/30 rounded px-3 py-2 text-xs font-inter focus:outline-none focus:border-deep-navy"
-              />
-              <label className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-deep-navy text-xs font-inter font-semibold rounded cursor-pointer transition-colors shrink-0 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm">upload</span>
-                <span>{uploading ? "Uploading..." : "Upload Photo"}</span>
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
-              </label>
-            </div>
-
-            {/* Uploaded Background Preview Thumbnail */}
-            {config.bgImage && (
-              <div className="relative w-full h-32 rounded overflow-hidden border border-slate-grey/30 bg-black/5 flex items-center justify-center group">
-                <img
-                  src={config.bgImage}
-                  alt="Selected Background Preview"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <a
-                    href={config.bgImage}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-1 bg-white/90 text-deep-navy text-[10px] font-semibold uppercase tracking-wider rounded"
-                  >
-                    Open Full
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => setConfig((prev) => ({ ...prev, bgImage: "" }))}
-                    className="px-3 py-1 bg-red-600 text-white text-[10px] font-semibold uppercase tracking-wider rounded hover:bg-red-700"
-                  >
-                    Remove
-                  </button>
+          {/* ══════════════════════════════════════════════════════════════════════════════
+              HERO BACKGROUND IMAGE CAROUSEL & SLIDES MANAGER (STORE HERO STYLE)
+              ══════════════════════════════════════════════════════════════════════════════ */}
+          <div className="space-y-6 pt-5 border-t border-slate-grey/20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-inter font-primary uppercase tracking-wider font-bold text-deep-navy">
+                    Hero Background Carousel (Changing Images)
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-inter font-semibold bg-deep-navy/10 text-deep-navy">
+                    {currentBgImages.length} {currentBgImages.length === 1 ? "Image" : "Images"} in Carousel
+                  </span>
                 </div>
-                <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 text-white text-[9px] font-inter uppercase tracking-wider rounded backdrop-blur-xs">
-                  Active Hero Background
-                </div>
+                <p className="font-jost font-secondary text-[11px] text-slate-grey mt-0.5">
+                  Just like the store hero section, background images automatically transition with smooth crossfade animations. Manage which images to include, their order, and timing.
+                </p>
               </div>
-            )}
 
-            {/* Presets Grid */}
-            <div>
-              <p className="text-[11px] font-inter text-slate-grey uppercase tracking-wider mb-2">
-                Or pick a luxury preset background:
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {PRESET_BACKGROUNDS.map((preset, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setConfig((prev) => ({ ...prev, bgImage: preset.url }))}
-                    className={`relative aspect-video rounded overflow-hidden border-2 cursor-pointer transition-all group ${
-                      config.bgImage === preset.url ? "border-deep-navy ring-2 ring-deep-navy/30" : "border-slate-grey/20 hover:border-slate-grey/60"
+              {/* Slide Interval Speed Controls */}
+              <div className="flex items-center gap-1.5 self-start sm:self-auto bg-slate-100 p-1 rounded border border-slate-grey/20">
+                <span className="text-[10px] font-inter uppercase tracking-wider font-medium text-slate-grey px-1.5">
+                  Interval:
+                </span>
+                {[3000, 4000, 5000, 6000].map((ms) => (
+                  <button
+                    key={ms}
+                    type="button"
+                    onClick={() => setConfig((prev) => ({ ...prev, slideInterval: ms }))}
+                    className={`px-2 py-1 rounded text-[10px] font-inter font-semibold transition-all cursor-pointer ${
+                      (config.slideInterval || 4000) === ms
+                        ? "bg-deep-navy text-white shadow-xs"
+                        : "text-slate-600 hover:text-deep-navy hover:bg-white"
                     }`}
                   >
-                    <img src={preset.url} alt={preset.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    <div className="absolute inset-0 bg-black/40 flex items-end p-1.5">
-                      <span className="text-[10px] text-white font-inter tracking-wider truncate">{preset.name}</span>
-                    </div>
-                  </div>
+                    {ms / 1000}s
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Dark Overlay Slider */}
-            <div className="pt-2">
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs font-inter font-primary uppercase tracking-wider text-slate-grey">
-                  Background Dimming Overlay
+            {/* Interactive Live Mini Preview of the Carousel */}
+            <div className="relative w-full h-44 sm:h-52 rounded-lg overflow-hidden border border-slate-grey/30 bg-[#0A0805] shadow-inner flex items-center justify-center">
+              {/* Slides with crossfade transition matching storefront */}
+              {currentBgImages.map((imgUrl, idx) => (
+                <div
+                  key={`${imgUrl}-${idx}`}
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                    idx === adminActiveSlide ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                  }`}
+                >
+                  <img
+                    src={imgUrl}
+                    alt={`Preview slide ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+
+              {/* Overlay with admin opacity slider value */}
+              <div
+                className="absolute inset-0 bg-black z-20 pointer-events-none transition-opacity duration-300"
+                style={{ opacity: (config.bgOverlayOpacity || 45) / 100 }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80 pointer-events-none z-20" />
+
+              {/* Mockup Brand & Countdown Overlay */}
+              <div className="relative z-30 flex flex-col items-center justify-center text-center text-white px-4">
+                <span className="text-[8px] sm:text-[9px] font-inter uppercase tracking-[0.2em] text-white/60 mb-0.5">
+                  {config.badgeText || "UNVEILING SOON"}
+                </span>
+                <span className="font-aquavit text-lg sm:text-2xl tracking-[0.3em] font-light mb-1">
+                  {config.title || "V R I X"}
+                </span>
+                <span className="font-jost italic text-[10px] sm:text-[11px] text-white/80 max-w-xs mb-2">
+                  {config.subtitle || "A luxury that feels like you."}
+                </span>
+
+                {/* Mini timer digits */}
+                <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-xs px-3 py-1 rounded border border-white/15">
+                  <span className="font-inter text-xs tabular-nums font-semibold">{String(days).padStart(2, "0")}d</span>
+                  <span className="text-white/40 text-[10px]">:</span>
+                  <span className="font-inter text-xs tabular-nums font-semibold">{String(hours).padStart(2, "0")}h</span>
+                  <span className="text-white/40 text-[10px]">:</span>
+                  <span className="font-inter text-xs tabular-nums font-semibold">{String(minutes).padStart(2, "0")}m</span>
+                  <span className="text-white/40 text-[10px]">:</span>
+                  <span className="font-inter text-xs tabular-nums font-semibold text-amber-300">{String(seconds).padStart(2, "0")}s</span>
+                </div>
+              </div>
+
+              {/* Slide indicators in preview */}
+              {currentBgImages.length > 1 && (
+                <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5">
+                  {currentBgImages.map((_, dotIdx) => (
+                    <button
+                      key={dotIdx}
+                      type="button"
+                      onClick={() => setAdminActiveSlide(dotIdx)}
+                      className={`h-1 transition-all duration-300 rounded-full cursor-pointer ${
+                        dotIdx === adminActiveSlide ? "w-5 bg-amber-300" : "w-1.5 bg-white/40"
+                      }`}
+                      aria-label={`Jump to slide ${dotIdx + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="absolute top-2.5 left-2.5 z-30 px-2 py-0.5 rounded bg-black/70 backdrop-blur-xs text-[9px] font-inter uppercase tracking-wider text-white border border-white/20">
+                Live Carousel Preview · Slide {adminActiveSlide + 1} of {currentBgImages.length}
+              </div>
+            </div>
+
+            {/* Active Slides Management Grid ("kya rakhva and kya n rakhva") */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-inter font-primary uppercase tracking-wider font-semibold text-deep-navy">
+                  Active Carousel Slides ({currentBgImages.length})
                 </label>
-                <span className="text-xs font-inter font-bold text-deep-navy">{config.bgOverlayOpacity || 45}%</span>
+                <span className="text-[10px] font-inter text-slate-grey">
+                  Reorder slides or remove them below
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+                {currentBgImages.map((imgUrl, sIdx) => {
+                  const isFirst = sIdx === 0;
+                  const isLast = sIdx === currentBgImages.length - 1;
+                  return (
+                    <div
+                      key={sIdx}
+                      className="bg-soft-linen/30 border border-slate-grey/25 rounded-md overflow-hidden flex flex-col justify-between group hover:border-deep-navy/40 transition-all shadow-2xs"
+                    >
+                      {/* Image Thumbnail */}
+                      <div className="relative aspect-video w-full bg-black/10 overflow-hidden">
+                        <img
+                          src={imgUrl}
+                          alt={`Slide ${sIdx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {/* Slide order badge */}
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/75 backdrop-blur-xs text-[9px] font-inter font-semibold uppercase tracking-wider text-white">
+                          {isFirst ? "Slide #1 (Cover)" : `Slide #${sIdx + 1}`}
+                        </div>
+
+                        {/* Quick remove button on thumbnail hover */}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(sIdx)}
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-600/90 hover:bg-red-700 text-white flex items-center justify-center transition-all cursor-pointer shadow"
+                          title="Remove from Carousel"
+                        >
+                          <span className="material-symbols-outlined text-xs">close</span>
+                        </button>
+                      </div>
+
+                      {/* Controls Footer */}
+                      <div className="p-2.5 bg-white space-y-2 border-t border-slate-grey/15">
+                        <div className="truncate text-[10px] font-mono text-slate-grey" title={imgUrl}>
+                          {imgUrl.length > 40 ? "..." + imgUrl.slice(-35) : imgUrl}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-1 pt-1 border-t border-slate-grey/10">
+                          {/* Reorder Left */}
+                          <button
+                            type="button"
+                            onClick={() => handleMoveImage(sIdx, sIdx - 1)}
+                            disabled={isFirst}
+                            className="p-1 rounded bg-slate-100 hover:bg-deep-navy hover:text-white text-slate-700 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer flex items-center gap-0.5 text-[10px] font-inter"
+                            title="Move Earlier"
+                          >
+                            <span className="material-symbols-outlined text-xs">arrow_back</span>
+                            <span>Left</span>
+                          </button>
+
+                          {/* Reorder Right */}
+                          <button
+                            type="button"
+                            onClick={() => handleMoveImage(sIdx, sIdx + 1)}
+                            disabled={isLast}
+                            className="p-1 rounded bg-slate-100 hover:bg-deep-navy hover:text-white text-slate-700 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer flex items-center gap-0.5 text-[10px] font-inter"
+                            title="Move Later"
+                          >
+                            <span>Right</span>
+                            <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(sIdx)}
+                            className="p-1 px-2 rounded text-red-600 hover:bg-red-50 text-[10px] font-inter font-semibold transition-colors cursor-pointer"
+                            title="Remove image from carousel"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Add Image Bar (Upload + URL) */}
+            <div className="bg-soft-linen/40 border border-slate-grey/25 rounded-md p-4 space-y-3">
+              <label className="block text-xs font-inter font-primary uppercase tracking-wider font-semibold text-deep-navy">
+                Add Images to Countdown Carousel
+              </label>
+
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <input
+                  type="text"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddImage();
+                    }
+                  }}
+                  placeholder="Paste direct image URL (https://images.unsplash.com/...)"
+                  className="flex-1 bg-white border border-slate-grey/30 rounded px-3 py-2 text-xs font-inter focus:outline-none focus:border-deep-navy"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddImage()}
+                  disabled={!newImageUrl.trim()}
+                  className="px-4 py-2 bg-deep-navy text-white rounded text-xs font-inter font-semibold uppercase tracking-wider hover:bg-ink-black transition-colors disabled:opacity-40 cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+                >
+                  <span className="material-symbols-outlined text-sm">add</span>
+                  <span>Add URL</span>
+                </button>
+
+                <label className="px-4 py-2 bg-white border border-slate-grey/30 hover:bg-slate-100 text-deep-navy text-xs font-inter font-semibold rounded cursor-pointer transition-colors shrink-0 flex items-center justify-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm">upload</span>
+                  <span>{uploading ? "Uploading..." : "Upload New Photo"}</span>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
+                </label>
+              </div>
+              <p className="font-jost font-secondary text-[11px] text-slate-grey">
+                Upload images or paste direct links. Any added images will automatically loop into the countdown hero slider.
+              </p>
+            </div>
+
+            {/* Preset Library with Toggle (Click to add or remove from carousel) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-inter text-slate-grey uppercase tracking-wider font-medium">
+                  Curated Luxury Presets (Click to add/remove from carousel):
+                </p>
+                <span className="text-[10px] font-inter text-slate-grey">
+                  Toggle on/off with 1-click
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {PRESET_BACKGROUNDS.map((preset, idx) => {
+                  const isInCarousel = currentBgImages.includes(preset.url);
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => handleTogglePreset(preset.url)}
+                      className={`relative aspect-video rounded-md overflow-hidden border-2 cursor-pointer transition-all group ${
+                        isInCarousel
+                          ? "border-emerald-600 ring-2 ring-emerald-600/30 shadow-xs"
+                          : "border-slate-grey/25 hover:border-deep-navy/60 opacity-75 hover:opacity-100"
+                      }`}
+                    >
+                      <img
+                        src={preset.url}
+                        alt={preset.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex flex-col justify-between p-2">
+                        {/* Top badge */}
+                        <div className="self-end">
+                          {isInCarousel ? (
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-inter font-bold uppercase tracking-wider flex items-center gap-0.5 shadow">
+                              <span className="material-symbols-outlined text-[10px]">check</span>
+                              <span>In Slider</span>
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded bg-black/60 text-white/80 text-[9px] font-inter uppercase tracking-wider group-hover:bg-deep-navy">
+                              + Add
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Bottom label */}
+                        <div>
+                          <p className="text-[10px] text-white font-inter tracking-wider font-medium truncate">
+                            {preset.name}
+                          </p>
+                          <span className="text-[8px] text-white/70 block">
+                            {isInCarousel ? "Click to remove" : "Click to add"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Dark Dimming Overlay Slider */}
+            <div className="pt-2 bg-soft-linen/25 p-4 rounded-md border border-slate-grey/20">
+              <div className="flex justify-between items-center mb-1.5">
+                <div>
+                  <label className="text-xs font-inter font-primary uppercase tracking-wider font-semibold text-deep-navy">
+                    Background Dimming Overlay
+                  </label>
+                  <p className="font-jost font-secondary text-[11px] text-slate-grey">
+                    Controls dark tint opacity over all images so countdown numbers and typography remain perfectly legible.
+                  </p>
+                </div>
+                <span className="text-sm font-inter font-bold text-deep-navy px-2.5 py-1 bg-white rounded border border-slate-grey/20 shadow-2xs">
+                  {config.bgOverlayOpacity || 45}%
+                </span>
               </div>
               <input
                 type="range"
@@ -679,8 +1028,13 @@ export default function AdminLaunchCountdownPage() {
                 step="5"
                 value={config.bgOverlayOpacity || 45}
                 onChange={(e) => setConfig((prev) => ({ ...prev, bgOverlayOpacity: Number(e.target.value) }))}
-                className="w-full accent-deep-navy cursor-pointer"
+                className="w-full accent-deep-navy cursor-pointer mt-2"
               />
+              <div className="flex justify-between text-[10px] text-slate-grey font-inter mt-1">
+                <span>10% (Subtle)</span>
+                <span>45% (Recommended)</span>
+                <span>85% (Deep Noir)</span>
+              </div>
             </div>
           </div>
 

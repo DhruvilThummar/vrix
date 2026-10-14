@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLaunchCountdown } from "@/context/LaunchCountdownContext";
@@ -30,6 +30,27 @@ export default function LaunchCountdownHero() {
   const [savedEmail, setSavedEmail] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Multi-image slides array: support config.bgImages, fallback to [config.bgImage]
+  const slides = useMemo(() => {
+    if (Array.isArray(config.bgImages) && config.bgImages.length > 0) {
+      const valid = config.bgImages.filter((img) => typeof img === "string" && img.trim().length > 0);
+      if (valid.length > 0) return valid;
+    }
+    return [config.bgImage || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop"];
+  }, [config.bgImages, config.bgImage]);
+
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  // Auto Slider: advance slide every interval (default 4000ms / 4s, matching storefront hero)
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const intervalTime = Math.max(Number(config.slideInterval) || 4000, 2000);
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % slides.length);
+    }, intervalTime);
+    return () => clearInterval(interval);
+  }, [slides.length, config.slideInterval]);
 
   useEffect(() => {
     try {
@@ -103,9 +124,7 @@ export default function LaunchCountdownHero() {
     }
   };
 
-  const bgImage = config.bgImage || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop";
   const overlayOpacity = typeof config.bgOverlayOpacity === "number" ? config.bgOverlayOpacity / 100 : 0.45;
-
   const formatNumber = (num: number) => String(num).padStart(2, "0");
 
   return (
@@ -113,28 +132,42 @@ export default function LaunchCountdownHero() {
       suppressHydrationWarning
       className="relative w-full min-h-[100dvh] min-h-screen flex flex-col justify-between overflow-x-hidden overflow-y-auto bg-[#0A0805] text-white"
     >
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={bgImage}
-          alt={config.title || "VRIX Jewellery Launch"}
-          fill
-          priority
-          fetchPriority="high"
-          quality={80}
-          sizes="100vw"
-          unoptimized={bgImage?.startsWith("http://localhost") || bgImage?.startsWith("http://127.0.0.1") || bgImage?.startsWith("data:")}
-          className="object-cover object-center"
-        />
+      {/* Background Image Carousel (Smooth Hero-style Crossfade Transitions) */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
+        {slides.map((imgSrc, sIdx) => {
+          const isActive = sIdx === activeSlide;
+          return (
+            <div
+              key={`${imgSrc}-${sIdx}`}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+              }`}
+            >
+              <Image
+                src={imgSrc}
+                alt={config.title ? `${config.title} Background ${sIdx + 1}` : `VRIX Jewellery Launch ${sIdx + 1}`}
+                fill
+                priority={sIdx === 0}
+                fetchPriority={sIdx === 0 ? "high" : "low"}
+                quality={80}
+                sizes="100vw"
+                unoptimized={imgSrc?.startsWith("http://localhost") || imgSrc?.startsWith("http://127.0.0.1") || imgSrc?.startsWith("data:")}
+                className={`object-cover object-center transform transition-transform duration-10000 ease-out ${
+                  isActive ? "scale-105" : "scale-100"
+                }`}
+              />
+            </div>
+          );
+        })}
         {/* Dark overlay */}
         <div
-          className="absolute inset-0 bg-black"
+          className="absolute inset-0 bg-black z-20 pointer-events-none transition-opacity duration-500"
           style={{ opacity: overlayOpacity }}
         />
         {/* Cinematic gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/35 to-black/80 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/35 to-black/85 pointer-events-none z-20" />
         {/* Warm golden tint */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/10 via-transparent to-amber-800/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/10 via-transparent to-amber-800/10 pointer-events-none z-20" />
       </div>
 
       {/* Delicate Golden Orbit & Star Overlay from Reference Image */}
@@ -402,11 +435,30 @@ export default function LaunchCountdownHero() {
         {/* Contact Us Button Matching Reference */}
         <Link
           href={config.contactButtonUrl || "/contact"}
-          className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-[10px] sm:text-[11px] font-inter tracking-[0.24em] uppercase pb-1 border-b border-white/30 hover:border-white transition-all duration-300 select-none mb-4 sm:mb-6 group"
+          className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-[10px] sm:text-[11px] font-inter tracking-[0.24em] uppercase pb-1 border-b border-white/30 hover:border-white transition-all duration-300 select-none mb-3 sm:mb-4 group"
         >
           <span>{config.contactButtonText || "Contact Us"}</span>
           <span className="text-xs group-hover:translate-x-1 transition-transform">→</span>
         </Link>
+
+        {/* Slide Indicator Dots (When multiple background images are configured) */}
+        {slides.length > 1 && (
+          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4 select-none z-30">
+            {slides.map((_, sIdx) => (
+              <button
+                key={sIdx}
+                type="button"
+                onClick={() => setActiveSlide(sIdx)}
+                className={`h-1 sm:h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
+                  sIdx === activeSlide
+                    ? "w-6 sm:w-7 bg-amber-200 shadow-[0_0_8px_rgba(253,230,138,0.7)]"
+                    : "w-1.5 sm:w-2 bg-white/40 hover:bg-white/80"
+                }`}
+                aria-label={`Go to slide ${sIdx + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Bottom Pillars Section — Fully Responsive Across All Devices (Mobile 2x2, Tablet & Desktop 4 Cols) */}

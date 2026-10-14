@@ -246,6 +246,13 @@ router.get("/cms/launch-countdown", async (req, res) => {
       subtitle: "A luxury that feels like you.",
       description: "Lab-grown diamonds and fine jewellery crafted with architectural minimalism and quiet luxury. Our inaugural digital atelier arrives soon.",
       bgImage: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop",
+      bgImages: [
+        "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=2000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=2000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=2000&auto=format&fit=crop"
+      ],
+      slideInterval: 4000,
       bgOverlayOpacity: 45,
       showAnnouncementBar: true,
       announcementText: "✦ OFFICIAL ATELIER LAUNCH COUNTDOWN — ENTERING A NEW ERA OF LAB-GROWN DIAMONDS ✦",
@@ -257,7 +264,11 @@ router.get("/cms/launch-countdown", async (req, res) => {
       contactButtonUrl: "/contact",
       autoUnlockOnZero: true
     };
-    const payload = setting || defaultData;
+    const payload = setting ? {
+      ...defaultData,
+      ...setting,
+      bgImages: Array.isArray(setting.bgImages) && setting.bgImages.length > 0 ? setting.bgImages : (setting.bgImage ? [setting.bgImage] : defaultData.bgImages)
+    } : defaultData;
     setServerCache("cms_launch_countdown", payload, CACHE_TTL.CMS_CONTENT);
     res.json(payload);
   } catch (err) {

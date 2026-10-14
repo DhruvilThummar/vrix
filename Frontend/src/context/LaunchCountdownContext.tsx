@@ -11,6 +11,8 @@ export interface LaunchCountdownConfig {
   subtitle: string;
   description: string;
   bgImage: string;
+  bgImages?: string[];
+  slideInterval?: number;
   bgOverlayOpacity: number;
   showAnnouncementBar: boolean;
   announcementText: string;
@@ -67,6 +69,13 @@ export const DEFAULT_LAUNCH_CONFIG: LaunchCountdownConfig = {
   subtitle: "A luxury that feels like you.",
   description: "Lab-grown diamonds and fine jewellery crafted with architectural minimalism and quiet luxury. Our inaugural digital atelier arrives soon.",
   bgImage: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop",
+  bgImages: [
+    "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=2000&auto=format&fit=crop"
+  ],
+  slideInterval: 4000,
   bgOverlayOpacity: 45,
   showAnnouncementBar: true,
   announcementText: "✦ OFFICIAL ATELIER LAUNCH COUNTDOWN — ENTERING A NEW ERA OF LAB-GROWN DIAMONDS ✦",
