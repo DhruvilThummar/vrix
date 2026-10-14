@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import Header from "@/components/shop/Header";
 import Footer from "@/components/shop/Footer";

@@ -93,7 +93,7 @@ export const userService = {
       orders: userData.orders || [],
       wishlist: userData.wishlist || [],
       isVrixPlusMember: !!userData.isVrixPlusMember,
-      vrixPlusJoinedDate: userData.vrixPlusJoinedDate || null,
+      vrixPlusJoinedDate: userData.isVrixPlusMember ? (userData.vrixPlusJoinedDate || null) : null,
       dateOfBirth: userData.dateOfBirth || null,
       createdAt: userData.createdAt || nowIso,
       updatedAt: nowIso,

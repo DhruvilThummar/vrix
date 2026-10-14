@@ -192,8 +192,11 @@ export default function LaunchCountdownHero() {
         {/* Screen Reader Title for SEO/Accessibility */}
         <h1 className="sr-only">{config.title || "VRIX"}</h1>
 
-        {/* Main Heading */}
-        <h2 className="font-inter text-[13px] sm:text-base md:text-lg lg:text-xl text-white/95 font-light tracking-[0.2em] sm:tracking-[0.25em] uppercase mb-3 sm:mb-4 leading-relaxed max-w-2xl">
+        {/* Main Heading — Classical Luxury Serif Matching Reference */}
+        <h2
+          className="text-base sm:text-xl md:text-2xl lg:text-3xl text-white/95 font-light tracking-[0.22em] sm:tracking-[0.28em] uppercase mb-3 sm:mb-4 leading-relaxed max-w-3xl"
+          style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
+        >
           {config.subtitle ? (
             <span>{config.subtitle}</span>
           ) : (
@@ -203,84 +206,118 @@ export default function LaunchCountdownHero() {
 
         {/* Editorial Description */}
         {config.description ? (
-          <p className="font-jost text-[11px] sm:text-xs md:text-sm text-white/65 max-w-lg mb-6 md:mb-8 font-light leading-relaxed tracking-wide">
+          <p className="font-jost text-[11px] sm:text-xs md:text-sm text-white/70 max-w-lg mb-6 md:mb-9 font-light leading-relaxed tracking-wide">
             {config.description}
           </p>
         ) : (
-          <p className="font-jost text-[11px] sm:text-xs md:text-sm text-white/65 max-w-lg mb-6 md:mb-8 font-light leading-relaxed tracking-wide">
+          <p className="font-jost text-[11px] sm:text-xs md:text-sm text-white/70 max-w-lg mb-6 md:mb-9 font-light leading-relaxed tracking-wide">
             Jewelry shaped by intention. Defined by detail.
             <br />
             Discover a quieter expression of luxury, created for the way you live.
           </p>
         )}
 
-        {/* Countdown Timer — Minimal ✦ Star-Separated Style Matching Reference */}
+        {/* Countdown Timer — Luxury Serif & Hairline ✦ Star Separators Matching Reference */}
         {!timeLeft.isExpired ? (
-          <div suppressHydrationWarning className="mb-6 md:mb-8">
-            <div className="flex items-start justify-center gap-3 sm:gap-5 md:gap-8">
+          <div suppressHydrationWarning className="relative mb-7 md:mb-10 select-none">
+            {/* Celestial Orbit Arc around the countdown */}
+            <div className="absolute -inset-x-8 -inset-y-6 pointer-events-none hidden sm:block">
+              <svg viewBox="0 0 900 240" fill="none" className="w-full h-full opacity-60">
+                <path
+                  d="M 120 180 C 260 50, 680 40, 840 130"
+                  stroke="url(#orbitGold)"
+                  strokeWidth="0.85"
+                />
+                {/* Sparkle star at top right of arc */}
+                <g transform="translate(735, 68)">
+                  <path d="M 0 -7 Q 0 0 7 0 Q 0 0 0 7 Q 0 0 -7 0 Q 0 0 0 -7 Z" fill="#FFE8B2" />
+                </g>
+                {/* Golden bead dot at bottom right */}
+                <circle cx="838" cy="130" r="3.5" fill="#E5D3AE" opacity="0.85" />
+                <defs>
+                  <linearGradient id="orbitGold" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#CBB48C" stopOpacity="0" />
+                    <stop offset="60%" stopColor="#FFE8B2" stopOpacity="0.7" />
+                    <stop offset="100%" stopColor="#CBB48C" stopOpacity="0.2" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+
+            <div className="relative z-10 flex items-center justify-center gap-2 sm:gap-4 md:gap-6">
               {/* DAYS */}
-              <div className="flex flex-col items-center min-w-[50px] sm:min-w-[65px]">
+              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[95px]">
                 <span
                   suppressHydrationWarning
-                  className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-white tabular-nums tracking-tight leading-none"
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.days)}
                 </span>
-                <span className="font-inter text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-white/50 mt-2 font-medium">
+                <span className="font-inter font-primary text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-white/55 mt-2.5 sm:mt-3 font-medium">
                   Days
                 </span>
               </div>
 
-              {/* Separator ✦ */}
-              <div className="flex flex-col items-center pt-3 sm:pt-4 md:pt-6">
-                <span className="text-amber-200/60 text-xs sm:text-sm select-none">✦</span>
+              {/* Separator Hairline + ✦ Star */}
+              <div className="flex flex-col items-center justify-center self-stretch px-1 sm:px-2 md:px-3 opacity-70">
+                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
+                <span className="text-amber-200 text-xs sm:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
               </div>
 
               {/* HOURS */}
-              <div className="flex flex-col items-center min-w-[50px] sm:min-w-[65px]">
+              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[95px]">
                 <span
                   suppressHydrationWarning
-                  className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-white tabular-nums tracking-tight leading-none"
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.hours)}
                 </span>
-                <span className="font-inter text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-white/50 mt-2 font-medium">
+                <span className="font-inter font-primary text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-white/55 mt-2.5 sm:mt-3 font-medium">
                   Hours
                 </span>
               </div>
 
-              {/* Separator ✦ */}
-              <div className="flex flex-col items-center pt-3 sm:pt-4 md:pt-6">
-                <span className="text-amber-200/60 text-xs sm:text-sm select-none">✦</span>
+              {/* Separator Hairline + ✦ Star */}
+              <div className="flex flex-col items-center justify-center self-stretch px-1 sm:px-2 md:px-3 opacity-70">
+                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
+                <span className="text-amber-200 text-xs sm:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
               </div>
 
               {/* MINUTES */}
-              <div className="flex flex-col items-center min-w-[50px] sm:min-w-[65px]">
+              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[95px]">
                 <span
                   suppressHydrationWarning
-                  className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-white tabular-nums tracking-tight leading-none"
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.minutes)}
                 </span>
-                <span className="font-inter text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-white/50 mt-2 font-medium">
+                <span className="font-inter font-primary text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-white/55 mt-2.5 sm:mt-3 font-medium">
                   Minutes
                 </span>
               </div>
 
-              {/* Separator ✦ */}
-              <div className="flex flex-col items-center pt-3 sm:pt-4 md:pt-6">
-                <span className="text-amber-200/60 text-xs sm:text-sm select-none">✦</span>
+              {/* Separator Hairline + ✦ Star */}
+              <div className="flex flex-col items-center justify-center self-stretch px-1 sm:px-2 md:px-3 opacity-70">
+                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
+                <span className="text-amber-200 text-xs sm:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
               </div>
 
               {/* SECONDS */}
-              <div className="flex flex-col items-center min-w-[50px] sm:min-w-[65px]">
+              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[95px]">
                 <span
                   suppressHydrationWarning
-                  className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-white tabular-nums tracking-tight leading-none"
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.seconds)}
                 </span>
-                <span className="font-inter text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-white/50 mt-2 font-medium">
+                <span className="font-inter font-primary text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-white/55 mt-2.5 sm:mt-3 font-medium">
                   Seconds
                 </span>
               </div>
@@ -296,21 +333,26 @@ export default function LaunchCountdownHero() {
 
         {/* VIP Early Access / Waitlist Box */}
         {config.enableWaitlist && (
-          <div className="w-full max-w-sm mx-auto mb-5 sm:mb-6">
+          <div className="w-full max-w-md mx-auto mb-5 sm:mb-6 select-none">
             {subscribed ? (
-              <div className="py-4 px-5 text-center">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-amber-300 text-sm">✦</span>
-                  <p className="font-inter text-[11px] sm:text-xs tracking-[0.2em] uppercase font-semibold text-white/95">
+              <div className="py-2 px-4 text-center">
+                <div className="flex items-center justify-center gap-2.5 mb-1.5">
+                  <svg className="w-4 h-4 text-amber-200/90" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+                  </svg>
+                  <p
+                    className="text-xs sm:text-sm tracking-[0.25em] uppercase text-white/95 font-light"
+                    style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
+                  >
                     You&apos;re on the list.
                   </p>
                 </div>
-                <p className="font-jost text-[11px] sm:text-xs text-white/60 leading-relaxed">
+                <p className="font-jost text-[11px] sm:text-xs text-white/65 leading-relaxed max-w-sm mx-auto">
                   {successMsg || config.waitlistSuccessMsg || "Early access. First collection previews. A closer look at the world of VRIX."}
                 </p>
                 {savedEmail && (
-                  <p className="font-inter text-[10px] text-white/40 mt-2 tracking-wider">
-                    Registered: <span className="text-amber-200/80 font-medium">{savedEmail}</span>
+                  <p className="font-jost text-[11px] sm:text-xs text-white/55 mt-2">
+                    Registered: <span className="text-amber-200/90 font-medium">{savedEmail}</span>
                   </p>
                 )}
                 <button
@@ -320,13 +362,13 @@ export default function LaunchCountdownHero() {
                     setSuccessMsg(null);
                     setEmail("");
                   }}
-                  className="mt-3 text-[10px] text-white/40 hover:text-white/70 underline underline-offset-4 tracking-[0.15em] uppercase font-inter cursor-pointer transition-colors"
+                  className="mt-2.5 text-[9px] sm:text-[10px] text-white/45 hover:text-white/80 underline underline-offset-4 tracking-[0.2em] uppercase font-inter cursor-pointer transition-colors block mx-auto"
                 >
                   Register another email
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2.5 w-full">
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2.5 w-full max-w-sm mx-auto">
                 <input
                   type="email"
                   value={email}
@@ -352,20 +394,20 @@ export default function LaunchCountdownHero() {
               </form>
             )}
             {errorMsg && (
-              <p className="text-[10px] text-red-300 mt-2 font-jost text-center bg-red-950/30 py-1.5 px-3 border border-red-500/20">
+              <p className="text-[10px] text-red-300 mt-2 font-jost text-center bg-red-950/30 py-1.5 px-3 border border-red-500/20 max-w-sm mx-auto">
                 {errorMsg}
               </p>
             )}
           </div>
         )}
 
-        {/* Contact Us Button */}
+        {/* Contact Us Button Matching Reference */}
         <Link
           href={config.contactButtonUrl || "/contact"}
-          className="inline-flex items-center gap-2 px-6 py-2 border-b border-white/50 hover:border-white text-white/85 hover:text-white text-[10px] sm:text-[11px] font-inter tracking-[0.25em] uppercase font-medium transition-all duration-300 cursor-pointer mb-5 sm:mb-6"
+          className="inline-flex items-center gap-2 text-white/80 hover:text-white text-[10px] sm:text-[11px] font-inter tracking-[0.25em] uppercase pb-1 border-b border-white/30 hover:border-white transition-all duration-300 select-none mb-5 sm:mb-7 group"
         >
           <span>{config.contactButtonText || "Contact Us"}</span>
-          <span className="text-xs">→</span>
+          <span className="text-xs group-hover:translate-x-1 transition-transform">→</span>
         </Link>
       </div>
 
