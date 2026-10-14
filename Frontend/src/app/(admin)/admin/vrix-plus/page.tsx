@@ -34,6 +34,7 @@ export default function AdminVrixPlusPage() {
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [revokingEmail, setRevokingEmail] = useState<string | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const loadData = async () => {
@@ -79,8 +80,15 @@ export default function AdminVrixPlusPage() {
     }
   };
 
-  const handleRevokeMembership = async (email: string) => {
-    if (!confirm(`Are you sure you want to revoke VRIX+ membership for ${email}?`)) return;
+  const handleRevokeMembership = (email: string) => {
+    // Non-blocking: opens modal in <1ms without freezing the main thread or profiler
+    setRevokeTarget(email);
+  };
+
+  const confirmRevokeMembership = async () => {
+    if (!revokeTarget) return;
+    const email = revokeTarget;
+    setRevokeTarget(null);
     setRevokingEmail(email);
     try {
       await updateUserVrixPlus(email, false);
@@ -413,6 +421,37 @@ export default function AdminVrixPlusPage() {
           </table>
         </div>
       </div>
+
+      {/* Non-blocking Revoke Confirmation Modal */}
+      {revokeTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-[2px] p-4">
+          <div className="bg-white p-6 max-w-sm w-full shadow-2xl border border-slate-grey/20 space-y-4 animate-fade-in">
+            <div className="flex items-center gap-2.5 text-red-600">
+              <span className="material-symbols-outlined text-2xl">warning</span>
+              <h3 className="font-bold text-sm text-deep-navy font-primary">Revoke VRIX+ Membership</h3>
+            </div>
+            <p className="text-xs text-slate-grey leading-relaxed font-secondary">
+              Are you sure you want to revoke the VRIX+ Club Card for <span className="font-semibold text-deep-navy font-mono break-all">{revokeTarget}</span>? This action can be undone later from the user registry.
+            </p>
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setRevokeTarget(null)}
+                className="px-4 py-2 border border-slate-grey/25 text-slate-grey hover:bg-soft-linen/25 text-xs font-semibold cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRevokeMembership}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+              >
+                Confirm Revoke
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

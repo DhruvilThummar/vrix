@@ -141,6 +141,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${jost.variable} ${aquavit.variable} ${chancery.variable} h-full antialiased`}
     >
       <head>
@@ -166,7 +167,7 @@ export default function RootLayout({
         />
       </head>
 
-      <body className="min-h-full flex flex-col bg-surface text-on-surface font-body-md antialiased overflow-x-hidden shop-typography">
+      <body suppressHydrationWarning className="min-h-full flex flex-col bg-surface text-on-surface font-body-md antialiased overflow-x-hidden shop-typography">
         <AuthProvider>
           <CurrencyProvider>
             <CartProvider>

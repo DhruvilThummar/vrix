@@ -109,7 +109,7 @@ export default function LaunchCountdownHero() {
   const formatNumber = (num: number) => String(num).padStart(2, "0");
 
   return (
-    <section className="relative w-full min-h-screen flex flex-col justify-between overflow-hidden bg-[#0A0805] text-white">
+    <section suppressHydrationWarning className="relative w-full min-h-screen flex flex-col justify-between overflow-hidden bg-[#0A0805] text-white">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
