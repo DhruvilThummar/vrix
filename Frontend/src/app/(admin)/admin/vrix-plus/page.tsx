@@ -33,6 +33,7 @@ export default function AdminVrixPlusPage() {
 
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [revokingEmail, setRevokingEmail] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const loadData = async () => {
@@ -80,22 +81,46 @@ export default function AdminVrixPlusPage() {
 
   const handleRevokeMembership = async (email: string) => {
     if (!confirm(`Are you sure you want to revoke VRIX+ membership for ${email}?`)) return;
+    setRevokingEmail(email);
     try {
       await updateUserVrixPlus(email, false);
-      setUsers(prev => prev.map(u => u.email === email ? { ...u, isVrixPlusMember: false, is_vrix_plus_member: false } : u));
+      setUsers(prev => prev.map(u => 
+        String(u.email).toLowerCase() === String(email).toLowerCase() 
+          ? { 
+              ...u, 
+              isVrixPlusMember: false, 
+              is_vrix_plus_member: false,
+              vrixPlusJoinedDate: undefined,
+              vrix_plus_joined_date: undefined
+            } 
+          : u
+      ));
     } catch (err: any) {
-      alert("Failed to revoke membership: " + err.message);
+      alert("Failed to revoke membership: " + (err.message || "Unknown error"));
+    } finally {
+      setRevokingEmail(null);
     }
   };
 
   // Calculations
-  const isMember = (u: any) =>
-    Boolean(u.isVrixPlusMember) ||
-    String(u.isVrixPlusMember).toLowerCase() === "true" ||
-    Boolean(u.is_vrix_plus_member) ||
-    String(u.is_vrix_plus_member).toLowerCase() === "true" ||
-    Boolean(u.vrixPlusJoinedDate) ||
-    Boolean(u.vrix_plus_joined_date);
+  const isMember = (u: any) => {
+    if (
+      u.isVrixPlusMember === false ||
+      u.is_vrix_plus_member === false ||
+      String(u.isVrixPlusMember).toLowerCase() === "false" ||
+      String(u.is_vrix_plus_member).toLowerCase() === "false"
+    ) {
+      return false;
+    }
+    return Boolean(
+      u.isVrixPlusMember ||
+      String(u.isVrixPlusMember).toLowerCase() === "true" ||
+      u.is_vrix_plus_member ||
+      String(u.is_vrix_plus_member).toLowerCase() === "true" ||
+      u.vrixPlusJoinedDate ||
+      u.vrix_plus_joined_date
+    );
+  };
 
   const members = useMemo(() => users.filter(isMember), [users]);
   
@@ -368,9 +393,17 @@ export default function AdminVrixPlusPage() {
                     <td className="py-3.5 px-4 text-center flex items-center justify-center gap-2">
                       <button
                         onClick={() => handleRevokeMembership(m.email)}
-                        className="px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 text-[10px] font-semibold transition-all"
+                        disabled={revokingEmail === m.email}
+                        className="px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 text-[10px] font-semibold transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 min-w-[110px]"
                       >
-                        Revoke Club Card
+                        {revokingEmail === m.email ? (
+                          <>
+                            <span className="w-2.5 h-2.5 rounded-full border-2 border-red-600 border-t-transparent animate-spin inline-block" />
+                            <span>Revoking...</span>
+                          </>
+                        ) : (
+                          "Revoke Club Card"
+                        )}
                       </button>
                     </td>
                   </tr>

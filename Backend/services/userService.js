@@ -15,7 +15,13 @@ const withTimeout = (promise, ms) => {
 
 const normalizeUser = (u) => {
   if (!u) return null;
-  const isVrix = Boolean(
+  const isExplicitlyFalse =
+    u.isVrixPlusMember === false ||
+    u.is_vrix_plus_member === false ||
+    String(u.isVrixPlusMember).toLowerCase() === "false" ||
+    String(u.is_vrix_plus_member).toLowerCase() === "false";
+
+  const isVrix = !isExplicitlyFalse && Boolean(
     u.isVrixPlusMember ||
     u.is_vrix_plus_member ||
     String(u.isVrixPlusMember).toLowerCase() === "true" ||
@@ -27,8 +33,8 @@ const normalizeUser = (u) => {
     ...u,
     isVrixPlusMember: isVrix,
     is_vrix_plus_member: isVrix,
-    vrixPlusJoinedDate: u.vrixPlusJoinedDate || u.vrix_plus_joined_date || null,
-    vrix_plus_joined_date: u.vrixPlusJoinedDate || u.vrix_plus_joined_date || null,
+    vrixPlusJoinedDate: isVrix ? (u.vrixPlusJoinedDate || u.vrix_plus_joined_date || null) : null,
+    vrix_plus_joined_date: isVrix ? (u.vrixPlusJoinedDate || u.vrix_plus_joined_date || null) : null,
     dateOfBirth: u.dateOfBirth || u.date_of_birth || null,
     date_of_birth: u.dateOfBirth || u.date_of_birth || null,
     createdAt: u.createdAt || u.created_at,
@@ -172,7 +178,7 @@ export const userService = {
           date_of_birth: record.dateOfBirth,
         }).select().single();
 
-        if (!error && sRes) return sRes;
+        if (!error && sRes) return normalizeUser(sRes);
       } catch (e) {}
     }
 

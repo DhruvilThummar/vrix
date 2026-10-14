@@ -84,6 +84,7 @@ interface HomepageClientProps {
 
 export default function HomepageClient({ initialData, initialProducts }: HomepageClientProps) {
   const { formatPrice } = useCurrency();
+  const { addItem } = useCart();
   const { isPreLaunch, isSaleCountdown, config: launchConfig } = useLaunchCountdown();
   const [store, setStore] = useState(() => {
     if (initialData?.homepage) {

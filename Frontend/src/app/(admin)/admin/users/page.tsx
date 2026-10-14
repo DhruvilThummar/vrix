@@ -70,10 +70,30 @@ export default function AdminUsersPage() {
     try {
       await updateUserVrixPlus(user.email, nextState);
       setUsers((prev) =>
-        prev.map((u) => (u.email === user.email ? { ...u, isVrixPlusMember: nextState } : u))
+        prev.map((u) =>
+          u.email === user.email
+            ? {
+                ...u,
+                isVrixPlusMember: nextState,
+                is_vrix_plus_member: nextState,
+                vrixPlusJoinedDate: nextState ? (u.vrixPlusJoinedDate || new Date().toISOString()) : undefined,
+                vrix_plus_joined_date: nextState ? ((u as any).vrix_plus_joined_date || u.vrixPlusJoinedDate || new Date().toISOString()) : undefined,
+              }
+            : u
+        )
       );
       if (selectedUser?.email === user.email) {
-        setSelectedUser((prev) => (prev ? { ...prev, isVrixPlusMember: nextState } : null));
+        setSelectedUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                isVrixPlusMember: nextState,
+                is_vrix_plus_member: nextState,
+                vrixPlusJoinedDate: nextState ? (prev.vrixPlusJoinedDate || new Date().toISOString()) : undefined,
+                vrix_plus_joined_date: nextState ? ((prev as any).vrix_plus_joined_date || prev.vrixPlusJoinedDate || new Date().toISOString()) : undefined,
+              }
+            : null
+        );
       }
     } catch (err: any) {
       alert("Failed to update membership status: " + err.message);
