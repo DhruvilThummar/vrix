@@ -188,12 +188,34 @@ export function validateCollectionsArgs(args = {}) {
   return { theme };
 }
 
+let cachedProducts = null;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60 * 1000; // 60-second in-memory cache to eliminate repetitive DB latency
+
+async function getCachedProducts() {
+  const now = Date.now();
+  if (cachedProducts && now - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedProducts;
+  }
+  try {
+    const list = await db.products.findMany();
+    if (Array.isArray(list)) {
+      cachedProducts = list;
+      cacheTimestamp = now;
+      return cachedProducts;
+    }
+  } catch (err) {
+    console.warn("[geminiService] DB fetch error, using stale cache if available:", err.message);
+  }
+  return cachedProducts || [];
+}
+
 // ── Tool Handlers Interacting with PostgreSQL DB via Prisma / Database Layer ─
 export async function executeSearchProducts(rawArgs) {
   const { category, priceMin, priceMax, metalType, gemstoneType, intent, limit } = validateSearchArgs(rawArgs);
 
   try {
-    const products = await db.products.findMany();
+    const products = await getCachedProducts();
     let list = Array.isArray(products) ? products.filter((p) => p.isVisible !== false) : [];
 
     if (category && category !== "All") {
@@ -240,7 +262,7 @@ export async function executeGetCollections(rawArgs) {
   const { theme } = validateCollectionsArgs(rawArgs);
 
   try {
-    const products = await db.products.findMany();
+    const products = await getCachedProducts();
     const visibleProducts = (products || []).filter((p) => p.isVisible !== false);
     const categories = Array.from(new Set(visibleProducts.map((p) => p.type || p.collection).filter(Boolean)));
 
@@ -282,7 +304,7 @@ export async function executeCompareProducts(rawArgs) {
   }
 
   try {
-    const products = await db.products.findMany();
+    const products = await getCachedProducts();
     const visibleProducts = (products || []).filter((p) => p.isVisible !== false);
     const matched = visibleProducts.filter((p) => productIds.includes(p.id));
 
@@ -501,12 +523,28 @@ export async function runInteractionsChatLoop({
       previous_interaction_id: currentPreviousId || undefined
     });
   } catch (apiErr) {
-    console.error("[GEMINI API ERROR] Initial ai.interactions.create call failed:", apiErr);
-    throw apiErr;
+    if (currentPreviousId) {
+      console.warn("[GEMINI API WARN] Initial call failed with previous_interaction_id, retrying without it:", apiErr.message);
+      try {
+        currentPreviousId = null;
+        interaction = await ai.interactions.create({
+          model: MODEL_NAME,
+          input: userMessage,
+          tools: CHATBOT_TOOLS,
+          system_instruction: VRIX_SYSTEM_INSTRUCTION
+        });
+      } catch (retryErr) {
+        console.error("[GEMINI API ERROR] Retry ai.interactions.create call failed:", retryErr);
+        throw retryErr;
+      }
+    } else {
+      console.error("[GEMINI API ERROR] Initial ai.interactions.create call failed:", apiErr);
+      throw apiErr;
+    }
   }
 
   let turns = 0;
-  const maxTurns = 5;
+  const maxTurns = 2; // Keep loop bounded to prevent latency spikes and timeouts
 
   while (turns < maxTurns) {
     turns++;
@@ -553,12 +591,23 @@ export async function runInteractionsChatLoop({
           system_instruction: VRIX_SYSTEM_INSTRUCTION,
           previous_interaction_id: currentPreviousId
         });
+        currentPreviousId = interaction.id || currentPreviousId;
       } catch (subTurnErr) {
-        console.error("[GEMINI API ERROR] Sub-turn ai.interactions.create call failed:", subTurnErr);
-        throw subTurnErr;
+        console.warn("[GEMINI API WARN] Sub-turn ai.interactions.create call failed, continuing with tool output:", subTurnErr.message);
+        // If sub-turn fails, deliver quiet luxury fallback reply instead of crashing
+        if (call.name === "search_products" && structuredData.products?.length > 0) {
+          finalReply = "Here are some of our signature pieces matching your preferences:";
+        } else if (call.name === "get_collections") {
+          finalReply = "Explore our curated fine jewelry collections:";
+        } else if (call.name === "compare_products") {
+          finalReply = "Here is a side-by-side comparison of the selected pieces:";
+        } else if (call.name === "create_repair_request") {
+          finalReply = toolResult.message || "Your repair request has been logged. Our concierge will be in touch shortly.";
+        } else {
+          finalReply = "I've retrieved these details from our collection for you. How else may I assist you today?";
+        }
+        break;
       }
-
-      currentPreviousId = interaction.id || currentPreviousId;
     }
   }
 

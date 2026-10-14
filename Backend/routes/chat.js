@@ -644,11 +644,12 @@ const handleChatMessage = async (req, res) => {
       }
     }).catch(() => { });
 
-    // Execute Gemini Interactions loop with 15-second timeout safeguard
-    const timeoutMs = 15000;
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Gemini API timeout")), timeoutMs)
-    );
+    // Execute Gemini Interactions loop with 25-second timeout safeguard (allows ample headroom for multi-turn tool calling and cold starts)
+    const timeoutMs = parseInt(process.env.GEMINI_TIMEOUT_MS, 10) || 25000;
+    let timeoutTimer = null;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutTimer = setTimeout(() => reject(new Error("Gemini API timeout")), timeoutMs);
+    });
 
     const chatPromise = runInteractionsChatLoop({
       userMessage: userText,
@@ -656,7 +657,12 @@ const handleChatMessage = async (req, res) => {
       sessionId: session.id
     });
 
-    const result = await Promise.race([chatPromise, timeoutPromise]);
+    let result;
+    try {
+      result = await Promise.race([chatPromise, timeoutPromise]);
+    } finally {
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+    }
 
     // Update session last_interaction_id
     if (result.lastInteractionId && db.chatSession) {
@@ -715,32 +721,68 @@ const handleChatMessage = async (req, res) => {
       ]
     });
   } catch (err) {
-    console.error("Chat message endpoint error:", err);
+    console.warn("Chat message endpoint fallback triggered:", err?.message || err);
 
-    // Quiet luxury graceful error fallback
-    const fallbackText = "Our client associates are currently experiencing high volume. Please try again in a few moments, or connect directly with our concierge team.";
+    let fallbackProducts = [];
+    let fallbackReply = "Our client associates are currently experiencing high volume. Here are signature pieces from our atelier, or connect directly with our private concierge:";
+
+    try {
+      // Intelligent catalog matching so customer is never left empty-handed on timeout or network lag
+      const queryLower = (userText || "").toLowerCase();
+      const allProds = await db.products.findMany().catch(() => []);
+      const visible = (allProds || []).filter(p => p.isVisible !== false);
+
+      const keywords = queryLower.split(/\s+/).filter(w => w.length > 2);
+      const matched = visible.filter(p => {
+        const title = (p.title || "").toLowerCase();
+        const type = (p.type || p.collection || "").toLowerCase();
+        const mat = (p.material || "").toLowerCase();
+        const desc = (p.description || "").toLowerCase();
+        return keywords.some(k => title.includes(k) || type.includes(k) || mat.includes(k) || desc.includes(k));
+      });
+
+      const chosen = matched.length > 0 ? matched : visible;
+      fallbackProducts = chosen.slice(0, 4).map(p => ({
+        id: p.id,
+        title: p.title,
+        category: p.type || p.collection || "Jewelry",
+        material: p.material || "18K Gold / 950 Platinum",
+        price: Number(p.price) || 0,
+        image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+        slug: p.id
+      }));
+
+      if (matched.length > 0) {
+        fallbackReply = "Here are signature pieces from our atelier tailored to your inquiry:";
+      }
+    } catch (fallbackErr) {
+      // keep fallback defaults
+    }
+
+    const isoTimestamp = new Date().toISOString();
+    const fallbackOptions = [
+      { label: "Find a piece for myself", value: "myself" },
+      { label: "Find a gift", value: "gift" },
+      { label: "Talk to concierge", value: "trigger-handoff" }
+    ];
 
     res.json({
       success: true,
       sessionId: sessionId || `sess-${Date.now()}`,
-      reply: fallbackText,
+      reply: fallbackReply,
       toolsUsed: [],
       structuredData: {
-        options: [
-          { label: "Try again", value: "retry" },
-          { label: "Talk to concierge", value: "trigger-handoff" }
-        ]
+        products: fallbackProducts.length > 0 ? fallbackProducts : undefined,
+        options: fallbackOptions
       },
       messages: [
         {
           id: `msg-${Date.now()}`,
           sender: "bot",
-          text: fallbackText,
-          options: [
-            { label: "Try again", value: "retry" },
-            { label: "Talk to concierge", value: "trigger-handoff" }
-          ],
-          timestamp: new Date().toISOString()
+          text: fallbackReply,
+          products: fallbackProducts.length > 0 ? fallbackProducts : undefined,
+          options: fallbackOptions,
+          timestamp: isoTimestamp
         }
       ]
     });
