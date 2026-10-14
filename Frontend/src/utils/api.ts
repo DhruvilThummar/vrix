@@ -185,7 +185,13 @@ export async function updateCMS(data: {
 
 export async function fetchLaunchCountdown() {
   try {
-    return await apiFetch<any>("/cms/launch-countdown", { cache: "no-store" });
+    const data = await apiFetchCached<any>("/cms/launch-countdown", 600);
+    if (data && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("vrix_launch_countdown_cached", JSON.stringify(data));
+      } catch (_) {}
+    }
+    return data;
   } catch (err: any) {
     console.warn("fetchLaunchCountdown offline / rate-limited (using local fallback):", err?.message || err);
     return null;
@@ -193,6 +199,12 @@ export async function fetchLaunchCountdown() {
 }
 
 export async function updateLaunchCountdown(data: any) {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("vrix_launch_countdown_cached", JSON.stringify(data));
+      localStorage.setItem("vrix_cache_api__cms_launch-countdown", JSON.stringify({ value: data, expiresAt: Date.now() + 600000 }));
+    } catch (_) {}
+  }
   return adminFetch<any>("/cms/launch-countdown", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

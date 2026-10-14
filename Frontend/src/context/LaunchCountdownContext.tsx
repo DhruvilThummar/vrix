@@ -116,12 +116,35 @@ function calculateTimeLeft(targetDateStr: string): TimeLeft {
   return { days, hours, minutes, seconds, isExpired: false, totalSeconds };
 }
 
+const getInitialConfig = (): LaunchCountdownConfig => {
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem("vrix_launch_countdown_cached") || localStorage.getItem("vrix_cache_api__cms_launch-countdown");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const data = parsed?.value || parsed;
+        if (data && typeof data === "object" && data.targetDate) {
+          return { ...DEFAULT_LAUNCH_CONFIG, ...data };
+        }
+      }
+    } catch (_) {}
+  }
+  return DEFAULT_LAUNCH_CONFIG;
+};
+
 const LaunchCountdownContext = createContext<LaunchCountdownContextType | null>(null);
 
 export function LaunchCountdownProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<LaunchCountdownConfig>(DEFAULT_LAUNCH_CONFIG);
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(DEFAULT_LAUNCH_CONFIG.targetDate));
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [config, setConfig] = useState<LaunchCountdownConfig>(getInitialConfig);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(getInitialConfig().targetDate));
+  const [isLoaded, setIsLoaded] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return !!(localStorage.getItem("vrix_launch_countdown_cached") || localStorage.getItem("vrix_cache_api__cms_launch-countdown"));
+      } catch (_) {}
+    }
+    return false;
+  });
 
   const refreshConfig = useCallback(async () => {
     try {
@@ -131,6 +154,11 @@ export function LaunchCountdownProvider({ children }: { children: ReactNode }) {
           ...DEFAULT_LAUNCH_CONFIG,
           ...data,
         }));
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("vrix_launch_countdown_cached", JSON.stringify(data));
+          } catch (_) {}
+        }
       }
     } catch (err) {
       console.warn("Could not fetch launch countdown config:", err);
@@ -155,7 +183,15 @@ export function LaunchCountdownProvider({ children }: { children: ReactNode }) {
   }, [config.targetDate]);
 
   const updateLocalConfig = useCallback((partial: Partial<LaunchCountdownConfig>) => {
-    setConfig((prev) => ({ ...prev, ...partial }));
+    setConfig((prev) => {
+      const updated = { ...prev, ...partial };
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("vrix_launch_countdown_cached", JSON.stringify(updated));
+        } catch (_) {}
+      }
+      return updated;
+    });
   }, []);
 
   // Pre-launch is active if mode is LAUNCH and not expired with autoUnlock

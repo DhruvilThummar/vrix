@@ -234,6 +234,9 @@ router.post("/cms/product-templates", adminAuth, async (req, res) => {
 // GET /api/cms/launch-countdown — Public endpoint for launch / sale countdown config
 router.get("/cms/launch-countdown", async (req, res) => {
   try {
+    const cached = getServerCache("cms_launch_countdown");
+    if (cached) return res.json(cached);
+
     const setting = await db.cmsSettings.findUnique({ where: { key: "launch_countdown" } });
     const defaultData = {
       mode: "LAUNCH", // "LAUNCH" | "SALE" | "DISABLED"
@@ -254,7 +257,9 @@ router.get("/cms/launch-countdown", async (req, res) => {
       contactButtonUrl: "/contact",
       autoUnlockOnZero: true
     };
-    res.json(setting || defaultData);
+    const payload = setting || defaultData;
+    setServerCache("cms_launch_countdown", payload, CACHE_TTL.CMS_CONTENT);
+    res.json(payload);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -264,12 +269,14 @@ router.get("/cms/launch-countdown", async (req, res) => {
 router.post("/cms/launch-countdown", adminAuth, async (req, res) => {
   try {
     clearServerCache("db_public");
+    clearServerCache("cms_launch_countdown");
     const data = req.body;
     await db.cmsSettings.upsert({
       where: { key: "launch_countdown" },
       update: { value: data },
       create: { key: "launch_countdown", value: data }
     });
+    setServerCache("cms_launch_countdown", data, CACHE_TTL.CMS_CONTENT);
     res.json({ success: true, launch_countdown: data });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -117,6 +117,8 @@ export default function LaunchCountdownHero() {
           alt={config.title || "VRIX Jewellery Launch"}
           fill
           priority
+          fetchPriority="high"
+          quality={80}
           sizes="100vw"
           unoptimized={bgImage?.startsWith("http://localhost") || bgImage?.startsWith("http://127.0.0.1") || bgImage?.startsWith("data:")}
           className="object-cover object-center"

@@ -85,7 +85,7 @@ interface HomepageClientProps {
 export default function HomepageClient({ initialData, initialProducts }: HomepageClientProps) {
   const { formatPrice } = useCurrency();
   const { addItem } = useCart();
-  const { isPreLaunch, isSaleCountdown, config: launchConfig } = useLaunchCountdown();
+  const { isPreLaunch, isSaleCountdown, config: launchConfig, updateLocalConfig } = useLaunchCountdown();
   const [store, setStore] = useState(() => {
     if (initialData?.homepage) {
       return {
@@ -100,6 +100,13 @@ export default function HomepageClient({ initialData, initialProducts }: Homepag
   const [activeSlide, setActiveSlide] = useState(0);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Sync launch countdown config from server SSR payload immediately
+  useEffect(() => {
+    if (initialData?.launch_countdown) {
+      updateLocalConfig(initialData.launch_countdown);
+    }
+  }, [initialData?.launch_countdown, updateLocalConfig]);
 
   const showToast = (message: string) => {
     setToastMessage(message);

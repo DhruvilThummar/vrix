@@ -81,16 +81,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  let homepageData = null;
+  let homepageData: any = null;
   let productsData: any[] = [];
 
   try {
-    const [dbRes, productsRes] = await Promise.all([
-      getCachedDbPublic(),
-      getCachedProducts(),
-    ]);
+    const dbRes: any = await getCachedDbPublic();
     homepageData = dbRes;
-    productsData = (productsRes as any[]) || [];
+
+    const isLaunchMode = dbRes?.launch_countdown?.mode === "LAUNCH";
+    // Avoid querying entire product catalog on server if site is in pre-launch mode
+    if (!isLaunchMode) {
+      productsData = (await getCachedProducts()) || [];
+    }
   } catch (error) {
     console.error("Error fetching homepage data on server:", error);
   }
