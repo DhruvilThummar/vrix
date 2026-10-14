@@ -72,8 +72,8 @@ export default function LaunchCountdownHero() {
   const overlayOpacity = typeof config.bgOverlayOpacity === "number" ? config.bgOverlayOpacity / 100 : 0.45;
 
   return (
-    <section className="relative w-full h-[819px] md:h-screen min-h-[700px] flex items-center justify-center overflow-hidden bg-[#0A0D14] text-pure-white px-4 sm:px-6 pt-18 sm:pt-20 md:pt-20 pb-6 sm:pb-8">
-      {/* Background Image with Cinematic Subtle Zoom */}
+    <section className="relative w-full min-h-screen flex flex-col overflow-hidden bg-[#0A0805] text-white">
+      {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
           src={bgImage}
@@ -81,131 +81,155 @@ export default function LaunchCountdownHero() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center scale-105 animate-pulse duration-[12000ms]"
+          className="object-cover object-center"
         />
-        {/* Dark Luxury Vignette & Contrast Overlay */}
+        {/* Dark overlay */}
         <div
           className="absolute inset-0 bg-black"
           style={{ opacity: overlayOpacity }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/60 pointer-events-none" />
+        {/* Cinematic gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70 pointer-events-none" />
+        {/* Warm golden tint */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/10 via-transparent to-amber-800/5 pointer-events-none" />
       </div>
 
-      {/* Hero Content Container */}
-      <div className="relative z-10 max-w-4xl mx-auto text-center flex flex-col items-center justify-center h-full max-h-full py-2">
-        {/* 2. Main Brand Logo (Official VRIX Wordmark) */}
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto px-5 sm:px-8 py-8 sm:py-12 md:py-16 text-center">
+
+        {/* Brand Logo */}
         <h1 className="sr-only">{config.title || "VRIX"}</h1>
-        <div className="relative w-44 sm:w-56 md:w-64 h-12 sm:h-15 md:h-16 mb-2 sm:mb-3 select-none drop-shadow-xl shrink-0">
+        <div className="relative w-52 sm:w-64 md:w-72 lg:w-80 h-14 sm:h-16 md:h-20 mb-4 sm:mb-5 select-none drop-shadow-2xl">
           <Image
             src="/logos/white.png"
             alt={config.title || "VRIX"}
             fill
             priority
             className="object-contain"
-            sizes="(max-width: 640px) 200px, 300px"
+            sizes="(max-width: 640px) 220px, 320px"
           />
         </div>
 
-        {/* 3. Subtitle / Tagline */}
-        <p className="font-jost font-secondary text-sm sm:text-base md:text-lg text-white/90 font-light tracking-[0.08em] mb-2 drop-shadow shrink-0">
+        {/* Main Heading */}
+        <h2 className="font-inter text-[13px] sm:text-base md:text-lg lg:text-xl text-white/95 font-light tracking-[0.2em] sm:tracking-[0.25em] uppercase mb-3 sm:mb-4 leading-relaxed max-w-2xl">
           {config.subtitle ? (
             <span>{config.subtitle}</span>
           ) : (
-            <>
-              A luxury that feels like <span className="font-chancery italic text-amber-200/90 text-xl sm:text-2xl">you</span>.
-            </>
+            <>A new form of everyday luxury.</>
           )}
-        </p>
+        </h2>
 
-        {/* 4. Editorial Description */}
+        {/* Editorial Description */}
         {config.description && (
-          <p className="font-jost font-secondary text-[11px] sm:text-xs text-white/70 max-w-md mb-3 md:mb-4 font-normal leading-relaxed tracking-wide line-clamp-2 shrink-0">
+          <p className="font-jost text-[11px] sm:text-xs md:text-sm text-white/65 max-w-lg mb-5 md:mb-7 font-light leading-relaxed tracking-wide">
             {config.description}
           </p>
         )}
+        {!config.description && (
+          <p className="font-jost text-[11px] sm:text-xs md:text-sm text-white/65 max-w-lg mb-5 md:mb-7 font-light leading-relaxed tracking-wide">
+            Jewelry shaped by intention. Defined by detail.
+            <br />
+            Discover a quieter expression of luxury, created for the way you live.
+          </p>
+        )}
 
-        {/* 5. Luxury Countdown Ticker (Denorreys inspired) */}
+        {/* Countdown Timer — Elegant Dot-Separated Style */}
         {!timeLeft.isExpired ? (
-          <div suppressHydrationWarning className="w-full max-w-xl mx-auto mb-3 md:mb-4 shrink-0">
-            <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+          <div suppressHydrationWarning className="mb-6 md:mb-8">
+            <div className="flex items-start justify-center gap-3 sm:gap-4 md:gap-6">
               {/* DAYS */}
-              <div className="flex flex-col items-center justify-center p-2 sm:p-3 md:p-3.5 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-white/40">
+              <div className="flex flex-col items-center">
                 <span
                   suppressHydrationWarning
-                  className="font-inter font-primary text-xl sm:text-3xl md:text-4xl font-light text-white tracking-tight tabular-nums"
+                  className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-white tabular-nums tracking-tight leading-none"
                 >
                   {formatNumber(timeLeft.days)}
                 </span>
-                <span className="font-inter font-primary text-[8px] sm:text-[10px] tracking-[0.25em] uppercase text-white/70 mt-1 font-medium">
+                <span className="font-inter text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-white/50 mt-2 font-medium">
                   Days
                 </span>
               </div>
 
+              {/* Separator dot */}
+              <div className="flex flex-col items-center pt-3 sm:pt-4 md:pt-5">
+                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-amber-300/70" />
+              </div>
+
               {/* HOURS */}
-              <div className="flex flex-col items-center justify-center p-2 sm:p-3 md:p-3.5 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-white/40">
+              <div className="flex flex-col items-center">
                 <span
                   suppressHydrationWarning
-                  className="font-inter font-primary text-xl sm:text-3xl md:text-4xl font-light text-white tracking-tight tabular-nums"
+                  className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-white tabular-nums tracking-tight leading-none"
                 >
                   {formatNumber(timeLeft.hours)}
                 </span>
-                <span className="font-inter font-primary text-[8px] sm:text-[10px] tracking-[0.25em] uppercase text-white/70 mt-1 font-medium">
+                <span className="font-inter text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-white/50 mt-2 font-medium">
                   Hours
                 </span>
               </div>
 
+              {/* Separator dot */}
+              <div className="flex flex-col items-center pt-3 sm:pt-4 md:pt-5">
+                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-amber-300/70" />
+              </div>
+
               {/* MINUTES */}
-              <div className="flex flex-col items-center justify-center p-2 sm:p-3 md:p-3.5 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-white/40">
+              <div className="flex flex-col items-center">
                 <span
                   suppressHydrationWarning
-                  className="font-inter font-primary text-xl sm:text-3xl md:text-4xl font-light text-white tracking-tight tabular-nums"
+                  className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-white tabular-nums tracking-tight leading-none"
                 >
                   {formatNumber(timeLeft.minutes)}
                 </span>
-                <span className="font-inter font-primary text-[8px] sm:text-[10px] tracking-[0.25em] uppercase text-white/70 mt-1 font-medium">
+                <span className="font-inter text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-white/50 mt-2 font-medium">
                   Minutes
                 </span>
               </div>
 
+              {/* Separator dot */}
+              <div className="flex flex-col items-center pt-3 sm:pt-4 md:pt-5">
+                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-amber-300/70" />
+              </div>
+
               {/* SECONDS */}
-              <div className="flex flex-col items-center justify-center p-2 sm:p-3 md:p-3.5 rounded-xs border border-white/20 bg-white/10 backdrop-blur-md shadow-2xl transition-transform duration-300 hover:border-white/40">
+              <div className="flex flex-col items-center">
                 <span
                   suppressHydrationWarning
-                  className="font-inter font-primary text-xl sm:text-3xl md:text-4xl font-light text-white tracking-tight tabular-nums text-amber-200/95"
+                  className="font-inter text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-white tabular-nums tracking-tight leading-none"
                 >
                   {formatNumber(timeLeft.seconds)}
                 </span>
-                <span className="font-inter font-primary text-[8px] sm:text-[10px] tracking-[0.25em] uppercase text-white/70 mt-1 font-medium">
+                <span className="font-inter text-[9px] sm:text-[10px] tracking-[0.3em] uppercase text-white/50 mt-2 font-medium">
                   Seconds
                 </span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="mb-4 py-2 px-6 rounded border border-amber-300/40 bg-amber-400/10 backdrop-blur-md text-amber-200 shrink-0">
-            <p className="font-inter font-primary text-xs sm:text-sm tracking-[0.25em] uppercase font-medium">
-              ✦ WE ARE LIVE — WELCOME TO THE ATELIER ✦
+          <div className="mb-6 py-3 px-8 border border-amber-300/30 bg-amber-400/5 backdrop-blur-sm text-amber-200/90">
+            <p className="font-inter text-xs sm:text-sm tracking-[0.25em] uppercase font-medium">
+              ✦ We are live — Welcome to the atelier ✦
             </p>
           </div>
         )}
 
-        {/* 6. VIP Early Access / Waitlist Box */}
+        {/* VIP Early Access / Waitlist Box */}
         {config.enableWaitlist && (
-          <div className="w-full max-w-sm mx-auto mb-3 shrink-0">
+          <div className="w-full max-w-sm mx-auto mb-5 sm:mb-6">
             {subscribed ? (
-              <div className="p-2.5 sm:p-3 rounded-xs border border-amber-300/40 bg-amber-400/10 backdrop-blur-md text-center animate-fade-in shadow-xl">
-                <div className="flex items-center justify-center gap-1.5 mb-1 text-amber-200">
-                  <span className="material-symbols-outlined text-sm">verified</span>
-                  <p className="font-inter font-primary text-xs tracking-wider uppercase font-semibold">
-                    VIP Launch Access Confirmed
+              <div className="py-4 px-5 text-center">
+                <div className="flex items-center justify-center gap-1.5 mb-2">
+                  <span className="material-symbols-outlined text-amber-300/90 text-sm">verified</span>
+                  <p className="font-inter text-[11px] sm:text-xs tracking-[0.15em] uppercase font-semibold text-white/90">
+                    You&apos;re on the list.
                   </p>
                 </div>
-                <p className="font-jost font-secondary text-[11px] text-white/90">
-                  {successMsg || config.waitlistSuccessMsg || "Thank you. You have been added to our private VIP launch list."}
+                <p className="font-jost text-[11px] sm:text-xs text-white/60 leading-relaxed">
+                  {successMsg || config.waitlistSuccessMsg || "Early access. First collection previews. A closer look at the world of VRIX."}
                 </p>
                 {savedEmail && (
-                  <p className="font-inter text-[10px] text-white/60 mt-1 tracking-wider">
-                    Registered: <span className="text-amber-200/90 font-medium">{savedEmail}</span>
+                  <p className="font-inter text-[10px] text-white/40 mt-2 tracking-wider">
+                    Registered: <span className="text-amber-200/70 font-medium">{savedEmail}</span>
                   </p>
                 )}
                 <button
@@ -215,29 +239,29 @@ export default function LaunchCountdownHero() {
                     setSuccessMsg(null);
                     setEmail("");
                   }}
-                  className="mt-2 text-[10px] text-white/50 hover:text-white underline underline-offset-2 tracking-wider uppercase font-inter cursor-pointer transition-colors"
+                  className="mt-3 text-[10px] text-white/40 hover:text-white/70 underline underline-offset-4 tracking-[0.15em] uppercase font-inter cursor-pointer transition-colors"
                 >
                   Register another email
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 w-full">
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2.5 w-full">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email for private launch access..."
                   required
-                  className="flex-1 bg-black/40 border border-white/25 text-white placeholder-white/50 px-3 py-2 text-xs font-inter tracking-wider rounded-xs focus:outline-none focus:border-white transition-colors backdrop-blur-xs"
+                  className="flex-1 bg-white/5 border border-white/20 text-white placeholder-white/35 px-4 py-2.5 text-xs font-inter tracking-wider focus:outline-none focus:border-white/50 transition-colors backdrop-blur-sm"
                 />
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="bg-pure-white text-ink-black hover:bg-white/90 active:scale-95 transition-all px-5 py-2 text-xs font-inter font-primary tracking-[0.15em] uppercase font-semibold rounded-xs cursor-pointer disabled:opacity-50 shrink-0 flex items-center justify-center gap-1.5 min-w-[100px]"
+                  className="bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all px-5 py-2.5 text-xs font-inter tracking-[0.15em] uppercase font-semibold cursor-pointer disabled:opacity-50 shrink-0 flex items-center justify-center gap-1.5 min-w-[110px]"
                 >
                   {submitting ? (
                     <>
-                      <span className="w-2.5 h-2.5 rounded-full border-2 border-ink-black border-t-transparent animate-spin inline-block" />
+                      <span className="w-2.5 h-2.5 rounded-full border-2 border-black border-t-transparent animate-spin inline-block" />
                       <span>Joining...</span>
                     </>
                   ) : (
@@ -247,91 +271,75 @@ export default function LaunchCountdownHero() {
               </form>
             )}
             {errorMsg && (
-              <p className="text-[10px] text-red-300 mt-1 font-jost text-center bg-red-950/40 py-1 px-2 rounded border border-red-500/30">
+              <p className="text-[10px] text-red-300 mt-2 font-jost text-center bg-red-950/30 py-1.5 px-3 border border-red-500/20">
                 {errorMsg}
               </p>
             )}
           </div>
         )}
 
-        {/* 7. Action Buttons (Contact Us) */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-1 shrink-0">
-          <Link
-            href={config.contactButtonUrl || "/contact"}
-            className="inline-flex items-center gap-2 px-6 py-2 border border-white/70 hover:border-white hover:bg-white hover:text-ink-black text-white text-[11px] font-inter font-primary tracking-[0.2em] uppercase font-medium transition-all duration-300 rounded-xs cursor-pointer shadow-md"
-          >
-            <span>{config.contactButtonText || "Contact Us"}</span>
-            <span className="material-symbols-outlined text-xs">arrow_forward</span>
-          </Link>
-        </div>
+        {/* Contact Us Button */}
+        <Link
+          href={config.contactButtonUrl || "/contact"}
+          className="inline-flex items-center gap-2.5 px-7 py-2.5 border border-white/60 hover:border-white hover:bg-white hover:text-black text-white text-[11px] font-inter tracking-[0.25em] uppercase font-medium transition-all duration-300 cursor-pointer mb-6 sm:mb-8"
+        >
+          <span>{config.contactButtonText || "Contact Us"}</span>
+          <span className="text-xs">→</span>
+        </Link>
+      </div>
 
-        {/* 8. Atelier Pillars */}
-        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-white/15 w-full max-w-3xl select-none shrink-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+      {/* Bottom Pillars Section */}
+      <div className="relative z-10 w-full border-t border-white/10 bg-black/20 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8 py-5 sm:py-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             <div className="flex flex-col items-center text-center group">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-2xl font-light">
+              <span className="material-symbols-outlined text-white/70 group-hover:text-amber-200/80 transition-colors mb-1.5 text-xl font-light">
                 flare
               </span>
-              <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
+              <h4 className="font-inter text-[10px] sm:text-[11px] text-white/85 uppercase mb-0.5 font-semibold tracking-[0.15em]">
                 Intentional Design
               </h4>
-              <p className="font-jost font-secondary text-[10px] sm:text-[11px] text-white/70 whitespace-pre-line leading-tight">
-                {"Every piece has\na deeper meaning."}
+              <p className="font-jost text-[10px] sm:text-[11px] text-white/45 leading-tight">
+                Nothing without purpose.
               </p>
             </div>
 
             <div className="flex flex-col items-center text-center group">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-2xl font-light">
+              <span className="material-symbols-outlined text-white/70 group-hover:text-amber-200/80 transition-colors mb-1.5 text-xl font-light">
                 hourglass_empty
               </span>
-              <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
+              <h4 className="font-inter text-[10px] sm:text-[11px] text-white/85 uppercase mb-0.5 font-semibold tracking-[0.15em]">
                 Timeless Quality
               </h4>
-              <p className="font-jost font-secondary text-[10px] sm:text-[11px] text-white/70 whitespace-pre-line leading-tight">
-                {"Crafted to last.\nMade to be lived in."}
+              <p className="font-jost text-[10px] sm:text-[11px] text-white/45 leading-tight">
+                Made to be lived in.
               </p>
             </div>
 
             <div className="flex flex-col items-center text-center group">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-2xl font-light">
+              <span className="material-symbols-outlined text-white/70 group-hover:text-amber-200/80 transition-colors mb-1.5 text-xl font-light">
                 eco
               </span>
-              <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
+              <h4 className="font-inter text-[10px] sm:text-[11px] text-white/85 uppercase mb-0.5 font-semibold tracking-[0.15em]">
                 Conscious Luxury
               </h4>
-              <p className="font-jost font-secondary text-[10px] sm:text-[11px] text-white/70 whitespace-pre-line leading-tight">
-                {"Ethical materials.\nThoughtful process."}
+              <p className="font-jost text-[10px] sm:text-[11px] text-white/45 leading-tight whitespace-pre-line">
+                {"Thoughtful choices.\nLasting value."}
               </p>
             </div>
 
             <div className="flex flex-col items-center text-center group">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-2xl font-light">
+              <span className="material-symbols-outlined text-white/70 group-hover:text-amber-200/80 transition-colors mb-1.5 text-xl font-light">
                 favorite_border
               </span>
-              <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
+              <h4 className="font-inter text-[10px] sm:text-[11px] text-white/85 uppercase mb-0.5 font-semibold tracking-[0.15em]">
                 Personal Connection
               </h4>
-              <p className="font-jost font-secondary text-[10px] sm:text-[11px] text-white/70 whitespace-pre-line leading-tight">
-                {"A piece for every\nchapter of you."}
+              <p className="font-jost text-[10px] sm:text-[11px] text-white/45 leading-tight">
+                Jewelry with meaning.
               </p>
             </div>
           </div>
-
-          {/* Understated subtle bottom ribbon */}
-          {(() => {
-            const rawText = config.pillarsText || "Lab-Grown Diamonds · Architectural Minimalism · Surat Atelier · Lifetime Warranty";
-            const items = rawText.split(/[·•|]+/).map(s => s.trim()).filter(Boolean);
-            return (
-              <div className="mt-2.5 pt-2 border-t border-white/10 w-full flex flex-wrap justify-center items-center gap-x-4 gap-y-1 text-[9px] sm:text-[10px] tracking-widest text-white/45 uppercase font-jost font-secondary select-none">
-                {items.map((item, idx) => (
-                  <React.Fragment key={idx}>
-                    <span className="hover:text-white/80 transition-colors">{item}</span>
-                    {idx < items.length - 1 && <span className="text-white/20">·</span>}
-                  </React.Fragment>
-                ))}
-              </div>
-            );
-          })()}
         </div>
       </div>
     </section>
