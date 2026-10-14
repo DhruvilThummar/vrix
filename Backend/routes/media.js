@@ -48,13 +48,13 @@ router.post("/upload", upload.single("file"), async (req, res, next) => {
         console.log("✅ [Media Upload] Cloudinary upload successful:", result.secure_url);
         return res.json({ url: result.secure_url, public_id: result.public_id });
       } catch (err) {
-        console.error("❌ [Media Upload] Cloudinary upload failed:", err);
-        return res.status(500).json({ error: "Cloudinary upload failed: " + err.message });
+        console.warn("⚠️ [Media Upload] Cloudinary upload failed, falling back to local storage:", err.message);
+        // Seamlessly fall through to local uploads directory below
       }
     }
 
     // Fallback: save file locally in /data/uploads/
-    console.log("💾 [Media Upload] Cloudinary not configured. Storing file locally...");
+    console.log("💾 [Media Upload] Storing file locally in /data/uploads/...");
     const uploadsDir = path.join(__dirname, "..", "data", "uploads");
     
     try {

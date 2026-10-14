@@ -13,21 +13,44 @@ const withTimeout = (promise, ms) => {
   });
 };
 
+const normalizeUser = (u) => {
+  if (!u) return null;
+  const isVrix = Boolean(
+    u.isVrixPlusMember ||
+    u.is_vrix_plus_member ||
+    String(u.isVrixPlusMember).toLowerCase() === "true" ||
+    String(u.is_vrix_plus_member).toLowerCase() === "true" ||
+    Boolean(u.vrixPlusJoinedDate) ||
+    Boolean(u.vrix_plus_joined_date)
+  );
+  return {
+    ...u,
+    isVrixPlusMember: isVrix,
+    is_vrix_plus_member: isVrix,
+    vrixPlusJoinedDate: u.vrixPlusJoinedDate || u.vrix_plus_joined_date || null,
+    vrix_plus_joined_date: u.vrixPlusJoinedDate || u.vrix_plus_joined_date || null,
+    dateOfBirth: u.dateOfBirth || u.date_of_birth || null,
+    date_of_birth: u.dateOfBirth || u.date_of_birth || null,
+    createdAt: u.createdAt || u.created_at,
+    updatedAt: u.updatedAt || u.updated_at,
+  };
+};
+
 export const userService = {
   findMany: async () => {
     if (isDbConnected && prisma) {
       try {
         const users = await withTimeout(prisma.user.findMany({ orderBy: { createdAt: "desc" } }), 800);
-        if (Array.isArray(users) && users.length > 0) return users;
+        if (Array.isArray(users) && users.length > 0) return users.map(normalizeUser);
       } catch (err) {}
     }
     if (supabase) {
       try {
         const { data, error } = await supabase.from("users").select("*").order("created_at", { ascending: false });
-        if (!error && Array.isArray(data)) return data;
+        if (!error && Array.isArray(data)) return data.map(normalizeUser);
       } catch (e) {}
     }
-    return Array.from(userMemoryMap.values());
+    return Array.from(userMemoryMap.values()).map(normalizeUser);
   },
 
   findByEmail: async (email) => {
@@ -37,19 +60,19 @@ export const userService = {
     if (isDbConnected && prisma) {
       try {
         const u = await withTimeout(prisma.user.findFirst({ where: { email: { equals: targetEmail, mode: "insensitive" } } }), 600);
-        if (u) return u;
+        if (u) return normalizeUser(u);
       } catch (err) {}
     }
 
     if (supabase) {
       try {
         const { data, error } = await supabase.from("users").select("*").ilike("email", targetEmail).maybeSingle();
-        if (!error && data) return data;
+        if (!error && data) return normalizeUser(data);
       } catch (e) {}
     }
 
     for (const u of userMemoryMap.values()) {
-      if (u.email && String(u.email).toLowerCase() === targetEmail) return u;
+      if (u.email && String(u.email).toLowerCase() === targetEmail) return normalizeUser(u);
     }
     return null;
   },

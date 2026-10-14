@@ -133,6 +133,12 @@ export default function AdminLaunchCountdownPage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showToast("Please select a valid image file.");
+      return;
+    }
+
     setUploading(true);
     try {
       const res = await uploadMedia(file);
@@ -141,7 +147,19 @@ export default function AdminLaunchCountdownPage() {
         showToast("Hero background image uploaded successfully!");
       }
     } catch (err: any) {
-      showToast(err.message || "Failed to upload image.");
+      console.warn("Server upload failed, falling back to local base64 preview:", err);
+      // Fallback: Read as base64 data URL so admin can preview & use image even if backend media upload is offline
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setConfig((prev) => ({ ...prev, bgImage: reader.result as string }));
+          showToast("Image loaded successfully (Local/Client Preview).");
+        }
+      };
+      reader.onerror = () => {
+        showToast(err.message || "Failed to upload image.");
+      };
+      reader.readAsDataURL(file);
     } finally {
       setUploading(false);
     }
@@ -591,6 +609,37 @@ export default function AdminLaunchCountdownPage() {
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
               </label>
             </div>
+
+            {/* Uploaded Background Preview Thumbnail */}
+            {config.bgImage && (
+              <div className="relative w-full h-32 rounded overflow-hidden border border-slate-grey/30 bg-black/5 flex items-center justify-center group">
+                <img
+                  src={config.bgImage}
+                  alt="Selected Background Preview"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <a
+                    href={config.bgImage}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1 bg-white/90 text-deep-navy text-[10px] font-semibold uppercase tracking-wider rounded"
+                  >
+                    Open Full
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setConfig((prev) => ({ ...prev, bgImage: "" }))}
+                    className="px-3 py-1 bg-red-600 text-white text-[10px] font-semibold uppercase tracking-wider rounded hover:bg-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 text-white text-[9px] font-inter uppercase tracking-wider rounded backdrop-blur-xs">
+                  Active Hero Background
+                </div>
+              </div>
+            )}
 
             {/* Presets Grid */}
             <div>

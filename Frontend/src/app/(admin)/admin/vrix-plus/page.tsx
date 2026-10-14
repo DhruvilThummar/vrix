@@ -42,7 +42,10 @@ export default function AdminVrixPlusPage() {
         fetchUsers().catch(() => []),
         fetchDb().catch(() => ({}))
       ]);
-      setUsers(Array.isArray(usersData) ? usersData : []);
+      const rawUsers = Array.isArray(usersData) && usersData.length > 0
+        ? usersData
+        : (Array.isArray(dbData?.users) ? dbData.users : []);
+      setUsers(rawUsers);
       
       const vrixPlusCMS = dbData?.vrix_plus || dbData?.cms?.vrix_plus || {};
       setVrixConfig((prev: any) => ({
@@ -79,14 +82,22 @@ export default function AdminVrixPlusPage() {
     if (!confirm(`Are you sure you want to revoke VRIX+ membership for ${email}?`)) return;
     try {
       await updateUserVrixPlus(email, false);
-      setUsers(prev => prev.map(u => u.email === email ? { ...u, isVrixPlusMember: false } : u));
+      setUsers(prev => prev.map(u => u.email === email ? { ...u, isVrixPlusMember: false, is_vrix_plus_member: false } : u));
     } catch (err: any) {
       alert("Failed to revoke membership: " + err.message);
     }
   };
 
   // Calculations
-  const members = useMemo(() => users.filter(u => !!u.isVrixPlusMember), [users]);
+  const isMember = (u: any) =>
+    Boolean(u.isVrixPlusMember) ||
+    String(u.isVrixPlusMember).toLowerCase() === "true" ||
+    Boolean(u.is_vrix_plus_member) ||
+    String(u.is_vrix_plus_member).toLowerCase() === "true" ||
+    Boolean(u.vrixPlusJoinedDate) ||
+    Boolean(u.vrix_plus_joined_date);
+
+  const members = useMemo(() => users.filter(isMember), [users]);
   
   const estimatedRevenue = useMemo(() => {
     const price = Number(vrixConfig.subscriptionPrice) || 0;
@@ -101,7 +112,7 @@ export default function AdminVrixPlusPage() {
     const currentMonth = now.toLocaleString("en-US", { month: "long" }).toLowerCase();
     const currentYear = now.getFullYear().toString();
     return members.filter(u => {
-      const joinedDate = String(u.vrixPlusJoinedDate || "").toLowerCase();
+      const joinedDate = String(u.vrixPlusJoinedDate || (u as any).vrix_plus_joined_date || "").toLowerCase();
       return joinedDate.includes(currentMonth) && joinedDate.includes(currentYear);
     }).length;
   }, [members]);
@@ -110,8 +121,9 @@ export default function AdminVrixPlusPage() {
     // Shows number of members whose birthday is this month
     const currentMonth = new Date().getMonth();
     return members.filter(u => {
-      if (!u.dateOfBirth) return false;
-      const dob = new Date(u.dateOfBirth);
+      const dobVal = u.dateOfBirth || (u as any).date_of_birth;
+      if (!dobVal) return false;
+      const dob = new Date(dobVal);
       return !isNaN(dob.getTime()) && dob.getMonth() === currentMonth;
     }).length;
   }, [members]);
@@ -121,7 +133,8 @@ export default function AdminVrixPlusPage() {
     return members.filter(u => 
       !q ||
       String(u.name || "").toLowerCase().includes(q) ||
-      String(u.email || "").toLowerCase().includes(q)
+      String(u.email || "").toLowerCase().includes(q) ||
+      String(u.phone || "").toLowerCase().includes(q)
     );
   }, [members, searchQuery]);
 
@@ -349,8 +362,8 @@ export default function AdminVrixPlusPage() {
                     <td className="py-3.5 px-4 font-semibold text-deep-navy">{m.name || "VRIX Member"}</td>
                     <td className="py-3.5 px-4">{m.email}</td>
                     <td className="py-3.5 px-4">{m.phone || "N/A"}</td>
-                    <td className="py-3.5 px-4">{m.dateOfBirth || "N/A"}</td>
-                    <td className="py-3.5 px-4">{m.vrixPlusJoinedDate || "N/A"}</td>
+                    <td className="py-3.5 px-4">{m.dateOfBirth || (m as any).date_of_birth || "N/A"}</td>
+                    <td className="py-3.5 px-4">{m.vrixPlusJoinedDate || (m as any).vrix_plus_joined_date || "N/A"}</td>
                     <td className="py-3.5 px-4 text-right font-semibold">{formatPrice(m.totalBuying || 0)}</td>
                     <td className="py-3.5 px-4 text-center flex items-center justify-center gap-2">
                       <button

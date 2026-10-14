@@ -87,7 +87,7 @@ export default function ShopLayout({
         <div className={`hidden md:block ${isPreLaunch ? "h-[65px]" : "h-[105px]"}`} />
       )}
       <main className="shop-shell flex-grow">{children}</main>
-      <Footer />
+      {!isPreLaunch && <Footer />}
       <VrixChatWidget />
     </div>
   );

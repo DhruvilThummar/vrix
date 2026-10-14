@@ -346,20 +346,11 @@ export default function Header() {
         <div className="w-full max-w-container-max mx-auto px-margin-desktop py-4 grid grid-cols-3 items-center">
           {/* Left space */}
           <div className="header-member-info flex justify-start text-xs font-label-caps">
-            {isPreLaunch ? (
-              <Link
-                href="/contact"
-                className="font-inter font-primary text-xs tracking-[0.2em] font-semibold uppercase hover:opacity-75 transition-opacity py-1 px-2 border-b border-transparent hover:border-current"
-              >
-                CONTACT US
+            {!isPreLaunch && isLoggedIn && user?.isVrixPlusMember && (
+              <Link href="/vrix-plus" className="header-member-link flex items-center gap-1.5 font-semibold hover:opacity-85 transition-opacity">
+                <span className="material-symbols-outlined text-[15px] font-bold animate-pulse">stars</span>
+                VRIX+ ACTIVE MEMBER
               </Link>
-            ) : (
-              isLoggedIn && user?.isVrixPlusMember && (
-                <Link href="/vrix-plus" className="header-member-link flex items-center gap-1.5 font-semibold hover:opacity-85 transition-opacity">
-                  <span className="material-symbols-outlined text-[15px] font-bold animate-pulse">stars</span>
-                  VRIX+ ACTIVE MEMBER
-                </Link>
-              )
             )}
           </div>
 
@@ -387,47 +378,47 @@ export default function Header() {
 
           {/* Right Action Icons */}
           <div className="flex justify-end items-center gap-6">
-            <Select.Root
-              value={currency}
-              onValueChange={(val: string | null) => {
-                if (val) changeCurrency(val as any);
-              }}
-            >
-              <Select.Trigger className="header-currency text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2 bg-transparent flex items-center gap-1.5 focus:outline-none">
-                <Select.Value>
-                  {currency === "INR" && <span className="fi fi-in" />}
-                  {currency === "USD" && <span className="fi fi-us" />}
-                  {currency === "EUR" && <span className="fi fi-eu" />}
-                  {currency === "GBP" && <span className="fi fi-gb" />}
-                  <span className="ml-1">{currency}</span>
-                </Select.Value>
-                <Select.Icon className="material-symbols-outlined text-[14px]">expand_more</Select.Icon>
-              </Select.Trigger>
-              <Select.Portal>
-                <Select.Positioner className="z-50 mt-1">
-                  <Select.Popup className="bg-pure-white border border-slate-grey/20 shadow-xl py-1 flex flex-col min-w-[100px] outline-none">
-                    <Select.Item value="INR" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
-                      <span className="fi fi-in" />
-                      <span>INR (₹)</span>
-                    </Select.Item>
-                    <Select.Item value="USD" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
-                      <span className="fi fi-us" />
-                      <span>USD ($)</span>
-                    </Select.Item>
-                    <Select.Item value="EUR" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
-                      <span className="fi fi-eu" />
-                      <span>EUR (€)</span>
-                    </Select.Item>
-                    <Select.Item value="GBP" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
-                      <span className="fi fi-gb" />
-                      <span>GBP (£)</span>
-                    </Select.Item>
-                  </Select.Popup>
-                </Select.Positioner>
-              </Select.Portal>
-            </Select.Root>
             {!isPreLaunch && (
               <>
+                <Select.Root
+                  value={currency}
+                  onValueChange={(val: string | null) => {
+                    if (val) changeCurrency(val as any);
+                  }}
+                >
+                  <Select.Trigger className="header-currency text-xs font-semibold uppercase tracking-wider outline-none cursor-pointer border-none mr-2 bg-transparent flex items-center gap-1.5 focus:outline-none">
+                    <Select.Value>
+                      {currency === "INR" && <span className="fi fi-in" />}
+                      {currency === "USD" && <span className="fi fi-us" />}
+                      {currency === "EUR" && <span className="fi fi-eu" />}
+                      {currency === "GBP" && <span className="fi fi-gb" />}
+                      <span className="ml-1">{currency}</span>
+                    </Select.Value>
+                    <Select.Icon className="material-symbols-outlined text-[14px]">expand_more</Select.Icon>
+                  </Select.Trigger>
+                  <Select.Portal>
+                    <Select.Positioner className="z-50 mt-1">
+                      <Select.Popup className="bg-pure-white border border-slate-grey/20 shadow-xl py-1 flex flex-col min-w-[100px] outline-none">
+                        <Select.Item value="INR" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
+                          <span className="fi fi-in" />
+                          <span>INR (₹)</span>
+                        </Select.Item>
+                        <Select.Item value="USD" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
+                          <span className="fi fi-us" />
+                          <span>USD ($)</span>
+                        </Select.Item>
+                        <Select.Item value="EUR" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
+                          <span className="fi fi-eu" />
+                          <span>EUR (€)</span>
+                        </Select.Item>
+                        <Select.Item value="GBP" className="px-3 py-1.5 text-xs text-ink-black hover:bg-soft-linen cursor-pointer flex items-center gap-2 focus:outline-none">
+                          <span className="fi fi-gb" />
+                          <span>GBP (£)</span>
+                        </Select.Item>
+                      </Select.Popup>
+                    </Select.Positioner>
+                  </Select.Portal>
+                </Select.Root>
                 <button
                   onClick={() => setIsSearchOpen(true)}
                   className="header-action p-1 transition-colors duration-300 cursor-pointer flex items-center justify-center"
@@ -579,16 +570,9 @@ export default function Header() {
             : "bg-pure-white text-ink-black border-soft-linen shadow-sm"
         }`}
       >
-        {/* Left: Hamburger menu or Contact link in pre-launch */}
+        {/* Left: Hamburger menu or empty in pre-launch */}
         <div className="flex justify-start items-center">
-          {isPreLaunch ? (
-            <Link
-              href="/contact"
-              className="text-[11px] font-inter font-primary tracking-widest uppercase font-semibold hover:opacity-75 transition-opacity"
-            >
-              CONTACT
-            </Link>
-          ) : (
+          {!isPreLaunch && (
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="cursor-pointer flex items-center justify-center w-8 h-8"
@@ -623,14 +607,7 @@ export default function Header() {
 
         {/* Right: Actions */}
         <div className="flex justify-end gap-3 items-center">
-          {isPreLaunch ? (
-            <Link
-              href="/contact"
-              className="text-[10px] font-inter font-primary uppercase tracking-wider text-slate-grey hover:text-black transition-colors"
-            >
-              ATELIER
-            </Link>
-          ) : (
+          {!isPreLaunch && (
             <>
               <button
                 onClick={() => setIsSearchOpen(true)}

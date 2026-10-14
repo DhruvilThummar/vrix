@@ -13,17 +13,20 @@ const getAmount = (payment = {}) => Number(payment.amount || 0);
 router.get("/users", async (req, res) => {
   try {
     const [users, payments, carts, wishlists] = await Promise.all([
-      db.users.findMany(),
-      db.payments.findMany().catch(() => []),
-      (db.carts?.findMany().catch(() => []) || Promise.resolve([])),
-      (db.wishlists?.findMany().catch(() => []) || Promise.resolve([]))
+      db.users.findMany().catch(() => []),
+      (db.payments?.findMany ? db.payments.findMany().catch(() => []) : Promise.resolve([])),
+      (db.carts?.findMany ? db.carts.findMany().catch(() => []) : Promise.resolve([])),
+      (db.wishlists?.findMany ? db.wishlists.findMany().catch(() => []) : Promise.resolve([]))
     ]);
 
-    const enriched = users.map((u) => {
+    const safeUsers = Array.isArray(users) ? users : [];
+    const safePayments = Array.isArray(payments) ? payments : [];
+
+    const enriched = safeUsers.map((u) => {
       const cleanEmail = String(u.email || "").trim().toLowerCase();
 
       // Total lifetime spending from successful payments
-      const userPayments = payments.filter(
+      const userPayments = safePayments.filter(
         (p) =>
           String(p.userEmail || p.email || "").trim().toLowerCase() === cleanEmail &&
           ["SUCCESS", "DELIVERED", "PAID"].includes(normalizeStatus(p.status))
@@ -50,9 +53,24 @@ router.get("/users", async (req, res) => {
       const cartItemsCount = Array.isArray(userCart?.items) ? userCart.items.reduce((sum, i) => sum + (Number(i.quantity) || 1), 0) : 0;
       const wishlistItemsCount = Array.isArray(userWishlist?.items) ? userWishlist.items.length : 0;
 
+      const isVrix = Boolean(
+        u.isVrixPlusMember ||
+        u.is_vrix_plus_member ||
+        String(u.isVrixPlusMember).toLowerCase() === "true" ||
+        String(u.is_vrix_plus_member).toLowerCase() === "true" ||
+        Boolean(u.vrixPlusJoinedDate) ||
+        Boolean(u.vrix_plus_joined_date)
+      );
+
       const { password: _, ...safeUser } = u;
       return {
         ...safeUser,
+        isVrixPlusMember: isVrix,
+        is_vrix_plus_member: isVrix,
+        vrixPlusJoinedDate: u.vrixPlusJoinedDate || u.vrix_plus_joined_date || null,
+        vrix_plus_joined_date: u.vrixPlusJoinedDate || u.vrix_plus_joined_date || null,
+        dateOfBirth: u.dateOfBirth || u.date_of_birth || null,
+        date_of_birth: u.dateOfBirth || u.date_of_birth || null,
         totalBuying,
         totalOrdersCount: userPayments.length,
         cartItemsCount,
@@ -83,7 +101,9 @@ router.patch("/users/:email/vrix-plus", async (req, res) => {
       where: { email: cleanEmail },
       data: { 
         isVrixPlusMember: !!isVrixPlusMember, 
-        vrixPlusJoinedDate: isVrixPlusMember ? today : null 
+        is_vrix_plus_member: !!isVrixPlusMember,
+        vrixPlusJoinedDate: isVrixPlusMember ? today : null,
+        vrix_plus_joined_date: isVrixPlusMember ? today : null
       }
     });
 

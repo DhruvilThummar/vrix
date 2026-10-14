@@ -34,6 +34,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "**",
       },
+      // Allow local development and upload server
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+      },
     ],
   },
   typescript: {
