@@ -109,7 +109,10 @@ export default function LaunchCountdownHero() {
   const formatNumber = (num: number) => String(num).padStart(2, "0");
 
   return (
-    <section suppressHydrationWarning className="relative w-full min-h-screen flex flex-col justify-between overflow-hidden bg-[#0A0805] text-white">
+    <section
+      suppressHydrationWarning
+      className="relative w-full min-h-[100dvh] min-h-screen flex flex-col justify-between overflow-x-hidden overflow-y-auto bg-[#0A0805] text-white"
+    >
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -129,7 +132,7 @@ export default function LaunchCountdownHero() {
           style={{ opacity: overlayOpacity }}
         />
         {/* Cinematic gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/75 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/35 to-black/80 pointer-events-none" />
         {/* Warm golden tint */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/10 via-transparent to-amber-800/10 pointer-events-none" />
       </div>
@@ -138,7 +141,7 @@ export default function LaunchCountdownHero() {
       <div className="absolute inset-0 pointer-events-none z-[5] overflow-hidden flex items-center justify-center">
         <svg
           viewBox="0 0 1200 800"
-          className="w-full h-full max-w-6xl object-contain opacity-30 sm:opacity-40"
+          className="w-full h-full max-w-5xl lg:max-w-6xl object-contain opacity-25 sm:opacity-35 md:opacity-40"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -183,12 +186,13 @@ export default function LaunchCountdownHero() {
         </svg>
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto px-5 sm:px-8 pt-10 sm:pt-14 pb-6 sm:pb-8 text-center">
+      {/* Main Content — Perfectly Centered with Dynamic Breathing Room */}
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-6 sm:pb-8 text-center">
 
         {/* Top Unveiling Banner Badge */}
-        <div className="text-[10px] sm:text-[11px] font-inter uppercase tracking-[0.3em] text-white/70 mb-4 sm:mb-6 select-none font-medium">
-          {config.badgeText || "THE WORLD OF VRIX — UNVEILING SOON"}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-xs text-[9px] sm:text-[10px] md:text-[11px] font-inter uppercase tracking-[0.2em] sm:tracking-[0.28em] text-white/75 mb-3 sm:mb-4 md:mb-5 select-none font-medium max-w-[90vw] truncate">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse inline-block shrink-0" />
+          <span className="truncate">{config.badgeText || "THE WORLD OF VRIX — UNVEILING SOON"}</span>
         </div>
 
         {/* Screen Reader Title for SEO/Accessibility */}
@@ -196,7 +200,7 @@ export default function LaunchCountdownHero() {
 
         {/* Main Heading — Classical Luxury Serif Matching Reference */}
         <h2
-          className="text-base sm:text-xl md:text-2xl lg:text-3xl text-white/95 font-light tracking-[0.22em] sm:tracking-[0.28em] uppercase mb-3 sm:mb-4 leading-relaxed max-w-3xl"
+          className="text-lg sm:text-2xl md:text-3xl lg:text-4xl text-white/95 font-light tracking-[0.16em] sm:tracking-[0.22em] md:tracking-[0.28em] uppercase mb-2.5 sm:mb-3 md:mb-4 leading-snug sm:leading-relaxed max-w-3xl px-2"
           style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
         >
           {config.subtitle ? (
@@ -207,24 +211,16 @@ export default function LaunchCountdownHero() {
         </h2>
 
         {/* Editorial Description */}
-        {config.description ? (
-          <p className="font-jost text-[11px] sm:text-xs md:text-sm text-white/70 max-w-lg mb-6 md:mb-9 font-light leading-relaxed tracking-wide">
-            {config.description}
-          </p>
-        ) : (
-          <p className="font-jost text-[11px] sm:text-xs md:text-sm text-white/70 max-w-lg mb-6 md:mb-9 font-light leading-relaxed tracking-wide">
-            Jewelry shaped by intention. Defined by detail.
-            <br />
-            Discover a quieter expression of luxury, created for the way you live.
-          </p>
-        )}
+        <p className="font-jost text-xs sm:text-[13px] md:text-sm text-white/70 max-w-md sm:max-w-lg mb-6 sm:mb-8 md:mb-10 font-light leading-relaxed tracking-normal sm:tracking-wide px-3">
+          {config.description || "Jewelry shaped by intention. Defined by detail.\nDiscover a quieter expression of luxury, created for the way you live."}
+        </p>
 
-        {/* Countdown Timer — Luxury Serif & Hairline ✦ Star Separators Matching Reference */}
+        {/* Countdown Timer — Luxury Serif & Hairline ✦ Star Separators (Scaled for All Screen Sizes) */}
         {!timeLeft.isExpired ? (
-          <div suppressHydrationWarning className="relative mb-7 md:mb-10 select-none">
-            {/* Celestial Orbit Arc around the countdown */}
-            <div className="absolute -inset-x-8 -inset-y-6 pointer-events-none hidden sm:block">
-              <svg viewBox="0 0 900 240" fill="none" className="w-full h-full opacity-60">
+          <div suppressHydrationWarning className="relative mb-6 sm:mb-8 md:mb-10 select-none w-full max-w-2xl mx-auto px-2">
+            {/* Celestial Orbit Arc around the countdown (Visible on tablets and larger) */}
+            <div className="absolute -inset-x-4 -inset-y-4 sm:-inset-x-8 sm:-inset-y-6 pointer-events-none hidden sm:block">
+              <svg viewBox="0 0 900 240" fill="none" className="w-full h-full opacity-50 sm:opacity-60">
                 <path
                   d="M 120 180 C 260 50, 680 40, 840 130"
                   stroke="url(#orbitGold)"
@@ -246,88 +242,88 @@ export default function LaunchCountdownHero() {
               </svg>
             </div>
 
-            <div className="relative z-10 flex items-center justify-center gap-2 sm:gap-4 md:gap-6">
+            <div className="relative z-10 flex items-center justify-center gap-1 sm:gap-3 md:gap-5 lg:gap-7">
               {/* DAYS */}
-              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[95px]">
+              <div className="flex flex-col items-center min-w-[52px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
                   suppressHydrationWarning
-                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.days)}
                 </span>
-                <span className="font-inter font-primary text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-white/55 mt-2.5 sm:mt-3 font-medium">
+                <span className="font-inter font-primary text-[8px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.32em] uppercase text-white/55 mt-1.5 sm:mt-2.5 font-medium">
                   Days
                 </span>
               </div>
 
               {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-1 sm:px-2 md:px-3 opacity-70">
-                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
-                <span className="text-amber-200 text-xs sm:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
+              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-70">
+                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
+                <span className="text-amber-200 text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
               </div>
 
               {/* HOURS */}
-              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[95px]">
+              <div className="flex flex-col items-center min-w-[52px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
                   suppressHydrationWarning
-                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.hours)}
                 </span>
-                <span className="font-inter font-primary text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-white/55 mt-2.5 sm:mt-3 font-medium">
+                <span className="font-inter font-primary text-[8px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.32em] uppercase text-white/55 mt-1.5 sm:mt-2.5 font-medium">
                   Hours
                 </span>
               </div>
 
               {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-1 sm:px-2 md:px-3 opacity-70">
-                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
-                <span className="text-amber-200 text-xs sm:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
+              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-70">
+                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
+                <span className="text-amber-200 text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
               </div>
 
               {/* MINUTES */}
-              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[95px]">
+              <div className="flex flex-col items-center min-w-[52px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
                   suppressHydrationWarning
-                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.minutes)}
                 </span>
-                <span className="font-inter font-primary text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-white/55 mt-2.5 sm:mt-3 font-medium">
+                <span className="font-inter font-primary text-[8px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.32em] uppercase text-white/55 mt-1.5 sm:mt-2.5 font-medium">
                   Minutes
                 </span>
               </div>
 
               {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-1 sm:px-2 md:px-3 opacity-70">
-                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
-                <span className="text-amber-200 text-xs sm:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-3 sm:h-5 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
+              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-70">
+                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
+                <span className="text-amber-200 text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
               </div>
 
               {/* SECONDS */}
-              <div className="flex flex-col items-center min-w-[60px] sm:min-w-[80px] md:min-w-[95px]">
+              <div className="flex flex-col items-center min-w-[52px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
                   suppressHydrationWarning
-                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.seconds)}
                 </span>
-                <span className="font-inter font-primary text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.32em] uppercase text-white/55 mt-2.5 sm:mt-3 font-medium">
+                <span className="font-inter font-primary text-[8px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.32em] uppercase text-white/55 mt-1.5 sm:mt-2.5 font-medium">
                   Seconds
                 </span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="mb-6 py-3 px-8 border border-amber-300/30 bg-amber-400/5 backdrop-blur-sm text-amber-200/90">
-            <p className="font-inter text-xs sm:text-sm tracking-[0.25em] uppercase font-medium">
+          <div className="mb-6 py-3 px-6 sm:px-8 border border-amber-300/30 bg-amber-400/5 backdrop-blur-sm text-amber-200/90 rounded-xs">
+            <p className="font-inter text-xs sm:text-sm tracking-[0.22em] sm:tracking-[0.25em] uppercase font-medium">
               ✦ We are live — Welcome to the atelier ✦
             </p>
           </div>
@@ -335,26 +331,26 @@ export default function LaunchCountdownHero() {
 
         {/* VIP Early Access / Waitlist Box */}
         {config.enableWaitlist && (
-          <div className="w-full max-w-md mx-auto mb-5 sm:mb-6 select-none">
+          <div className="w-full max-w-sm sm:max-w-md mx-auto mb-4 sm:mb-6 select-none px-2 sm:px-0">
             {subscribed ? (
-              <div className="py-2 px-4 text-center">
-                <div className="flex items-center justify-center gap-2.5 mb-1.5">
-                  <svg className="w-4 h-4 text-amber-200/90" viewBox="0 0 24 24" fill="currentColor">
+              <div className="py-2.5 px-4 text-center bg-white/5 border border-white/10 backdrop-blur-sm rounded-xs">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <svg className="w-3.5 h-3.5 text-amber-200/90" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
                   </svg>
                   <p
-                    className="text-xs sm:text-sm tracking-[0.25em] uppercase text-white/95 font-light"
+                    className="text-xs sm:text-sm tracking-[0.22em] uppercase text-white/95 font-light"
                     style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                   >
                     You&apos;re on the list.
                   </p>
                 </div>
-                <p className="font-jost text-[11px] sm:text-xs text-white/65 leading-relaxed max-w-sm mx-auto">
+                <p className="font-jost text-[11px] sm:text-xs text-white/65 leading-relaxed max-w-xs sm:max-w-sm mx-auto">
                   {successMsg || config.waitlistSuccessMsg || "Early access. First collection previews. A closer look at the world of VRIX."}
                 </p>
                 {savedEmail && (
-                  <p className="font-jost text-[11px] sm:text-xs text-white/55 mt-2">
-                    Registered: <span className="text-amber-200/90 font-medium">{savedEmail}</span>
+                  <p className="font-jost text-[10px] sm:text-[11px] text-white/50 mt-1.5">
+                    Registered: <span className="text-amber-200/90 font-medium break-all">{savedEmail}</span>
                   </p>
                 )}
                 <button
@@ -364,25 +360,25 @@ export default function LaunchCountdownHero() {
                     setSuccessMsg(null);
                     setEmail("");
                   }}
-                  className="mt-2.5 text-[9px] sm:text-[10px] text-white/45 hover:text-white/80 underline underline-offset-4 tracking-[0.2em] uppercase font-inter cursor-pointer transition-colors block mx-auto"
+                  className="mt-2 text-[9px] sm:text-[10px] text-white/45 hover:text-white/80 underline underline-offset-4 tracking-[0.2em] uppercase font-inter cursor-pointer transition-colors block mx-auto"
                 >
                   Register another email
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2.5 w-full max-w-sm mx-auto">
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 sm:gap-2.5 w-full">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email for private launch access..."
                   required
-                  className="flex-1 bg-white/5 border border-white/20 text-white placeholder-white/35 px-4 py-2.5 text-xs font-inter tracking-wider focus:outline-none focus:border-white/50 transition-colors backdrop-blur-sm"
+                  className="flex-1 h-10 sm:h-11 bg-white/5 border border-white/20 text-white placeholder-white/35 px-3.5 sm:px-4 text-xs font-inter tracking-wider focus:outline-none focus:border-white/50 transition-colors backdrop-blur-sm"
                 />
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all px-5 py-2.5 text-xs font-inter tracking-[0.15em] uppercase font-semibold cursor-pointer disabled:opacity-50 shrink-0 flex items-center justify-center gap-1.5 min-w-[110px]"
+                  className="h-10 sm:h-11 bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all px-5 sm:px-6 text-xs font-inter tracking-[0.16em] uppercase font-semibold cursor-pointer disabled:opacity-50 shrink-0 flex items-center justify-center gap-1.5 sm:w-auto"
                 >
                   {submitting ? (
                     <>
@@ -396,7 +392,7 @@ export default function LaunchCountdownHero() {
               </form>
             )}
             {errorMsg && (
-              <p className="text-[10px] text-red-300 mt-2 font-jost text-center bg-red-950/30 py-1.5 px-3 border border-red-500/20 max-w-sm mx-auto">
+              <p className="text-[10px] sm:text-[11px] text-red-300 mt-2 font-jost text-center bg-red-950/40 py-1.5 px-3 border border-red-500/25 max-w-sm mx-auto">
                 {errorMsg}
               </p>
             )}
@@ -406,66 +402,66 @@ export default function LaunchCountdownHero() {
         {/* Contact Us Button Matching Reference */}
         <Link
           href={config.contactButtonUrl || "/contact"}
-          className="inline-flex items-center gap-2 text-white/80 hover:text-white text-[10px] sm:text-[11px] font-inter tracking-[0.25em] uppercase pb-1 border-b border-white/30 hover:border-white transition-all duration-300 select-none mb-5 sm:mb-7 group"
+          className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-[10px] sm:text-[11px] font-inter tracking-[0.24em] uppercase pb-1 border-b border-white/30 hover:border-white transition-all duration-300 select-none mb-4 sm:mb-6 group"
         >
           <span>{config.contactButtonText || "Contact Us"}</span>
           <span className="text-xs group-hover:translate-x-1 transition-transform">→</span>
         </Link>
       </div>
 
-      {/* Bottom Pillars Section — User Request 2 + Reference Image Dividers */}
-      <div className="relative z-10 w-full border-t border-white/10 bg-black/40 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-5 sm:py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 divide-y sm:divide-y-0 md:divide-x divide-white/10">
+      {/* Bottom Pillars Section — Fully Responsive Across All Devices (Mobile 2x2, Tablet & Desktop 4 Cols) */}
+      <div className="relative z-10 w-full border-t border-white/10 bg-black/45 backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-3.5 sm:py-4 md:py-5 lg:py-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3 gap-x-2 sm:gap-x-4 md:gap-x-0 md:divide-x md:divide-white/10">
             {/* Pillar 1 */}
-            <div className="flex flex-col items-center text-center group px-2 py-1">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-2xl font-light">
+            <div className="flex flex-col items-center text-center group px-1 sm:px-2 md:px-4">
+              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-xl sm:text-2xl font-light">
                 flare
               </span>
               <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
                 Intentional Design
               </h4>
-              <p className="font-jost font-secondary text-[10px] sm:text-[11px] text-white/70 whitespace-pre-line leading-tight">
+              <p className="font-jost font-secondary text-[9px] sm:text-[10px] md:text-[11px] text-white/70 whitespace-pre-line leading-tight">
                 {"Every piece has\na deeper meaning."}
               </p>
             </div>
 
             {/* Pillar 2 */}
-            <div className="flex flex-col items-center text-center group px-2 py-1">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-2xl font-light">
+            <div className="flex flex-col items-center text-center group px-1 sm:px-2 md:px-4">
+              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-xl sm:text-2xl font-light">
                 hourglass_empty
               </span>
               <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
                 Timeless Quality
               </h4>
-              <p className="font-jost font-secondary text-[10px] sm:text-[11px] text-white/70 whitespace-pre-line leading-tight">
-                {"Considered forms.\nNothing unnecessary."}
+              <p className="font-jost font-secondary text-[9px] sm:text-[10px] md:text-[11px] text-white/70 whitespace-pre-line leading-tight">
+                {"Crafted to last.\nMade to be lived in."}
               </p>
             </div>
 
             {/* Pillar 3 */}
-            <div className="flex flex-col items-center text-center group px-2 py-1">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-2xl font-light">
+            <div className="flex flex-col items-center text-center group px-1 sm:px-2 md:px-4">
+              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-xl sm:text-2xl font-light">
                 eco
               </span>
               <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
                 Conscious Luxury
               </h4>
-              <p className="font-jost font-secondary text-[10px] sm:text-[11px] text-white/70 whitespace-pre-line leading-tight">
-                {"Thoughtful choices.\nLasting value."}
+              <p className="font-jost font-secondary text-[9px] sm:text-[10px] md:text-[11px] text-white/70 whitespace-pre-line leading-tight">
+                {"Ethical materials.\nThoughtful process."}
               </p>
             </div>
 
             {/* Pillar 4 */}
-            <div className="flex flex-col items-center text-center group px-2 py-1">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-2xl font-light">
+            <div className="flex flex-col items-center text-center group px-1 sm:px-2 md:px-4">
+              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-xl sm:text-2xl font-light">
                 favorite_border
               </span>
               <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
                 Personal Connection
               </h4>
-              <p className="font-jost font-secondary text-[10px] sm:text-[11px] text-white/70 whitespace-pre-line leading-tight">
-                {"Jewelry with meaning.\nCreated for you."}
+              <p className="font-jost font-secondary text-[9px] sm:text-[10px] md:text-[11px] text-white/70 whitespace-pre-line leading-tight">
+                {"A piece for every\nchapter of you."}
               </p>
             </div>
           </div>
