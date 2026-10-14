@@ -220,10 +220,10 @@ export default function LaunchCountdownHero() {
       </div>
 
       {/* Main Content — Perfectly Centered with Dynamic Breathing Room */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-6 sm:pb-8 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto px-3.5 sm:px-6 md:px-8 pt-20 sm:pt-28 md:pt-32 pb-5 sm:pb-8 text-center">
 
         {/* Top Unveiling Banner Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-xs text-[9px] sm:text-[10px] md:text-[11px] font-inter uppercase tracking-[0.2em] sm:tracking-[0.28em] text-white/75 mb-3 sm:mb-4 md:mb-5 select-none font-medium max-w-[90vw] truncate">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 sm:bg-white/5 border border-white/20 sm:border-white/10 backdrop-blur-xs text-[9px] sm:text-[10px] md:text-[11px] font-inter uppercase tracking-[0.2em] sm:tracking-[0.28em] text-white/80 mb-2.5 sm:mb-4 md:mb-5 select-none font-medium max-w-[92vw] truncate">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse inline-block shrink-0" />
           <span className="truncate">{config.badgeText || "THE WORLD OF VRIX — UNVEILING SOON"}</span>
         </div>
@@ -233,7 +233,7 @@ export default function LaunchCountdownHero() {
 
         {/* Main Heading — Classical Luxury Serif Matching Reference */}
         <h2
-          className="text-lg sm:text-2xl md:text-3xl lg:text-4xl text-white/95 font-light tracking-[0.16em] sm:tracking-[0.22em] md:tracking-[0.28em] uppercase mb-2.5 sm:mb-3 md:mb-4 leading-snug sm:leading-relaxed max-w-3xl px-2"
+          className="text-xl xs:text-2xl sm:text-3xl lg:text-4xl text-white/95 font-light tracking-[0.14em] sm:tracking-[0.22em] md:tracking-[0.28em] uppercase mb-2 sm:mb-3 leading-snug sm:leading-relaxed max-w-3xl px-2"
           style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
         >
           {config.subtitle ? (
@@ -244,13 +244,13 @@ export default function LaunchCountdownHero() {
         </h2>
 
         {/* Editorial Description */}
-        <p className="font-jost text-xs sm:text-[13px] md:text-sm text-white/70 max-w-md sm:max-w-lg mb-6 sm:mb-8 md:mb-10 font-light leading-relaxed tracking-normal sm:tracking-wide px-3">
+        <p className="font-jost text-xs sm:text-[13px] md:text-sm text-white/75 sm:text-white/70 max-w-md sm:max-w-lg mb-5 sm:mb-8 md:mb-10 font-light leading-relaxed tracking-normal sm:tracking-wide px-3">
           {config.description || "Jewelry shaped by intention. Defined by detail.\nDiscover a quieter expression of luxury, created for the way you live."}
         </p>
 
-        {/* Countdown Timer — Luxury Serif & Hairline ✦ Star Separators (Scaled for All Screen Sizes) */}
+        {/* Countdown Timer — Luxury Serif & Hairline ✦ Star Separators (Scaled & Framed for Phone View) */}
         {!timeLeft.isExpired ? (
-          <div suppressHydrationWarning className="relative mb-6 sm:mb-8 md:mb-10 select-none w-full max-w-2xl mx-auto px-2">
+          <div suppressHydrationWarning className="relative mb-5 sm:mb-8 md:mb-10 w-full max-w-2xl mx-auto px-1 sm:px-2">
             {/* Celestial Orbit Arc around the countdown (Visible on tablets and larger) */}
             <div className="absolute -inset-x-4 -inset-y-4 sm:-inset-x-8 sm:-inset-y-6 pointer-events-none hidden sm:block">
               <svg viewBox="0 0 900 240" fill="none" className="w-full h-full opacity-50 sm:opacity-60">
@@ -275,80 +275,81 @@ export default function LaunchCountdownHero() {
               </svg>
             </div>
 
-            <div className="relative z-10 flex items-center justify-center gap-1 sm:gap-3 md:gap-5 lg:gap-7">
+            {/* Countdown Display Units — Frosted Glass Panel on Mobile for Optimal Legibility */}
+            <div className="relative z-10 flex items-center justify-center gap-1.5 xs:gap-2 sm:gap-3 md:gap-5 lg:gap-7 py-3 px-2 xs:px-3 sm:py-0 sm:px-0 bg-white/[0.04] sm:bg-transparent border border-white/10 sm:border-0 rounded-xs sm:rounded-none backdrop-blur-md sm:backdrop-blur-none shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:shadow-none select-none">
               {/* DAYS */}
-              <div className="flex flex-col items-center min-w-[52px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+              <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
                   suppressHydrationWarning
-                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.days)}
                 </span>
-                <span className="font-inter font-primary text-[8px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.32em] uppercase text-white/55 mt-1.5 sm:mt-2.5 font-medium">
+                <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
                   Days
                 </span>
               </div>
 
               {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-70">
-                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
-                <span className="text-amber-200 text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
+              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
+                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
+                <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
               </div>
 
               {/* HOURS */}
-              <div className="flex flex-col items-center min-w-[52px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+              <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
                   suppressHydrationWarning
-                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.hours)}
                 </span>
-                <span className="font-inter font-primary text-[8px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.32em] uppercase text-white/55 mt-1.5 sm:mt-2.5 font-medium">
+                <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
                   Hours
                 </span>
               </div>
 
               {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-70">
-                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
-                <span className="text-amber-200 text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
+              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
+                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
+                <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
               </div>
 
               {/* MINUTES */}
-              <div className="flex flex-col items-center min-w-[52px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+              <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
                   suppressHydrationWarning
-                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.minutes)}
                 </span>
-                <span className="font-inter font-primary text-[8px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.32em] uppercase text-white/55 mt-1.5 sm:mt-2.5 font-medium">
+                <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
                   Minutes
                 </span>
               </div>
 
               {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-70">
-                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/25 to-white/15" />
-                <span className="text-amber-200 text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/25 to-transparent" />
+              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
+                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
+                <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
               </div>
 
               {/* SECONDS */}
-              <div className="flex flex-col items-center min-w-[52px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+              <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
                   suppressHydrationWarning
-                  className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#F8F7F4] tabular-nums tracking-tight leading-none drop-shadow-md"
+                  className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
                   {formatNumber(timeLeft.seconds)}
                 </span>
-                <span className="font-inter font-primary text-[8px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.32em] uppercase text-white/55 mt-1.5 sm:mt-2.5 font-medium">
+                <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
                   Seconds
                 </span>
               </div>
@@ -362,13 +363,13 @@ export default function LaunchCountdownHero() {
           </div>
         )}
 
-        {/* VIP Early Access / Waitlist Box */}
+        {/* VIP Early Access / Waitlist Box — Fully Styled & Selectable on Mobile */}
         {config.enableWaitlist && (
-          <div className="w-full max-w-sm sm:max-w-md mx-auto mb-4 sm:mb-6 select-none px-2 sm:px-0">
+          <div className="w-full max-w-sm sm:max-w-md mx-auto mb-4 sm:mb-6 px-2 sm:px-0">
             {subscribed ? (
-              <div className="py-2.5 px-4 text-center bg-white/5 border border-white/10 backdrop-blur-sm rounded-xs">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <svg className="w-3.5 h-3.5 text-amber-200/90" viewBox="0 0 24 24" fill="currentColor">
+              <div className="py-3 px-4 text-center bg-white/[0.08] border border-white/20 backdrop-blur-md rounded-xs shadow-lg">
+                <div className="flex items-center justify-center gap-2 mb-1.5">
+                  <svg className="w-3.5 h-3.5 text-amber-200/90 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
                   </svg>
                   <p
@@ -378,11 +379,11 @@ export default function LaunchCountdownHero() {
                     You&apos;re on the list.
                   </p>
                 </div>
-                <p className="font-jost text-[11px] sm:text-xs text-white/65 leading-relaxed max-w-xs sm:max-w-sm mx-auto">
+                <p className="font-jost text-[11px] sm:text-xs text-white/70 leading-relaxed max-w-xs sm:max-w-sm mx-auto">
                   {successMsg || config.waitlistSuccessMsg || "Early access. First collection previews. A closer look at the world of VRIX."}
                 </p>
                 {savedEmail && (
-                  <p className="font-jost text-[10px] sm:text-[11px] text-white/50 mt-1.5">
+                  <p className="font-jost text-[10px] sm:text-[11px] text-white/60 mt-1.5">
                     Registered: <span className="text-amber-200/90 font-medium break-all">{savedEmail}</span>
                   </p>
                 )}
@@ -393,25 +394,34 @@ export default function LaunchCountdownHero() {
                     setSuccessMsg(null);
                     setEmail("");
                   }}
-                  className="mt-2 text-[9px] sm:text-[10px] text-white/45 hover:text-white/80 underline underline-offset-4 tracking-[0.2em] uppercase font-inter cursor-pointer transition-colors block mx-auto"
+                  className="mt-2 text-[9px] sm:text-[10px] text-white/50 hover:text-white underline underline-offset-4 tracking-[0.2em] uppercase font-inter cursor-pointer transition-colors block mx-auto"
                 >
                   Register another email
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2 sm:gap-2.5 w-full">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter email for private launch access..."
-                  required
-                  className="flex-1 h-10 sm:h-11 bg-white/5 border border-white/20 text-white placeholder-white/35 px-3.5 sm:px-4 text-xs font-inter tracking-wider focus:outline-none focus:border-white/50 transition-colors backdrop-blur-sm"
-                />
+              <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-2.5 sm:gap-2.5 w-full">
+                <div className="relative flex-1 w-full">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter email for private launch access..."
+                    required
+                    style={{
+                      WebkitAppearance: "none",
+                      MozAppearance: "none",
+                      appearance: "none",
+                      WebkitUserSelect: "text",
+                      userSelect: "text",
+                    }}
+                    className="w-full h-11 bg-white/10 sm:bg-white/5 border border-white/35 sm:border-white/20 text-white placeholder:text-white/45 px-3.5 sm:px-4 text-[14px] sm:text-xs font-inter tracking-wider rounded-none sm:rounded-xs focus:outline-none focus:border-amber-200/90 focus:ring-1 focus:ring-amber-200/40 focus:bg-white/15 transition-all backdrop-blur-md select-text"
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="h-10 sm:h-11 bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all px-5 sm:px-6 text-xs font-inter tracking-[0.16em] uppercase font-semibold cursor-pointer disabled:opacity-50 shrink-0 flex items-center justify-center gap-1.5 sm:w-auto"
+                  className="w-full sm:w-auto h-11 bg-white text-black hover:bg-white/90 active:scale-[0.98] transition-all px-6 text-xs font-inter tracking-[0.18em] uppercase font-semibold cursor-pointer disabled:opacity-50 shrink-0 flex items-center justify-center gap-1.5 shadow-sm rounded-none sm:rounded-xs"
                 >
                   {submitting ? (
                     <>
@@ -425,7 +435,7 @@ export default function LaunchCountdownHero() {
               </form>
             )}
             {errorMsg && (
-              <p className="text-[10px] sm:text-[11px] text-red-300 mt-2 font-jost text-center bg-red-950/40 py-1.5 px-3 border border-red-500/25 max-w-sm mx-auto">
+              <p className="text-[10px] sm:text-[11px] text-red-300 mt-2 font-jost text-center bg-red-950/60 py-1.5 px-3 border border-red-500/30 max-w-sm mx-auto rounded-none sm:rounded-xs">
                 {errorMsg}
               </p>
             )}
