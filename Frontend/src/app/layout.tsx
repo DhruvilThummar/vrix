@@ -40,23 +40,22 @@ const chancery = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+    process.env.NEXT_PUBLIC_SITE_URL || "https://vrixjewels.com"
   ),
   title: {
-    default: "VRIX | Luxury Minimalist Jewelry",
+    default: "VRIX | A Luxury That Feels Like You",
     template: "%s | VRIX",
   },
   description:
-    "Experience VRIX — luxury minimalist jewelry crafted from ethical materials. Architectural forms, quiet luxury, and pieces made for moments that belong only to you.",
+    "Experience VRIX — lab-grown diamond & minimalist fine jewellery crafted with precision, emotion, and elegance. Quiet luxury and pieces made for moments that belong only to you.",
   keywords: [
     "VRIX", "luxury jewelry", "minimalist jewelry", "fine jewelry India",
-    "ethical jewelry", "handcrafted jewelry", "quiet luxury", "architectural jewelry",
-    "silver jewelry", "gold jewelry", "designer jewelry",
+    "lab-grown diamonds", "ethical jewelry", "handcrafted jewelry", "quiet luxury",
+    "architectural jewelry", "gold jewelry", "designer jewelry", "VRIX jewels",
   ],
-  authors: [{ name: "VRIX", url: "https://vrix.vercel.app" }],
-  creator: "VRIX",
-  publisher: "VRIX",
+  authors: [{ name: "VRIX", url: "https://vrixjewels.com" }],
+  creator: "VRIX Jewels",
+  publisher: "VRIX Jewels",
   category: "Jewelry & Accessories",
   robots: {
     index: true,
@@ -70,13 +69,13 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "/",
+    canonical: "https://vrixjewels.com",
   },
   icons: {
     icon: [
-      { url: "/logos/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/logos/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon.ico" },
+      { url: "/logos/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
     ],
     apple: [
       { url: "/logos/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
@@ -84,31 +83,52 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
   },
   openGraph: {
-    title: "VRIX | Luxury Minimalist Jewelry",
+    title: "VRIX | A Luxury That Feels Like You",
     description:
-      "Discover VRIX — where architectural minimalism meets fine jewelry. Ethical materials, quiet luxury, handcrafted for you.",
-    url: "/",
-    siteName: "VRIX",
+      "Lab-grown diamond & minimalist fine jewellery crafted with precision, emotion, and elegance. Discover modern luxury that feels personal and meaningful.",
+    url: "https://vrixjewels.com",
+    siteName: "VRIX Jewels",
     images: [
       {
-        url: "/logos/og-image.jpg",
+        url: "https://vrixjewels.com/logos/blue-bg.jpg",
         width: 1200,
         height: 630,
-        alt: "VRIX — Luxury Minimalist Jewelry",
+        alt: "VRIX Jewels — A luxury that feels like you",
         type: "image/jpeg",
       },
       {
-        url: "/logos/og-whatsapp.jpg",
+        url: "https://vrixjewels.com/logos/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "VRIX — Luxury Minimalist Jewellery",
+        type: "image/jpeg",
+      },
+      {
+        url: "https://vrixjewels.com/logos/whatsapp.jpg",
         width: 504,
         height: 504,
-        alt: "VRIX Jewelry",
+        alt: "VRIX Jewels WhatsApp Preview",
         type: "image/jpeg",
       },
       {
-        url: "/logos/og-instagram.jpg",
-        width: 326,
-        height: 326,
-        alt: "VRIX",
+        url: "https://vrixjewels.com/logos/Facebook.jpg",
+        width: 1200,
+        height: 630,
+        alt: "VRIX Jewels Facebook Preview",
+        type: "image/jpeg",
+      },
+      {
+        url: "https://vrixjewels.com/logos/Linkedin.jpg",
+        width: 1200,
+        height: 627,
+        alt: "VRIX Jewels LinkedIn Preview",
+        type: "image/jpeg",
+      },
+      {
+        url: "https://vrixjewels.com/logos/instagram.jpg",
+        width: 1080,
+        height: 1080,
+        alt: "VRIX Jewels Instagram Preview",
         type: "image/jpeg",
       },
     ],
@@ -117,19 +137,19 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VRIX | Luxury Minimalist Jewelry",
+    title: "VRIX | A Luxury That Feels Like You",
     description:
-      "Discover VRIX — where architectural minimalism meets fine jewelry. Ethical materials, quiet luxury, handcrafted for you.",
+      "Lab-grown diamond & minimalist fine jewellery crafted with precision, emotion, and elegance. Discover modern luxury that feels personal and meaningful.",
     images: [
       {
-        url: "/logos/og-image.jpg",
+        url: "https://vrixjewels.com/logos/blue-bg.jpg",
         width: 1200,
         height: 630,
-        alt: "VRIX — Luxury Minimalist Jewelry",
+        alt: "VRIX Jewels — A luxury that feels like you",
       },
     ],
-    creator: "@vrix",
-    site: "@vrix",
+    creator: "@vrixjewels",
+    site: "@vrixjewels",
   },
 };
 
@@ -145,6 +165,14 @@ export default function RootLayout({
       className={`${inter.variable} ${jost.variable} ${aquavit.variable} ${chancery.variable} h-full antialiased`}
     >
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/logos/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/logos/favicon-16x16.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/logos/apple-touch-icon.png" />
+        <meta property="og:image" content="https://vrixjewels.com/logos/blue-bg.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="VRIX — A luxury that feels like you" />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

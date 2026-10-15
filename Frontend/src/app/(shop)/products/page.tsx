@@ -15,6 +15,14 @@ export const metadata: Metadata = {
     title: "Shop All Fine Jewelry Online | VRIX",
     description: "Browse the complete VRIX fine jewelry catalog.",
     url: "https://vrixjewels.com/products",
+    images: [
+      {
+        url: "https://vrixjewels.com/logos/blue-bg.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Shop All Fine Jewelry Online | VRIX",
+      },
+    ],
   }
 };
 

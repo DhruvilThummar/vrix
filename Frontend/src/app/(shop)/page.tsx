@@ -40,10 +40,22 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       images: [
         {
-          url: "https://vrixjewels.com/logos/blue%20bg.jpg",
+          url: "https://vrixjewels.com/logos/blue-bg.jpg",
           width: 1200,
           height: 630,
           alt: "VRIX — A luxury that feels like you",
+        },
+        {
+          url: "https://vrixjewels.com/logos/og-image.jpg",
+          width: 1200,
+          height: 630,
+          alt: "VRIX — Luxury Minimalist Jewellery",
+        },
+        {
+          url: "https://vrixjewels.com/logos/whatsapp.jpg",
+          width: 504,
+          height: 504,
+          alt: "VRIX Fine Jewelry WhatsApp Preview",
         },
         {
           url: "https://vrixjewels.com/logos/Facebook.jpg",
@@ -63,19 +75,13 @@ export async function generateMetadata(): Promise<Metadata> {
           height: 1080,
           alt: "VRIX Fine Jewelry Instagram Preview",
         },
-        {
-          url: "https://vrixjewels.com/logos/whatsapp.jpg",
-          width: 800,
-          height: 800,
-          alt: "VRIX Fine Jewelry WhatsApp Preview",
-        },
       ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["https://vrixjewels.com/logos/blue%20bg.jpg"],
+      images: ["https://vrixjewels.com/logos/blue-bg.jpg"],
     },
   };
 }

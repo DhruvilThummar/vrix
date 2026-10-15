@@ -14,6 +14,14 @@ export const metadata: Metadata = {
     title: "Designer Jewelry Collections | VRIX",
     description: "Browse our signature jewelry collections.",
     url: "https://vrixjewels.com/collections",
+    images: [
+      {
+        url: "https://vrixjewels.com/logos/blue-bg.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Designer Jewelry Collections | VRIX",
+      },
+    ],
   }
 };
 
