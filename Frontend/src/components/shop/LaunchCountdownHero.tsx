@@ -220,7 +220,7 @@ export default function LaunchCountdownHero() {
       </div>
 
       {/* Main Content — Perfectly Centered with Dynamic Breathing Room */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto px-3.5 sm:px-6 md:px-8 pt-20 sm:pt-28 md:pt-32 pb-5 sm:pb-8 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto px-3.5 sm:px-6 md:px-8 pt-24 sm:pt-28 md:pt-32 pb-4 sm:pb-6 text-center">
 
         {/* Top Unveiling Banner Badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 sm:bg-white/5 border border-white/20 sm:border-white/10 backdrop-blur-xs text-[9px] sm:text-[10px] md:text-[11px] font-inter uppercase tracking-[0.2em] sm:tracking-[0.28em] text-white/80 mb-2.5 sm:mb-4 md:mb-5 select-none font-medium max-w-[92vw] truncate">
@@ -442,18 +442,43 @@ export default function LaunchCountdownHero() {
           </div>
         )}
 
-        {/* Contact Us Button Matching Reference */}
-        <Link
-          href={config.contactButtonUrl || "/contact"}
-          className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-[10px] sm:text-[11px] font-inter tracking-[0.24em] uppercase pb-1 border-b border-white/30 hover:border-white transition-all duration-300 select-none mb-3 sm:mb-4 group"
-        >
-          <span>{config.contactButtonText || "Contact Us"}</span>
-          <span className="text-xs group-hover:translate-x-1 transition-transform">→</span>
-        </Link>
+        {/* Contact & Social Links (Instagram & Facebook from Contact & Footer) */}
+        <div className="flex flex-wrap items-center justify-center gap-2 xs:gap-2.5 sm:gap-3.5 mb-3 sm:mb-4 select-none z-20">
+          <Link
+            href={config.contactButtonUrl || "/contact"}
+            className="inline-flex items-center gap-1.5 px-3 xs:px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/40 text-white text-[9.5px] xs:text-[10px] sm:text-[11px] font-inter tracking-[0.18em] uppercase transition-all duration-300 backdrop-blur-md shadow-xs group cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[13px] text-amber-200 group-hover:scale-110 transition-transform">mail</span>
+            <span>{config.contactButtonText || "Contact Us"}</span>
+            <span className="text-[10px] group-hover:translate-x-0.5 transition-transform">→</span>
+          </Link>
+
+          <a
+            href="https://www.instagram.com/vrix.official"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 xs:px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/40 text-white text-[9.5px] xs:text-[10px] sm:text-[11px] font-inter tracking-[0.18em] uppercase transition-all duration-300 backdrop-blur-md shadow-xs group cursor-pointer"
+            title="Follow @vrix.official on Instagram"
+          >
+            <i className="fa-brands fa-instagram text-[13px] text-amber-200 group-hover:scale-110 transition-transform"></i>
+            <span>Instagram</span>
+          </a>
+
+          <a
+            href="https://www.facebook.com/vrixjewels"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 xs:px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/40 text-white text-[9.5px] xs:text-[10px] sm:text-[11px] font-inter tracking-[0.18em] uppercase transition-all duration-300 backdrop-blur-md shadow-xs group cursor-pointer"
+            title="Follow VRIX on Facebook"
+          >
+            <i className="fa-brands fa-facebook-f text-[12px] text-amber-200 group-hover:scale-110 transition-transform"></i>
+            <span>Facebook</span>
+          </a>
+        </div>
 
         {/* Slide Indicator Dots (When multiple background images are configured) */}
         {slides.length > 1 && (
-          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4 select-none z-30">
+          <div className="flex items-center justify-center gap-2 mb-2.5 sm:mb-4 select-none z-30">
             {slides.map((_, sIdx) => (
               <button
                 key={sIdx}
@@ -471,58 +496,58 @@ export default function LaunchCountdownHero() {
         )}
       </div>
 
-      {/* Bottom Pillars Section — Fully Responsive Across All Devices (Mobile 2x2, Tablet & Desktop 4 Cols) */}
-      <div className="relative z-10 w-full border-t border-white/10 bg-black/45 backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-3.5 sm:py-4 md:py-5 lg:py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-3 gap-x-2 sm:gap-x-4 md:gap-x-0 md:divide-x md:divide-white/10">
+      {/* Bottom Pillars Section — Set in ONE Single Row on Phone & Desktop */}
+      <div className="relative z-10 w-full border-t border-white/10 bg-black/55 backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="max-w-5xl mx-auto px-1.5 xs:px-3 sm:px-6 md:px-8 py-2 xs:py-2.5 sm:py-3.5 md:py-4">
+          <div className="grid grid-cols-4 divide-x divide-white/10">
             {/* Pillar 1 */}
             <div className="flex flex-col items-center text-center group px-1 sm:px-2 md:px-4">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-xl sm:text-2xl font-light">
+              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-0.5 sm:mb-1 text-base xs:text-lg sm:text-2xl font-light">
                 flare
               </span>
-              <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
+              <h4 className="font-inter font-primary text-[8px] xs:text-[9.5px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-tight sm:tracking-wider leading-tight">
                 Intentional Design
               </h4>
-              <p className="font-jost font-secondary text-[9px] sm:text-[10px] md:text-[11px] text-white/70 whitespace-pre-line leading-tight">
+              <p className="font-jost font-secondary text-[7px] xs:text-[8px] sm:text-[10px] text-white/70 whitespace-pre-line leading-tight">
                 {"Every piece has\na deeper meaning."}
               </p>
             </div>
 
             {/* Pillar 2 */}
             <div className="flex flex-col items-center text-center group px-1 sm:px-2 md:px-4">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-xl sm:text-2xl font-light">
+              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-0.5 sm:mb-1 text-base xs:text-lg sm:text-2xl font-light">
                 hourglass_empty
               </span>
-              <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
+              <h4 className="font-inter font-primary text-[8px] xs:text-[9.5px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-tight sm:tracking-wider leading-tight">
                 Timeless Quality
               </h4>
-              <p className="font-jost font-secondary text-[9px] sm:text-[10px] md:text-[11px] text-white/70 whitespace-pre-line leading-tight">
+              <p className="font-jost font-secondary text-[7px] xs:text-[8px] sm:text-[10px] text-white/70 whitespace-pre-line leading-tight">
                 {"Crafted to last.\nMade to be lived in."}
               </p>
             </div>
 
             {/* Pillar 3 */}
             <div className="flex flex-col items-center text-center group px-1 sm:px-2 md:px-4">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-xl sm:text-2xl font-light">
+              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-0.5 sm:mb-1 text-base xs:text-lg sm:text-2xl font-light">
                 eco
               </span>
-              <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
+              <h4 className="font-inter font-primary text-[8px] xs:text-[9.5px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-tight sm:tracking-wider leading-tight">
                 Conscious Luxury
               </h4>
-              <p className="font-jost font-secondary text-[9px] sm:text-[10px] md:text-[11px] text-white/70 whitespace-pre-line leading-tight">
+              <p className="font-jost font-secondary text-[7px] xs:text-[8px] sm:text-[10px] text-white/70 whitespace-pre-line leading-tight">
                 {"Ethical materials.\nThoughtful process."}
               </p>
             </div>
 
             {/* Pillar 4 */}
             <div className="flex flex-col items-center text-center group px-1 sm:px-2 md:px-4">
-              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-1 text-xl sm:text-2xl font-light">
+              <span className="material-symbols-outlined text-white/90 group-hover:text-amber-200 transition-colors mb-0.5 sm:mb-1 text-base xs:text-lg sm:text-2xl font-light">
                 favorite_border
               </span>
-              <h4 className="font-inter font-primary text-[10px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-wider">
+              <h4 className="font-inter font-primary text-[8px] xs:text-[9.5px] sm:text-[11px] text-white uppercase mb-0.5 font-semibold tracking-tight sm:tracking-wider leading-tight">
                 Personal Connection
               </h4>
-              <p className="font-jost font-secondary text-[9px] sm:text-[10px] md:text-[11px] text-white/70 whitespace-pre-line leading-tight">
+              <p className="font-jost font-secondary text-[7px] xs:text-[8px] sm:text-[10px] text-white/70 whitespace-pre-line leading-tight">
                 {"A piece for every\nchapter of you."}
               </p>
             </div>

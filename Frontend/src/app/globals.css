@@ -497,6 +497,28 @@ textarea:focus {
   flex-shrink: 0;
 }
 
+/* Continuous Marquee Ticker for Announcements / Ad Banners */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 24s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+
 /*
  * ══════════════════════════════════════════════════════════════════════════════
  *  MANDATORY BRAND STYLE GUIDE TYPOGRAPHY ENFORCEMENT

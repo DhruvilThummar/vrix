@@ -283,17 +283,72 @@ export default function Header() {
       {isPreLaunch ? (
         launchConfig?.showAnnouncementBar !== false && (
           <div
-            className="w-full fixed top-0 left-0 right-0 z-50 py-2 px-4 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 bg-black text-white transition-all duration-500 min-h-[32px] flex items-center justify-center gap-2 overflow-hidden text-[11px]"
+            className="w-full fixed top-0 left-0 right-0 z-50 py-1.5 sm:py-2 text-center font-label-caps tracking-widest uppercase border-b border-pure-white/10 bg-black text-white transition-all duration-500 min-h-[32px] flex items-center overflow-hidden text-[10px] sm:text-[11px] select-none"
           >
-            <span>{launchConfig?.announcementText || "✦ OFFICIAL ATELIER LAUNCH COUNTDOWN — ENTERING A NEW ERA OF LAB-GROWN DIAMONDS ✦"}</span>
-            {launchConfig?.announcementLinkText && (
-              <Link
-                href={launchConfig?.announcementLinkUrl || "/contact"}
-                className="underline underline-offset-2 hover:opacity-80 font-bold ml-1 cursor-pointer"
-              >
-                {launchConfig.announcementLinkText}
-              </Link>
-            )}
+            <div className="w-full overflow-hidden whitespace-nowrap relative flex">
+              <div className="inline-flex whitespace-nowrap animate-marquee">
+                {/* Track 1 */}
+                <div className="flex shrink-0 items-center gap-6 sm:gap-8 px-4">
+                  <span className="inline-flex items-center gap-2 text-white font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    {launchConfig?.announcementText || "✦ OFFICIAL ATELIER LAUNCH COUNTDOWN — ENTERING A NEW ERA OF LAB-GROWN DIAMONDS ✦"}
+                  </span>
+                  {launchConfig?.announcementLinkText && (
+                    <Link
+                      href={launchConfig?.announcementLinkUrl || "/contact"}
+                      className="underline underline-offset-2 hover:text-amber-200 font-bold cursor-pointer"
+                    >
+                      {launchConfig.announcementLinkText}
+                    </Link>
+                  )}
+                  <span className="text-amber-300/70">✦</span>
+                  <span className="text-white/80 tracking-[0.2em]">A LUXURY THAT FEELS LIKE YOU</span>
+                  <span className="text-amber-300/70">✦</span>
+                  <span className="text-white/80 tracking-[0.2em]">LAB-GROWN DIAMOND &amp; FINE JEWELLERY</span>
+                  <span className="text-amber-300/70">✦</span>
+                  <a
+                    href="https://www.instagram.com/vrix.official"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-amber-200 text-white/90 inline-flex items-center gap-1.5"
+                  >
+                    <i className="fa-brands fa-instagram text-xs text-amber-300"></i>
+                    <span>@vrix.official</span>
+                  </a>
+                  <span className="text-amber-300/70">✦</span>
+                </div>
+                {/* Track 2 (duplicate for seamless loop) */}
+                <div className="flex shrink-0 items-center gap-6 sm:gap-8 px-4" aria-hidden="true">
+                  <span className="inline-flex items-center gap-2 text-white font-medium">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    {launchConfig?.announcementText || "✦ OFFICIAL ATELIER LAUNCH COUNTDOWN — ENTERING A NEW ERA OF LAB-GROWN DIAMONDS ✦"}
+                  </span>
+                  {launchConfig?.announcementLinkText && (
+                    <Link
+                      href={launchConfig?.announcementLinkUrl || "/contact"}
+                      className="underline underline-offset-2 hover:text-amber-200 font-bold cursor-pointer"
+                    >
+                      {launchConfig.announcementLinkText}
+                    </Link>
+                  )}
+                  <span className="text-amber-300/70">✦</span>
+                  <span className="text-white/80 tracking-[0.2em]">A LUXURY THAT FEELS LIKE YOU</span>
+                  <span className="text-amber-300/70">✦</span>
+                  <span className="text-white/80 tracking-[0.2em]">LAB-GROWN DIAMOND &amp; FINE JEWELLERY</span>
+                  <span className="text-amber-300/70">✦</span>
+                  <a
+                    href="https://www.instagram.com/vrix.official"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-amber-200 text-white/90 inline-flex items-center gap-1.5"
+                  >
+                    <i className="fa-brands fa-instagram text-xs text-amber-300"></i>
+                    <span>@vrix.official</span>
+                  </a>
+                  <span className="text-amber-300/70">✦</span>
+                </div>
+              </div>
+            </div>
           </div>
         )
       ) : isSaleCountdown ? (
@@ -459,6 +514,36 @@ export default function Header() {
                 </button>
               </>
             )}
+            {isPreLaunch && (
+              <div className="flex items-center gap-4 text-xs font-inter tracking-widest text-white/90">
+                <a
+                  href="https://www.instagram.com/vrix.official"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-amber-200 transition-colors flex items-center gap-1.5 group"
+                  title="Follow on Instagram"
+                >
+                  <i className="fa-brands fa-instagram text-base group-hover:scale-110 transition-transform"></i>
+                  <span className="hidden lg:inline text-[10px] tracking-[0.2em] uppercase">Instagram</span>
+                </a>
+                <a
+                  href="https://www.facebook.com/vrixjewels"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-amber-200 transition-colors flex items-center gap-1.5 group"
+                  title="Follow on Facebook"
+                >
+                  <i className="fa-brands fa-facebook-f text-sm group-hover:scale-110 transition-transform"></i>
+                  <span className="hidden lg:inline text-[10px] tracking-[0.2em] uppercase">Facebook</span>
+                </a>
+                <Link
+                  href="/contact"
+                  className="hidden sm:inline-flex items-center gap-1 text-[10px] tracking-[0.2em] uppercase text-white/80 hover:text-white border-b border-white/30 hover:border-white pb-0.5 ml-2"
+                >
+                  <span>Atelier</span>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 
@@ -570,9 +655,18 @@ export default function Header() {
             : "bg-pure-white text-ink-black border-soft-linen shadow-sm"
         }`}
       >
-        {/* Left: Hamburger menu or empty in pre-launch */}
+        {/* Left: Hamburger menu or atelier link in pre-launch */}
         <div className="flex justify-start items-center">
-          {!isPreLaunch && (
+          {isPreLaunch ? (
+            <Link
+              href="/contact"
+              className="text-white/80 hover:text-white text-[10px] font-inter uppercase tracking-wider flex items-center gap-1"
+              title="Atelier Services"
+            >
+              <span className="material-symbols-outlined text-[15px] text-amber-200">mail</span>
+              <span className="hidden xs:inline tracking-widest text-[9px]">Atelier</span>
+            </Link>
+          ) : (
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="cursor-pointer flex items-center justify-center w-8 h-8"
@@ -605,9 +699,30 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Right: Actions */}
+        {/* Right: Actions / Socials */}
         <div className="flex justify-end gap-3 items-center">
-          {!isPreLaunch && (
+          {isPreLaunch ? (
+            <div className="flex items-center gap-2.5 text-white/90">
+              <a
+                href="https://www.instagram.com/vrix.official"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-amber-200 transition-colors p-1 flex items-center justify-center"
+                aria-label="VRIX on Instagram"
+              >
+                <i className="fa-brands fa-instagram text-[17px]"></i>
+              </a>
+              <a
+                href="https://www.facebook.com/vrixjewels"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-amber-200 transition-colors p-1 flex items-center justify-center"
+                aria-label="VRIX on Facebook"
+              >
+                <i className="fa-brands fa-facebook-f text-[15px]"></i>
+              </a>
+            </div>
+          ) : (
             <>
               <button
                 onClick={() => setIsSearchOpen(true)}
