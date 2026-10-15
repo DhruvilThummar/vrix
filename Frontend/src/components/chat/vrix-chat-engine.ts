@@ -818,44 +818,80 @@ export function handleUserAction(
         timestamp: time,
       });
     } else {
-      const parsed = parseUserQuery(textInput);
-      const results = (parsed.category || parsed.budgetStr) ? filterCatalog(parsed.category, parsed.budgetStr) : [];
-
-      if (results.length > 0) {
+      if (activeMode === "LAUNCH") {
         messages.push({
-          id: `msg-${Date.now()}-fb`,
+          id: `msg-${Date.now()}-launch-preview`,
           sender: "bot",
-          text: `Here are signature pieces matching your search:`,
-          products: results,
+          text: `Our architectural fine jewelry collections and signature lab diamond solitaires will be officially unveiled on launch day.\n\nEnter your email below to join our private VIP waitlist for early access, or follow our preview stories on Instagram and Facebook:`,
+          emailCollector: {
+            placeholder: "your.email@example.com",
+            buttonText: "Notify Me",
+            successMessage: launchConfig?.waitlistSuccessMsg || "Thank you. You have been added to our private VIP launch waitlist.",
+          },
+          socialLinks: {
+            title: "Follow VRIX Atelier",
+            description: "Official releases, atelier previews, and live countdown stories.",
+            instagram: "https://www.instagram.com/vrix.official",
+            facebook: "https://www.facebook.com/profile.php?id=61588375466280",
+            whatsapp: "https://wa.me/919054285693?text=Hi%20VRIX%20Concierge,%20I%20have%20an%20inquiry%20regarding%20the%20upcoming%20launch.",
+          },
           options: [
-            { label: "Compare these pieces", value: "trigger-compare" },
-            { label: "Talk to concierge", value: "trigger-handoff" },
+            { label: "When is the Launch?", value: "launch_date" },
+            { label: "Join VIP Waitlist", value: "launch_waitlist" },
+            { label: "Instagram & Facebook", value: "social_channels" },
+            { label: "About VRIX Lab Diamonds", value: "education" },
           ],
           timestamp: time,
         });
       } else {
-        messages.push({
-          id: `msg-${Date.now()}-fb-def`,
-          sender: "bot",
-          text: "I would be delighted to assist you with finding the ideal piece or answering any craftsmanship questions. You may also connect directly with our client concierge:",
-          options: [
-            { label: "Find a piece for myself", value: "myself" },
-            { label: "Find a gift", value: "gift" },
-            { label: "Explore collections", value: "collections" },
-            { label: "Talk to concierge", value: "trigger-handoff" },
-          ],
-          timestamp: time,
-        });
+        const parsed = parseUserQuery(textInput);
+        const results = (parsed.category || parsed.budgetStr) ? filterCatalog(parsed.category, parsed.budgetStr) : [];
+
+        if (results.length > 0) {
+          messages.push({
+            id: `msg-${Date.now()}-fb`,
+            sender: "bot",
+            text: `Here are signature pieces matching your search:`,
+            products: results,
+            options: [
+              { label: "Compare these pieces", value: "trigger-compare" },
+              { label: "Talk to concierge", value: "trigger-handoff" },
+            ],
+            timestamp: time,
+          });
+        } else {
+          messages.push({
+            id: `msg-${Date.now()}-fb-def`,
+            sender: "bot",
+            text: "I would be delighted to assist you with finding the ideal piece or answering any craftsmanship questions. You may also connect directly with our client concierge:",
+            options: [
+              { label: "Find a piece for myself", value: "myself" },
+              { label: "Find a gift", value: "gift" },
+              { label: "Explore collections", value: "collections" },
+              { label: "Talk to concierge", value: "trigger-handoff" },
+            ],
+            timestamp: time,
+          });
+        }
       }
     }
   }
 
+  // Strict enforcement: in LAUNCH mode, NEVER allow any products or comparisons to be displayed
+  if (activeMode === "LAUNCH") {
+    messages.forEach((m) => {
+      m.products = undefined;
+      m.comparison = undefined;
+      m.saleDiscountCard = undefined;
+    });
+  }
+
   return {
     nextState: {
-      currentFlow: nextFlow,
-      step: nextStep,
+      currentFlow: activeMode === "LAUNCH" ? null : nextFlow,
+      step: activeMode === "LAUNCH" ? 0 : nextStep,
       data: nextData,
-      surfacedProducts: surfaced,
+      surfacedProducts: activeMode === "LAUNCH" ? [] : surfaced,
     },
     messages,
   };

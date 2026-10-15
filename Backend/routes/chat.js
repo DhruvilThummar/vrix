@@ -781,6 +781,28 @@ const handleChatMessage = async (req, res) => {
         replyText = "Here is a side-by-side specification comparison of our signature pieces from the active database catalog:";
       }
 
+      // Enforce zero products in LAUNCH mode across quick action selections
+      if (isLaunchMode) {
+        products = [];
+        comparison = undefined;
+        actionConfig.socialLinks = {
+          title: "Follow VRIX Atelier",
+          description: "Official releases, previews, and live countdown stories.",
+          instagram: "https://www.instagram.com/vrix.official",
+          facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+        };
+        actionConfig.emailCollector = {
+          placeholder: "your.email@example.com",
+          buttonText: "Notify Me"
+        };
+        actionConfig.options = [
+          { label: "When is the Launch?", value: "launch_date" },
+          { label: "Join VIP Waitlist", value: "launch_waitlist" },
+          { label: "Instagram & Facebook", value: "social_channels" },
+          { label: "About VRIX Lab Diamonds", value: "education" }
+        ];
+      }
+
       const isoTimestamp = new Date().toISOString();
       return res.json({
         success: true,
@@ -1051,18 +1073,49 @@ const handleChatMessage = async (req, res) => {
           id: `msg-${Date.now()}`,
           sender: "bot",
           text: result.reply,
-          products: result.structuredData?.products,
-          comparison: result.structuredData?.comparison,
+          products: isLaunchMode ? undefined : result.structuredData?.products,
+          comparison: isLaunchMode ? undefined : result.structuredData?.comparison,
           bespokeEstimate: result.structuredData?.bespokeEstimate,
           handoff: result.structuredData?.handoff,
           socialLinks: result.structuredData?.socialLinks,
           emailCollector: result.structuredData?.emailCollector,
-          saleDiscountCard: result.structuredData?.saleDiscountCard,
+          saleDiscountCard: isLaunchMode ? undefined : result.structuredData?.saleDiscountCard,
           options,
           timestamp: isoTimestamp
         }
       ]
     };
+
+    // Strict sanitization: in LAUNCH mode, ZERO products/comparisons allowed
+    if (isLaunchMode) {
+      delete responsePayload.structuredData.products;
+      delete responsePayload.structuredData.comparison;
+      delete responsePayload.structuredData.saleDiscountCard;
+      responsePayload.structuredData.socialLinks = {
+        title: "Follow VRIX Atelier",
+        description: "Official releases, previews, and live countdown stories.",
+        instagram: "https://www.instagram.com/vrix.official",
+        facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+      };
+      responsePayload.structuredData.emailCollector = {
+        placeholder: "your.email@example.com",
+        buttonText: "Notify Me"
+      };
+      responsePayload.structuredData.options = [
+        { label: "When is the Launch?", value: "launch_date" },
+        { label: "Join VIP Waitlist", value: "launch_waitlist" },
+        { label: "Instagram & Facebook", value: "social_channels" },
+        { label: "About VRIX Lab Diamonds", value: "education" }
+      ];
+      responsePayload.messages.forEach(m => {
+        m.products = undefined;
+        m.comparison = undefined;
+        m.saleDiscountCard = undefined;
+        m.socialLinks = responsePayload.structuredData.socialLinks;
+        m.emailCollector = responsePayload.structuredData.emailCollector;
+        m.options = responsePayload.structuredData.options;
+      });
+    }
 
     // Cache successful response for fast subsequent retrieval
     setCachedResponse(cacheKey, responsePayload);
@@ -1122,6 +1175,7 @@ const handleChatMessage = async (req, res) => {
     let fallbackSaleDiscount = undefined;
 
     if (isLaunchMode) {
+      fallbackProducts = [];
       fallbackReply = "Welcome to VRIX. Our digital atelier arrives soon. Enter your email below to join our private VIP waitlist for early access, or follow our journey on Instagram and Facebook:";
       fallbackEmailCollector = {
         placeholder: "your.email@example.com",

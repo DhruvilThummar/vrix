@@ -229,12 +229,25 @@ export default function VrixChatWidget() {
             localStorage.setItem("vrix-chat-session-id", apiData.sessionId);
           }
           if (apiData.success && apiData.messages) {
+            const sanitizedMessages = activeMode === "LAUNCH"
+              ? apiData.messages.map((m: any) => ({
+                  ...m,
+                  products: undefined,
+                  comparison: undefined,
+                  saleDiscountCard: undefined,
+                }))
+              : apiData.messages;
+
             setMessages((prev) => [
               ...prev.filter((m) => m.id !== typingId),
-              ...apiData.messages,
+              ...sanitizedMessages,
             ]);
             if (apiData.nextState) {
-              setEngineState((prev) => ({ ...prev, ...apiData.nextState }));
+              setEngineState((prev) => ({
+                ...prev,
+                ...apiData.nextState,
+                surfacedProducts: activeMode === "LAUNCH" ? [] : (apiData.nextState.surfacedProducts || prev.surfacedProducts),
+              }));
             }
             setIsTyping(false);
             return;

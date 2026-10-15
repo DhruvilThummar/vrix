@@ -609,11 +609,33 @@ export async function runInteractionsChatLoop({
           else if (qLower.includes("earring")) matchedCategory = "Earrings";
           else if (qLower.includes("bracelet") || qLower.includes("bangle")) matchedCategory = "Bracelets";
 
-          if (matchedCategory) {
+          if (matchedCategory && launchContext.launchMode !== "LAUNCH") {
             const toolRes = await executeSearchProducts({ category: matchedCategory, limit: 3 });
             if (toolRes?.products?.length > 0) {
               structuredData.products = toolRes.products;
             }
+          }
+
+          if (launchContext.launchMode === "LAUNCH") {
+            delete structuredData.products;
+            delete structuredData.comparison;
+            delete structuredData.saleDiscountCard;
+            structuredData.emailCollector = {
+              placeholder: "your.email@example.com",
+              buttonText: "Notify Me"
+            };
+            structuredData.socialLinks = {
+              title: "Follow VRIX Atelier",
+              description: "Official releases, previews, and live countdown stories.",
+              instagram: "https://www.instagram.com/vrix.official",
+              facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+            };
+            structuredData.options = [
+              { label: "When is the Launch?", value: "launch_date" },
+              { label: "Join VIP Waitlist", value: "launch_waitlist" },
+              { label: "Instagram & Facebook", value: "social_channels" },
+              { label: "About VRIX Lab Diamonds", value: "education" }
+            ];
           }
 
           return {
@@ -633,7 +655,7 @@ export async function runInteractionsChatLoop({
   if (ai && ai.models?.generateContent) {
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.0-flash",
         contents: userMessage,
         config: {
           systemInstruction,
@@ -642,6 +664,27 @@ export async function runInteractionsChatLoop({
 
       const text = response?.text;
       if (text && text.trim().length > 0) {
+        if (launchContext.launchMode === "LAUNCH") {
+          delete structuredData.products;
+          delete structuredData.comparison;
+          delete structuredData.saleDiscountCard;
+          structuredData.emailCollector = {
+            placeholder: "your.email@example.com",
+            buttonText: "Notify Me"
+          };
+          structuredData.socialLinks = {
+            title: "Follow VRIX Atelier",
+            description: "Official releases, previews, and live countdown stories.",
+            instagram: "https://www.instagram.com/vrix.official",
+            facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+          };
+          structuredData.options = [
+            { label: "When is the Launch?", value: "launch_date" },
+            { label: "Join VIP Waitlist", value: "launch_waitlist" },
+            { label: "Instagram & Facebook", value: "social_channels" },
+            { label: "About VRIX Lab Diamonds", value: "education" }
+          ];
+        }
         return {
           reply: text.trim(),
           lastInteractionId: null,
@@ -657,7 +700,7 @@ export async function runInteractionsChatLoop({
   // 3. Fallback: Quiet luxury deterministic response tailored to intent
   const qLower = (userMessage || "").toLowerCase();
 
-  if (launchContext.launchMode === "LAUNCH" && (qLower.includes("when") || qLower.includes("date") || qLower.includes("launch") || qLower.includes("open"))) {
+  if (launchContext.launchMode === "LAUNCH") {
     const targetDateFormatted = launchContext.targetDate
       ? new Date(launchContext.targetDate).toLocaleDateString("en-IN", {
           day: "numeric",
@@ -665,7 +708,25 @@ export async function runInteractionsChatLoop({
           year: "numeric"
         })
       : "Coming Soon";
-    finalReply = `Our digital atelier arrives on ${targetDateFormatted}. We craft architectural lab-grown diamonds with quiet luxury. Join our private VIP waitlist for early access, or follow our journey on Instagram (@vrix.official) and Facebook.`;
+    finalReply = `Our digital atelier arrives on ${targetDateFormatted}. We craft architectural lab-grown diamonds with quiet luxury. Enter your email to join our private VIP waitlist for early access, or follow our preview stories on Instagram (@vrix.official) and Facebook:`;
+    structuredData = {
+      emailCollector: {
+        placeholder: "your.email@example.com",
+        buttonText: "Notify Me"
+      },
+      socialLinks: {
+        title: "Follow VRIX Atelier",
+        description: "Official releases, previews, and live countdown stories.",
+        instagram: "https://www.instagram.com/vrix.official",
+        facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+      },
+      options: [
+        { label: "When is the Launch?", value: "launch_date" },
+        { label: "Join VIP Waitlist", value: "launch_waitlist" },
+        { label: "Instagram & Facebook", value: "social_channels" },
+        { label: "About VRIX Lab Diamonds", value: "education" }
+      ]
+    };
   } else if (launchContext.launchMode === "SALE" && (qLower.includes("discount") || qLower.includes("sale") || qLower.includes("offer"))) {
     const saleCodeText = launchContext.saleDiscountCode ? ` with promo code ${launchContext.saleDiscountCode}` : ` (direct atelier pricing, no promo code needed)`;
     finalReply = `The Private Archive Event is currently active across our atelier. You can enjoy ${launchContext.saleDiscountHighlight || "exclusive pricing"} on signature lab diamond solitaires and pavé bands${saleCodeText}.`;
@@ -708,6 +769,13 @@ export async function runInteractionsChatLoop({
       }));
     }
     finalReply = "Welcome to VRIX. Our atelier crafts architectural lab-grown diamonds and fine jewellery. How may I assist your exploration today?";
+  }
+
+  // Final check to guarantee ZERO products in LAUNCH mode
+  if (launchContext.launchMode === "LAUNCH") {
+    delete structuredData.products;
+    delete structuredData.comparison;
+    delete structuredData.saleDiscountCard;
   }
 
   return {
