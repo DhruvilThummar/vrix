@@ -91,13 +91,6 @@ const handleChatMessage = async (req, res) => {
     });
   }
 
-  // Rate Limiter Check
-  if (!applyRateLimit(sessionId || clientIp)) {
-    return res.status(429).json({
-      error: "Rate limit exceeded. Please wait a moment before sending another message."
-    });
-  }
-
   try {
     let session = null;
 
