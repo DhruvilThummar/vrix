@@ -7,6 +7,9 @@ import ProductComparisonView from "./ProductComparisonView";
 import HumanHandoffCard from "./HumanHandoffCard";
 import BespokeEstimateCard from "./BespokeEstimateCard";
 import QuickReplyChips from "./QuickReplyChips";
+import SocialLinksCard from "./SocialLinksCard";
+import InChatEmailCollector from "./InChatEmailCollector";
+import SaleDiscountCard from "./SaleDiscountCard";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -87,6 +90,12 @@ export default function MessageBubble({ message, onOptionSelect }: MessageBubble
         )}
 
         {message.comparison && <ProductComparisonView data={message.comparison} />}
+
+        {message.saleDiscountCard && <SaleDiscountCard data={message.saleDiscountCard} />}
+
+        {message.emailCollector && <InChatEmailCollector data={message.emailCollector} />}
+
+        {message.socialLinks && <SocialLinksCard data={message.socialLinks} />}
 
         {message.handoff && <HumanHandoffCard data={message.handoff} />}
 

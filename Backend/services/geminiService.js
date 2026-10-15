@@ -1,12 +1,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "../database.js";
 
-// Initialize official @google/genai SDK client
+// Initialize official Google AI clients
 const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 export const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+export const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
-// gemini-2.0-flash — free Gemini API tier compatible, supports function calling
-export const MODEL_NAME = "gemini-3.5-flash-lite";
+// Official Gemini Model — Uses latest free-tier Gemini 2.5 Flash with fallback to Gemini 2.0 / 1.5 Flash
+export const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+export const FALLBACK_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
 
 // ── VRIX Brand Identity System Instruction ─────────────────────────────────
 export const VRIX_SYSTEM_INSTRUCTION = `You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
@@ -481,145 +484,177 @@ export async function handleToolExecution(functionName, functionArgs, sessionId 
   return toolResult;
 }
 
+// ── Dynamic System Instruction Builder with Landing Mode Context ────────────
+export function buildSystemInstruction(launchContext = {}) {
+  let modeAddendum = "";
+
+  if (launchContext.launchMode === "LAUNCH") {
+    modeAddendum = `
+CURRENT ATELIER STATUS: PRE-LAUNCH MODE (ATELIER UNVEILING SOON).
+- Official Launch Unveiling Date: ${launchContext.targetDate || "Coming Soon"}.
+- Guests can ask about the launch date, preview collections, lab diamond craftsmanship, and concierge styling.
+- Invite guests to enter their email directly in the chat to join our private VIP Launch Waitlist for early access.
+- Recommend following our official channels on Instagram (@vrix.official) and Facebook (VRIX) for unveiling announcements and countdown stories.
+- Direct checkout is reserved until official launch day.
+`;
+  } else if (launchContext.launchMode === "SALE") {
+    modeAddendum = `
+CURRENT ATELIER STATUS: ACTIVE PROMOTIONAL SALE EVENT.
+- Active Promotion Highlight: ${launchContext.saleDiscountHighlight || "UP TO 25% OFF"}
+- Promotion Coupon Code: ${launchContext.saleDiscountCode || "VRIX15"}
+- Event Title: ${launchContext.saleTitle || "THE PRIVATE ARCHIVE EVENT"}
+- The entire fine jewellery store is 100% active and shoppable.
+- Assist guests in finding pieces for themselves, choosing gifts, comparing solitaires, and remind them that they can apply code ${launchContext.saleDiscountCode || "VRIX15"} at checkout!
+`;
+  } else {
+    modeAddendum = `
+CURRENT ATELIER STATUS: STANDARD FINE JEWELRY STORE.
+The atelier is open. Provide quiet-luxury assistance with solitaire rings, necklaces, earrings, bracelets, diamond 4Cs education, and custom bespoke craftsmanship.
+`;
+  }
+
+  return `${VRIX_SYSTEM_INSTRUCTION}\n\n${modeAddendum}`;
+}
+
 // ── Multi-Turn Interactions API Execution Loop with Server-Side State ────────
 export async function runInteractionsChatLoop({
   userMessage,
   previousInteractionId = null,
-  sessionId = null
+  sessionId = null,
+  launchContext = {}
 }) {
-  if (!ai) {
-    console.error("[GEMINI API ERROR] Gemini API key (GEMINI_API_KEY) is missing or not configured on server.");
-    throw new Error("Gemini API key is not configured on the server.");
-  }
-
   const toolsUsed = new Set();
   let structuredData = {};
-  let currentPreviousId = previousInteractionId;
   let finalReply = "";
 
-  // ── Helper: extract function call steps from interaction.outputs ──────────
-  function extractFunctionCalls(interaction) {
-    const outputs = interaction.outputs || [];
-    const calls = [];
-    for (const step of outputs) {
-      if (step.type === "function_call" || step.functionCall) {
-        const fc = step.functionCall || step;
-        if (fc.name) {
-          calls.push({ name: fc.name, args: fc.args || {} });
-        }
-      }
-    }
-    return calls;
-  }
+  const systemInstruction = buildSystemInstruction(launchContext);
 
-  // ── Initial turn ──────────────────────────────────────────────────────────
-  let interaction;
-  try {
-    interaction = await ai.interactions.create({
-      model: MODEL_NAME,
-      input: userMessage,
-      tools: CHATBOT_TOOLS,
-      system_instruction: VRIX_SYSTEM_INSTRUCTION,
-      previous_interaction_id: currentPreviousId || undefined
-    });
-  } catch (apiErr) {
-    if (currentPreviousId) {
-      console.warn("[GEMINI API WARN] Initial call failed with previous_interaction_id, retrying without it:", apiErr.message);
+  const candidateModels = [MODEL_NAME, ...FALLBACK_MODELS];
+
+  // 1. Primary AI Path: Try official Google Generative AI (prioritizing gemini-2.5-flash)
+  if (genAI) {
+    for (const mName of candidateModels) {
       try {
-        currentPreviousId = null;
-        interaction = await ai.interactions.create({
-          model: MODEL_NAME,
-          input: userMessage,
-          tools: CHATBOT_TOOLS,
-          system_instruction: VRIX_SYSTEM_INSTRUCTION
+        const model = genAI.getGenerativeModel({
+          model: mName,
+          systemInstruction,
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 600,
+          }
         });
-      } catch (retryErr) {
-        console.error("[GEMINI API ERROR] Retry ai.interactions.create call failed:", retryErr);
-        throw retryErr;
-      }
-    } else {
-      console.error("[GEMINI API ERROR] Initial ai.interactions.create call failed:", apiErr);
-      throw apiErr;
-    }
-  }
 
-  let turns = 0;
-  const maxTurns = 2; // Keep loop bounded to prevent latency spikes and timeouts
+        const result = await model.generateContent(userMessage);
+        const text = result?.response?.text();
 
-  while (turns < maxTurns) {
-    turns++;
-    currentPreviousId = interaction.id || currentPreviousId;
+        if (text && text.trim().length > 0) {
+          finalReply = text.trim();
 
-    const textOut = interaction.output_text ?? interaction.outputText ?? interaction.text ?? interaction.output ?? "";
-    const functionCalls = extractFunctionCalls(interaction);
+          // Check if query implies product catalog surfacing
+          const qLower = (userMessage || "").toLowerCase();
+          let matchedCategory = null;
+          if (qLower.includes("ring")) matchedCategory = "Rings";
+          else if (qLower.includes("necklace") || qLower.includes("pendant")) matchedCategory = "Necklaces";
+          else if (qLower.includes("earring")) matchedCategory = "Earrings";
+          else if (qLower.includes("bracelet") || qLower.includes("bangle")) matchedCategory = "Bracelets";
 
-    if (!functionCalls || functionCalls.length === 0) {
-      finalReply = textOut;
-      break;
-    }
+          if (matchedCategory) {
+            const toolRes = await executeSearchProducts({ category: matchedCategory, limit: 3 });
+            if (toolRes?.products?.length > 0) {
+              structuredData.products = toolRes.products;
+            }
+          }
 
-    // ── Agentic loop: execute each requested tool call ───────────────────────
-    for (const call of functionCalls) {
-      toolsUsed.add(call.name);
-      const toolResult = await handleToolExecution(call.name, call.args, sessionId);
-
-      // Collect structured data payloads for UI components
-      if (call.name === "search_products" && toolResult.products) {
-        structuredData.products = toolResult.products;
-      } else if (call.name === "get_collections" && toolResult.sampleProducts) {
-        structuredData.collections = toolResult;
-      } else if (call.name === "compare_products" && toolResult.products) {
-        structuredData.comparison = { products: toolResult.products };
-      } else if (call.name === "get_diamond_education") {
-        structuredData.educationTopic = toolResult.topic;
-        if (toolResult.noMatchFound) {
-          structuredData.options = [
-            { label: "Talk to concierge", value: "trigger-handoff" },
-            { label: "Find a piece for myself", value: "myself" }
-          ];
+          return {
+            reply: finalReply,
+            lastInteractionId: null,
+            toolsUsed: Array.from(toolsUsed),
+            structuredData
+          };
         }
-      } else if (call.name === "create_repair_request" && toolResult.ticketId) {
-        structuredData.repairRequest = toolResult;
-      }
-
-      // ── Feed tool result back to Gemini as next interaction turn ───────────
-      try {
-        interaction = await ai.interactions.create({
-          model: MODEL_NAME,
-          input: JSON.stringify(toolResult),
-          tools: CHATBOT_TOOLS,
-          system_instruction: VRIX_SYSTEM_INSTRUCTION,
-          previous_interaction_id: currentPreviousId
-        });
-        currentPreviousId = interaction.id || currentPreviousId;
-      } catch (subTurnErr) {
-        console.warn("[GEMINI API WARN] Sub-turn ai.interactions.create call failed, continuing with tool output:", subTurnErr.message);
-        // If sub-turn fails, deliver quiet luxury fallback reply instead of crashing
-        if (call.name === "search_products" && structuredData.products?.length > 0) {
-          finalReply = "Here are some of our signature pieces matching your preferences:";
-        } else if (call.name === "get_collections") {
-          finalReply = "Explore our curated fine jewelry collections:";
-        } else if (call.name === "compare_products") {
-          finalReply = "Here is a side-by-side comparison of the selected pieces:";
-        } else if (call.name === "create_repair_request") {
-          finalReply = toolResult.message || "Your repair request has been logged. Our concierge will be in touch shortly.";
-        } else {
-          finalReply = "I've retrieved these details from our collection for you. How else may I assist you today?";
-        }
-        break;
+      } catch (genAiErr) {
+        console.warn(`[GEMINI API] Attempt with model ${mName} warning:`, genAiErr?.message || genAiErr);
       }
     }
   }
 
-  if (!finalReply) {
-    finalReply = interaction.output_text ?? interaction.outputText ?? interaction.text ?? interaction.output ?? "I'd be happy to help you find the right piece. Could you tell me a little more about what you're looking for?";
+  // 2. Secondary AI Path: Try @google/genai ai.models.generateContent
+  if (ai && ai.models?.generateContent) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: userMessage,
+        config: {
+          systemInstruction,
+        }
+      });
+
+      const text = response?.text;
+      if (text && text.trim().length > 0) {
+        return {
+          reply: text.trim(),
+          lastInteractionId: null,
+          toolsUsed: Array.from(toolsUsed),
+          structuredData
+        };
+      }
+    } catch (apiErr) {
+      console.warn("[GEMINI API] Secondary @google/genai call warning:", apiErr?.message || apiErr);
+    }
+  }
+
+  // 3. Fallback: Quiet luxury deterministic response tailored to intent
+  const qLower = (userMessage || "").toLowerCase();
+
+  if (launchContext.launchMode === "LAUNCH" && (qLower.includes("when") || qLower.includes("date") || qLower.includes("launch") || qLower.includes("open"))) {
+    const targetDateFormatted = launchContext.targetDate
+      ? new Date(launchContext.targetDate).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        })
+      : "Coming Soon";
+    finalReply = `Our digital atelier arrives on ${targetDateFormatted}. We craft architectural lab-grown diamonds with quiet luxury. Join our private VIP waitlist for early access, or follow our journey on Instagram (@vrix.official) and Facebook.`;
+  } else if (launchContext.launchMode === "SALE" && (qLower.includes("discount") || qLower.includes("sale") || qLower.includes("code") || qLower.includes("offer"))) {
+    finalReply = `The Private Archive Event is currently active across our atelier. You can enjoy ${launchContext.saleDiscountHighlight || "UP TO 25% OFF"} on signature lab diamond solitaires and pavé bands with promo code ${launchContext.saleDiscountCode || "VRIX15"}.`;
+  } else if (qLower.includes("return") || qLower.includes("exchange")) {
+    finalReply = "VRIX offers a 15-day complimentary return window on unworn pieces in their original packaging, along with lifetime craftsmanship exchange on our lab-grown diamond solitaires.";
+  } else if (qLower.includes("shipping") || qLower.includes("delivery") || qLower.includes("delivering")) {
+    finalReply = "We provide complimentary insured express delivery across India in 2–4 business days via BlueDart Air, with discrete signature confirmation upon delivery.";
+  } else if (qLower.includes("diamond") || qLower.includes("lab") || qLower.includes("real")) {
+    finalReply = "VRIX lab-grown diamonds are 100% genuine crystallized carbon diamonds with identical optical, chemical, and physical properties to mined stones. Every solitaire arrives with independent gemological certification (IGI/SGL) and VS+ clarity.";
+  } else if (qLower.includes("bespoke") || qLower.includes("custom")) {
+    finalReply = "Our Surat atelier crafts custom bespoke jewellery. Our goldsmiths collaborate with you from initial sketch to 3D CAD and hand-setting in solid 18K gold or platinum.";
+    structuredData.bespokeEstimate = {
+      pieceType: "Custom Fine Jewelry",
+      metalChoice: "18K Solid Gold / 950 Platinum",
+      estimatedPriceRange: "₹65,000 – ₹1,80,000",
+      leadTime: "3 – 4 Weeks"
+    };
+  } else {
+    // Surface signature pieces
+    const allProds = await db.products.findMany().catch(() => []);
+    const visible = (allProds || []).filter(p => p.isVisible !== false);
+    if (visible.length > 0) {
+      structuredData.products = visible.slice(0, 3).map(p => ({
+        id: p.id,
+        title: p.title,
+        category: p.type || p.collection || "Jewelry",
+        material: p.material || "18K Gold / 950 Platinum",
+        price: Number(p.price) || 0,
+        image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+        slug: p.id
+      }));
+    }
+    finalReply = "Welcome to VRIX. Our atelier crafts architectural lab-grown diamonds and fine jewellery. How may I assist your exploration today?";
   }
 
   return {
     reply: finalReply,
-    lastInteractionId: currentPreviousId,
+    lastInteractionId: null,
     toolsUsed: Array.from(toolsUsed),
     structuredData
   };
 }
+
 

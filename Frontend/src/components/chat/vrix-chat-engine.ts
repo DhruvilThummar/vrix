@@ -1,4 +1,14 @@
-import { ChatMessage, ChatProduct, EntryPoint, EntryPointId, QuickOption, HumanHandoffData } from "./vrix-chat-types";
+import {
+  ChatMessage,
+  ChatProduct,
+  EntryPoint,
+  EntryPointId,
+  QuickOption,
+  HumanHandoffData,
+  SocialLinksData,
+  EmailCollectorData,
+  SaleDiscountCardData,
+} from "./vrix-chat-types";
 
 export const VRIX_ENTRY_POINTS: EntryPoint[] = [
   {
@@ -45,28 +55,257 @@ export const VRIX_ENTRY_POINTS: EntryPoint[] = [
   },
 ];
 
-export const VRIX_CATALOG: ChatProduct[] = [];
+export const VRIX_LAUNCH_ENTRY_POINTS: EntryPoint[] = [
+  {
+    id: "launch_date",
+    label: "Launch Countdown & Date",
+    icon: "schedule",
+    description: "Check the official unveiling date and live countdown.",
+  },
+  {
+    id: "launch_waitlist",
+    label: "Join VIP Waitlist",
+    icon: "mail",
+    description: "Enter email for exclusive early private atelier access.",
+  },
+  {
+    id: "social_channels",
+    label: "Instagram & Facebook",
+    icon: "public",
+    description: "Connect on Instagram and Facebook for atelier releases.",
+  },
+  {
+    id: "education",
+    label: "About VRIX Lab Diamonds",
+    icon: "diamond",
+    description: "Learn about our conflict-free lab diamonds and 18K metals.",
+  },
+];
+
+export const VRIX_SALE_ENTRY_POINTS: EntryPoint[] = [
+  {
+    id: "sale_details",
+    label: "Sale Offer & Promo Code",
+    icon: "local_offer",
+    description: "View active discount percentage, promo code, and validity.",
+  },
+  {
+    id: "myself",
+    label: "Find a Piece for Myself",
+    icon: "person_search",
+    description: "Curated jewelry tailored to your personal aesthetic and budget.",
+  },
+  {
+    id: "gift",
+    label: "Find a Gift",
+    icon: "redeem",
+    description: "Thoughtful recommendations for someone special with gift perks.",
+  },
+  {
+    id: "collections",
+    label: "Browse Collections",
+    icon: "grid_view",
+    description: "Browse VRIX categories, signature edits, and bespoke design.",
+  },
+  {
+    id: "compare",
+    label: "Compare Products",
+    icon: "compare_arrows",
+    description: "Side-by-side breakdown of materials, stones, and specifications.",
+  },
+  {
+    id: "education",
+    label: "Diamond Education",
+    icon: "school",
+    description: "Learn about the 4Cs, conflict-free stones, and ethical metals.",
+  },
+];
+
+export function getEntryPointsForMode(mode?: string): EntryPoint[] {
+  if (mode === "LAUNCH") return VRIX_LAUNCH_ENTRY_POINTS;
+  if (mode === "SALE") return VRIX_SALE_ENTRY_POINTS;
+  return VRIX_ENTRY_POINTS;
+}
+
+// Initial fallback catalog of authentic signature pieces so chat is never empty
+export let VRIX_CATALOG: ChatProduct[] = [
+  {
+    id: "solitaire-arc-ring",
+    title: "The Solitaire Arc Ring",
+    category: "Rings",
+    material: "18K Gold Vermeil",
+    price: 18500,
+    image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800",
+      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800"
+    ],
+    whyFits: "Architectural minimal band set with brilliant round lab solitaire.",
+    stone: "1.0 ct VS+ Lab Diamond",
+    warranty: "Lifetime Craftsmanship Guarantee",
+    slug: "solitaire-arc-ring"
+  },
+  {
+    id: "pave-aura-necklace",
+    title: "Pavé Aura Solitaire Necklace",
+    category: "Necklaces",
+    material: "18K Gold Vermeil",
+    price: 24000,
+    image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800"
+    ],
+    whyFits: "Floating laboratory diamond pendant on delicate 18-inch cable chain.",
+    stone: "0.75 ct VS+ Lab Diamond",
+    warranty: "Lifetime Craftsmanship Guarantee",
+    slug: "pave-aura-necklace"
+  },
+  {
+    id: "geometric-prism-earrings",
+    title: "Geometric Prism Stud Earrings",
+    category: "Earrings",
+    material: "925 Sterling Silver",
+    price: 12500,
+    image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=800"
+    ],
+    whyFits: "Subtle architectural silhouette engineered for effortless daily wear.",
+    stone: "Lab Diamond (VS+)",
+    warranty: "Lifetime Craftsmanship Guarantee",
+    slug: "geometric-prism-earrings"
+  },
+  {
+    id: "linear-solitaire-cuff",
+    title: "Linear Solitaire Bangle",
+    category: "Bracelets",
+    material: "18K Gold Vermeil",
+    price: 32000,
+    image: "https://images.unsplash.com/photo-1611591475878-a28d575443fa?auto=format&fit=crop&q=80&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1611591475878-a28d575443fa?auto=format&fit=crop&q=80&w=800"
+    ],
+    whyFits: "Hinged precision cuff featuring twin bezel-set lab solitaires.",
+    stone: "Twin Lab Solitaires (VS+)",
+    warranty: "Lifetime Craftsmanship Guarantee",
+    slug: "linear-solitaire-cuff"
+  }
+];
+
+export function setChatCatalog(products: ChatProduct[]) {
+  if (Array.isArray(products) && products.length > 0) {
+    VRIX_CATALOG = products;
+  }
+}
 
 export interface EngineState {
-  currentFlow: EntryPointId | null;
+  currentFlow: EntryPointId | string | null;
   step: number;
   data: Record<string, any>;
   surfacedProducts: ChatProduct[];
 }
 
-export function createInitialMessage(): ChatMessage {
+export function createInitialMessage(
+  mode: string = "DISABLED",
+  launchConfig?: any,
+  timeLeft?: any
+): ChatMessage {
+  const time = formatTime(new Date());
+
+  // 1. LAUNCH MODE
+  if (mode === "LAUNCH") {
+    let countdownText = "";
+    if (timeLeft && !timeLeft.isExpired) {
+      countdownText = ` — unveiling in ${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m`;
+    }
+
+    const targetDateFormatted = launchConfig?.targetDate
+      ? new Date(launchConfig.targetDate).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : "Coming Soon";
+
+    return {
+      id: "msg-welcome-launch",
+      sender: "bot",
+      text: `Welcome to VRIX. Our digital atelier arrives on ${targetDateFormatted}${countdownText}.\n\nEnter your email for private VIP early access, or connect with our atelier on Instagram and Facebook for preview reveals:`,
+      emailCollector: {
+        placeholder: "your.email@example.com",
+        buttonText: "Notify Me",
+        successMessage: launchConfig?.waitlistSuccessMsg || "Thank you. You have been added to our private VIP launch waitlist.",
+      },
+      socialLinks: {
+        title: "Follow VRIX Atelier",
+        description: "Official releases, atelier previews, and launch news.",
+        instagram: "https://www.instagram.com/vrix.official",
+        facebook: "https://www.facebook.com/profile.php?id=61588375466280",
+        whatsapp: "https://wa.me/919054285693?text=Hi%20VRIX%20Concierge,%20I%20have%20an%20inquiry%20regarding%20the%20upcoming%20launch.",
+      },
+      options: [
+        { label: "When is the Launch?", value: "launch_date" },
+        { label: "Join VIP Waitlist", value: "launch_waitlist" },
+        { label: "Instagram & Facebook", value: "social_channels" },
+        { label: "About VRIX Lab Diamonds", value: "education" },
+      ],
+      timestamp: time,
+    };
+  }
+
+  // 2. SALE MODE
+  if (mode === "SALE") {
+    const highlight = launchConfig?.saleDiscountHighlight || "UP TO 25% OFF";
+    const code = launchConfig?.saleDiscountCode || "VRIX15";
+    const title = launchConfig?.saleTitle || "THE PRIVATE ARCHIVE EVENT";
+
+    let validity = "Limited Time Atelier Event";
+    if (timeLeft && !timeLeft.isExpired) {
+      validity = `Ends in ${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m`;
+    }
+
+    return {
+      id: "msg-welcome-sale",
+      sender: "bot",
+      text: `Welcome to VRIX. ${title} is currently live across our collections. Enjoy ${highlight} on signature lab-grown solitaires and fine jewellery with promo code ${code}.\n\nHow may I assist your exploration today?`,
+      saleDiscountCard: {
+        highlight,
+        code,
+        description: launchConfig?.saleDescription || "Enjoy exclusive atelier pricing across selected solitaires, minimal rings, and pavé bands.",
+        validUntil: validity,
+        ctaUrl: launchConfig?.saleCtaUrl || "/collections",
+      },
+      options: [
+        { label: "Copy Promo Code", value: "sale_details" },
+        { label: "Find a piece for myself", value: "myself" },
+        { label: "Find a gift", value: "gift" },
+        { label: "Explore collections", value: "collections" },
+      ],
+      timestamp: time,
+    };
+  }
+
+  // 3. STORE / DISABLED MODE
   return {
-    id: "msg-welcome",
+    id: "msg-welcome-store",
     sender: "bot",
     text: "Welcome to VRIX. Tell me who this is for and the occasion, and I'll narrow it down.",
-    timestamp: formatTime(new Date()),
+    options: [
+      { label: "Find a piece for myself", value: "myself" },
+      { label: "Find a gift", value: "gift" },
+      { label: "Explore collections", value: "collections" },
+      { label: "Diamond Education", value: "education" },
+    ],
+    timestamp: time,
   };
 }
 
 export function handleUserAction(
   actionValue: string,
   userLabel: string | undefined,
-  state: EngineState
+  state: EngineState,
+  launchConfig?: any,
+  timeLeft?: any
 ): { nextState: EngineState; messages: ChatMessage[] } {
   const nextData = { ...state.data };
   let nextFlow = state.currentFlow;
@@ -75,22 +314,145 @@ export function handleUserAction(
   const messages: ChatMessage[] = [];
 
   const time = formatTime(new Date());
+  const activeMode = launchConfig?.mode || "DISABLED";
 
   // Check if starting a new flow via entry point trigger
-  const entryMatch = VRIX_ENTRY_POINTS.find((e) => e.id === actionValue || e.label === userLabel);
+  const allPossibleEntryPoints = [
+    ...VRIX_ENTRY_POINTS,
+    ...VRIX_LAUNCH_ENTRY_POINTS,
+    ...VRIX_SALE_ENTRY_POINTS,
+  ];
+  const entryMatch = allPossibleEntryPoints.find(
+    (e) => e.id === actionValue || e.label === userLabel
+  );
+
   if (entryMatch) {
     nextFlow = entryMatch.id;
     nextStep = 1;
     delete nextData[entryMatch.id];
   }
 
+  // ── LAUNCH SPECIFIC ACTIONS ────────────────────────────────────────────────
+  if (actionValue === "launch_date" || userLabel === "When is the Launch?" || actionValue.includes("launch_date")) {
+    const targetDateFormatted = launchConfig?.targetDate
+      ? new Date(launchConfig.targetDate).toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "Coming Soon";
+
+    let countdownMsg = "";
+    if (timeLeft && !timeLeft.isExpired) {
+      countdownMsg = `\n\nLive Countdown: ${timeLeft.days} Days, ${timeLeft.hours} Hours, ${timeLeft.minutes} Minutes remaining until public unlock.`;
+    }
+
+    messages.push({
+      id: `msg-${Date.now()}-launch-date`,
+      sender: "bot",
+      text: `Official VRIX Digital Atelier Launch:\n• Date: ${targetDateFormatted}${countdownMsg}\n\nOur inaugural collection features VS+ architectural lab-grown diamond solitaires crafted in solid 18K gold and 925 sterling silver. Join our VIP waitlist below for 24-hour early access:`,
+      emailCollector: {
+        placeholder: "Enter your email for early invite...",
+        buttonText: "Join VIP Waitlist",
+      },
+      socialLinks: {
+        title: "Follow Along for Live Launch Countdown",
+        instagram: "https://www.instagram.com/vrix.official",
+        facebook: "https://www.facebook.com/profile.php?id=61588375466280",
+      },
+      options: [
+        { label: "Join VIP Waitlist", value: "launch_waitlist" },
+        { label: "Instagram & Facebook", value: "social_channels" },
+        { label: "About VRIX Lab Diamonds", value: "education" },
+      ],
+      timestamp: time,
+    });
+    return { nextState: { currentFlow: null, step: 0, data: nextData, surfacedProducts: surfaced }, messages };
+  }
+
+  if (actionValue === "launch_waitlist" || userLabel === "Join VIP Waitlist" || actionValue.includes("waitlist")) {
+    messages.push({
+      id: `msg-${Date.now()}-waitlist`,
+      sender: "bot",
+      text: "VIP Early Access Allocation:\nMembers on our waitlist receive private digital access before the official public unveiling, alongside exclusive first-drop invitations.",
+      emailCollector: {
+        placeholder: "Enter your email address...",
+        buttonText: "Notify Me",
+      },
+      options: [
+        { label: "When is the Launch?", value: "launch_date" },
+        { label: "Instagram & Facebook", value: "social_channels" },
+        { label: "About VRIX Lab Diamonds", value: "education" },
+      ],
+      timestamp: time,
+    });
+    return { nextState: { currentFlow: null, step: 0, data: nextData, surfacedProducts: surfaced }, messages };
+  }
+
+  if (actionValue === "social_channels" || userLabel === "Instagram & Facebook" || actionValue.includes("social")) {
+    messages.push({
+      id: `msg-${Date.now()}-social`,
+      sender: "bot",
+      text: "Stay connected with VRIX across our official digital ateliers. We publish daily diamond education, behind-the-scenes goldsmith craftsmanship, and unveiling countdowns on Instagram and Facebook:",
+      socialLinks: {
+        title: "VRIX Official Channels",
+        description: "Follow @vrix.official for inaugural solitaire previews & launch stories.",
+        instagram: "https://www.instagram.com/vrix.official",
+        facebook: "https://www.facebook.com/profile.php?id=61588375466280",
+        whatsapp: "https://wa.me/919054285693?text=Hi%20VRIX%20Concierge,%20I%20would%20like%20to%20learn%20more%20about%20your%20upcoming%20launch.",
+      },
+      options: [
+        { label: "When is the Launch?", value: "launch_date" },
+        { label: "Join VIP Waitlist", value: "launch_waitlist" },
+        { label: "About VRIX Lab Diamonds", value: "education" },
+      ],
+      timestamp: time,
+    });
+    return { nextState: { currentFlow: null, step: 0, data: nextData, surfacedProducts: surfaced }, messages };
+  }
+
+  // ── SALE SPECIFIC ACTIONS ──────────────────────────────────────────────────
+  if (actionValue === "sale_details" || userLabel?.includes("Sale") || userLabel?.includes("Promo Code")) {
+    const highlight = launchConfig?.saleDiscountHighlight || "UP TO 25% OFF";
+    const code = launchConfig?.saleDiscountCode || "VRIX15";
+    const title = launchConfig?.saleTitle || "THE PRIVATE ARCHIVE EVENT";
+
+    let validity = "Limited allocation event.";
+    if (timeLeft && !timeLeft.isExpired) {
+      validity = `Ends in ${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m.`;
+    }
+
+    messages.push({
+      id: `msg-${Date.now()}-sale-details`,
+      sender: "bot",
+      text: `Active Atelier Promotion — ${title}:\n• Discount: ${highlight} across signature pieces\n• Promotion Code: ${code}\n• Duration: ${validity}\n\nEnter code ${code} at checkout to apply your discount.`,
+      saleDiscountCard: {
+        highlight,
+        code,
+        description: launchConfig?.saleDescription || "Enjoy exclusive limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands.",
+        validUntil: validity,
+        ctaUrl: launchConfig?.saleCtaUrl || "/collections",
+      },
+      options: [
+        { label: "Find a piece for myself", value: "myself" },
+        { label: "Find a gift", value: "gift" },
+        { label: "Explore collections", value: "collections" },
+      ],
+      timestamp: time,
+    });
+    return { nextState: { currentFlow: null, step: 0, data: nextData, surfacedProducts: surfaced }, messages };
+  }
+
+  // ── MYSELF JOURNEY ─────────────────────────────────────────────────────────
   if (nextFlow === "myself") {
     if (nextStep === 1) {
       nextStep = 2;
       messages.push({
         id: `msg-${Date.now()}-1`,
         sender: "bot",
-        text: "What are you shopping for?",
+        text: "What category are you shopping for?",
         options: [
           { label: "Necklaces", value: "Necklaces" },
           { label: "Earrings", value: "Earrings" },
@@ -157,11 +519,12 @@ export function handleUserAction(
       messages.push({
         id: `msg-${Date.now()}-res`,
         sender: "bot",
-        text: `Here are pieces selected for you based on your aesthetic preference:`,
+        text: `Here are signature pieces selected for you based on your aesthetic preference:`,
         products: filtered,
         options: [
           { label: "Compare a couple of these", value: "trigger-compare" },
           { label: "Explore all collections", value: "collections" },
+          { label: "Talk to concierge", value: "trigger-handoff" },
         ],
         timestamp: time,
       });
@@ -189,7 +552,7 @@ export function handleUserAction(
         messages.push({
           id: `msg-${Date.now()}-g-hand`,
           sender: "bot",
-          text: "What are you shopping for?",
+          text: "What category are you shopping for?",
           options: [
             { label: "Necklaces", value: "Necklaces" },
             { label: "Earrings", value: "Earrings" },
@@ -243,12 +606,13 @@ export function handleUserAction(
         sender: "bot",
         text: `Here are gift-appropriate picks for your ${nextData.recipient || "special recipient"}.${
           isUpcomingClose
-            ? " Standard insured shipping takes 2-4 business days. Check our shipping schedule anytime at /legal?tab=shipping."
+            ? " Standard insured delivery takes 2–4 business days via BlueDart."
             : ""
-        }\n\nVRIX+ Circle members receive 10% off their first order and early sale access.`,
+        }\n\nVRIX pieces arrive in quiet-luxury velvet presentation packaging with authenticity card.`,
         products: picks,
         options: [
-          { label: "Explore full gift guide", value: "collections" },
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Explore collections", value: "collections" },
           { label: "Talk to concierge", value: "trigger-handoff" },
         ],
         timestamp: time,
@@ -256,253 +620,223 @@ export function handleUserAction(
     }
   } else if (nextFlow === "collections") {
     if (nextStep === 1) {
-      if (["Necklaces", "Earrings", "Rings", "Bracelets"].includes(actionValue)) {
-        const filtered = VRIX_CATALOG.filter((p) => p.category === actionValue);
-        surfaced = Array.from(new Set([...surfaced, ...filtered]));
-        messages.push({
-          id: `msg-${Date.now()}-col-cat`,
-          sender: "bot",
-          text: `${actionValue} — architectural forms crafted from ethical metals and conflict-free stones.`,
-          products: filtered,
-          options: [
-            { label: "Compare these pieces", value: "trigger-compare" },
-            { label: "Back to collections menu", value: "collections" },
-          ],
-          timestamp: time,
-        });
+      nextStep = 2;
+      messages.push({
+        id: `msg-${Date.now()}-col1`,
+        sender: "bot",
+        text: "Select a signature category to explore:",
+        options: [
+          { label: "Necklaces", value: "Necklaces" },
+          { label: "Earrings", value: "Earrings" },
+          { label: "Rings", value: "Rings" },
+          { label: "Bracelets", value: "Bracelets" },
+          { label: "Bespoke Design", value: "Bespoke" },
+        ],
+        timestamp: time,
+      });
+    } else {
+      if (actionValue === "Bespoke") {
         nextFlow = null;
         nextStep = 0;
-      } else if (actionValue === "Bespoke") {
-        nextStep = 2;
         messages.push({
-          id: `msg-${Date.now()}-bespoke-1`,
+          id: `msg-${Date.now()}-bespoke`,
           sender: "bot",
-          text: "Bespoke pieces are made-to-order in our atelier. What silhouette or stone do you have in mind?",
+          text: "Bespoke creations are handcrafted in our Surat atelier from your custom sketches, metal choice, and stone preferences.",
+          bespokeEstimate: {
+            pieceType: "Custom Fine Jewelry",
+            metalChoice: "18K Solid Gold / 950 Platinum",
+            estimatedPriceRange: "₹65,000 – ₹1,80,000",
+            leadTime: "3 – 4 Weeks",
+          },
           options: [
-            { label: "Solitaire diamond ring", value: "Ring design" },
-            { label: "Sculptural pendant", value: "Pendant design" },
-            { label: "Custom wedding band pair", value: "Wedding bands" },
+            { label: "Talk to Concierge", value: "trigger-handoff" },
+            { label: "Explore collections", value: "collections" },
           ],
           timestamp: time,
         });
       } else {
-        nextStep = 1;
+        const filtered = filterCatalog(actionValue);
+        surfaced = Array.from(new Set([...surfaced, ...filtered]));
+        nextFlow = null;
+        nextStep = 0;
+
         messages.push({
-          id: `msg-${Date.now()}-col-menu`,
+          id: `msg-${Date.now()}-col-res`,
           sender: "bot",
-          text: "Select a collection category to explore:",
+          text: `Explore our signature ${actionValue} collection:`,
+          products: filtered.length ? filtered : VRIX_CATALOG.slice(0, 3),
           options: [
-            { label: "Necklaces", value: "Necklaces" },
-            { label: "Earrings", value: "Earrings" },
-            { label: "Rings", value: "Rings" },
-            { label: "Bracelets", value: "Bracelets" },
-            { label: "Bespoke", value: "Bespoke" },
-            { label: "New Arrivals", value: "Earrings" },
+            { label: "Compare these pieces", value: "trigger-compare" },
+            { label: "Find a piece for myself", value: "myself" },
+            { label: "Explore other collections", value: "collections" },
           ],
           timestamp: time,
         });
       }
-    } else if (nextStep === 2) {
-      nextFlow = null;
-      nextStep = 0;
-      messages.push({
-        id: `msg-${Date.now()}-bespoke-out`,
-        sender: "bot",
-        text: "Our master goldsmiths work directly with you from preliminary sketch to final setting.",
-        bespokeEstimate: {
-          pieceType: userLabel || actionValue || "Custom Fine Jewelry",
-          metalChoice: "18K Solid Gold / 950 Platinum",
-          estimatedPriceRange: "₹65,000 – ₹1,80,000",
-          leadTime: "3 – 4 Weeks",
-        },
-        options: [
-          { label: "Book Atelier Consultation", value: "trigger-handoff" },
-          { label: "Browse standard collections", value: "collections" },
-        ],
-        timestamp: time,
-      });
     }
-  } else if (nextFlow === "discovery") {
+  } else if (nextFlow === "compare" || actionValue === "trigger-compare") {
+    const compPicks = surfaced.length >= 2 ? surfaced.slice(0, 3) : VRIX_CATALOG.slice(0, 2);
     nextFlow = null;
     nextStep = 0;
-    const parsed = parseUserQuery(userLabel || actionValue);
-    const results = filterCatalog(parsed.category, parsed.budgetStr);
-    surfaced = Array.from(new Set([...surfaced, ...results]));
 
     messages.push({
-      id: `msg-${Date.now()}-disc-res`,
+      id: `msg-${Date.now()}-cmp`,
       sender: "bot",
-      text: results.length
-        ? `Found ${results.length} matching pieces:`
-        : "Here are signature pieces matching your style preference:",
-      products: results.length ? results : VRIX_CATALOG.slice(0, 3),
+      text: "Here is a side-by-side specification comparison of our signature pieces:",
+      comparison: { products: compPicks },
       options: [
-        { label: "Compare these pieces", value: "trigger-compare" },
-        { label: "Show cheaper options", value: "under-15000" },
-        { label: "Show in silver", value: "silver" },
+        { label: "Find a piece for myself", value: "myself" },
+        { label: "Diamond Education", value: "education" },
+        { label: "Talk to concierge", value: "trigger-handoff" },
       ],
       timestamp: time,
     });
-  } else if (nextFlow === "compare" || actionValue === "trigger-compare") {
-    nextFlow = null;
-    nextStep = 0;
-    const compareList = surfaced.length >= 2 ? surfaced.slice(0, 3) : [];
-    if (compareList.length >= 2) {
+  } else if (nextFlow === "education" || actionValue === "education") {
+    if (nextStep === 1) {
+      nextStep = 2;
       messages.push({
-        id: `msg-${Date.now()}-comp`,
+        id: `msg-${Date.now()}-edu-1`,
         sender: "bot",
-        text: "Side-by-side comparison of your selected pieces:",
-        comparison: { products: compareList },
-        options: [
-          { label: "Find another piece", value: "myself" },
-          { label: "Talk to concierge", value: "trigger-handoff" },
-        ],
-        timestamp: time,
-      });
-    } else {
-      messages.push({
-        id: `msg-${Date.now()}-comp-empty`,
-        sender: "bot",
-        text: "Which pieces would you like to compare? Please search for or select 2 to 3 items to compare side-by-side.",
-        options: [
-          { label: "Find a piece for myself", value: "myself" },
-          { label: "Explore collections", value: "collections" },
-          { label: "Talk to concierge", value: "trigger-handoff" },
-        ],
-        timestamp: time,
-      });
-    }
-  } else if (nextFlow === "education") {
-    if (actionValue === "4Cs") {
-      messages.push({
-        id: `msg-${Date.now()}-4cs`,
-        sender: "bot",
-        text: "The 4Cs define diamond quality: Cut determines brilliance; Color ranges from colorless to warm tint; Clarity measures natural internal characteristics; Carat indicates weight. VRIX selects only excellent cut grades for maximum light reflection.",
-        options: [
-          { label: "VRIX ethical sourcing", value: "Sourcing" },
-          { label: "Metal purity guide", value: "Metals" },
-          { label: "Show diamond pieces", value: "myself" },
-        ],
-        timestamp: time,
-      });
-    } else if (actionValue === "Sourcing") {
-      messages.push({
-        id: `msg-${Date.now()}-src`,
-        sender: "bot",
-        text: "VRIX uses consciously mined metals and conflict-free stones. Every diamond is verified through ethical supply chains, and our solid gold and sterling silver are 100% recycled where possible.",
-        options: [
-          { label: "Metal purity guide", value: "Metals" },
-          { label: "Explore collections", value: "collections" },
-        ],
-        timestamp: time,
-      });
-    } else if (actionValue === "Metals") {
-      messages.push({
-        id: `msg-${Date.now()}-met`,
-        sender: "bot",
-        text: "We craft in 18K solid yellow gold, 18K white gold, 950 platinum, and 925 sterling silver. 18K gold offers the ideal balance of deep lustre and durability for fine jewelry.",
-        options: [
-          { label: "Diamond 4Cs", value: "4Cs" },
-          { label: "Explore collections", value: "collections" },
-        ],
-        timestamp: time,
-      });
-    } else {
-      messages.push({
-        id: `msg-${Date.now()}-edu-menu`,
-        sender: "bot",
-        text: "What would you like to know about our materials?",
+        text: "What would you like to explore about our materials and craftsmanship?",
         options: [
           { label: "The 4Cs of Diamonds", value: "4Cs" },
-          { label: "Ethical Sourcing", value: "Sourcing" },
+          { label: "Lab vs. Mined Diamonds", value: "Sourcing" },
           { label: "Metal Purity Guide", value: "Metals" },
         ],
         timestamp: time,
       });
-    }
-  } else if (nextFlow === "warranty") {
-    if (actionValue === "Care") {
-      messages.push({
-        id: `msg-${Date.now()}-care`,
-        sender: "bot",
-        text: "Store each piece separately in its soft linen VRIX box. Avoid contact with perfumes, chemicals, and saltwater. Clean gently with a soft microfibre cloth.",
-        options: [
-          { label: "Warranty & Repair claim", value: "Repair" },
-          { label: "Read care guide at /legal", value: "legal" },
-        ],
-        timestamp: time,
-      });
     } else {
-      messages.push({
-        id: `msg-${Date.now()}-hand-trig`,
-        sender: "bot",
-        text: "Our concierge team handles all resizes, physical inspections, and warranty claims with individual care.",
-        handoff: getHandoffData(),
-        timestamp: time,
-      });
+      nextFlow = null;
+      nextStep = 0;
+      if (actionValue === "4Cs") {
+        messages.push({
+          id: `msg-${Date.now()}-4cs`,
+          sender: "bot",
+          text: "The 4Cs of VRIX Diamonds:\n• Cut: Precision faceted for maximum light refraction.\n• Color: D–F colorless grades.\n• Clarity: VS+ eye-clean clarity with zero visible inclusions.\n• Carat: Measured with millimeter precision for optical balance.",
+          options: [
+            { label: "Lab vs. Mined Diamonds", value: "Sourcing" },
+            { label: "Metal Purity Guide", value: "Metals" },
+            { label: "Explore collections", value: "collections" },
+          ],
+          timestamp: time,
+        });
+      } else if (actionValue === "Sourcing") {
+        messages.push({
+          id: `msg-${Date.now()}-src`,
+          sender: "bot",
+          text: "VRIX Lab Diamonds:\nChemically, physically, and optically identical to mined diamonds (Carbon crystal structure, 10 on Mohs scale). Created with renewable energy, zero earth-mining disruption, and 100% conflict-free origin with IGI certification.",
+          options: [
+            { label: "The 4Cs of Diamonds", value: "4Cs" },
+            { label: "Metal Purity Guide", value: "Metals" },
+            { label: "Explore collections", value: "collections" },
+          ],
+          timestamp: time,
+        });
+      } else {
+        messages.push({
+          id: `msg-${Date.now()}-met`,
+          sender: "bot",
+          text: "VRIX Metal Purity:\n• 18K Solid Gold: Deep lustre and durable skin comfort.\n• 18K Gold Vermeil: Heavy 2.5µm solid gold bonded over pure 925 sterling silver.\n• 925 Sterling Silver: Hypoallergenic nickel-free base.",
+          options: [
+            { label: "The 4Cs of Diamonds", value: "4Cs" },
+            { label: "Explore collections", value: "collections" },
+          ],
+          timestamp: time,
+        });
+      }
     }
-  } else if (actionValue === "trigger-handoff") {
+  } else if (actionValue === "trigger-handoff" || actionValue === "Talk to concierge") {
     messages.push({
-      id: `msg-${Date.now()}-hand-direct`,
+      id: `msg-${Date.now()}-ho`,
       sender: "bot",
-      text: "Reach out directly to our quiet luxury retail associate team:",
+      text: "Our private client concierge associates are available for personal styling, custom bespoke orders, and order assistance.",
       handoff: getHandoffData(),
+      options: [
+        { label: "Find a piece for myself", value: "myself" },
+        { label: "Explore collections", value: "collections" },
+      ],
       timestamp: time,
     });
   } else {
-    // Free text fallback or unknown option
+    // Free text matching with fast FAQ / policy recognition
     const textInput = (userLabel || actionValue || "").trim();
     const qLower = textInput.toLowerCase();
-    const isGeneralBrandQuery =
-      qLower.includes("what") ||
-      qLower.includes("make") ||
-      qLower.includes("craft") ||
-      qLower.includes("about") ||
-      qLower.includes("who") ||
-      qLower.includes("collection") ||
-      qLower.includes("vrix");
 
-    const parsed = parseUserQuery(textInput);
-    const results = (parsed.category || parsed.budgetStr) ? filterCatalog(parsed.category, parsed.budgetStr) : [];
-
-    if (results.length > 0) {
+    // Fast Policy Matching
+    if (qLower.includes("return") || qLower.includes("exchange") || qLower.includes("refund")) {
       messages.push({
-        id: `msg-${Date.now()}-fb`,
+        id: `msg-${Date.now()}-policy-ret`,
         sender: "bot",
-        text: `Here are architectural pieces matching your request:`,
-        products: results,
+        text: "VRIX Returns & Exchange Policy:\n• 15-Day Complimentary Returns: Unworn pieces in original presentation packaging are eligible for full refund or exchange.\n• Lifetime Buyback & Exchange: Available on all lab diamond solitaires.\n• Dedicated insured return pickup arranged by our concierge.",
         options: [
-          { label: "Compare these pieces", value: "trigger-compare" },
+          { label: "Shipping Schedule", value: "Shipping Schedule" },
           { label: "Talk to concierge", value: "trigger-handoff" },
         ],
         timestamp: time,
       });
-    } else if (isGeneralBrandQuery) {
+    } else if (qLower.includes("ship") || qLower.includes("deliver") || qLower.includes("tracking") || qLower.includes("track order")) {
       messages.push({
-        id: `msg-${Date.now()}-brand-info`,
+        id: `msg-${Date.now()}-policy-ship`,
         sender: "bot",
-        text: "VRIX crafts architectural minimalist fine jewelry using consciously mined metals and conflict-free stones. Our collections include Necklaces, Earrings, Rings, Bracelets, and made-to-order Bespoke creations.",
+        text: "VRIX Insured Shipping & Delivery:\n• Pan-India: 2–4 business days via BlueDart Air Express with full insurance.\n• International: 5–7 business days via DHL Express.\n• Signature required upon delivery for complete security.",
         options: [
-          { label: "Find a piece for myself", value: "myself" },
-          { label: "Find a gift", value: "gift" },
-          { label: "Explore collections", value: "collections" },
+          { label: "Return Policy", value: "Return Policy" },
           { label: "Talk to concierge", value: "trigger-handoff" },
+        ],
+        timestamp: time,
+      });
+    } else if (qLower.includes("size") || qLower.includes("ring size")) {
+      messages.push({
+        id: `msg-${Date.now()}-policy-size`,
+        sender: "bot",
+        text: "VRIX International Ring Sizing Guide:\n• Size 5 (US): 15.7 mm inner diameter\n• Size 6 (US): 16.5 mm inner diameter\n• Size 7 (US): 17.3 mm inner diameter\n• Size 8 (US): 18.2 mm inner diameter\n\nWe provide 1 complimentary resize within 30 days of delivery.",
+        options: [
+          { label: "Talk to concierge", value: "trigger-handoff" },
+          { label: "Explore collections", value: "collections" },
+        ],
+        timestamp: time,
+      });
+    } else if (qLower.includes("real") || qLower.includes("fake") || qLower.includes("lab diamond") || qLower.includes("natural")) {
+      messages.push({
+        id: `msg-${Date.now()}-policy-diamond`,
+        sender: "bot",
+        text: "Are VRIX diamonds real?\nYes, 100%. VRIX lab-grown diamonds are authentic crystallized carbon with identical chemical, physical, and optical properties to mined diamonds. They pass standard diamond thermal testers and come with independent gemological laboratory certification (IGI).",
+        options: [
+          { label: "The 4Cs of Diamonds", value: "4Cs" },
+          { label: "Explore collections", value: "collections" },
         ],
         timestamp: time,
       });
     } else {
-      messages.push({
-        id: `msg-${Date.now()}-fb-def`,
-        sender: "bot",
-        text: "I apologize, but I do not have that specific information in our current catalog. Please connect with our concierge for bespoke requests.",
-        options: [
-          { label: "Find a piece for myself", value: "myself" },
-          { label: "Find a gift", value: "gift" },
-          { label: "Explore collections", value: "collections" },
-          { label: "Talk to concierge", value: "trigger-handoff" },
-        ],
-        timestamp: time,
-      });
+      const parsed = parseUserQuery(textInput);
+      const results = (parsed.category || parsed.budgetStr) ? filterCatalog(parsed.category, parsed.budgetStr) : [];
+
+      if (results.length > 0) {
+        messages.push({
+          id: `msg-${Date.now()}-fb`,
+          sender: "bot",
+          text: `Here are signature pieces matching your search:`,
+          products: results,
+          options: [
+            { label: "Compare these pieces", value: "trigger-compare" },
+            { label: "Talk to concierge", value: "trigger-handoff" },
+          ],
+          timestamp: time,
+        });
+      } else {
+        messages.push({
+          id: `msg-${Date.now()}-fb-def`,
+          sender: "bot",
+          text: "I would be delighted to assist you with finding the ideal piece or answering any craftsmanship questions. You may also connect directly with our client concierge:",
+          options: [
+            { label: "Find a piece for myself", value: "myself" },
+            { label: "Find a gift", value: "gift" },
+            { label: "Explore collections", value: "collections" },
+            { label: "Talk to concierge", value: "trigger-handoff" },
+          ],
+          timestamp: time,
+        });
+      }
     }
   }
 
@@ -537,7 +871,7 @@ function parseUserQuery(query: string): { category?: string; budgetStr?: string 
   if (q.includes("ring")) category = "Rings";
   else if (q.includes("necklace") || q.includes("pendant")) category = "Necklaces";
   else if (q.includes("earring")) category = "Earrings";
-  else if (q.includes("bracelet") || q.includes("cuff")) category = "Bracelets";
+  else if (q.includes("bracelet") || q.includes("cuff") || q.includes("bangle")) category = "Bracelets";
 
   let budgetStr: string | undefined;
   if (q.includes("15k") || q.includes("15000") || q.includes("under 15")) budgetStr = "15000";
@@ -549,7 +883,7 @@ function parseUserQuery(query: string): { category?: string; budgetStr?: string 
 
 export function getHandoffData(): HumanHandoffData {
   return {
-    title: "VRIX Concierge Service",
+    title: "VRIX Private Concierge",
     description: "Quiet luxury consultation, order inquiries, and bespoke guidance.",
     phone: "+91 90542 85693",
     instagram: "https://www.instagram.com/vrix.official",

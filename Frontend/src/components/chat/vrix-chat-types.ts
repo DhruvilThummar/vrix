@@ -50,6 +50,29 @@ export interface BespokeEstimateData {
   leadTime: string;
 }
 
+export interface SocialLinksData {
+  title?: string;
+  description?: string;
+  instagram?: string;
+  facebook?: string;
+  whatsapp?: string;
+}
+
+export interface EmailCollectorData {
+  placeholder?: string;
+  buttonText?: string;
+  successMessage?: string;
+  isSubmitted?: boolean;
+}
+
+export interface SaleDiscountCardData {
+  highlight: string;
+  code: string;
+  description?: string;
+  validUntil?: string;
+  ctaUrl?: string;
+}
+
 export type MessageSender = "bot" | "user";
 
 export interface ChatMessage {
@@ -61,13 +84,17 @@ export interface ChatMessage {
   comparison?: ComparisonData;
   handoff?: HumanHandoffData;
   bespokeEstimate?: BespokeEstimateData;
+  socialLinks?: SocialLinksData;
+  emailCollector?: EmailCollectorData;
+  saleDiscountCard?: SaleDiscountCardData;
   timestamp: string;
   isTyping?: boolean;
 }
 
 export interface EntryPoint {
-  id: EntryPointId;
+  id: EntryPointId | string;
   label: string;
   icon: string;
   description: string;
 }
+

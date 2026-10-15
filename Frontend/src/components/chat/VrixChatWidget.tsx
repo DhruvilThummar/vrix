@@ -1,17 +1,26 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { ChatMessage, EntryPoint, QuickOption } from "./vrix-chat-types";
-import { VRIX_ENTRY_POINTS, handleUserAction, createInitialMessage, EngineState } from "./vrix-chat-engine";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { ChatMessage, EntryPoint, QuickOption, ChatProduct } from "./vrix-chat-types";
+import {
+  getEntryPointsForMode,
+  handleUserAction,
+  createInitialMessage,
+  setChatCatalog,
+  EngineState,
+} from "./vrix-chat-engine";
 import ChatHeader from "./ChatHeader";
 import QuickActionsMenu from "./QuickActionsMenu";
 import MessageList from "./MessageList";
 import ChatComposer from "./ChatComposer";
-import { getApiBaseUrl } from "@/utils/api";
+import { getApiBaseUrl, fetchProducts } from "@/utils/api";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useLaunchCountdown } from "@/context/LaunchCountdownContext";
 
 export default function VrixChatWidget() {
   const { currency, symbol, rate, locale, detectedCountry } = useCurrency();
+  const { config: launchConfig, timeLeft, isPreLaunch, isSaleCountdown } = useLaunchCountdown();
+
   const [isOpen, setIsOpen] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -24,42 +33,91 @@ export default function VrixChatWidget() {
   const [isTyping, setIsTyping] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Active landing mode: "LAUNCH" | "SALE" | "DISABLED"
+  const activeMode = useMemo(() => {
+    return launchConfig?.mode || "DISABLED";
+  }, [launchConfig?.mode]);
+
+  // Dynamic entry points based on active mode
+  const currentEntryPoints = useMemo(() => {
+    return getEntryPointsForMode(activeMode);
+  }, [activeMode]);
+
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Hydrate live product catalog from API for instant offline/fallback chat recommendations
+  useEffect(() => {
+    fetchProducts()
+      .then((prods: any[]) => {
+        if (Array.isArray(prods) && prods.length > 0) {
+          const mapped: ChatProduct[] = prods
+            .filter((p) => p.isVisible !== false)
+            .map((p) => ({
+              id: p.id,
+              title: p.title,
+              category: p.type || p.collection || "Jewelry",
+              material: p.material || "18K Gold / 950 Platinum",
+              price: Number(p.price) || 0,
+              originalPrice: Number(p.originalPrice) || undefined,
+              image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+              images: Array.isArray(p.images) ? p.images : [p.image],
+              whyFits: p.subtitle || p.shortDescription || undefined,
+              stone: p.gemstone || p.stone || "Lab Diamond (VS+)",
+              warranty: "Lifetime Craftsmanship Guarantee",
+              slug: p.id,
+            }));
+          setChatCatalog(mapped);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Persistent Context Memory Window across page reloads and tab navigation
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const savedMsgs = localStorage.getItem("vrix-chat-history-v1");
-      const savedEngine = localStorage.getItem("vrix-chat-engine-state-v1");
+      const savedMsgs = localStorage.getItem("vrix-chat-history-v2");
+      const savedEngine = localStorage.getItem("vrix-chat-engine-state-v2");
+      const savedMode = localStorage.getItem("vrix-chat-saved-mode");
+
+      // If mode changed since last session, initialize fresh welcome tailored to current mode
+      if (savedMode && savedMode !== activeMode) {
+        setMessages([createInitialMessage(activeMode, launchConfig, timeLeft)]);
+        setShowQuickMenu(true);
+        localStorage.setItem("vrix-chat-saved-mode", activeMode);
+        return;
+      }
+
       if (savedMsgs) {
         const parsed = JSON.parse(savedMsgs);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setMessages(parsed);
           setShowQuickMenu(false);
         } else {
-          setMessages([createInitialMessage()]);
+          setMessages([createInitialMessage(activeMode, launchConfig, timeLeft)]);
         }
       } else {
-        setMessages([createInitialMessage()]);
+        setMessages([createInitialMessage(activeMode, launchConfig, timeLeft)]);
       }
+
       if (savedEngine) {
         setEngineState(JSON.parse(savedEngine));
       }
+      localStorage.setItem("vrix-chat-saved-mode", activeMode);
     } catch (e) {
-      setMessages([createInitialMessage()]);
+      setMessages([createInitialMessage(activeMode, launchConfig, timeLeft)]);
     }
-  }, []);
+  }, [activeMode, launchConfig, timeLeft]);
 
   // Sync state to localStorage on updates
   useEffect(() => {
     if (typeof window === "undefined" || messages.length === 0) return;
     try {
       const validMsgs = messages.filter((m) => !m.isTyping);
-      localStorage.setItem("vrix-chat-history-v1", JSON.stringify(validMsgs));
-      localStorage.setItem("vrix-chat-engine-state-v1", JSON.stringify(engineState));
+      localStorage.setItem("vrix-chat-history-v2", JSON.stringify(validMsgs));
+      localStorage.setItem("vrix-chat-engine-state-v2", JSON.stringify(engineState));
     } catch (e) {}
   }, [messages, engineState]);
 
@@ -105,9 +163,13 @@ export default function VrixChatWidget() {
       ]);
 
       try {
-        // Attempt Backend Gemini Interactions API call first
+        // Attempt Backend Gemini AI endpoint
         const baseUrl = getApiBaseUrl();
-        const savedSessionId = typeof window !== "undefined" ? localStorage.getItem("vrix-chat-session-id") : null;
+        const savedSessionId =
+          typeof window !== "undefined"
+            ? localStorage.getItem("vrix-chat-session-id")
+            : null;
+
         const res = await fetch(`${baseUrl}/chat/message`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -124,6 +186,12 @@ export default function VrixChatWidget() {
             rate: rate || 1,
             locale: locale || "en-IN",
             country: detectedCountry || "IN",
+            // Pass live landing page mode and promotional details to AI backend
+            launchMode: activeMode,
+            targetDate: launchConfig?.targetDate,
+            saleDiscountHighlight: launchConfig?.saleDiscountHighlight,
+            saleDiscountCode: launchConfig?.saleDiscountCode,
+            saleTitle: launchConfig?.saleTitle,
           }),
         });
 
@@ -145,7 +213,7 @@ export default function VrixChatWidget() {
           }
         }
       } catch (err) {
-        // Gracefully fallback to local flow engine
+        // Gracefully fallback to upgraded local flow engine
       }
 
       // Local fallback flow engine execution
@@ -153,7 +221,9 @@ export default function VrixChatWidget() {
         const { nextState, messages: newMsgs } = handleUserAction(
           actionValue,
           userLabel,
-          engineState
+          engineState,
+          launchConfig,
+          timeLeft
         );
         setEngineState(nextState);
         setMessages((prev) => [
@@ -161,14 +231,13 @@ export default function VrixChatWidget() {
           ...newMsgs,
         ]);
         setIsTyping(false);
-      }, 500);
+      }, 400);
     },
-    [engineState, currency, symbol, rate, locale, detectedCountry]
+    [engineState, currency, symbol, rate, locale, detectedCountry, activeMode, launchConfig, timeLeft]
   );
 
   const handleSelectEntryPoint = (entry: EntryPoint) => {
     setShowQuickMenu(false);
-    // Append user bubble
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       sender: "user",
@@ -206,11 +275,12 @@ export default function VrixChatWidget() {
   const handleReset = () => {
     setShowQuickMenu(true);
     setEngineState({ currentFlow: null, step: 0, data: {}, surfacedProducts: [] });
-    const init = [createInitialMessage()];
+    const init = [createInitialMessage(activeMode, launchConfig, timeLeft)];
     setMessages(init);
     try {
-      localStorage.removeItem("vrix-chat-history-v1");
-      localStorage.removeItem("vrix-chat-engine-state-v1");
+      localStorage.removeItem("vrix-chat-history-v2");
+      localStorage.removeItem("vrix-chat-engine-state-v2");
+      localStorage.removeItem("vrix-chat-session-id");
     } catch (e) {}
   };
 
@@ -218,7 +288,7 @@ export default function VrixChatWidget() {
 
   return (
     <>
-      {/* Closed State: Floating Circular FAB with restrained glint animation */}
+      {/* Closed State: Floating Circular FAB with restrained luxury glint animation */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -246,18 +316,18 @@ export default function VrixChatWidget() {
             2xl:max-w-[440px]
           "
         >
-          <ChatHeader onClose={() => setIsOpen(false)} onReset={handleReset} />
+          <ChatHeader onClose={() => setIsOpen(false)} onReset={handleReset} mode={activeMode} />
 
           {showQuickMenu && (
             <QuickActionsMenu
-              entryPoints={VRIX_ENTRY_POINTS}
+              entryPoints={currentEntryPoints}
               onSelect={handleSelectEntryPoint}
             />
           )}
 
           <MessageList messages={messages} onOptionSelect={handleOptionSelect} />
 
-          <ChatComposer onSend={handleSendText} disabled={isTyping} />
+          <ChatComposer onSend={handleSendText} disabled={isTyping} mode={activeMode} />
         </div>
       )}
     </>

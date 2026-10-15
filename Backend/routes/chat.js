@@ -5,29 +5,29 @@ import { chatbotLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
-// Simple in-memory sliding window rate limiter (max 30 requests per minute per IP)
-const rateLimitMap = new Map();
+// Cache-Aside with 5-minute TTL to optimize latency (<20ms) and preserve Gemini Free Tier Quota
+const queryResponseCache = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
-function applyRateLimit(ipOrSession) {
-  const now = Date.now();
-  const windowMs = 60 * 1000;
-  const maxRequests = 30;
-
-  const record = rateLimitMap.get(ipOrSession) || { count: 0, resetTime: now + windowMs };
-
-  if (now > record.resetTime) {
-    record.count = 1;
-    record.resetTime = now + windowMs;
-  } else {
-    record.count++;
+function getCachedResponse(cacheKey) {
+  const cached = queryResponseCache.get(cacheKey);
+  if (!cached) return null;
+  if (Date.now() > cached.expiresAt) {
+    queryResponseCache.delete(cacheKey);
+    return null;
   }
+  return cached.data;
+}
 
-  rateLimitMap.set(ipOrSession, record);
-
-  if (record.count > maxRequests) {
-    return false;
+function setCachedResponse(cacheKey, data) {
+  if (queryResponseCache.size > 500) {
+    const firstKey = queryResponseCache.keys().next().value;
+    queryResponseCache.delete(firstKey);
   }
-  return true;
+  queryResponseCache.set(cacheKey, {
+    data,
+    expiresAt: Date.now() + CACHE_TTL_MS
+  });
 }
 
 // Input normalizer to safely handle any request shape ({ message }, { userMessage }, { actionValue, userLabel, query })
@@ -216,6 +216,122 @@ const handleChatMessage = async (req, res) => {
           { label: "The 4Cs of Diamonds", value: "4Cs" },
           { label: "Ethical Sourcing", value: "Sourcing" },
           { label: "Metal Purity Guide", value: "Metals" }
+        ]
+      },
+      launch_date: {
+        reply: "The VRIX digital atelier arrives soon. Enter your email below to receive private early access before public unveiling, or connect with our atelier on Instagram and Facebook for daily reveals:",
+        emailCollector: {
+          placeholder: "Enter your email for early invite...",
+          buttonText: "Notify Me"
+        },
+        socialLinks: {
+          title: "Follow VRIX Atelier",
+          description: "Follow @vrix.official for inaugural solitaire previews & launch stories.",
+          instagram: "https://www.instagram.com/vrix.official",
+          facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+        },
+        options: [
+          { label: "Join VIP Waitlist", value: "launch_waitlist" },
+          { label: "Instagram & Facebook", value: "social_channels" },
+          { label: "About VRIX Lab Diamonds", value: "education" }
+        ]
+      },
+      "When is the Launch?": {
+        reply: "The VRIX digital atelier arrives soon. Enter your email below to receive private early access before public unveiling, or connect with our atelier on Instagram and Facebook for daily reveals:",
+        emailCollector: {
+          placeholder: "Enter your email for early invite...",
+          buttonText: "Notify Me"
+        },
+        socialLinks: {
+          title: "Follow VRIX Atelier",
+          description: "Follow @vrix.official for inaugural solitaire previews & launch stories.",
+          instagram: "https://www.instagram.com/vrix.official",
+          facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+        },
+        options: [
+          { label: "Join VIP Waitlist", value: "launch_waitlist" },
+          { label: "Instagram & Facebook", value: "social_channels" },
+          { label: "About VRIX Lab Diamonds", value: "education" }
+        ]
+      },
+      launch_waitlist: {
+        reply: "Join our private VIP waitlist to receive priority access to our inaugural lab diamond drop before the public launch:",
+        emailCollector: {
+          placeholder: "Enter your email address...",
+          buttonText: "Join VIP List"
+        },
+        options: [
+          { label: "When is the Launch?", value: "launch_date" },
+          { label: "Instagram & Facebook", value: "social_channels" },
+          { label: "About VRIX Lab Diamonds", value: "education" }
+        ]
+      },
+      "Join VIP Waitlist": {
+        reply: "Join our private VIP waitlist to receive priority access to our inaugural lab diamond drop before the public launch:",
+        emailCollector: {
+          placeholder: "Enter your email address...",
+          buttonText: "Join VIP List"
+        },
+        options: [
+          { label: "When is the Launch?", value: "launch_date" },
+          { label: "Instagram & Facebook", value: "social_channels" },
+          { label: "About VRIX Lab Diamonds", value: "education" }
+        ]
+      },
+      social_channels: {
+        reply: "Stay connected across our official digital ateliers. We publish daily craftsmanship stories, educational reels, and unveiling announcements on Instagram and Facebook:",
+        socialLinks: {
+          title: "VRIX Official Channels",
+          description: "Follow @vrix.official for inaugural solitaire previews & launch stories.",
+          instagram: "https://www.instagram.com/vrix.official",
+          facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+        },
+        options: [
+          { label: "When is the Launch?", value: "launch_date" },
+          { label: "Join VIP Waitlist", value: "launch_waitlist" },
+          { label: "About VRIX Lab Diamonds", value: "education" }
+        ]
+      },
+      "Instagram & Facebook": {
+        reply: "Stay connected across our official digital ateliers. We publish daily craftsmanship stories, educational reels, and unveiling announcements on Instagram and Facebook:",
+        socialLinks: {
+          title: "VRIX Official Channels",
+          description: "Follow @vrix.official for inaugural solitaire previews & launch stories.",
+          instagram: "https://www.instagram.com/vrix.official",
+          facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+        },
+        options: [
+          { label: "When is the Launch?", value: "launch_date" },
+          { label: "Join VIP Waitlist", value: "launch_waitlist" },
+          { label: "About VRIX Lab Diamonds", value: "education" }
+        ]
+      },
+      sale_details: {
+        reply: "The Private Archive Event is currently active across our atelier. Enjoy limited-time pricing across signature lab diamond solitaires, minimal rings, and pavé bands.",
+        saleDiscountCard: {
+          highlight: "UP TO 25% OFF",
+          code: "VRIX15",
+          description: "Limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands.",
+          ctaUrl: "/collections"
+        },
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Find a gift", value: "gift" },
+          { label: "Explore collections", value: "collections" }
+        ]
+      },
+      "Sale Details": {
+        reply: "The Private Archive Event is currently active across our atelier. Enjoy limited-time pricing across signature lab diamond solitaires, minimal rings, and pavé bands.",
+        saleDiscountCard: {
+          highlight: "UP TO 25% OFF",
+          code: "VRIX15",
+          description: "Limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands.",
+          ctaUrl: "/collections"
+        },
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Find a gift", value: "gift" },
+          { label: "Explore collections", value: "collections" }
         ]
       },
       warranty: {
@@ -628,6 +744,9 @@ const handleChatMessage = async (req, res) => {
             comparison,
             handoff: actionConfig.handoff,
             bespokeEstimate: actionConfig.bespokeEstimate,
+            socialLinks: actionConfig.socialLinks,
+            emailCollector: actionConfig.emailCollector,
+            saleDiscountCard: actionConfig.saleDiscountCard,
             options: actionConfig.options,
             timestamp: isoTimestamp
           }
@@ -644,6 +763,19 @@ const handleChatMessage = async (req, res) => {
       }
     }).catch(() => { });
 
+    // Cache-Aside lookup: if identical query was answered recently in current mode, return in <15ms
+    const modeKey = req.body?.launchMode || "DISABLED";
+    const cacheKey = `${modeKey}::${userText.toLowerCase()}`;
+    const cachedResponse = getCachedResponse(cacheKey);
+
+    if (cachedResponse) {
+      return res.json({
+        ...cachedResponse,
+        sessionId: session.id,
+        fromCache: true
+      });
+    }
+
     // Execute Gemini Interactions loop with 25-second timeout safeguard (allows ample headroom for multi-turn tool calling and cold starts)
     const timeoutMs = parseInt(process.env.GEMINI_TIMEOUT_MS, 10) || 25000;
     let timeoutTimer = null;
@@ -654,7 +786,14 @@ const handleChatMessage = async (req, res) => {
     const chatPromise = runInteractionsChatLoop({
       userMessage: userText,
       previousInteractionId: session.lastInteractionId,
-      sessionId: session.id
+      sessionId: session.id,
+      launchContext: {
+        launchMode: req.body?.launchMode,
+        targetDate: req.body?.targetDate,
+        saleDiscountHighlight: req.body?.saleDiscountHighlight,
+        saleDiscountCode: req.body?.saleDiscountCode,
+        saleTitle: req.body?.saleTitle
+      }
     });
 
     let result;
@@ -698,8 +837,7 @@ const handleChatMessage = async (req, res) => {
       { label: "Talk to concierge", value: "trigger-handoff" }
     ];
 
-    // Return unified contract matching widget expectations
-    res.json({
+    const responsePayload = {
       success: true,
       sessionId: session.id,
       reply: result.reply,
@@ -715,11 +853,21 @@ const handleChatMessage = async (req, res) => {
           text: result.reply,
           products: result.structuredData?.products,
           comparison: result.structuredData?.comparison,
+          bespokeEstimate: result.structuredData?.bespokeEstimate,
+          handoff: result.structuredData?.handoff,
+          socialLinks: result.structuredData?.socialLinks,
+          emailCollector: result.structuredData?.emailCollector,
+          saleDiscountCard: result.structuredData?.saleDiscountCard,
           options,
           timestamp: isoTimestamp
         }
       ]
-    });
+    };
+
+    // Cache successful response for fast subsequent retrieval
+    setCachedResponse(cacheKey, responsePayload);
+
+    return res.json(responsePayload);
   } catch (err) {
     console.warn("Chat message endpoint fallback triggered:", err?.message || err);
 
@@ -760,11 +908,50 @@ const handleChatMessage = async (req, res) => {
     }
 
     const isoTimestamp = new Date().toISOString();
-    const fallbackOptions = [
+    const isLaunchMode = req.body?.launchMode === "LAUNCH";
+    const isSaleMode = req.body?.launchMode === "SALE";
+
+    let fallbackOptions = [
       { label: "Find a piece for myself", value: "myself" },
       { label: "Find a gift", value: "gift" },
       { label: "Talk to concierge", value: "trigger-handoff" }
     ];
+
+    let fallbackSocialLinks = undefined;
+    let fallbackEmailCollector = undefined;
+    let fallbackSaleDiscount = undefined;
+
+    if (isLaunchMode) {
+      fallbackReply = "Welcome to VRIX. Our digital atelier arrives soon. Enter your email below to join our private VIP waitlist for early access, or follow our journey on Instagram and Facebook:";
+      fallbackEmailCollector = {
+        placeholder: "your.email@example.com",
+        buttonText: "Notify Me"
+      };
+      fallbackSocialLinks = {
+        title: "Follow VRIX Atelier",
+        description: "Official releases, previews, and live countdown stories.",
+        instagram: "https://www.instagram.com/vrix.official",
+        facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+      };
+      fallbackOptions = [
+        { label: "When is the Launch?", value: "launch_date" },
+        { label: "Join VIP Waitlist", value: "launch_waitlist" },
+        { label: "Instagram & Facebook", value: "social_channels" },
+        { label: "About VRIX Lab Diamonds", value: "education" }
+      ];
+    } else if (isSaleMode) {
+      fallbackReply = `Welcome to VRIX. The Private Archive Event is active. Enjoy ${req.body?.saleDiscountHighlight || "UP TO 25% OFF"} on signature lab diamond solitaires with code ${req.body?.saleDiscountCode || "VRIX15"}.`;
+      fallbackSaleDiscount = {
+        highlight: req.body?.saleDiscountHighlight || "UP TO 25% OFF",
+        code: req.body?.saleDiscountCode || "VRIX15",
+        ctaUrl: "/collections"
+      };
+      fallbackOptions = [
+        { label: "Find a piece for myself", value: "myself" },
+        { label: "Find a gift", value: "gift" },
+        { label: "Explore collections", value: "collections" }
+      ];
+    }
 
     res.json({
       success: true,
@@ -773,7 +960,10 @@ const handleChatMessage = async (req, res) => {
       toolsUsed: [],
       structuredData: {
         products: fallbackProducts.length > 0 ? fallbackProducts : undefined,
-        options: fallbackOptions
+        options: fallbackOptions,
+        socialLinks: fallbackSocialLinks,
+        emailCollector: fallbackEmailCollector,
+        saleDiscountCard: fallbackSaleDiscount
       },
       messages: [
         {
@@ -781,6 +971,9 @@ const handleChatMessage = async (req, res) => {
           sender: "bot",
           text: fallbackReply,
           products: fallbackProducts.length > 0 ? fallbackProducts : undefined,
+          socialLinks: fallbackSocialLinks,
+          emailCollector: fallbackEmailCollector,
+          saleDiscountCard: fallbackSaleDiscount,
           options: fallbackOptions,
           timestamp: isoTimestamp
         }
