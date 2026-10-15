@@ -358,7 +358,9 @@ export default function Header() {
           >
             <span className="inline-flex items-center gap-1.5 text-amber-200">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-              {launchConfig?.announcementText || `✦ LIMITED TIME EVENT: USE CODE [${launchConfig?.saleDiscountCode || "VRIX15"}] FOR ${launchConfig?.saleDiscountHighlight || "UP TO 25% OFF"} ✦`}
+              {launchConfig?.announcementText || (launchConfig?.saleDiscountCode
+                ? `✦ LIMITED TIME EVENT: USE CODE [${launchConfig.saleDiscountCode.trim()}] FOR ${launchConfig?.saleDiscountHighlight || "SPECIAL OFFERS"} ✦`
+                : `✦ LIMITED TIME EVENT: ${launchConfig?.saleDiscountHighlight || "EXCLUSIVE ATELIER PRICING"} ✦`)}
             </span>
             <Link
               href={launchConfig?.saleCtaUrl || "/collections"}

@@ -15,7 +15,7 @@ export default function SaleCountdownBanner() {
 
   if (!isSaleCountdown) return null;
 
-  const discountCode = config.saleDiscountCode || "VRIX15";
+  const discountCode = typeof config.saleDiscountCode === "string" ? config.saleDiscountCode.trim() : "";
   const displayType = config.saleDisplayType || "HERO";
   const bgImage =
     config.saleBgImage ||

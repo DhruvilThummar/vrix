@@ -255,8 +255,8 @@ export function createInitialMessage(
 
   // 2. SALE MODE
   if (mode === "SALE") {
-    const highlight = launchConfig?.saleDiscountHighlight || "UP TO 25% OFF";
-    const code = launchConfig?.saleDiscountCode || "VRIX15";
+    const highlight = launchConfig?.saleDiscountHighlight || "Special Atelier Pricing";
+    const adminCode = typeof launchConfig?.saleDiscountCode === "string" ? launchConfig.saleDiscountCode.trim() : "";
     const title = launchConfig?.saleTitle || "THE PRIVATE ARCHIVE EVENT";
 
     let validity = "Limited Time Atelier Event";
@@ -264,19 +264,25 @@ export function createInitialMessage(
       validity = `Ends in ${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m`;
     }
 
+    const promoNotice = adminCode
+      ? ` Enjoy ${highlight} with official promo code [${adminCode}].`
+      : ` Enjoy ${highlight} with direct pricing (no code required).`;
+
     return {
       id: "msg-welcome-sale",
       sender: "bot",
-      text: `Welcome to VRIX. ${title} is currently live across our collections. Enjoy ${highlight} on signature lab-grown solitaires and fine jewellery with promo code ${code}.\n\nHow may I assist your exploration today?`,
-      saleDiscountCard: {
-        highlight,
-        code,
-        description: launchConfig?.saleDescription || "Enjoy exclusive atelier pricing across selected solitaires, minimal rings, and pavé bands.",
-        validUntil: validity,
-        ctaUrl: launchConfig?.saleCtaUrl || "/collections",
-      },
+      text: `Welcome to VRIX. ${title} is currently live across our collections.${promoNotice}\n\nHow may I assist your exploration today?`,
+      saleDiscountCard: adminCode
+        ? {
+            highlight,
+            code: adminCode,
+            description: launchConfig?.saleDescription || "Enjoy exclusive atelier pricing across selected solitaires, minimal rings, and pavé bands.",
+            validUntil: validity,
+            ctaUrl: launchConfig?.saleCtaUrl || "/collections",
+          }
+        : undefined,
       options: [
-        { label: "Copy Promo Code", value: "sale_details" },
+        ...(adminCode ? [{ label: `Copy Code [${adminCode}]`, value: "sale_details" }] : []),
         { label: "Find a piece for myself", value: "myself" },
         { label: "Find a gift", value: "gift" },
         { label: "Explore collections", value: "collections" },
@@ -414,9 +420,9 @@ export function handleUserAction(
   }
 
   // ── SALE SPECIFIC ACTIONS ──────────────────────────────────────────────────
-  if (actionValue === "sale_details" || userLabel?.includes("Sale") || userLabel?.includes("Promo Code")) {
-    const highlight = launchConfig?.saleDiscountHighlight || "UP TO 25% OFF";
-    const code = launchConfig?.saleDiscountCode || "VRIX15";
+  if (actionValue === "sale_details" || userLabel?.includes("Sale") || userLabel?.includes("Promo Code") || userLabel?.includes("Offer")) {
+    const adminCode = typeof launchConfig?.saleDiscountCode === "string" ? launchConfig.saleDiscountCode.trim() : "";
+    const highlight = launchConfig?.saleDiscountHighlight || "Special Atelier Offer";
     const title = launchConfig?.saleTitle || "THE PRIVATE ARCHIVE EVENT";
 
     let validity = "Limited allocation event.";
@@ -424,13 +430,17 @@ export function handleUserAction(
       validity = `Ends in ${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m.`;
     }
 
+    const replyText = adminCode
+      ? `Active Atelier Promotion — ${title}:\n• Discount: ${highlight} across signature pieces\n• Promotion Code: ${adminCode}\n• Duration: ${validity}\n\nEnter code **${adminCode}** at checkout to apply your discount.`
+      : `Active Atelier Promotion — ${title}:\n• Discount: ${highlight} across signature pieces\n• Duration: ${validity}\n\nNo promo code is required — promotional atelier pricing is automatically applied at checkout.`;
+
     messages.push({
       id: `msg-${Date.now()}-sale-details`,
       sender: "bot",
-      text: `Active Atelier Promotion — ${title}:\n• Discount: ${highlight} across signature pieces\n• Promotion Code: ${code}\n• Duration: ${validity}\n\nEnter code ${code} at checkout to apply your discount.`,
+      text: replyText,
       saleDiscountCard: {
         highlight,
-        code,
+        code: adminCode || undefined,
         description: launchConfig?.saleDescription || "Enjoy exclusive limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands.",
         validUntil: validity,
         ctaUrl: launchConfig?.saleCtaUrl || "/collections",

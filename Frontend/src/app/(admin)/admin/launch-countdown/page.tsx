@@ -1351,9 +1351,9 @@ export default function AdminLaunchCountdownPage() {
               </label>
               <input
                 type="text"
-                value={config.saleDiscountCode ?? "VRIX15"}
+                value={config.saleDiscountCode ?? ""}
                 onChange={(e) => setConfig((prev) => ({ ...prev, saleDiscountCode: e.target.value.toUpperCase() }))}
-                placeholder="VRIX15"
+                placeholder="e.g. ARCHIVE20 (Optional)"
                 className="w-full bg-soft-linen/30 border border-slate-grey/30 rounded px-3 py-2 text-xs font-inter font-bold tracking-widest text-deep-navy focus:outline-none focus:border-deep-navy"
               />
             </div>

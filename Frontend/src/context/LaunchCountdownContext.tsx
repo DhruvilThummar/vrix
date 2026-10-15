@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
@@ -94,7 +95,7 @@ export const DEFAULT_LAUNCH_CONFIG: LaunchCountdownConfig = {
   saleSubtitle: "Limited allocation of architectural lab-grown diamonds.",
   saleDescription: "Enjoy exclusive limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands. Ends when the countdown reaches zero.",
   saleDiscountHighlight: "UP TO 25% OFF",
-  saleDiscountCode: "VRIX15",
+  saleDiscountCode: "",
   saleCtaText: "Shop The Sale",
   saleCtaUrl: "/collections",
   saleSecondaryCtaText: "Explore All Pieces",

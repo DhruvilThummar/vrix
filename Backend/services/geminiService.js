@@ -487,6 +487,40 @@ export async function handleToolExecution(functionName, functionArgs, sessionId 
 // ── Dynamic System Instruction Builder with Landing Mode Context ────────────
 export function buildSystemInstruction(launchContext = {}) {
   let modeAddendum = "";
+  const adminCodes = launchContext.adminPromoCodes || [];
+  const validCodes = [];
+
+  if (launchContext.saleDiscountCode) {
+    validCodes.push({
+      code: launchContext.saleDiscountCode,
+      description: `${launchContext.saleDiscountHighlight || "Active promotion"} (Archive Sale Event)`
+    });
+  }
+  for (const c of adminCodes) {
+    if (!validCodes.some(v => v.code === c.code)) {
+      validCodes.push(c);
+    }
+  }
+
+  let promoRule = "";
+  if (validCodes.length > 0) {
+    const codeLines = validCodes.map(c => `• Code "${c.code}": ${c.description || "Active promotion"}`).join("\n");
+    promoRule = `
+CRITICAL PROMO CODE POLICY:
+- The ONLY authorized promotional codes in the entire atelier are strictly:
+${codeLines}
+- Under NO circumstance may you mention, suggest, or invent any other promo code (never mention "VRIX15", "SAVE10", "WELCOME", etc. unless explicitly in the authorized list above).
+- If the customer asks for a discount or promo code, you may ONLY mention the authorized code(s) listed above.
+`;
+  } else {
+    promoRule = `
+CRITICAL PROMO CODE POLICY:
+- There are CURRENTLY ZERO active promotional codes configured by the atelier admin.
+- If the customer asks for a promo code, coupon, voucher, or discount code, you MUST politely and directly explain:
+  "There are currently no active public promotional codes. Our pieces are offered with transparent direct atelier pricing."
+- Under NO circumstances may you fabricate, hallucinate, or state any promo code (like "VRIX15", "WELCOME", etc.).
+`;
+  }
 
   if (launchContext.launchMode === "LAUNCH") {
     modeAddendum = `
@@ -496,20 +530,27 @@ CURRENT ATELIER STATUS: PRE-LAUNCH MODE (ATELIER UNVEILING SOON).
 - Invite guests to enter their email directly in the chat to join our private VIP Launch Waitlist for early access.
 - Recommend following our official channels on Instagram (@vrix.official) and Facebook (VRIX) for unveiling announcements and countdown stories.
 - Direct checkout is reserved until official launch day.
+${promoRule}
 `;
   } else if (launchContext.launchMode === "SALE") {
+    const saleCodeDetail = launchContext.saleDiscountCode
+      ? `- Promotion Coupon Code: "${launchContext.saleDiscountCode}" (remind guests they can apply code ${launchContext.saleDiscountCode} at checkout)`
+      : `- Promotion Coupon Code: NONE REQUIRED (promotional pricing is directly active across pieces, no code needed at checkout)`;
+
     modeAddendum = `
 CURRENT ATELIER STATUS: ACTIVE PROMOTIONAL SALE EVENT.
-- Active Promotion Highlight: ${launchContext.saleDiscountHighlight || "UP TO 25% OFF"}
-- Promotion Coupon Code: ${launchContext.saleDiscountCode || "VRIX15"}
+- Active Promotion Highlight: ${launchContext.saleDiscountHighlight || "Special Atelier Event"}
+${saleCodeDetail}
 - Event Title: ${launchContext.saleTitle || "THE PRIVATE ARCHIVE EVENT"}
 - The entire fine jewellery store is 100% active and shoppable.
-- Assist guests in finding pieces for themselves, choosing gifts, comparing solitaires, and remind them that they can apply code ${launchContext.saleDiscountCode || "VRIX15"} at checkout!
+- Assist guests in finding pieces for themselves, choosing gifts, and comparing solitaires.
+${promoRule}
 `;
   } else {
     modeAddendum = `
 CURRENT ATELIER STATUS: STANDARD FINE JEWELRY STORE.
 The atelier is open. Provide quiet-luxury assistance with solitaire rings, necklaces, earrings, bracelets, diamond 4Cs education, and custom bespoke craftsmanship.
+${promoRule}
 `;
   }
 
@@ -615,8 +656,18 @@ export async function runInteractionsChatLoop({
         })
       : "Coming Soon";
     finalReply = `Our digital atelier arrives on ${targetDateFormatted}. We craft architectural lab-grown diamonds with quiet luxury. Join our private VIP waitlist for early access, or follow our journey on Instagram (@vrix.official) and Facebook.`;
-  } else if (launchContext.launchMode === "SALE" && (qLower.includes("discount") || qLower.includes("sale") || qLower.includes("code") || qLower.includes("offer"))) {
-    finalReply = `The Private Archive Event is currently active across our atelier. You can enjoy ${launchContext.saleDiscountHighlight || "UP TO 25% OFF"} on signature lab diamond solitaires and pavé bands with promo code ${launchContext.saleDiscountCode || "VRIX15"}.`;
+  } else if (launchContext.launchMode === "SALE" && (qLower.includes("discount") || qLower.includes("sale") || qLower.includes("offer"))) {
+    const saleCodeText = launchContext.saleDiscountCode ? ` with promo code ${launchContext.saleDiscountCode}` : ` (direct atelier pricing, no promo code needed)`;
+    finalReply = `The Private Archive Event is currently active across our atelier. You can enjoy ${launchContext.saleDiscountHighlight || "exclusive pricing"} on signature lab diamond solitaires and pavé bands${saleCodeText}.`;
+  } else if (qLower.includes("promo") || qLower.includes("coupon") || qLower.includes("voucher") || qLower.includes("discount code")) {
+    const adminCodes = launchContext.adminPromoCodes || [];
+    if (launchContext.saleDiscountCode) {
+      finalReply = `You can apply official code ${launchContext.saleDiscountCode} at checkout for ${launchContext.saleDiscountHighlight || "our active promotion"}.`;
+    } else if (adminCodes.length > 0) {
+      finalReply = `Our active atelier privilege code is ${adminCodes[0].code} (${adminCodes[0].description || "special discount"}). Enter it at checkout to apply your privilege.`;
+    } else {
+      finalReply = `There are currently no active public promotional codes. All VRIX pieces are offered with transparent direct atelier pricing.`;
+    }
   } else if (qLower.includes("return") || qLower.includes("exchange")) {
     finalReply = "VRIX offers a 15-day complimentary return window on unworn pieces in their original packaging, along with lifetime craftsmanship exchange on our lab-grown diamond solitaires.";
   } else if (qLower.includes("shipping") || qLower.includes("delivery") || qLower.includes("delivering")) {

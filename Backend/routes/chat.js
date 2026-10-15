@@ -130,6 +130,34 @@ const handleChatMessage = async (req, res) => {
 
     sessionId = session.id;
 
+    // Load active CMS launch countdown and admin redeem codes
+    let cmsCountdown = null;
+    try {
+      cmsCountdown = await db.cmsSettings.findUnique({ where: { key: "launch_countdown" } });
+    } catch (e) {}
+
+    let activeRedeemCodes = [];
+    try {
+      const allCodes = await db.redeemCodes.findMany();
+      if (Array.isArray(allCodes)) {
+        const now = new Date();
+        activeRedeemCodes = allCodes.filter(c => {
+          if (!c.isActive) return false;
+          if (c.expiryDate && new Date(c.expiryDate) < now) return false;
+          if (c.usageLimit && (c.usedCount || 0) >= c.usageLimit) return false;
+          return true;
+        });
+      }
+    } catch (e) {}
+
+    const adminSaleCode = (typeof req.body?.saleDiscountCode === "string" && req.body.saleDiscountCode.trim())
+      ? req.body.saleDiscountCode.trim()
+      : (typeof cmsCountdown?.saleDiscountCode === "string" && cmsCountdown.saleDiscountCode.trim())
+        ? cmsCountdown.saleDiscountCode.trim()
+        : null;
+
+    const adminHighlight = req.body?.saleDiscountHighlight || cmsCountdown?.saleDiscountHighlight || "Special Atelier Offer";
+
     const actionValue = req.body?.actionValue;
     const userLabel = req.body?.userLabel;
     const targetKey = actionValue || userLabel;
@@ -307,12 +335,14 @@ const handleChatMessage = async (req, res) => {
         ]
       },
       sale_details: {
-        reply: "The Private Archive Event is currently active across our atelier. Enjoy limited-time pricing across signature lab diamond solitaires, minimal rings, and pavé bands.",
+        reply: adminSaleCode
+          ? `The Private Archive Event is currently active across our atelier. Enjoy ${adminHighlight} across signature lab diamond solitaires, minimal rings, and pavé bands with official promo code ${adminSaleCode}.`
+          : `The Private Archive Event is currently active across our atelier. Enjoy ${adminHighlight} across signature lab diamond solitaires, minimal rings, and pavé bands. No promo code is required — promotional atelier pricing is automatically applied at checkout.`,
         saleDiscountCard: {
-          highlight: "UP TO 25% OFF",
-          code: "VRIX15",
-          description: "Limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands.",
-          ctaUrl: "/collections"
+          highlight: adminHighlight,
+          code: adminSaleCode || undefined,
+          description: cmsCountdown?.saleDescription || "Limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands.",
+          ctaUrl: cmsCountdown?.saleCtaUrl || "/collections"
         },
         options: [
           { label: "Find a piece for myself", value: "myself" },
@@ -321,12 +351,14 @@ const handleChatMessage = async (req, res) => {
         ]
       },
       "Sale Details": {
-        reply: "The Private Archive Event is currently active across our atelier. Enjoy limited-time pricing across signature lab diamond solitaires, minimal rings, and pavé bands.",
+        reply: adminSaleCode
+          ? `The Private Archive Event is currently active across our atelier. Enjoy ${adminHighlight} across signature lab diamond solitaires, minimal rings, and pavé bands with official promo code ${adminSaleCode}.`
+          : `The Private Archive Event is currently active across our atelier. Enjoy ${adminHighlight} across signature lab diamond solitaires, minimal rings, and pavé bands. No promo code is required — promotional atelier pricing is automatically applied at checkout.`,
         saleDiscountCard: {
-          highlight: "UP TO 25% OFF",
-          code: "VRIX15",
-          description: "Limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands.",
-          ctaUrl: "/collections"
+          highlight: adminHighlight,
+          code: adminSaleCode || undefined,
+          description: cmsCountdown?.saleDescription || "Limited-time atelier pricing across selected solitaires, minimal rings, and pavé bands.",
+          ctaUrl: cmsCountdown?.saleCtaUrl || "/collections"
         },
         options: [
           { label: "Find a piece for myself", value: "myself" },
@@ -587,9 +619,20 @@ const handleChatMessage = async (req, res) => {
         ]
       },
       "Redeem Code": {
-        reply: "To redeem a VRIX Gift Card, Promo Code, or VRIX+ Privilege Code:\n1. Enter your 8-digit voucher code at checkout.\n2. Or share your code with our concierge associate for instant cart application.",
+        reply: adminSaleCode || activeRedeemCodes.length > 0
+          ? `Active Atelier Privilege Codes:\n${adminSaleCode ? `• Sale Promo Code: ${adminSaleCode} (${adminHighlight})\n` : ""}${activeRedeemCodes.map(c => `• Code "${c.code}": ${c.description || (c.type === "percentage" ? `${c.discount}% off` : `₹${c.discount} off`)}`).join("\n")}\n\nEnter your code at checkout to apply your privilege.`
+          : "There are currently no active public promotional codes. All VRIX pieces are offered with transparent direct atelier pricing.",
         options: [
-          { label: "Under ₹15,000", value: "15000" },
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Talk to Concierge", value: "trigger-handoff" }
+        ]
+      },
+      "Promo Code": {
+        reply: adminSaleCode || activeRedeemCodes.length > 0
+          ? `Active Atelier Privilege Codes:\n${adminSaleCode ? `• Sale Promo Code: ${adminSaleCode} (${adminHighlight})\n` : ""}${activeRedeemCodes.map(c => `• Code "${c.code}": ${c.description || (c.type === "percentage" ? `${c.discount}% off` : `₹${c.discount} off`)}`).join("\n")}\n\nEnter your code at checkout to apply your privilege.`
+          : "There are currently no active public promotional codes. All VRIX pieces are offered with transparent direct atelier pricing.",
+        options: [
+          { label: "Find a piece for myself", value: "myself" },
           { label: "Talk to Concierge", value: "trigger-handoff" }
         ]
       },
@@ -788,11 +831,18 @@ const handleChatMessage = async (req, res) => {
       previousInteractionId: session.lastInteractionId,
       sessionId: session.id,
       launchContext: {
-        launchMode: req.body?.launchMode,
-        targetDate: req.body?.targetDate,
-        saleDiscountHighlight: req.body?.saleDiscountHighlight,
-        saleDiscountCode: req.body?.saleDiscountCode,
-        saleTitle: req.body?.saleTitle
+        launchMode: req.body?.launchMode || (cmsCountdown?.isLaunchActive ? "LAUNCH" : (cmsCountdown?.isSaleActive ? "SALE" : "DISABLED")),
+        targetDate: req.body?.targetDate || cmsCountdown?.targetDate,
+        saleDiscountHighlight: adminHighlight,
+        saleDiscountCode: adminSaleCode,
+        saleTitle: req.body?.saleTitle || cmsCountdown?.saleTitle,
+        adminPromoCodes: [
+          ...(adminSaleCode ? [{ code: adminSaleCode, description: `${adminHighlight} (Archive Sale)` }] : []),
+          ...activeRedeemCodes.map(c => ({
+            code: c.code,
+            description: c.description || (c.type === "percentage" ? `${c.discount}% off` : `₹${c.discount} off`)
+          }))
+        ]
       }
     });
 
@@ -940,10 +990,11 @@ const handleChatMessage = async (req, res) => {
         { label: "About VRIX Lab Diamonds", value: "education" }
       ];
     } else if (isSaleMode) {
-      fallbackReply = `Welcome to VRIX. The Private Archive Event is active. Enjoy ${req.body?.saleDiscountHighlight || "UP TO 25% OFF"} on signature lab diamond solitaires with code ${req.body?.saleDiscountCode || "VRIX15"}.`;
+      const codePart = adminSaleCode ? ` with code ${adminSaleCode}` : ` (direct pricing applied at checkout)`;
+      fallbackReply = `Welcome to VRIX. The Private Archive Event is active. Enjoy ${adminHighlight} on signature lab diamond solitaires${codePart}.`;
       fallbackSaleDiscount = {
-        highlight: req.body?.saleDiscountHighlight || "UP TO 25% OFF",
-        code: req.body?.saleDiscountCode || "VRIX15",
+        highlight: adminHighlight,
+        code: adminSaleCode || undefined,
         ctaUrl: "/collections"
       };
       fallbackOptions = [
