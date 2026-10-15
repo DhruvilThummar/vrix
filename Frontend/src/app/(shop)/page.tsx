@@ -124,7 +124,7 @@ export default async function Page() {
     "description": seoText,
     "sameAs": [
       "https://www.instagram.com/vrixjewels",
-      "https://www.facebook.com/vrixjewels",
+      "https://www.facebook.com/profile.php?id=61588375466280",
     ],
   };
 

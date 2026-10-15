@@ -442,37 +442,28 @@ export default function LaunchCountdownHero() {
           </div>
         )}
 
-        {/* Contact & Social Links (Instagram & Facebook from Contact & Footer) */}
-        <div className="flex flex-wrap items-center justify-center gap-2 xs:gap-2.5 sm:gap-3.5 mb-3 sm:mb-4 select-none z-20">
-          <Link
-            href={config.contactButtonUrl || "/contact"}
-            className="inline-flex items-center gap-1.5 px-3 xs:px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/40 text-white text-[9.5px] xs:text-[10px] sm:text-[11px] font-inter tracking-[0.18em] uppercase transition-all duration-300 backdrop-blur-md shadow-xs group cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[13px] text-amber-200 group-hover:scale-110 transition-transform">mail</span>
-            <span>{config.contactButtonText || "Contact Us"}</span>
-            <span className="text-[10px] group-hover:translate-x-0.5 transition-transform">→</span>
-          </Link>
-
+        {/* Social Links (Instagram & Facebook Logos Only - Centered & Perfectly Arranged for Phone & PC) */}
+        <div className="flex items-center justify-center gap-3 sm:gap-3.5 mb-3 sm:mb-4 select-none z-20">
           <a
             href="https://www.instagram.com/vrix.official"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 xs:px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/40 text-white text-[9.5px] xs:text-[10px] sm:text-[11px] font-inter tracking-[0.18em] uppercase transition-all duration-300 backdrop-blur-md shadow-xs group cursor-pointer"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 hover:border-amber-200/60 text-white/90 hover:text-amber-200 flex items-center justify-center transition-all duration-300 backdrop-blur-md shadow-xs group cursor-pointer hover:scale-105 active:scale-95"
+            aria-label="Follow VRIX on Instagram"
             title="Follow @vrix.official on Instagram"
           >
-            <i className="fa-brands fa-instagram text-[13px] text-amber-200 group-hover:scale-110 transition-transform"></i>
-            <span>Instagram</span>
+            <i className="fa-brands fa-instagram text-[16px] sm:text-[18px] transition-transform group-hover:scale-110"></i>
           </a>
 
           <a
-            href="https://www.facebook.com/vrixjewels"
+            href="https://www.facebook.com/profile.php?id=61588375466280"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 xs:px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 hover:border-white/40 text-white text-[9.5px] xs:text-[10px] sm:text-[11px] font-inter tracking-[0.18em] uppercase transition-all duration-300 backdrop-blur-md shadow-xs group cursor-pointer"
+            className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 hover:border-amber-200/60 text-white/90 hover:text-amber-200 flex items-center justify-center transition-all duration-300 backdrop-blur-md shadow-xs group cursor-pointer hover:scale-105 active:scale-95"
+            aria-label="Follow VRIX on Facebook"
             title="Follow VRIX on Facebook"
           >
-            <i className="fa-brands fa-facebook-f text-[12px] text-amber-200 group-hover:scale-110 transition-transform"></i>
-            <span>Facebook</span>
+            <i className="fa-brands fa-facebook-f text-[14px] sm:text-[16px] transition-transform group-hover:scale-110"></i>
           </a>
         </div>
 

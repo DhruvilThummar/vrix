@@ -283,6 +283,10 @@ export default function Footer() {
                 <i className="fa-brands fa-instagram text-sm w-4 text-center"></i>
                 Instagram
               </a>
+              <a href="https://www.facebook.com/profile.php?id=61588375466280" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
+                <i className="fa-brands fa-facebook-f text-sm w-4 text-center"></i>
+                Facebook
+              </a>
               <a href="https://www.linkedin.com/company/vrixjewels/" target="_blank" rel="noopener noreferrer" className="text-xs hover:text-ink-black transition-colors duration-200 flex items-center gap-2 text-slate-grey/90">
                 <i className="fa-brands fa-linkedin-in text-sm w-4 text-center"></i>
                 LinkedIn

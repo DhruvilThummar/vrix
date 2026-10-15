@@ -527,7 +527,7 @@ export default function Header() {
                   <span className="hidden lg:inline text-[10px] tracking-[0.2em] uppercase">Instagram</span>
                 </a>
                 <a
-                  href="https://www.facebook.com/vrixjewels"
+                  href="https://www.facebook.com/profile.php?id=61588375466280"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-amber-200 transition-colors flex items-center gap-1.5 group"
@@ -713,7 +713,7 @@ export default function Header() {
                 <i className="fa-brands fa-instagram text-[17px]"></i>
               </a>
               <a
-                href="https://www.facebook.com/vrixjewels"
+                href="https://www.facebook.com/profile.php?id=61588375466280"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-amber-200 transition-colors p-1 flex items-center justify-center"
