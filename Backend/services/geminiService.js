@@ -7,9 +7,9 @@ const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 export const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 export const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
-// Official Gemini Model — Uses latest free-tier Gemini 2.5 Flash with fallback to Gemini 2.0 / 1.5 Flash
-export const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-export const FALLBACK_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
+// Official Gemini Model — Uses latest high-speed Gemini 2.0 Flash with fallback to 1.5 Flash
+export const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+export const FALLBACK_MODELS = ["gemini-1.5-flash"];
 
 // ── VRIX Brand Identity System Instruction ─────────────────────────────────
 export const VRIX_SYSTEM_INSTRUCTION = `You are the VRIX Luxury Chat Assistant, a digital extension of a quiet-luxury retail associate.
@@ -572,7 +572,7 @@ export async function runInteractionsChatLoop({
 
   const candidateModels = [MODEL_NAME, ...FALLBACK_MODELS];
 
-  // 1. Primary AI Path: Try official Google Generative AI (prioritizing gemini-2.5-flash)
+  // 1. Primary AI Path: Try official Google Generative AI (prioritizing high-speed gemini-2.0-flash)
   if (genAI) {
     for (const mName of candidateModels) {
       try {
@@ -581,11 +581,21 @@ export async function runInteractionsChatLoop({
           systemInstruction,
           generationConfig: {
             temperature: 0.4,
-            maxOutputTokens: 600,
+            maxOutputTokens: 500,
           }
         });
 
-        const result = await model.generateContent(userMessage);
+        // Fast race against 2500ms timeout per model
+        let timer = null;
+        const callPromise = model.generateContent(userMessage);
+        const timeoutPromise = new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error(`Model ${mName} call timed out after 2500ms`)), 2500);
+        });
+
+        const result = await Promise.race([callPromise, timeoutPromise]).finally(() => {
+          if (timer) clearTimeout(timer);
+        });
+
         const text = result?.response?.text();
 
         if (text && text.trim().length > 0) {

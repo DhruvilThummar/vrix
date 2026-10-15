@@ -162,8 +162,34 @@ export default function VrixChatWidget() {
         { id: typingId, sender: "bot", isTyping: true, timestamp: "" },
       ]);
 
+      const isDirectAction = Boolean(actionValue && actionValue !== "custom_text");
+
+      // ── 1. FAST-PATH: Direct UI Actions & Option Pills (<200ms) ───────────
+      // When user clicks pills, entry points, or menus, resolve locally with a smooth luxury typing delay
+      if (isDirectAction) {
+        setTimeout(() => {
+          const { nextState, messages: newMsgs } = handleUserAction(
+            actionValue,
+            userLabel,
+            engineState,
+            launchConfig,
+            timeLeft
+          );
+          setEngineState(nextState);
+          setMessages((prev) => [
+            ...prev.filter((m) => m.id !== typingId),
+            ...newMsgs,
+          ]);
+          setIsTyping(false);
+        }, 200);
+        return;
+      }
+
+      // ── 2. FREE-TEXT: Query Backend with strict 3000ms AbortController ───
+      const controller = new AbortController();
+      const abortTimer = setTimeout(() => controller.abort(), 3000);
+
       try {
-        // Attempt Backend Gemini AI endpoint
         const baseUrl = getApiBaseUrl();
         const savedSessionId =
           typeof window !== "undefined"
@@ -173,6 +199,7 @@ export default function VrixChatWidget() {
         const res = await fetch(`${baseUrl}/chat/message`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             sessionId: savedSessionId || undefined,
             actionValue,
@@ -186,7 +213,6 @@ export default function VrixChatWidget() {
             rate: rate || 1,
             locale: locale || "en-IN",
             country: detectedCountry || "IN",
-            // Pass live landing page mode and promotional details to AI backend
             launchMode: activeMode,
             targetDate: launchConfig?.targetDate,
             saleDiscountHighlight: launchConfig?.saleDiscountHighlight,
@@ -194,6 +220,8 @@ export default function VrixChatWidget() {
             saleTitle: launchConfig?.saleTitle,
           }),
         });
+
+        clearTimeout(abortTimer);
 
         if (res.ok) {
           const apiData = await res.json();
@@ -213,25 +241,24 @@ export default function VrixChatWidget() {
           }
         }
       } catch (err) {
-        // Gracefully fallback to upgraded local flow engine
+        clearTimeout(abortTimer);
+        // Fallback gracefully to instant local engine
       }
 
-      // Local fallback flow engine execution
-      setTimeout(() => {
-        const { nextState, messages: newMsgs } = handleUserAction(
-          actionValue,
-          userLabel,
-          engineState,
-          launchConfig,
-          timeLeft
-        );
-        setEngineState(nextState);
-        setMessages((prev) => [
-          ...prev.filter((m) => m.id !== typingId),
-          ...newMsgs,
-        ]);
-        setIsTyping(false);
-      }, 400);
+      // Instant Local Fallback if network takes >3000ms or fails
+      const { nextState, messages: newMsgs } = handleUserAction(
+        actionValue,
+        userLabel,
+        engineState,
+        launchConfig,
+        timeLeft
+      );
+      setEngineState(nextState);
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== typingId),
+        ...newMsgs,
+      ]);
+      setIsTyping(false);
     },
     [engineState, currency, symbol, rate, locale, detectedCountry, activeMode, launchConfig, timeLeft]
   );

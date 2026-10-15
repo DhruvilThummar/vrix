@@ -30,6 +30,38 @@ function setCachedResponse(cacheKey, data) {
   });
 }
 
+// In-Memory Cache for CMS Settings & Admin Redeem Codes (60s TTL) to eliminate Sydney DB roundtrips
+let cachedCmsData = null;
+let cachedCmsExpiresAt = 0;
+
+async function getAdminCmsSettings() {
+  const now = Date.now();
+  if (cachedCmsData && now < cachedCmsExpiresAt) {
+    return cachedCmsData;
+  }
+  try {
+    const [cmsCountdown, allCodes] = await Promise.all([
+      db.cmsSettings.findUnique({ where: { key: "launch_countdown" } }).catch(() => null),
+      db.redeemCodes.findMany().catch(() => [])
+    ]);
+
+    const activeRedeemCodes = Array.isArray(allCodes)
+      ? allCodes.filter(c => {
+          if (!c.isActive) return false;
+          if (c.expiryDate && new Date(c.expiryDate) < new Date()) return false;
+          if (c.usageLimit && (c.usedCount || 0) >= c.usageLimit) return false;
+          return true;
+        })
+      : [];
+
+    cachedCmsData = { cmsCountdown, activeRedeemCodes };
+    cachedCmsExpiresAt = now + 60 * 1000;
+    return cachedCmsData;
+  } catch (e) {
+    return cachedCmsData || { cmsCountdown: null, activeRedeemCodes: [] };
+  }
+}
+
 // Input normalizer to safely handle any request shape ({ message }, { userMessage }, { actionValue, userLabel, query })
 export function normalizeUserMessage(body = {}) {
   const raw = body.userMessage || body.message || body.query || body.userLabel || body.actionValue || "";
@@ -123,25 +155,8 @@ const handleChatMessage = async (req, res) => {
 
     sessionId = session.id;
 
-    // Load active CMS launch countdown and admin redeem codes
-    let cmsCountdown = null;
-    try {
-      cmsCountdown = await db.cmsSettings.findUnique({ where: { key: "launch_countdown" } });
-    } catch (e) {}
-
-    let activeRedeemCodes = [];
-    try {
-      const allCodes = await db.redeemCodes.findMany();
-      if (Array.isArray(allCodes)) {
-        const now = new Date();
-        activeRedeemCodes = allCodes.filter(c => {
-          if (!c.isActive) return false;
-          if (c.expiryDate && new Date(c.expiryDate) < now) return false;
-          if (c.usageLimit && (c.usedCount || 0) >= c.usageLimit) return false;
-          return true;
-        });
-      }
-    } catch (e) {}
+    // Load active CMS launch countdown and admin redeem codes (cached in-memory for 60s)
+    const { cmsCountdown, activeRedeemCodes } = await getAdminCmsSettings();
 
     const adminSaleCode = (typeof req.body?.saleDiscountCode === "string" && req.body.saleDiscountCode.trim())
       ? req.body.saleDiscountCode.trim()
@@ -790,14 +805,16 @@ const handleChatMessage = async (req, res) => {
       });
     }
 
-    // Record user message in DB
-    await db.chatMessage?.create({
-      data: {
-        sessionId: session.id,
-        role: "user",
-        content: userText
-      }
-    }).catch(() => { });
+    // Record user message in DB asynchronously without blocking response
+    if (db.chatMessage) {
+      db.chatMessage.create({
+        data: {
+          sessionId: session.id,
+          role: "user",
+          content: userText
+        }
+      }).catch(() => { });
+    }
 
     // Cache-Aside lookup: if identical query was answered recently in current mode, return in <15ms
     const modeKey = req.body?.launchMode || "DISABLED";
@@ -812,8 +829,148 @@ const handleChatMessage = async (req, res) => {
       });
     }
 
-    // Execute Gemini Interactions loop with 25-second timeout safeguard (allows ample headroom for multi-turn tool calling and cold starts)
-    const timeoutMs = parseInt(process.env.GEMINI_TIMEOUT_MS, 10) || 25000;
+    const qLower = userText.toLowerCase().trim();
+    const isLaunchMode = (req.body?.launchMode === "LAUNCH") || (cmsCountdown?.isLaunchActive === true);
+    const isSaleMode = (req.body?.launchMode === "SALE") || (cmsCountdown?.isSaleActive === true);
+
+    // ── Instant Fast-Path Intent Resolver (<5ms latency) ─────────────────────
+    let fastReply = null;
+    let fastOptions = [
+      { label: "Find a piece for myself", value: "myself" },
+      { label: "Find a gift", value: "gift" },
+      { label: "Explore collections", value: "collections" }
+    ];
+    let fastSocial = undefined;
+    let fastEmail = undefined;
+    let fastSaleCard = undefined;
+
+    // 1. Instant Greetings
+    if (/^(hi|hello|hey|namaste|kem cho|good morning|good evening|good afternoon|hlw|hoi|yo|sup)\b/i.test(qLower) || qLower === "hi" || qLower === "hello") {
+      if (isLaunchMode) {
+        fastReply = "Welcome to VRIX. Our digital atelier arrives soon. Enter your email below to join our private VIP waitlist for early access, or follow our journey on Instagram and Facebook:";
+        fastEmail = { placeholder: "your.email@example.com", buttonText: "Notify Me" };
+        fastSocial = {
+          title: "Follow VRIX Atelier",
+          description: "Official releases, previews, and live countdown stories.",
+          instagram: "https://www.instagram.com/vrix.official",
+          facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+        };
+        fastOptions = [
+          { label: "When is the Launch?", value: "launch_date" },
+          { label: "Join VIP Waitlist", value: "launch_waitlist" },
+          { label: "About VRIX Lab Diamonds", value: "education" }
+        ];
+      } else if (isSaleMode) {
+        const codeNote = adminSaleCode ? ` with code [${adminSaleCode}]` : ` (direct atelier pricing)`;
+        fastReply = `Welcome to VRIX. The Private Archive Event is currently active across our atelier. Enjoy ${adminHighlight}${codeNote}. How may I assist your exploration today?`;
+        fastSaleCard = {
+          highlight: adminHighlight,
+          code: adminSaleCode || undefined,
+          ctaUrl: "/collections"
+        };
+      } else {
+        fastReply = `Welcome to VRIX. "A luxury that feels like you." How may our atelier concierge assist your exploration today?`;
+        fastOptions = [
+          { label: "Find a piece for myself", value: "myself" },
+          { label: "Find a gift", value: "gift" },
+          { label: "Diamond Education", value: "education" },
+          { label: "Compare products", value: "compare" }
+        ];
+      }
+    }
+    // 2. Instant Launch Inquiries
+    else if (isLaunchMode && (qLower.includes("when") || qLower.includes("date") || qLower.includes("launch") || qLower.includes("open") || qLower.includes("timing") || qLower.includes("start"))) {
+      const targetDateFormatted = cmsCountdown?.targetDate
+        ? new Date(cmsCountdown.targetDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+        : "Coming Soon";
+      fastReply = `Our digital atelier arrives on ${targetDateFormatted}. We craft architectural lab-grown diamonds with quiet luxury. Join our private VIP waitlist for early access:`;
+      fastEmail = { placeholder: "your.email@example.com", buttonText: "Notify Me" };
+      fastSocial = {
+        title: "Follow VRIX Atelier",
+        description: "Official releases, previews, and live countdown stories.",
+        instagram: "https://www.instagram.com/vrix.official",
+        facebook: "https://www.facebook.com/profile.php?id=61588375466280"
+      };
+      fastOptions = [
+        { label: "Join VIP Waitlist", value: "launch_waitlist" },
+        { label: "About VRIX Lab Diamonds", value: "education" }
+      ];
+    }
+    // 3. Instant Promo Code & Coupon Inquiries
+    else if (qLower.includes("promo") || qLower.includes("coupon") || qLower.includes("code") || qLower.includes("discount code") || qLower.includes("voucher") || qLower.includes("offer")) {
+      if (adminSaleCode) {
+        fastReply = `Our active archive promotion is ${adminHighlight}. Apply official code ${adminSaleCode} at checkout to receive your privilege.`;
+        fastSaleCard = {
+          highlight: adminHighlight,
+          code: adminSaleCode,
+          ctaUrl: "/collections"
+        };
+      } else if (activeRedeemCodes.length > 0) {
+        fastReply = `Our active atelier privilege code is ${activeRedeemCodes[0].code} (${activeRedeemCodes[0].description || "special discount"}). Enter it at checkout to apply your privilege.`;
+      } else {
+        fastReply = "There are currently no active public promotional codes. All VRIX pieces are offered with transparent direct atelier pricing.";
+      }
+    }
+    // 4. Instant Return & Shipping Policies
+    else if (qLower.includes("return") || qLower.includes("exchange") || qLower.includes("refund")) {
+      fastReply = "VRIX offers a 15-day complimentary return window on unworn pieces in original packaging, along with lifetime craftsmanship exchange on our lab-grown diamond solitaires.";
+      fastOptions = [
+        { label: "Shipping Schedule", value: "Shipping Schedule" },
+        { label: "Talk to concierge", value: "trigger-handoff" }
+      ];
+    }
+    else if (qLower.includes("shipping") || qLower.includes("delivery") || qLower.includes("delivering") || qLower.includes("track")) {
+      fastReply = "We provide complimentary insured express delivery across India in 2–4 business days via BlueDart Air, with discrete signature confirmation upon delivery.";
+      fastOptions = [
+        { label: "Return Policy", value: "Return Policy" },
+        { label: "Talk to concierge", value: "trigger-handoff" }
+      ];
+    }
+    else if (qLower.includes("diamond") && (qLower.includes("real") || qLower.includes("lab") || qLower.includes("fake") || qLower.includes("natural"))) {
+      fastReply = "VRIX lab-grown diamonds are 100% genuine crystallized carbon diamonds with identical optical, chemical, and physical properties to mined stones. Every solitaire arrives with independent gemological certification (IGI/SGL) and VS+ clarity.";
+      fastOptions = [
+        { label: "The 4Cs of Diamonds", value: "4Cs" },
+        { label: "Explore collections", value: "collections" }
+      ];
+    }
+    else if (qLower.includes("address") || qLower.includes("location") || qLower.includes("surat") || qLower.includes("visit") || qLower.includes("studio") || qLower.includes("contact") || qLower.includes("whatsapp")) {
+      fastReply = "VRIX Flagship Atelier & Studio:\n• Location: Diamond Financial District, Surat, Gujarat 395007\n• Hours: Monday – Saturday, 10:30 AM – 7:30 PM IST\n• Contact: +91 90542 85693";
+      fastOptions = [
+        { label: "Talk to concierge", value: "trigger-handoff" },
+        { label: "Explore collections", value: "collections" }
+      ];
+    }
+
+    if (fastReply) {
+      const fastResult = {
+        success: true,
+        sessionId: session.id,
+        reply: fastReply,
+        structuredData: {
+          options: fastOptions,
+          socialLinks: fastSocial,
+          emailCollector: fastEmail,
+          saleDiscountCard: fastSaleCard
+        },
+        messages: [
+          {
+            id: `msg-${Date.now()}`,
+            sender: "bot",
+            text: fastReply,
+            options: fastOptions,
+            socialLinks: fastSocial,
+            emailCollector: fastEmail,
+            saleDiscountCard: fastSaleCard,
+            timestamp: new Date().toISOString()
+          }
+        ]
+      };
+      setCachedResponse(cacheKey, fastResult);
+      return res.json(fastResult);
+    }
+
+    // Execute Gemini Interactions loop with high-speed 3500ms timeout ceiling
+    const timeoutMs = parseInt(process.env.GEMINI_TIMEOUT_MS, 10) || 3500;
     let timeoutTimer = null;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutTimer = setTimeout(() => reject(new Error("Gemini API timeout")), timeoutMs);
