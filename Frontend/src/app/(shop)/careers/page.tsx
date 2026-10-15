@@ -6,7 +6,7 @@ import { fetchDbPublic as fetchDb } from "@/utils/api";
 
 const DEFAULT_DATA = {
   heroTitle: "Careers at VRIX",
-  content: "Join the team redefining modern minimalist luxury fine jewelry. We are always looking for passionate artisans, e-commerce visionaries, brand storytellers, and customer experience specialists. Send your portfolio to vrixjewels@gmail.com to start your journey with us."
+  content: "Join the team redefining modern minimalist luxury fine jewelry. We are always looking for passionate artisans, e-commerce visionaries, brand storytellers, and customer experience specialists. Send your portfolio to info@vrixjewels.com to start your journey with us."
 };
 
 const OPEN_POSITIONS = [
@@ -93,7 +93,7 @@ export default function CareersPage() {
               </div>
 
               <a
-                href="mailto:vrixjewels@gmail.com?subject=Application%20for%20Career%20Role"
+                href="mailto:info@vrixjewels.com?subject=Application%20for%20Career%20Role"
                 className="shrink-0 inline-block bg-deep-navy text-pure-white px-6 py-3 font-inter font-primary text-xs uppercase tracking-widest hover:bg-black transition-colors text-center"
               >
                 Apply Now

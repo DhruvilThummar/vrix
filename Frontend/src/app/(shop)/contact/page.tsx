@@ -32,7 +32,7 @@ const VRIX_CONTACT_INFO = {
   phoneDisplay: "090542 85693",
   phoneTel: "+919054285693",
   hours: "Open Daily · Closes 7:00 PM",
-  email: "vrixjewels@gmail.com",
+  email: "info@vrixjewels.com",
   brandBio:
     "VRIX Jewels is a premium jewelry brand creating minimalist lab-grown diamond pieces for modern luxury. Each design is crafted with precision, emotion, and elegance—allowing every piece to express individuality through simplicity."
 };
