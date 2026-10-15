@@ -93,7 +93,16 @@ export default function VrixChatWidget() {
       if (savedMsgs) {
         const parsed = JSON.parse(savedMsgs);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed);
+          const sanitized =
+            activeMode === "LAUNCH"
+              ? parsed.map((m: any) => ({
+                  ...m,
+                  products: undefined,
+                  comparison: undefined,
+                  saleDiscountCard: undefined,
+                }))
+              : parsed;
+          setMessages(sanitized);
           setShowQuickMenu(false);
         } else {
           setMessages([createInitialMessage(activeMode, launchConfig, timeLeft)]);
@@ -103,7 +112,11 @@ export default function VrixChatWidget() {
       }
 
       if (savedEngine) {
-        setEngineState(JSON.parse(savedEngine));
+        const parsedEngine = JSON.parse(savedEngine);
+        if (activeMode === "LAUNCH") {
+          parsedEngine.surfacedProducts = [];
+        }
+        setEngineState(parsedEngine);
       }
       localStorage.setItem("vrix-chat-saved-mode", activeMode);
     } catch (e) {
@@ -115,11 +128,28 @@ export default function VrixChatWidget() {
   useEffect(() => {
     if (typeof window === "undefined" || messages.length === 0) return;
     try {
-      const validMsgs = messages.filter((m) => !m.isTyping);
+      const validMsgs = messages
+        .filter((m) => !m.isTyping)
+        .map((m) =>
+          activeMode === "LAUNCH"
+            ? {
+                ...m,
+                products: undefined,
+                comparison: undefined,
+                saleDiscountCard: undefined,
+              }
+            : m
+        );
       localStorage.setItem("vrix-chat-history-v2", JSON.stringify(validMsgs));
-      localStorage.setItem("vrix-chat-engine-state-v2", JSON.stringify(engineState));
+      localStorage.setItem(
+        "vrix-chat-engine-state-v2",
+        JSON.stringify({
+          ...engineState,
+          surfacedProducts: activeMode === "LAUNCH" ? [] : engineState.surfacedProducts,
+        })
+      );
     } catch (e) {}
-  }, [messages, engineState]);
+  }, [messages, engineState, activeMode]);
 
   // Lock body scroll on mobile when full-screen chat is open (<640px)
   useEffect(() => {

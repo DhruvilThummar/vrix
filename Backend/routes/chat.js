@@ -166,6 +166,9 @@ const handleChatMessage = async (req, res) => {
 
     const adminHighlight = req.body?.saleDiscountHighlight || cmsCountdown?.saleDiscountHighlight || "Special Atelier Offer";
 
+    const isLaunchMode = (req.body?.launchMode === "LAUNCH") || (cmsCountdown?.isLaunchActive === true) || (cmsCountdown?.mode === "LAUNCH");
+    const isSaleMode = (req.body?.launchMode === "SALE") || (cmsCountdown?.isSaleActive === true) || (cmsCountdown?.mode === "SALE");
+
     const actionValue = req.body?.actionValue;
     const userLabel = req.body?.userLabel;
     const targetKey = actionValue || userLabel;
@@ -785,6 +788,9 @@ const handleChatMessage = async (req, res) => {
       if (isLaunchMode) {
         products = [];
         comparison = undefined;
+        if (!actionConfig.emailCollector && !actionConfig.socialLinks) {
+          replyText = "The VRIX digital atelier arrives soon. Our inaugural collections are currently being prepared for unveiling. Enter your email below to receive private early access before public unveiling, or connect with our atelier on Instagram and Facebook for preview reveals:";
+        }
         actionConfig.socialLinks = {
           title: "Follow VRIX Atelier",
           description: "Official releases, previews, and live countdown stories.",
@@ -852,8 +858,6 @@ const handleChatMessage = async (req, res) => {
     }
 
     const qLower = userText.toLowerCase().trim();
-    const isLaunchMode = (req.body?.launchMode === "LAUNCH") || (cmsCountdown?.isLaunchActive === true);
-    const isSaleMode = (req.body?.launchMode === "SALE") || (cmsCountdown?.isSaleActive === true);
 
     // ── Instant Fast-Path Intent Resolver (<5ms latency) ─────────────────────
     let fastReply = null;
@@ -1127,42 +1131,45 @@ const handleChatMessage = async (req, res) => {
     let fallbackProducts = [];
     let fallbackReply = "Our client associates are currently experiencing high volume. Here are signature pieces from our atelier, or connect directly with our private concierge:";
 
-    try {
-      // Intelligent catalog matching so customer is never left empty-handed on timeout or network lag
-      const queryLower = (userText || "").toLowerCase();
-      const allProds = await db.products.findMany().catch(() => []);
-      const visible = (allProds || []).filter(p => p.isVisible !== false);
+    const isLaunchMode = (req.body?.launchMode === "LAUNCH") || (cmsCountdown?.isLaunchActive === true) || (cmsCountdown?.mode === "LAUNCH");
+    const isSaleMode = (req.body?.launchMode === "SALE") || (cmsCountdown?.isSaleActive === true) || (cmsCountdown?.mode === "SALE");
 
-      const keywords = queryLower.split(/\s+/).filter(w => w.length > 2);
-      const matched = visible.filter(p => {
-        const title = (p.title || "").toLowerCase();
-        const type = (p.type || p.collection || "").toLowerCase();
-        const mat = (p.material || "").toLowerCase();
-        const desc = (p.description || "").toLowerCase();
-        return keywords.some(k => title.includes(k) || type.includes(k) || mat.includes(k) || desc.includes(k));
-      });
+    if (!isLaunchMode) {
+      try {
+        // Intelligent catalog matching so customer is never left empty-handed on timeout or network lag
+        const queryLower = (userText || "").toLowerCase();
+        const allProds = await db.products.findMany().catch(() => []);
+        const visible = (allProds || []).filter(p => p.isVisible !== false);
 
-      const chosen = matched.length > 0 ? matched : visible;
-      fallbackProducts = chosen.slice(0, 4).map(p => ({
-        id: p.id,
-        title: p.title,
-        category: p.type || p.collection || "Jewelry",
-        material: p.material || "18K Gold / 950 Platinum",
-        price: Number(p.price) || 0,
-        image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
-        slug: p.id
-      }));
+        const keywords = queryLower.split(/\s+/).filter(w => w.length > 2);
+        const matched = visible.filter(p => {
+          const title = (p.title || "").toLowerCase();
+          const type = (p.type || p.collection || "").toLowerCase();
+          const mat = (p.material || "").toLowerCase();
+          const desc = (p.description || "").toLowerCase();
+          return keywords.some(k => title.includes(k) || type.includes(k) || mat.includes(k) || desc.includes(k));
+        });
 
-      if (matched.length > 0) {
-        fallbackReply = "Here are signature pieces from our atelier tailored to your inquiry:";
+        const chosen = matched.length > 0 ? matched : visible;
+        fallbackProducts = chosen.slice(0, 4).map(p => ({
+          id: p.id,
+          title: p.title,
+          category: p.type || p.collection || "Jewelry",
+          material: p.material || "18K Gold / 950 Platinum",
+          price: Number(p.price) || 0,
+          image: p.image || (Array.isArray(p.images) ? p.images[0] : ""),
+          slug: p.id
+        }));
+
+        if (matched.length > 0) {
+          fallbackReply = "Here are signature pieces from our atelier tailored to your inquiry:";
+        }
+      } catch (fallbackErr) {
+        // keep fallback defaults
       }
-    } catch (fallbackErr) {
-      // keep fallback defaults
     }
 
     const isoTimestamp = new Date().toISOString();
-    const isLaunchMode = req.body?.launchMode === "LAUNCH";
-    const isSaleMode = req.body?.launchMode === "SALE";
 
     let fallbackOptions = [
       { label: "Find a piece for myself", value: "myself" },

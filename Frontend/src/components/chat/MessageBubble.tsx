@@ -10,6 +10,7 @@ import QuickReplyChips from "./QuickReplyChips";
 import SocialLinksCard from "./SocialLinksCard";
 import InChatEmailCollector from "./InChatEmailCollector";
 import SaleDiscountCard from "./SaleDiscountCard";
+import { useLaunchCountdown } from "@/context/LaunchCountdownContext";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -34,6 +35,8 @@ function formatLocalTime(isoString?: string): string {
 export default function MessageBubble({ message, onOptionSelect }: MessageBubbleProps) {
   const isBot = message.sender === "bot";
   const [copied, setCopied] = useState(false);
+  const { config, isPreLaunch } = useLaunchCountdown();
+  const isLaunchMode = config?.mode === "LAUNCH" || isPreLaunch;
 
   const handleCopy = () => {
     if (!message.text) return;
@@ -81,7 +84,7 @@ export default function MessageBubble({ message, onOptionSelect }: MessageBubble
           </div>
         )}
 
-        {message.products && message.products.length > 0 && (
+        {!isLaunchMode && message.products && message.products.length > 0 && (
           <div className="flex gap-3 overflow-x-auto py-2.5 hide-scrollbar w-full">
             {message.products.map((prod) => (
               <ProductCardItem key={prod.id} product={prod} />
@@ -89,13 +92,17 @@ export default function MessageBubble({ message, onOptionSelect }: MessageBubble
           </div>
         )}
 
-        {message.comparison && <ProductComparisonView data={message.comparison} />}
+        {!isLaunchMode && message.comparison && <ProductComparisonView data={message.comparison} />}
 
-        {message.saleDiscountCard && <SaleDiscountCard data={message.saleDiscountCard} />}
+        {!isLaunchMode && message.saleDiscountCard && <SaleDiscountCard data={message.saleDiscountCard} />}
 
-        {message.emailCollector && <InChatEmailCollector data={message.emailCollector} />}
+        {(message.emailCollector || (isBot && isLaunchMode)) && (
+          <InChatEmailCollector data={message.emailCollector} />
+        )}
 
-        {message.socialLinks && <SocialLinksCard data={message.socialLinks} />}
+        {(message.socialLinks || (isBot && isLaunchMode)) && (
+          <SocialLinksCard data={message.socialLinks || {}} />
+        )}
 
         {message.handoff && <HumanHandoffCard data={message.handoff} />}
 

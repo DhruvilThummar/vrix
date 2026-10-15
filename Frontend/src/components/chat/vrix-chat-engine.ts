@@ -419,6 +419,46 @@ export function handleUserAction(
     return { nextState: { currentFlow: null, step: 0, data: nextData, surfacedProducts: surfaced }, messages };
   }
 
+  // ── STRICT LAUNCH MODE INTERCEPTOR: NEVER ALLOW SHOPPING OR PRODUCTS ───────────
+  if (activeMode === "LAUNCH") {
+    const isEducation =
+      actionValue === "education" ||
+      userLabel === "About VRIX Lab Diamonds" ||
+      actionValue === "4Cs" ||
+      actionValue === "Sourcing" ||
+      actionValue === "Metals";
+
+    if (!isEducation) {
+      messages.push({
+        id: `msg-${Date.now()}-launch-waitlist-call`,
+        sender: "bot",
+        text: "The VRIX digital atelier arrives soon. Our inaugural fine jewellery collections are currently being prepared for unveiling. Direct shopping and product browsing are reserved until official launch day.\n\nEnter your email to receive private VIP early access before the public unveiling, or connect with our atelier on Instagram and Facebook for preview reveals:",
+        emailCollector: {
+          placeholder: "Enter your email for early invite...",
+          buttonText: "Join VIP Waitlist",
+        },
+        socialLinks: {
+          title: "Follow Along on Official Channels",
+          description: "Official previews, craftsmanship reels, and launch countdown announcements.",
+          instagram: "https://www.instagram.com/vrix.official",
+          facebook: "https://www.facebook.com/profile.php?id=61588375466280",
+          whatsapp: "https://wa.me/919054285693?text=Hi%20VRIX%20Concierge,%20I%20have%20an%20inquiry%20regarding%20the%20upcoming%20launch.",
+        },
+        options: [
+          { label: "When is the Launch?", value: "launch_date" },
+          { label: "Join VIP Waitlist", value: "launch_waitlist" },
+          { label: "Instagram & Facebook", value: "social_channels" },
+          { label: "About VRIX Lab Diamonds", value: "education" },
+        ],
+        timestamp: time,
+      });
+      return {
+        nextState: { currentFlow: null, step: 0, data: nextData, surfacedProducts: [] },
+        messages,
+      };
+    }
+  }
+
   // ── SALE SPECIFIC ACTIONS ──────────────────────────────────────────────────
   if (actionValue === "sale_details" || userLabel?.includes("Sale") || userLabel?.includes("Promo Code") || userLabel?.includes("Offer")) {
     const adminCode = typeof launchConfig?.saleDiscountCode === "string" ? launchConfig.saleDiscountCode.trim() : "";
@@ -718,16 +758,42 @@ export function handleUserAction(
     } else {
       nextFlow = null;
       nextStep = 0;
+      const eduOptions =
+        activeMode === "LAUNCH"
+          ? [
+              { label: "When is the Launch?", value: "launch_date" },
+              { label: "Join VIP Waitlist", value: "launch_waitlist" },
+              { label: "Instagram & Facebook", value: "social_channels" },
+            ]
+          : [
+              { label: "The 4Cs of Diamonds", value: "4Cs" },
+              { label: "Metal Purity Guide", value: "Metals" },
+              { label: "Explore collections", value: "collections" },
+            ];
+
+      const launchAdditions =
+        activeMode === "LAUNCH"
+          ? {
+              emailCollector: {
+                placeholder: "Enter email for VIP early access...",
+                buttonText: "Join VIP Waitlist",
+              },
+              socialLinks: {
+                title: "Follow VRIX Atelier",
+                description: "Official releases, previews, and live countdown stories.",
+                instagram: "https://www.instagram.com/vrix.official",
+                facebook: "https://www.facebook.com/profile.php?id=61588375466280",
+              },
+            }
+          : {};
+
       if (actionValue === "4Cs") {
         messages.push({
           id: `msg-${Date.now()}-4cs`,
           sender: "bot",
           text: "The 4Cs of VRIX Diamonds:\n• Cut: Precision faceted for maximum light refraction.\n• Color: D–F colorless grades.\n• Clarity: VS+ eye-clean clarity with zero visible inclusions.\n• Carat: Measured with millimeter precision for optical balance.",
-          options: [
-            { label: "Lab vs. Mined Diamonds", value: "Sourcing" },
-            { label: "Metal Purity Guide", value: "Metals" },
-            { label: "Explore collections", value: "collections" },
-          ],
+          options: eduOptions,
+          ...launchAdditions,
           timestamp: time,
         });
       } else if (actionValue === "Sourcing") {
@@ -735,11 +801,8 @@ export function handleUserAction(
           id: `msg-${Date.now()}-src`,
           sender: "bot",
           text: "VRIX Lab Diamonds:\nChemically, physically, and optically identical to mined diamonds (Carbon crystal structure, 10 on Mohs scale). Created with renewable energy, zero earth-mining disruption, and 100% conflict-free origin with IGI certification.",
-          options: [
-            { label: "The 4Cs of Diamonds", value: "4Cs" },
-            { label: "Metal Purity Guide", value: "Metals" },
-            { label: "Explore collections", value: "collections" },
-          ],
+          options: eduOptions,
+          ...launchAdditions,
           timestamp: time,
         });
       } else {
@@ -747,10 +810,8 @@ export function handleUserAction(
           id: `msg-${Date.now()}-met`,
           sender: "bot",
           text: "VRIX Metal Purity:\n• 18K Solid Gold: Deep lustre and durable skin comfort.\n• 18K Gold Vermeil: Heavy 2.5µm solid gold bonded over pure 925 sterling silver.\n• 925 Sterling Silver: Hypoallergenic nickel-free base.",
-          options: [
-            { label: "The 4Cs of Diamonds", value: "4Cs" },
-            { label: "Explore collections", value: "collections" },
-          ],
+          options: eduOptions,
+          ...launchAdditions,
           timestamp: time,
         });
       }
