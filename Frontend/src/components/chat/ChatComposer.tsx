@@ -97,7 +97,7 @@ export default function ChatComposer({ onSend, disabled, mode = "DISABLED" }: Ch
   return (
     <div className="bg-surface-container-low border-t border-outline-variant shrink-0 select-none">
       {/* Contextual Smart Suggestion Pills (Horizontally Scrollable) */}
-      <div className="flex items-center gap-1.5 px-3 py-2 overflow-x-auto hide-scrollbar border-b border-outline-variant/30">
+      <div className="flex items-center gap-1.5 px-3 py-2 overflow-x-auto overscroll-x-contain touch-pan-x scroll-smooth hide-scrollbar border-b border-outline-variant/30">
         <span className="material-symbols-outlined text-[14px] text-primary/70 shrink-0">
           auto_awesome
         </span>

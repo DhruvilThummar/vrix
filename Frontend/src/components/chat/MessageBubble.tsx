@@ -85,7 +85,7 @@ export default function MessageBubble({ message, onOptionSelect }: MessageBubble
         )}
 
         {!isLaunchMode && message.products && message.products.length > 0 && (
-          <div className="flex gap-3 overflow-x-auto py-2.5 hide-scrollbar w-full">
+          <div className="flex gap-3 overflow-x-auto overscroll-x-contain touch-pan-x scroll-smooth hide-scrollbar py-2.5 w-full">
             {message.products.map((prod) => (
               <ProductCardItem key={prod.id} product={prod} />
             ))}
