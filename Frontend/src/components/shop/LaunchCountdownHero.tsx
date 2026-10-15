@@ -251,9 +251,9 @@ export default function LaunchCountdownHero() {
         {/* Countdown Timer — Luxury Serif & Hairline ✦ Star Separators (Scaled & Framed for Phone View) */}
         {!timeLeft.isExpired ? (
           <div suppressHydrationWarning className="relative mb-5 sm:mb-8 md:mb-10 w-full max-w-2xl mx-auto px-1 sm:px-2">
-            {/* Celestial Orbit Arc around the countdown (Visible on tablets and larger) */}
-            <div className="absolute -inset-x-4 -inset-y-4 sm:-inset-x-8 sm:-inset-y-6 pointer-events-none hidden sm:block">
-              <svg viewBox="0 0 900 240" fill="none" className="w-full h-full opacity-50 sm:opacity-60">
+            {/* Celestial Orbit Arc around the countdown (Visible on mobile & desktop) */}
+            <div className="absolute -inset-x-2 -inset-y-3 sm:-inset-x-8 sm:-inset-y-6 pointer-events-none block">
+              <svg viewBox="0 0 900 240" fill="none" className="w-full h-full opacity-45 sm:opacity-60">
                 <path
                   d="M 120 180 C 260 50, 680 40, 840 130"
                   stroke="url(#orbitGold)"
@@ -275,8 +275,8 @@ export default function LaunchCountdownHero() {
               </svg>
             </div>
 
-            {/* Countdown Display Units — Frosted Glass Panel on Mobile for Optimal Legibility */}
-            <div className="relative z-10 flex items-center justify-center gap-1.5 xs:gap-2 sm:gap-3 md:gap-5 lg:gap-7 py-3 px-2 xs:px-3 sm:py-0 sm:px-0 bg-white/[0.04] sm:bg-transparent border border-white/10 sm:border-0 rounded-xs sm:rounded-none backdrop-blur-md sm:backdrop-blur-none shadow-[0_8px_32px_rgba(0,0,0,0.35)] sm:shadow-none select-none">
+            {/* Countdown Display Units — Clean, Open & Borderless Matching PC View */}
+            <div className="relative z-10 flex items-center justify-center gap-1.5 xs:gap-2 sm:gap-3 md:gap-5 lg:gap-7 py-1 sm:py-0 select-none">
               {/* DAYS */}
               <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
                 <span
