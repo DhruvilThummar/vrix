@@ -248,10 +248,10 @@ export default function LaunchCountdownHero() {
           {config.description || "Jewelry shaped by intention. Defined by detail.\nDiscover a quieter expression of luxury, created for the way you live."}
         </p>
 
-        {/* Countdown Timer — Luxury Serif & Hairline ✦ Star Separators (Scaled & Framed for Phone View) */}
-        {!timeLeft.isExpired ? (
+        {/* Countdown Timer or Custom Text Replacement (Only this section toggles when timer is off) */}
+        {!timeLeft.isExpired && (config.showTimer !== false || (config.timerCustomText && config.timerCustomText.trim().length > 0)) ? (
           <div suppressHydrationWarning className="relative mb-5 sm:mb-8 md:mb-10 w-full max-w-2xl mx-auto px-1 sm:px-2">
-            {/* Celestial Orbit Arc around the countdown (Visible on mobile & desktop) */}
+            {/* Celestial Orbit Arc around the countdown / text (Visible on mobile & desktop) */}
             <div className="absolute -inset-x-2 -inset-y-3 sm:-inset-x-8 sm:-inset-y-6 pointer-events-none block">
               <svg viewBox="0 0 900 240" fill="none" className="w-full h-full opacity-45 sm:opacity-60">
                 <path
@@ -275,93 +275,105 @@ export default function LaunchCountdownHero() {
               </svg>
             </div>
 
-            {/* Countdown Display Units — Clean, Open & Borderless Matching PC View */}
-            <div className="relative z-10 flex items-center justify-center gap-1.5 xs:gap-2 sm:gap-3 md:gap-5 lg:gap-7 py-1 sm:py-0 select-none">
-              {/* DAYS */}
-              <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+            {config.showTimer !== false ? (
+              /* Countdown Display Units — Clean, Open & Borderless Matching PC View */
+              <div className="relative z-10 flex items-center justify-center gap-1.5 xs:gap-2 sm:gap-3 md:gap-5 lg:gap-7 py-1 sm:py-0 select-none">
+                {/* DAYS */}
+                <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+                  <span
+                    suppressHydrationWarning
+                    className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
+                    style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
+                  >
+                    {formatNumber(timeLeft.days)}
+                  </span>
+                  <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
+                    Days
+                  </span>
+                </div>
+
+                {/* Separator Hairline + ✦ Star */}
+                <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
+                  <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
+                  <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                  <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
+                </div>
+
+                {/* HOURS */}
+                <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+                  <span
+                    suppressHydrationWarning
+                    className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
+                    style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
+                  >
+                    {formatNumber(timeLeft.hours)}
+                  </span>
+                  <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
+                    Hours
+                  </span>
+                </div>
+
+                {/* Separator Hairline + ✦ Star */}
+                <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
+                  <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
+                  <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                  <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
+                </div>
+
+                {/* MINUTES */}
+                <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+                  <span
+                    suppressHydrationWarning
+                    className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
+                    style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
+                  >
+                    {formatNumber(timeLeft.minutes)}
+                  </span>
+                  <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
+                    Minutes
+                  </span>
+                </div>
+
+                {/* Separator Hairline + ✦ Star */}
+                <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
+                  <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
+                  <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
+                  <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
+                </div>
+
+                {/* SECONDS */}
+                <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
+                  <span
+                    suppressHydrationWarning
+                    className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
+                    style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
+                  >
+                    {formatNumber(timeLeft.seconds)}
+                  </span>
+                  <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
+                    Seconds
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* Custom Text in place of Timer */
+              <div className="relative z-10 flex flex-col items-center justify-center py-2 sm:py-3 select-none">
                 <span
-                  suppressHydrationWarning
-                  className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
+                  className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light text-[#FDFCF7] tracking-[0.16em] sm:tracking-[0.22em] uppercase leading-tight drop-shadow-[0_2px_14px_rgba(255,232,178,0.3)] text-center px-4"
                   style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
                 >
-                  {formatNumber(timeLeft.days)}
-                </span>
-                <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
-                  Days
+                  {config.timerCustomText}
                 </span>
               </div>
-
-              {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
-                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
-                <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
-              </div>
-
-              {/* HOURS */}
-              <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
-                <span
-                  suppressHydrationWarning
-                  className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
-                  style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
-                >
-                  {formatNumber(timeLeft.hours)}
-                </span>
-                <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
-                  Hours
-                </span>
-              </div>
-
-              {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
-                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
-                <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
-              </div>
-
-              {/* MINUTES */}
-              <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
-                <span
-                  suppressHydrationWarning
-                  className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
-                  style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
-                >
-                  {formatNumber(timeLeft.minutes)}
-                </span>
-                <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
-                  Minutes
-                </span>
-              </div>
-
-              {/* Separator Hairline + ✦ Star */}
-              <div className="flex flex-col items-center justify-center self-stretch px-0.5 sm:px-1.5 md:px-2.5 opacity-75">
-                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-transparent via-white/30 to-white/15" />
-                <span className="text-amber-200 text-[9px] xs:text-[10px] sm:text-xs md:text-sm my-0.5 select-none drop-shadow-[0_0_6px_rgba(255,232,178,0.7)]">✦</span>
-                <div className="w-[1px] h-2 xs:h-2.5 sm:h-4 md:h-6 bg-gradient-to-b from-white/15 via-white/30 to-transparent" />
-              </div>
-
-              {/* SECONDS */}
-              <div className="flex flex-col items-center min-w-[50px] xs:min-w-[58px] sm:min-w-[76px] md:min-w-[96px] lg:min-w-[110px]">
-                <span
-                  suppressHydrationWarning
-                  className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-light text-[#FDFCF7] tabular-nums tracking-tight leading-none drop-shadow-[0_2px_12px_rgba(255,232,178,0.25)]"
-                  style={{ fontFamily: 'var(--font-aquavit), "Cormorant Garamond", Georgia, serif' }}
-                >
-                  {formatNumber(timeLeft.seconds)}
-                </span>
-                <span className="font-inter font-primary text-[8px] xs:text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.32em] uppercase text-white/60 mt-1.5 sm:mt-2.5 font-medium">
-                  Seconds
-                </span>
-              </div>
-            </div>
+            )}
           </div>
-        ) : (
+        ) : timeLeft.isExpired ? (
           <div className="mb-6 py-3 px-6 sm:px-8 border border-amber-300/30 bg-amber-400/5 backdrop-blur-sm text-amber-200/90 rounded-xs">
             <p className="font-inter text-xs sm:text-sm tracking-[0.22em] sm:tracking-[0.25em] uppercase font-medium">
               ✦ We are live — Welcome to the atelier ✦
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* VIP Early Access / Waitlist Box — Fully Styled & Selectable on Mobile */}
         {config.enableWaitlist && (

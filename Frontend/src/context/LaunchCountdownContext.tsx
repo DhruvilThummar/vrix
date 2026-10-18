@@ -25,6 +25,8 @@ export interface LaunchCountdownConfig {
   contactButtonUrl: string;
   autoUnlockOnZero: boolean;
   pillarsText: string;
+  showTimer?: boolean;
+  timerCustomText?: string;
 
   // Sale Mode Specific Configuration
   saleBadgeText?: string;
@@ -88,6 +90,8 @@ export const DEFAULT_LAUNCH_CONFIG: LaunchCountdownConfig = {
   contactButtonUrl: "/contact",
   autoUnlockOnZero: true,
   pillarsText: "Lab-Grown Diamonds · Architectural Minimalism · Surat Atelier · Lifetime Warranty",
+  showTimer: true,
+  timerCustomText: "",
 
   // Default Sale Mode Settings
   saleBadgeText: "✦ PRIVATE ARCHIVE EVENT ✦",

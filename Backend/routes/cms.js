@@ -262,7 +262,9 @@ router.get("/cms/launch-countdown", async (req, res) => {
       waitlistSuccessMsg: "Thank you. You have been added to our private VIP launch list.",
       contactButtonText: "Contact Atelier",
       contactButtonUrl: "/contact",
-      autoUnlockOnZero: true
+      autoUnlockOnZero: true,
+      showTimer: true,
+      timerCustomText: ""
     };
     const payload = setting ? {
       ...defaultData,

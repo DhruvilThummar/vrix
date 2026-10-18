@@ -491,34 +491,55 @@ export default function AdminLaunchCountdownPage() {
                 Live Countdown Preview
               </p>
               <h4 className="font-inter font-primary text-base font-semibold uppercase text-white">
-                {isExpired ? "Time Expired / Target Reached" : "Time Remaining to Launch"}
+                {config.showTimer === false
+                  ? config.timerCustomText
+                    ? "Custom Text Display (Timer Off)"
+                    : "Timer Hidden (Only Launch Content Shown)"
+                  : isExpired
+                  ? "Time Expired / Target Reached"
+                  : "Time Remaining to Launch"}
               </h4>
               <p className="font-jost font-secondary text-xs text-white/70 mt-1">
                 Target: {new Date(config.targetDate).toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" })}
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-center bg-white/10 backdrop-blur-xs px-4 py-2 rounded border border-white/15 min-w-[64px]">
-                <span className="font-inter text-2xl font-light tabular-nums">{String(days).padStart(2, "0")}</span>
-                <span className="text-[9px] uppercase tracking-widest text-white/60 mt-1 font-inter">Days</span>
+            {config.showTimer !== false ? (
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center bg-white/10 backdrop-blur-xs px-4 py-2 rounded border border-white/15 min-w-[64px]">
+                  <span className="font-inter text-2xl font-light tabular-nums">{String(days).padStart(2, "0")}</span>
+                  <span className="text-[9px] uppercase tracking-widest text-white/60 mt-1 font-inter">Days</span>
+                </div>
+                <span className="text-white/40 text-xl">:</span>
+                <div className="flex flex-col items-center bg-white/10 backdrop-blur-xs px-4 py-2 rounded border border-white/15 min-w-[64px]">
+                  <span className="font-inter text-2xl font-light tabular-nums">{String(hours).padStart(2, "0")}</span>
+                  <span className="text-[9px] uppercase tracking-widest text-white/60 mt-1 font-inter">Hours</span>
+                </div>
+                <span className="text-white/40 text-xl">:</span>
+                <div className="flex flex-col items-center bg-white/10 backdrop-blur-xs px-4 py-2 rounded border border-white/15 min-w-[64px]">
+                  <span className="font-inter text-2xl font-light tabular-nums">{String(minutes).padStart(2, "0")}</span>
+                  <span className="text-[9px] uppercase tracking-widest text-white/60 mt-1 font-inter">Mins</span>
+                </div>
+                <span className="text-white/40 text-xl">:</span>
+                <div className="flex flex-col items-center bg-white/10 backdrop-blur-xs px-4 py-2 rounded border border-white/15 min-w-[64px]">
+                  <span className="font-inter text-2xl font-light tabular-nums text-amber-300">{String(seconds).padStart(2, "0")}</span>
+                  <span className="text-[9px] uppercase tracking-widest text-white/60 mt-1 font-inter">Secs</span>
+                </div>
               </div>
-              <span className="text-white/40 text-xl">:</span>
-              <div className="flex flex-col items-center bg-white/10 backdrop-blur-xs px-4 py-2 rounded border border-white/15 min-w-[64px]">
-                <span className="font-inter text-2xl font-light tabular-nums">{String(hours).padStart(2, "0")}</span>
-                <span className="text-[9px] uppercase tracking-widest text-white/60 mt-1 font-inter">Hours</span>
+            ) : config.timerCustomText ? (
+              <div className="bg-amber-400/10 border border-amber-300/30 px-5 py-3 rounded text-center">
+                <span className="text-[10px] uppercase tracking-widest text-amber-200/70 block font-inter mb-1">Custom Text Display</span>
+                <span className="text-lg sm:text-xl font-light text-white tracking-widest uppercase font-serif drop-shadow-[0_2px_10px_rgba(255,232,178,0.3)]">
+                  {config.timerCustomText}
+                </span>
               </div>
-              <span className="text-white/40 text-xl">:</span>
-              <div className="flex flex-col items-center bg-white/10 backdrop-blur-xs px-4 py-2 rounded border border-white/15 min-w-[64px]">
-                <span className="font-inter text-2xl font-light tabular-nums">{String(minutes).padStart(2, "0")}</span>
-                <span className="text-[9px] uppercase tracking-widest text-white/60 mt-1 font-inter">Mins</span>
+            ) : (
+              <div className="bg-white/5 border border-white/15 px-5 py-3 rounded text-center">
+                <span className="text-xs text-white/50 uppercase tracking-wider font-inter">
+                  Timer Hidden (Only Rest of Launch Hero Shown)
+                </span>
               </div>
-              <span className="text-white/40 text-xl">:</span>
-              <div className="flex flex-col items-center bg-white/10 backdrop-blur-xs px-4 py-2 rounded border border-white/15 min-w-[64px]">
-                <span className="font-inter text-2xl font-light tabular-nums text-amber-300">{String(seconds).padStart(2, "0")}</span>
-                <span className="text-[9px] uppercase tracking-widest text-white/60 mt-1 font-inter">Secs</span>
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
@@ -582,6 +603,53 @@ export default function AdminLaunchCountdownPage() {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Timer Visibility Toggle & Custom Text Replacement */}
+          <div className="pt-4 border-t border-slate-grey/15 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-inter font-primary text-xs uppercase tracking-wider font-semibold text-deep-navy">
+                  Show Countdown Timer (Days / Hours / Mins / Secs)
+                </p>
+                <p className="font-jost font-secondary text-[11px] text-slate-grey">
+                  Turn ON to show ticking countdown numbers. Turn OFF to hide ONLY the timer block from the launch hero while keeping the rest of the launch page completely active.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.showTimer !== false}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, showTimer: e.target.checked }))}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-deep-navy"></div>
+              </label>
+            </div>
+
+            {/* Custom Text In Place of Timer */}
+            {config.showTimer === false && (
+              <div className="bg-soft-linen/35 border border-slate-grey/25 rounded-md p-4 space-y-2 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-inter font-primary uppercase tracking-wider font-semibold text-deep-navy">
+                    Custom Text in Place of Timer (Optional)
+                  </label>
+                  <span className="text-[10px] font-inter text-slate-grey">
+                    Replaces countdown numbers
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={config.timerCustomText || ""}
+                  onChange={(e) => setConfig((prev) => ({ ...prev, timerCustomText: e.target.value }))}
+                  placeholder="e.g. LAUNCHING VERY SOON / THE DIGITAL ATELIER ARRIVES (Leave blank to show nothing)"
+                  className="w-full bg-white border border-slate-grey/30 rounded px-3 py-2 text-xs font-inter focus:outline-none focus:border-deep-navy"
+                />
+                <p className="font-jost font-secondary text-[11px] text-slate-grey">
+                  When the timer is turned off, this text will appear in place of the countdown numbers. If left blank, only the timer is removed, keeping everything else (Waitlist, Background, Title, Details) in place.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Auto Unlock Toggle */}
