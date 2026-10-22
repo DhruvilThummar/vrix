@@ -12,17 +12,27 @@ const normalizePrismaDatabaseUrl = () => {
     if (!isSupabasePooler) return;
 
     let changed = false;
+    // Always enforce port 6543 (Transaction Mode) on Supabase pooler to avoid EMAXCONNSESSION
+    if (url.hostname.includes("pooler.supabase.com") && (url.port === "5432" || !url.port)) {
+      url.port = "6543";
+      changed = true;
+    }
     if (!url.searchParams.has("pgbouncer")) {
       url.searchParams.set("pgbouncer", "true");
       changed = true;
     }
-    url.searchParams.set("connection_limit", "15");
-    url.searchParams.set("pool_timeout", "5");
-    changed = true;
+    if (url.searchParams.get("connection_limit") !== "5") {
+      url.searchParams.set("connection_limit", "5");
+      changed = true;
+    }
+    if (url.searchParams.get("pool_timeout") !== "10") {
+      url.searchParams.set("pool_timeout", "10");
+      changed = true;
+    }
 
     if (changed) {
       process.env.DATABASE_URL = url.toString();
-      console.log("Database Access Layer: Enabled Prisma PgBouncer mode for Supabase pooler.");
+      console.log("Database Access Layer: Enabled Prisma Transaction Mode (Port 6543, PgBouncer) for Supabase pooler.");
     }
   } catch (error) {
     console.warn("Database Access Layer: Could not inspect DATABASE_URL for PgBouncer mode.", error);

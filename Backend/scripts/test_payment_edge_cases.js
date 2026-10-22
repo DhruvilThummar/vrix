@@ -3,10 +3,9 @@ process.env.TEST_MODE = "true";
 
 import "dotenv/config";
 import http from "http";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../config/prismaClient.js";
 
 const { default: app } = await import("../server.js");
-const prisma = new PrismaClient();
 
 const testSuite = [];
 
@@ -34,9 +33,10 @@ async function runPaymentEdgeCaseSuite() {
 
   const auditCustomer = `edge_audit_${Date.now()}@vrixjewels.com`;
 
-  // Fetch a sample product from DB
+  // Fetch a sample product from DB using explicit select to avoid raw vector columns
   const sampleProduct = await prisma.product.findFirst({
     where: { isVisible: true, stock: { gte: 10 } },
+    select: { id: true, title: true, stock: true, price: true },
   });
 
   if (!sampleProduct) {
@@ -176,9 +176,12 @@ async function runPaymentEdgeCaseSuite() {
         }),
       });
       const data = await res.json();
-      const freshProduct = await prisma.product.findUnique({ where: { id: sampleProduct.id } });
-      const passed = res.status === 200 && freshProduct.stock === initialStock - 1;
-      logTest("7. Legitimate Payment Verification & Atomic Stock -1", passed, Date.now() - t0, `Stock reduced: ${initialStock} -> ${freshProduct.stock}`);
+      const freshProduct = await prisma.product.findUnique({
+        where: { id: sampleProduct.id },
+        select: { id: true, stock: true },
+      });
+      const passed = res.status === 200 && freshProduct?.stock === initialStock - 1;
+      logTest("7. Legitimate Payment Verification & Atomic Stock -1", passed, Date.now() - t0, `Stock reduced: ${initialStock} -> ${freshProduct?.stock}`);
     }
 
     // -------------------------------------------------------------------------
@@ -187,7 +190,10 @@ async function runPaymentEdgeCaseSuite() {
     // Simulate user frantically double clicking "Pay Now" or network retrying
     {
       const t0 = Date.now();
-      const stockBeforeSecondClick = (await prisma.product.findUnique({ where: { id: sampleProduct.id } })).stock;
+      const stockBeforeSecondClick = (await prisma.product.findUnique({
+        where: { id: sampleProduct.id },
+        select: { stock: true },
+      }))?.stock;
 
       const res = await fetch(`${baseUrl}/api/payment/verify`, {
         method: "POST",
@@ -200,7 +206,10 @@ async function runPaymentEdgeCaseSuite() {
         }),
       });
       const data = await res.json();
-      const stockAfterSecondClick = (await prisma.product.findUnique({ where: { id: sampleProduct.id } })).stock;
+      const stockAfterSecondClick = (await prisma.product.findUnique({
+        where: { id: sampleProduct.id },
+        select: { stock: true },
+      }))?.stock;
 
       // Idempotency rule: stock must NOT be deducted again!
       const passed = res.status === 200 && data.isDuplicate === true && stockBeforeSecondClick === stockAfterSecondClick;
@@ -250,7 +259,10 @@ async function runPaymentEdgeCaseSuite() {
         })
       ]);
 
-      const finalProduct = await prisma.product.findUnique({ where: { id: sampleProduct.id } });
+      const finalProduct = await prisma.product.findUnique({
+        where: { id: sampleProduct.id },
+        select: { stock: true },
+      });
       const successfulCount = (resA.status === 200 ? 1 : 0) + (resB.status === 200 ? 1 : 0);
 
       // Exactly ONE must succeed, stock must be 0 (NEVER negative!), and one must fail
