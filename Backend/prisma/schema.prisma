@@ -45,8 +45,12 @@ model Product {
   giftOptions         Json?    @map("gift_options")
   deliveryPolicy      String?  @map("delivery_policy")
   careGuide           String?  @map("care_guide")
-  tags                String[] @default([])
-  createdAt           DateTime @default(now()) @map("created_at")
+  tags                String[]             @default([])
+  createdAt           DateTime             @default(now()) @map("created_at")
+  variantList         ProductVariant[]
+  reviews             Review[]
+  orderItems          OrderItem[]
+  wishlistAlerts      WishlistStockAlert[]
 
   @@index([type])
   @@index([collection])
@@ -96,23 +100,38 @@ model Payment {
   city                  String?
   postalCode            String?   @map("postal_code")
   assignedAgent         String?   @map("assigned_agent")
+  promoCode             String?   @map("promo_code")
+  deliveredAt           DateTime? @map("delivered_at")
+  reviewEmailSent       Boolean?  @default(false) @map("review_email_sent")
+  productIds            String?   @map("product_ids")
   estimatedDeliveryDate DateTime? @map("estimated_delivery_date")
-  cartItems             String?   @map("cart_items")
+  cartItems             Json?     @map("cart_items")
   isGiftWrapped         Boolean   @default(false) @map("is_gift_wrapped")
   giftMessage           String?   @map("gift_message")
   giftWrapPrice         Float?    @map("gift_wrap_price")
   paymentGateway        String?   @default("razorpay") @map("payment_gateway")
   gatewayOrderId        String?   @map("gateway_order_id")
 
+  user                  User?          @relation(fields: [userEmail], references: [email], onDelete: SetNull)
+  deliveryStaff         DeliveryStaff? @relation(fields: [assignedAgent], references: [email], onDelete: SetNull)
+  redeemCode            RedeemCode?    @relation(fields: [promoCode], references: [code], onDelete: SetNull)
+  items                 OrderItem[]
+  reviews               Review[]
+  repairRequests        RepairRequest[]
+
+  @@index([userEmail])
+  @@index([status])
+  @@index([createdAt])
   @@map("payments")
 }
 
 
 model DeliveryStaff {
-  email     String   @id
+  email     String    @id
   name      String
-  role      String   // "agent" or "manager"
-  createdAt DateTime @default(now()) @map("created_at")
+  role      String    // "agent" or "manager"
+  createdAt DateTime  @default(now()) @map("created_at")
+  payments  Payment[]
 
   @@map("delivery_staff")
 }
@@ -128,31 +147,35 @@ model VerificationOtp {
 }
 
 model RedeemCode {
-  code        String   @id
+  code        String    @id
   discount    Float
-  type        String   @default("percentage") // "percentage" or "fixed"
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
+  type        String    @default("percentage") // "percentage" or "fixed"
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
   description String?
-  minSubtotal Float?   @map("min_subtotal")
-  usageLimit  Int?     @map("usage_limit")
-  usedCount   Int      @default(0) @map("used_count")
-  expiryDate  String?  @map("expiry_date")
+  minSubtotal Float?    @map("min_subtotal")
+  usageLimit  Int?      @map("usage_limit")
+  usedCount   Int       @default(0) @map("used_count")
+  expiryDate  String?   @map("expiry_date")
+  payments    Payment[]
 
   @@map("redeem_codes")
 }
 
 model User {
-  email              String   @id
+  email              String               @id
   name               String?
   phone              String?
   password           String?
-  role               String?  @default("customer")
-  isVrixPlusMember   Boolean  @default(false) @map("is_vrix_plus_member")
-  vrixPlusJoinedDate String?  @map("vrix_plus_joined_date")
-  dateOfBirth        String?  @map("date_of_birth")
-  createdAt          DateTime @default(now()) @map("created_at")
+  role               String?              @default("customer")
+  isVrixPlusMember   Boolean              @default(false) @map("is_vrix_plus_member")
+  vrixPlusJoinedDate String?              @map("vrix_plus_joined_date")
+  dateOfBirth        String?              @map("date_of_birth")
+  createdAt          DateTime             @default(now()) @map("created_at")
   addresses          Address[]
+  payments           Payment[]
+  notifications      Notification[]
+  wishlistAlerts     WishlistStockAlert[]
 
   @@map("users")
 }
@@ -186,7 +209,9 @@ model Notification {
   isRead    Boolean  @default(false) @map("is_read")
   userEmail String?  @map("user_email")
   createdAt DateTime @default(now()) @map("created_at")
+  user      User?    @relation(fields: [userEmail], references: [email], onDelete: Cascade)
 
+  @@index([userEmail])
   @@map("notifications")
 }
 
@@ -288,14 +313,16 @@ model RepairRequest {
   id               String       @id @default(uuid()) @db.Uuid
   sessionId        String?      @map("session_id") @db.Uuid
   userId           String?      @map("user_id")
-  orderNumber      String       @map("order_number")
+  orderNumber      String?      @map("order_number")
   issueDescription String       @map("issue_description")
   contactEmail     String       @map("contact_email")
   status           String       @default("PENDING")
   createdAt        DateTime     @default(now()) @map("created_at")
   session          ChatSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  order            Payment?     @relation(fields: [orderNumber], references: [orderId], onDelete: SetNull)
 
   @@index([sessionId])
+  @@index([orderNumber])
   @@map("repair_requests")
 }
 
@@ -313,6 +340,88 @@ model DiamondEducation {
 
   @@map("diamond_education")
 }
+
+model OrderItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  orderId    String   @map("order_id")
+  productId  String?  @map("product_id")
+  title      String
+  price      Float
+  quantity   Int      @default(1)
+  image      String?
+  sku        String?
+  size       String?
+  engraving  String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  order      Payment  @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model ProductVariant {
+  id            String         @id
+  productId     String         @map("product_id")
+  material      String?
+  label         String?
+  price         Float
+  originalPrice Float?         @map("original_price")
+  stock         Int            @default(999)
+  image         String?
+  isAvailable   Boolean        @default(true) @map("is_available")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images        VariantImage[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model VariantImage {
+  id        Int            @id @default(autoincrement())
+  variantId String         @map("variant_id")
+  imageUrl  String         @map("image_url")
+  createdAt DateTime       @default(now()) @map("created_at")
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+  @@map("variant_images")
+}
+
+model Review {
+  id            String   @id @default(uuid()) @db.Uuid
+  productId     String   @map("product_id")
+  orderId       String?  @map("order_id")
+  rating        Int
+  title         String?
+  comment       String?
+  customerName  String?  @map("customer_name")
+  customerEmail String?  @map("customer_email")
+  isApproved    Boolean  @default(false) @map("is_approved")
+  createdAt     DateTime @default(now()) @map("created_at")
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order         Payment? @relation(fields: [orderId], references: [orderId], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([orderId])
+  @@map("reviews")
+}
+
+model WishlistStockAlert {
+  id             String    @id @default(uuid()) @db.Uuid
+  userEmail      String    @map("user_email")
+  productId      String    @map("product_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  lastNotifiedAt DateTime? @map("last_notified_at")
+  user           User      @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+  product        Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([userEmail, productId])
+  @@map("wishlist_stock_alerts")
+}
+
 
 
 
