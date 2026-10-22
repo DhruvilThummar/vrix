@@ -56,7 +56,12 @@ export async function getRazorpay() {
   }
 
   if (apiSettings && apiSettings.razorpayEnabled) {
-    if (apiSettings.razorpayKeyId && apiSettings.razorpayKeySecret) {
+    if (
+      apiSettings.razorpayKeyId &&
+      apiSettings.razorpayKeySecret &&
+      apiSettings.razorpayKeyId !== "rzp_test_YourKeyIdHere" &&
+      apiSettings.razorpayKeySecret !== "YourKeySecretHere"
+    ) {
       try {
         const { default: Razorpay } = await import("razorpay");
         return new Razorpay({ key_id: apiSettings.razorpayKeyId, key_secret: apiSettings.razorpayKeySecret });
@@ -66,8 +71,13 @@ export async function getRazorpay() {
     }
   }
 
-  // Fallback to process.env only if not explicitly disabled in CMS
-  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  // Fallback to process.env only if not explicitly disabled in CMS and not placeholder
+  if (
+    process.env.RAZORPAY_KEY_ID &&
+    process.env.RAZORPAY_KEY_SECRET &&
+    process.env.RAZORPAY_KEY_ID !== "rzp_test_YourKeyIdHere" &&
+    process.env.RAZORPAY_KEY_SECRET !== "YourKeySecretHere"
+  ) {
     try {
       const { default: Razorpay } = await import("razorpay");
       return new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET });

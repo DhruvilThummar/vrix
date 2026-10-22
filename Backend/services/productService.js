@@ -140,21 +140,21 @@ const withTimeout = (promise, ms) => {
 
 const runProductQuery = async (queryWithImages, queryWithoutImages) => {
   try {
-    const res = await withTimeout(queryWithImages(), 500);
+    const res = await withTimeout(queryWithImages(), 6000);
     return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
   } catch (error) {
     if (supabase) {
       try {
         const { data, error: sErr } = await withTimeout(
           supabase.from("products").select("*").order("created_at", { ascending: false }),
-          400
+          4000
         );
         if (!sErr && data) return data.map(withProductDefaults);
       } catch (e) {}
     }
     if (queryWithoutImages) {
       try {
-        const res = await withTimeout(queryWithoutImages(), 300);
+        const res = await withTimeout(queryWithoutImages(), 4000);
         return Array.isArray(res) ? res.map(withProductDefaults) : withProductDefaults(res);
       } catch (e) {}
     }

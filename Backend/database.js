@@ -20,6 +20,49 @@ const inMemoryWishlists = new Map();
 export const db = {
   isConnected: () => isDbConnected || !!supabase,
 
+  $transaction: async (fn) => {
+    if (isDbConnected && prisma) {
+      return await prisma.$transaction(async (txPrisma) => {
+        const tx = {
+          payments: {
+            findUnique: ({ where }) => txPrisma.payment.findUnique({ where }),
+            findFirst: ({ where }) => txPrisma.payment.findFirst({ where }),
+            update: ({ where, data }) => txPrisma.payment.update({ where, data }),
+            create: ({ data }) => txPrisma.payment.create({ data: data?.data || data }),
+          },
+          securityLogs: {
+            create: ({ data }) => txPrisma.securityLog.create({ data: data?.data || data }),
+          },
+          redeemCodes: {
+            findUnique: ({ where }) => txPrisma.redeemCode.findUnique({ where }),
+            update: ({ where, data }) => txPrisma.redeemCode.update({ where, data }),
+          },
+          products: {
+            updateMany: ({ where, data }) => txPrisma.product.updateMany({ where, data }),
+            findUnique: ({ where }) => txPrisma.product.findUnique({ where }),
+          },
+          prisma: txPrisma,
+        };
+        return await fn(tx);
+      });
+    }
+    return await fn(db);
+  },
+
+  $executeRawUnsafe: async (query, ...params) => {
+    if (isDbConnected && prisma) {
+      return await prisma.$executeRawUnsafe(query, ...params);
+    }
+    return 0;
+  },
+
+  $queryRawUnsafe: async (query, ...params) => {
+    if (isDbConnected && prisma) {
+      return await prisma.$queryRawUnsafe(query, ...params);
+    }
+    return [];
+  },
+
   products: productService,
   cms: cmsService,
   cmsSettings: cmsService,
@@ -115,11 +158,10 @@ export const db = {
   },
 
   payments: {
-    findMany: async () => {
+    findMany: async (args) => {
       if (isDbConnected && prisma) {
         try {
-          const res = await prisma.payment.findMany({ orderBy: { createdAt: "desc" } });
-          if (Array.isArray(res)) return res;
+          return await prisma.payment.findMany(args || { orderBy: { createdAt: "desc" } });
         } catch (e) {}
       }
       if (supabase) {
@@ -130,11 +172,48 @@ export const db = {
       }
       return [];
     },
-    create: async (data) => {
+    findUnique: async ({ where } = {}) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.payment.findUnique({ where });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          let query = supabase.from("payments").select("*");
+          if (where?.orderId) query = query.eq("order_id", where.orderId);
+          else if (where?.id) query = query.eq("id", where.id);
+          const { data } = await query.maybeSingle();
+          if (data) return data;
+        } catch (e) {}
+      }
+      return null;
+    },
+    findFirst: async ({ where } = {}) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.payment.findFirst({ where });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          let query = supabase.from("payments").select("*");
+          if (where?.orderId) query = query.eq("order_id", where.orderId);
+          else if (where?.userEmail) query = query.eq("user_email", where.userEmail);
+          const { data } = await query.maybeSingle();
+          if (data) return data;
+        } catch (e) {}
+      }
+      return null;
+    },
+    create: async (args) => {
+      const data = args?.data || args;
       if (isDbConnected && prisma) {
         try {
           return await prisma.payment.create({ data });
-        } catch (e) {}
+        } catch (e) {
+          console.error("prisma.payment.create error:", e.message);
+        }
       }
       if (supabase) {
         try {
@@ -143,6 +222,39 @@ export const db = {
         } catch (e) {}
       }
       return data;
+    },
+    update: async ({ where, data }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.payment.update({ where, data });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          let query = supabase.from("payments").update(data);
+          if (where?.orderId) query = query.eq("order_id", where.orderId);
+          else if (where?.id) query = query.eq("id", where.id);
+          const { data: res } = await query.select().single();
+          if (res) return res;
+        } catch (e) {}
+      }
+      return { ...where, ...data };
+    },
+    delete: async ({ where }) => {
+      if (isDbConnected && prisma) {
+        try {
+          return await prisma.payment.delete({ where });
+        } catch (e) {}
+      }
+      if (supabase) {
+        try {
+          let query = supabase.from("payments").delete();
+          if (where?.orderId) query = query.eq("order_id", where.orderId);
+          else if (where?.id) query = query.eq("id", where.id);
+          await query;
+        } catch (e) {}
+      }
+      return true;
     }
   },
 
@@ -163,11 +275,14 @@ export const db = {
       }
       return null;
     },
-    create: async (data) => {
+    create: async (args) => {
+      const data = args?.data || args;
       if (isDbConnected && prisma) {
         try {
           return await prisma.verificationOtp.create({ data });
-        } catch (e) {}
+        } catch (e) {
+          console.error("prisma.verificationOtp.create error:", e.message);
+        }
       }
       return data;
     },

@@ -255,9 +255,23 @@ router.post("/verify", async (req, res) => {
       return res.status(400).json({ error: "Payment signature verification failed" });
     }
 
+    // Step 1b: Double-Click & Replay Idempotency Guard
+    // If a customer double-clicks "Pay" or network duplicates the verify request,
+    // prevent multiple stock deductions and duplicate promo code counting.
+    const existingPayment = await db.payments.findUnique({ where: { orderId: razorpay_order_id } });
+    if (existingPayment && existingPayment.status === "SUCCESS") {
+      return res.json({
+        success: true,
+        message: "Payment already verified and fulfilled.",
+        payment: existingPayment,
+        orderId: razorpay_order_id,
+        isDuplicate: true,
+      });
+    }
+
     let paymentRecord;
     try {
-      // Step 1b: Signature valid - Execute atomic transaction for payment fulfillment
+      // Step 1c: Signature valid - Execute atomic transaction for payment fulfillment
       // If any of these operations fail, the entire block is rolled back.
       // NOTE: Because Razorpay has already deducted money, a failure here requires manual intervention.
       paymentRecord = await db.$transaction(async (tx) => {

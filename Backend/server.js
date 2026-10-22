@@ -205,8 +205,8 @@ app.use((err, req, res, next) => {
 
 import { initPayPalReconcilerCron } from "./jobs/paypalReconciler.js";
 
-// Start the HTTP listener only for local runs. Vercel imports the exported app.
-if (!process.env.VERCEL) {
+// Start the HTTP listener only for standalone runs. Skip in Vercel or test mode.
+if (!process.env.VERCEL && process.env.NODE_ENV !== "test" && !process.env.TEST_MODE) {
   try {
     initPayPalReconcilerCron();
   } catch (cronErr) {
